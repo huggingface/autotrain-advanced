@@ -2,15 +2,30 @@
 """ HuggingFace/AutoNLP
 """
 
-import datetime
-import itertools
-import os
-import sys
-
 from setuptools import find_packages
 from setuptools import setup
 
 DOCLINES = __doc__.split("\n")
+
+
+QUALITY_REQUIRE = [
+    "black",
+    "isort",
+    "flake8==3.7.9",
+]
+
+
+EXTRAS_REQUIRE = {
+    "dev": QUALITY_REQUIRE,
+    "quality": QUALITY_REQUIRE,
+    "docs": [
+        "recommonmark",
+        "sphinx==3.1.2",
+        "sphinx-markdown-tables",
+        "sphinx-rtd-theme==0.4.3",
+        "sphinx-copybutton",
+    ],
+}
 
 setup(
     name="autonlp",
@@ -25,6 +40,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages("src"),
     scripts=["scripts/autonlp"],
+    extras_require=EXTRAS_REQUIRE,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
