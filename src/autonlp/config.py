@@ -1,1 +1,1 @@
-HF_AUTONLP_BACKEND_API = "http://192.168.86.48:9000"
+HF_AUTONLP_BACKEND_API = "http://localhost:8000"

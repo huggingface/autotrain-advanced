@@ -1,19 +1,6 @@
 # flake8: noqa
 # coding=utf-8
-# Copyright 2020 The HuggingFace AutoNLP Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+# Copyright 2020 The HuggingFace Team
 # Lint as: python3
 # pylint: enable=line-too-long
 
@@ -21,38 +8,49 @@ import json
 import requests
 from typing import Union, List
 
+import requests
 from . import config
+from .tasks import TASKS
+from .project import Project
 
 
 class AutoNLP:
-    def __init__(self, api_key: str) -> None:
-        self.api_key = api_key
-        if not self._verify_key():
-            raise Exception("Unable to verify account or no credits left")
+    def __init__(self, org: str, username: str) -> None:
+        self.org = org
+        self.username = username
 
-    def _verify_key(self):
-        resp = requests.post(
-            url=f"{config.HF_AUTONLP_BACKEND_API}/verify_api_key",
-            data=json.dumps({"key": self.api_key}),
-        )
-        resp = resp.json()
-        if resp["success"] is True and resp["credits_left"] > 0:
-            return True
-        return False
+    def create_project(self, name: str, task: str):
+        task_id = TASKS.get(task, -1)
+        if task_id == -1:
+            raise Exception(f"Invalid task specified. Please choose one of {list(TASKS.keys())}")
+        payload = {
+            "username": self.username,
+            "org": self.org,
+            "proj_name": name,
+            "task": task_id,
+            "config": {"version": 0, "patch": 1},
+        }
+        try:
+            resp = requests.post(url=config.HF_AUTONLP_BACKEND_API + "/projects/", json=payload)
+        except requests.exceptions.ConnectionError:
+            raise Exception("API is currently not available")
+        resp_json = resp.json()
+        return resp_json
 
-    def train(self, dataset: Union[str, List[str]]) -> str:
-        if isinstance(dataset, str):
-            # do something
-            # need to push data to endpoint here.
-            print("string")
-        elif isinstance(dataset, list):
-            print("list of strings")
-
-    def deploy(self):
-        pass
+    def get_project(self, name):
+        if self.org is None or self.username is None:
+            raise Exception("Please init the AutoNLP class first")
+        return Project(name=name, org=self.org, user=self.username)
 
 
 if __name__ == "__main__":
-    anlp = AutoNLP(api_key="fake_api_key")
-    anlp.train(dataset="this")
-    anlp.train(dataset=["this", "that"])
+    client = AutoNLP(org="huggingface", username="abhishek")
+    resp = client.create_project(name="imdb_new", task="binary_classification")
+    print(resp)
+
+    col_mapping = {"sentiment": "target", "review": "text"}
+    project = client.get_project(name="imdb_new")
+    train_files = ["/home/abhishek/dataset/imdb_folds.csv"]
+    valid_files = ["/home/abhishek/dataset/imdb_folds.csv"]
+    project.upload(train_files, split="train", col_mapping=col_mapping)
+    project.upload(train_files, split="valid", col_mapping=col_mapping)
