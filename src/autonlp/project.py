@@ -34,4 +34,5 @@ class Project:
             logger.info(response.text)
 
     def train(self):
-        pass
+        response = requests.get(url=config.HF_AUTONLP_BACKEND_API + "/projects/1/data/start_process")
+        logger.info(response.text)

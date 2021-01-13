@@ -45,12 +45,12 @@ class AutoNLP:
 
 if __name__ == "__main__":
     client = AutoNLP(org="huggingface", username="abhishek")
-    resp = client.create_project(name="imdb_new", task="binary_classification")
-    print(resp)
+    resp = client.create_project(name="imdb_test_1", task="binary_classification")
 
     col_mapping = {"sentiment": "target", "review": "text"}
-    project = client.get_project(name="imdb_new")
+    project = client.get_project(name="imdb_test_1")
     train_files = ["/home/abhishek/datasets/imdb_folds.csv"]
     valid_files = ["/home/abhishek/datasets/imdb_valid.csv"]
     project.upload(train_files, split="train", col_mapping=col_mapping)
     project.upload(valid_files, split="valid", col_mapping=col_mapping)
+    project.train()
