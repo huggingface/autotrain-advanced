@@ -7,6 +7,9 @@ from setuptools import setup
 
 DOCLINES = __doc__.split("\n")
 
+INSTALL_REQUIRES = [
+    "loguru==0.5.3"
+]
 
 QUALITY_REQUIRE = [
     "black",
@@ -16,8 +19,8 @@ QUALITY_REQUIRE = [
 
 
 EXTRAS_REQUIRE = {
-    "dev": QUALITY_REQUIRE,
-    "quality": QUALITY_REQUIRE,
+    "dev": INSTALL_REQUIRES + QUALITY_REQUIRE,
+    "quality": INSTALL_REQUIRES + QUALITY_REQUIRE,
     "docs": [
         "recommonmark",
         "sphinx==3.1.2",
@@ -41,6 +44,7 @@ setup(
     packages=find_packages("src"),
     scripts=["scripts/autonlp"],
     extras_require=EXTRAS_REQUIRE,
+    install_requires=INSTALL_REQUIRES,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
