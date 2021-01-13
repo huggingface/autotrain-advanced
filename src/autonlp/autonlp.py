@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     col_mapping = {"sentiment": "target", "review": "text"}
     project = client.get_project(name="imdb_new")
-    train_files = ["/home/abhishek/dataset/imdb_folds.csv"]
-    valid_files = ["/home/abhishek/dataset/imdb_folds.csv"]
+    train_files = ["/home/abhishek/datasets/imdb_folds.csv"]
+    valid_files = ["/home/abhishek/datasets/imdb_valid.csv"]
     project.upload(train_files, split="train", col_mapping=col_mapping)
-    project.upload(train_files, split="valid", col_mapping=col_mapping)
+    project.upload(valid_files, split="valid", col_mapping=col_mapping)
