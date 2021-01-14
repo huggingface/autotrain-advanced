@@ -7,9 +7,7 @@ from setuptools import setup
 
 DOCLINES = __doc__.split("\n")
 
-INSTALL_REQUIRES = [
-    "loguru==0.5.3"
-]
+INSTALL_REQUIRES = ["loguru==0.5.3"]
 
 QUALITY_REQUIRE = [
     "black",
@@ -45,6 +43,7 @@ setup(
     scripts=["scripts/autonlp"],
     extras_require=EXTRAS_REQUIRE,
     install_requires=INSTALL_REQUIRES,
+    entry_points={"console_scripts": ["autonlp=autonlp.cli.autonlp:main"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

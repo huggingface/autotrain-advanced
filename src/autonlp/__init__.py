@@ -18,3 +18,5 @@
 # pylint: enable=line-too-long
 
 __version__ = "0.0.1"
+
+from .autonlp import AutoNLP

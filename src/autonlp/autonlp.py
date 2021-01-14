@@ -7,7 +7,7 @@
 import json
 import requests
 from typing import Union, List
-
+import os
 import requests
 from . import config
 from .tasks import TASKS
@@ -20,6 +20,10 @@ class AutoNLP:
         self.org = "huggingface"
         self.username = username
         self.project_id = -1
+
+    def login(self):
+        # os.makedirs()
+        pass
 
     def create_project(self, name: str, task: str):
         task_id = TASKS.get(task, -1)
