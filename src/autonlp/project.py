@@ -6,7 +6,8 @@ from loguru import logger
 
 
 class Project:
-    def __init__(self, name, org, user):
+    def __init__(self, proj_id, name, org, user):
+        self.proj_id = proj_id
         self.name = name
         self.org = org
         self.user = user
@@ -30,9 +31,11 @@ class Project:
                 "data_files": [{"fname": base_name, "username": self.user, "org": self.org}],
             }
             logger.info(payload)
-            response = requests.post(url=config.HF_AUTONLP_BACKEND_API + "/projects/1/data/add", json=payload)
+            response = requests.post(
+                url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.proj_id}/data/add", json=payload
+            )
             logger.info(response.text)
 
     def train(self):
-        response = requests.get(url=config.HF_AUTONLP_BACKEND_API + "/projects/1/data/start_process")
+        response = requests.get(url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.proj_id}/data/start_process")
         logger.info(response.text)
