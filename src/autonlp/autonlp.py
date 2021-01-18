@@ -16,14 +16,23 @@ from loguru import logger
 
 
 class AutoNLP:
-    def __init__(self, username: str) -> None:
-        self.org = "huggingface"
+    def __init__(self, username: str, config_dir: str = None) -> None:
         self.username = username
         self.project_id = -1
+        self.config_dir = config_dir
+        if self.config_dir is None:
+            home_dir = os.path.expanduser("~")
+            self.config_dir = os.path.join(home_dir, ".autonlp")
+        os.makedirs(self.config_dir, exist_ok=True)
 
     def login(self):
-        # os.makedirs()
-        pass
+        # verify the user here and get the api key
+        # save the api key in a json file
+        login_dict = {"username": self.username, "token": "TEST_API_KEY"}
+        # TODO: these credentials need to be passed with every request to the backend
+        logger.info(f"Storing credentials in:  {self.config_dir}")
+        with open(os.path.join(self.config_dir, "autonlp.json"), "w") as fp:
+            json.dump(login_dict, fp)
 
     def create_project(self, name: str, task: str):
         task_id = TASKS.get(task, -1)
@@ -49,14 +58,14 @@ class AutoNLP:
         return self.get_project(name=name)
 
     def get_project(self, name):
-        if self.org is None or self.username is None:
-            raise Exception("Please init the AutoNLP class first")
+        if self.username is None:
+            raise Exception("Please init/login AutoNLP first")
         if self.project_id == -1:
-            resp = requests.get(url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.org}/{self.username}/{name}")
+            resp = requests.get(url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.username}/{name}")
             proj_id = resp.get("id")
             if proj_id is None:
                 raise Exception("Project not found, please create the project using create_project")
-        return Project(proj_id=self.project_id, name=name, org=self.org, user=self.username)
+        return Project(proj_id=self.project_id, name=name, user=self.username)
 
 
 if __name__ == "__main__":

@@ -6,14 +6,13 @@ from loguru import logger
 
 
 class Project:
-    def __init__(self, proj_id, name, org, user):
+    def __init__(self, proj_id, name, user):
         self.proj_id = proj_id
         self.name = name
-        self.org = org
         self.user = user
 
     def upload(self, files, split, col_mapping):
-        jdata = {"project": self.name, "org": self.org, "user": self.user}
+        jdata = {"project": self.name, "user": self.user}
         for file_path in files:
             base_name = os.path.basename(file_path)
             binary_file = open(file_path, "rb")
@@ -28,7 +27,7 @@ class Project:
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
-                "data_files": [{"fname": base_name, "username": self.user, "org": self.org}],
+                "data_files": [{"fname": base_name, "username": self.user}],
             }
             logger.info(payload)
             response = requests.post(

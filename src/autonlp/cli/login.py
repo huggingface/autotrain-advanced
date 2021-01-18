@@ -23,4 +23,4 @@ class LoginCommand(BaseAutoNLPCommand):
 
         logger.info(f"Logging in using username: {self._username}")
         client = AutoNLP(username=self._username)
-
+        client.login()
