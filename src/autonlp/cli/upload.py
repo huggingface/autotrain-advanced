@@ -4,27 +4,42 @@ from . import BaseAutoNLPCommand
 from loguru import logger
 
 
-def create_project_command_factory(args):
-    return CreateProjectCommand(args.project, args.)
+def upload_command_factory(args):
+    return UploadCommand(args.project, args.split, args.col_mapping, args.files)
 
 
-class CreateProjectCommand(BaseAutoNLPCommand):
+class UploadCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        create_project_parser = parser.add_parser("create_project")
-        create_project_parser.add_argument("--name", type=str, default=None, required=True, help="Project Name")
-        create_project_parser.add_argument(
-            "--task", type=str, default=None, required=True, help="Project Task Type", choices=list(TASKS.keys())
+        upload_parser = parser.add_parser("upload")
+        upload_parser.add_argument("--project", type=str, default=None, required=True, help="Project Name")
+        upload_parser.add_argument(
+            "--split", type=str, default=None, required=True, help="File Split Type", choices=["train", "valid"]
         )
-        create_project_parser.set_defaults(func=create_project_command_factory)
+        upload_parser.add_argument(
+            "--col_mapping", type=str, default=None, required=True, help="Column Mapping. E.g. col1:map1,col2:map2"
+        )
+        upload_parser.add_argument("--files")
+        upload_parser.set_defaults(func=upload_command_factory)
 
-    def __init__(self, name: str, task: str):
+    def __init__(self, name: str, split: str, col_mapping: str, files: str):
         self._name = name
-        self._task = task
+        self._split = split
+        self._col_mapping = col_mapping
+        self._files = files
 
     def run(self):
         from ..autonlp import AutoNLP
 
-        logger.info(f"Creating project: {self._name} with task: {self._task}")
+        logger.info(f"Uploading files for project: {self._name}")
         client = AutoNLP()
-        client.create_project(name=self._name, task=self._task)
+        project = client.get_project(name=self._name)
+        splits = self._col_mapping.split(",")
+        col_maps = {}
+        for s in splits:
+            k, v = s.split(":")
+            col_maps[k] = v
+        logger.info(f"Mapping: {col_maps}")
+
+        files = self._files.split(",")
+        project.upload(files=files, split=self._split, col_mapping=col_maps)

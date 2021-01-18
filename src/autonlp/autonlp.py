@@ -35,7 +35,7 @@ class AutoNLP:
         with open(os.path.join(self.config_dir, "autonlp.json"), "w") as fp:
             json.dump(login_dict, fp)
 
-    def create_project(self, name: str, task: str):
+    def _login_from_conf(self):
         conf_json = None
         if self.username is None:
             if os.path.isfile(os.path.join(self.config_dir, "autonlp.json")):
@@ -45,6 +45,9 @@ class AutoNLP:
             raise Exception("Unable to login / credentials not found. Please login first")
         else:
             self.username = conf_json["username"]
+
+    def create_project(self, name: str, task: str):
+        self._login_from_conf()
         task_id = TASKS.get(task, -1)
         if task_id == -1:
             raise Exception(f"Invalid task specified. Please choose one of {list(TASKS.keys())}")
@@ -66,16 +69,20 @@ class AutoNLP:
         else:
             logger.info(f"Project already exists. Loaded successfully: {resp_json['proj_name']}")
         self.project_id = resp_json["id"]
-        return self._get_project(name=name)
+        return self.get_project(name=name)
 
-    def _get_project(self, name):
+    def get_project(self, name):
+        self._login_from_conf()
         if self.username is None:
             raise Exception("Please init/login AutoNLP first")
         if self.project_id == -1:
             resp = requests.get(url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.username}/{name}")
-            proj_id = resp.get("id")
+            logger.info(resp.json())
+            proj_id = resp.json().get("id")
             if proj_id is None:
                 raise Exception("Project not found, please create the project using create_project")
+            else:
+                self.project_id = proj_id
         return Project(proj_id=self.project_id, name=name, user=self.username)
 
 

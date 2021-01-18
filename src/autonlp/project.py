@@ -12,7 +12,7 @@ class Project:
         self.user = user
 
     def upload(self, files, split, col_mapping):
-        jdata = {"project": self.name, "user": self.user}
+        jdata = {"project": self.name, "username": self.user}
         for file_path in files:
             base_name = os.path.basename(file_path)
             binary_file = open(file_path, "rb")

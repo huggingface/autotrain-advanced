@@ -1,6 +1,7 @@
 import argparse
 from .login import LoginCommand
 from .create_project import CreateProjectCommand
+from .upload import UploadCommand
 
 
 def main():
@@ -10,6 +11,7 @@ def main():
     # Register commands
     LoginCommand.register_subcommand(commands_parser)
     CreateProjectCommand.register_subcommand(commands_parser)
+    UploadCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
