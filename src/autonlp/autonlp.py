@@ -16,8 +16,8 @@ from loguru import logger
 
 
 class AutoNLP:
-    def __init__(self, username: str, config_dir: str = None) -> None:
-        self.username = username
+    def __init__(self, config_dir: str = None) -> None:
+        self.username = None
         self.project_id = -1
         self.config_dir = config_dir
         if self.config_dir is None:
@@ -25,7 +25,8 @@ class AutoNLP:
             self.config_dir = os.path.join(home_dir, ".autonlp")
         os.makedirs(self.config_dir, exist_ok=True)
 
-    def login(self):
+    def login(self, username):
+        self.username = username
         # verify the user here and get the api key
         # save the api key in a json file
         login_dict = {"username": self.username, "token": "TEST_API_KEY"}
@@ -35,12 +36,20 @@ class AutoNLP:
             json.dump(login_dict, fp)
 
     def create_project(self, name: str, task: str):
+        conf_json = None
+        if self.username is None:
+            if os.path.isfile(os.path.join(self.config_dir, "autonlp.json")):
+                with open(os.path.join(self.config_dir, "autonlp.json"), "r") as conf_file:
+                    conf_json = json.load(conf_file)
+        if conf_json is None:
+            raise Exception("Unable to login / credentials not found. Please login first")
+        else:
+            self.username = conf_json["username"]
         task_id = TASKS.get(task, -1)
         if task_id == -1:
             raise Exception(f"Invalid task specified. Please choose one of {list(TASKS.keys())}")
         payload = {
             "username": self.username,
-            "org": self.org,
             "proj_name": name,
             "task": task_id,
             "config": {"version": 0, "patch": 1},
@@ -50,14 +59,16 @@ class AutoNLP:
         except requests.exceptions.ConnectionError:
             raise Exception("API is currently not available")
         resp_json = resp.json()
+        logger.info(resp_json)
+
         if resp_json["created"] is True:
             logger.info(f"Created project: {resp_json['proj_name']}")
         else:
             logger.info(f"Project already exists. Loaded successfully: {resp_json['proj_name']}")
         self.project_id = resp_json["id"]
-        return self.get_project(name=name)
+        return self._get_project(name=name)
 
-    def get_project(self, name):
+    def _get_project(self, name):
         if self.username is None:
             raise Exception("Please init/login AutoNLP first")
         if self.project_id == -1:

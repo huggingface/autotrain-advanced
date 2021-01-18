@@ -22,5 +22,5 @@ class LoginCommand(BaseAutoNLPCommand):
         from ..autonlp import AutoNLP
 
         logger.info(f"Logging in using username: {self._username}")
-        client = AutoNLP(username=self._username)
-        client.login()
+        client = AutoNLP()
+        client.login(username=self._username)
