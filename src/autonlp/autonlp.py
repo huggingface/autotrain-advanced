@@ -41,10 +41,10 @@ class AutoNLP:
             if os.path.isfile(os.path.join(self.config_dir, "autonlp.json")):
                 with open(os.path.join(self.config_dir, "autonlp.json"), "r") as conf_file:
                     conf_json = json.load(conf_file)
-        if conf_json is None:
-            raise Exception("Unable to login / credentials not found. Please login first")
-        else:
-            self.username = conf_json["username"]
+                    if conf_json is None:
+                        raise Exception("Unable to login / credentials not found. Please login first")
+                    else:
+                        self.username = conf_json["username"]
 
     def create_project(self, name: str, task: str):
         self._login_from_conf()
