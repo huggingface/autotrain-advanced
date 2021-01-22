@@ -1,8 +1,9 @@
 import argparse
-from .login import LoginCommand
+
 from .create_project import CreateProjectCommand
-from .upload import UploadCommand
+from .login import LoginCommand
 from .train import TrainCommand
+from .upload import UploadCommand
 
 
 def main():

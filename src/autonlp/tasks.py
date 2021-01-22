@@ -1,6 +1,3 @@
-import enum
-
-
 TASKS = {
     "binary_classification": 1,
     "multi_class_classification": 2,

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+
 from autonlp import AutoNLP
+
 
 def parse_args():
     parser = argparse.ArgumentParser("AutoNLP")

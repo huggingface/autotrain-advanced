@@ -1,8 +1,9 @@
-import requests
 import os
 
-from . import config
+import requests
 from loguru import logger
+
+from . import config
 
 
 class Project:

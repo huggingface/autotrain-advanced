@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
 
-from . import BaseAutoNLPCommand
 from loguru import logger
+
+from . import BaseAutoNLPCommand
+
 
 TASKS = {
     "binary_classification": 1,

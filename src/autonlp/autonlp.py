@@ -5,14 +5,15 @@
 # pylint: enable=line-too-long
 
 import json
-import requests
-from typing import Union, List
 import os
+from typing import List, Union
+
 import requests
-from . import config
-from .tasks import TASKS
-from .project import Project
 from loguru import logger
+
+from . import config
+from .project import Project
+from .tasks import TASKS
 
 
 class AutoNLP:

@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 
-from . import BaseAutoNLPCommand
 from loguru import logger
+
+from . import BaseAutoNLPCommand
 
 
 def train_command_factory(args):

@@ -3,12 +3,12 @@
 # Check that source code meets quality standards
 
 quality:
-	black --check --line-length 119 --target-version py36 tests src
-	isort --check-only tests src
-	flake8 tests src
+	black --check --line-length 119 --target-version py38 .
+	isort --check-only .
+	flake8 --max-line-length 119
 
 # Format source code automatically
 
 style:
-	black --line-length 119 --target-version py36 tests src
-	isort tests src
+	black --line-length 119 --target-version py38 .
+	isort .

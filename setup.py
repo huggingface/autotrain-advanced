@@ -2,8 +2,8 @@
 """ HuggingFace/AutoNLP
 """
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
+
 
 DOCLINES = __doc__.split("\n")
 
