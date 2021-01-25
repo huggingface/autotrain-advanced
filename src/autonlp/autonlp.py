@@ -19,6 +19,7 @@ from .tasks import TASKS
 class AutoNLP:
     def __init__(self, config_dir: str = None) -> None:
         self.username = None
+        self.api_key = None
         self.project_id = -1
         self.config_dir = config_dir
         if self.config_dir is None:
@@ -26,11 +27,12 @@ class AutoNLP:
             self.config_dir = os.path.join(home_dir, ".autonlp")
         os.makedirs(self.config_dir, exist_ok=True)
 
-    def login(self, username):
+    def login(self, username, api_key):
         self.username = username
+        self.api_key = api_key
         # verify the user here and get the api key
         # save the api key in a json file
-        login_dict = {"username": self.username, "token": "TEST_API_KEY"}
+        login_dict = {"username": self.username, "api_key": api_key}
         # TODO: these credentials need to be passed with every request to the backend
         logger.info(f"Storing credentials in:  {self.config_dir}")
         with open(os.path.join(self.config_dir, "autonlp.json"), "w") as fp:
@@ -38,7 +40,7 @@ class AutoNLP:
 
     def _login_from_conf(self):
         conf_json = None
-        if self.username is None:
+        if self.username is None or self.api_key is None:
             if os.path.isfile(os.path.join(self.config_dir, "autonlp.json")):
                 with open(os.path.join(self.config_dir, "autonlp.json"), "r") as conf_file:
                     conf_json = json.load(conf_file)
@@ -46,6 +48,7 @@ class AutoNLP:
                         raise Exception("Unable to login / credentials not found. Please login first")
                     else:
                         self.username = conf_json["username"]
+                        self.api_key = conf_json["api_key"]
 
     def create_project(self, name: str, task: str):
         self._login_from_conf()
@@ -88,7 +91,8 @@ class AutoNLP:
 
 
 if __name__ == "__main__":
-    client = AutoNLP(username="abhishek")
+    client = AutoNLP()
+    client.login(username="abhishek")
     project = client.create_project(name="imdb_test_4", task="binary_classification")
     # project = client.get_project(name="imdb_test_4")
     col_mapping = {"sentiment": "target", "review": "text"}
