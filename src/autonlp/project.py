@@ -5,14 +5,17 @@ from datetime import datetime
 import requests
 from loguru import logger
 from typing import Optional, List, Dict
+from tqdm import tqdm
 
 from . import config
 from .tasks import TASKS
-from .config import get_auth_headers
+from .utils import http_get, http_post, http_upload_files
 
 
 @dataclass
 class Project:
+    """An AutoNLP project"""
+
     proj_id: int
     name: str
     user: str
@@ -25,6 +28,7 @@ class Project:
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
+        """Build a Project from the API response, JSON-encoded"""
         return cls(
             proj_id=json_resp["id"],
             name=json_resp["proj_name"],
@@ -50,36 +54,25 @@ class Project:
         printout = [header]
         return "\n".join(printout)
 
-    def upload(self, files: List[str], split: str, col_mapping: Dict[str, str], token: str):
+    def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str], token: str):
+        """Uploads files to the project"""
         jdata = {"project": self.name, "username": self.user}
-        for file_path in files:
+        for file_path in tqdm(filepaths, desc="Uploaded files"):
             base_name = os.path.basename(file_path)
             binary_file = open(file_path, "rb")
             files = [("files", (base_name, binary_file, "text/csv"))]
-            response = requests.post(
-                url=config.HF_AUTONLP_BACKEND_API + "/uploader/upload_files",
-                data=jdata,
-                files=files,
-                headers=get_auth_headers(token),
-            )
-            logger.info(response.text)
-
+            response = http_upload_files(path="/uploader/upload_files", data=jdata, files_info=files, token=token)
+            logger.debug(response.text)
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": base_name, "username": self.user}],
             }
-            logger.info(payload)
-            response = requests.post(
-                url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.proj_id}/data/add",
-                json=payload,
-                headers=get_auth_headers(token),
-            )
-            logger.info(response.text)
+            logger.debug(payload)
+            response = http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=token)
+        logger.info(f"✅ Successfully uplaoded {len(file_path)} files to AutoNLP!")
 
     def train(self, token: str):
-        response = requests.get(
-            url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.proj_id}/data/start_process",
-            headers=get_auth_headers(token),
-        )
-        logger.info(response.text)
+        """Starts training on the models"""
+        response = http_get(path=f"/projects/{self.proj_id}/data/start_process", token=token)
+        logger.info("🤗 Training started!")
