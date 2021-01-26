@@ -14,13 +14,14 @@ from loguru import logger
 from . import config
 from .project import Project
 from .tasks import TASKS
+from .config import get_auth_headers
 
 
 class AutoNLP:
     def __init__(self, config_dir: str = None) -> None:
         self.username = None
         self.api_key = None
-        self.project_id = -1
+        self.project = None
         self.config_dir = config_dir
         if self.config_dir is None:
             home_dir = os.path.expanduser("~")
@@ -62,7 +63,11 @@ class AutoNLP:
             "config": {"version": 0, "patch": 1},
         }
         try:
-            resp = requests.post(url=config.HF_AUTONLP_BACKEND_API + "/projects/", json=payload)
+            resp = requests.post(
+                url=config.HF_AUTONLP_BACKEND_API + "/projects/",
+                json=payload,
+                headers=get_auth_headers(token=self.api_key),
+            )
         except requests.exceptions.ConnectionError:
             raise Exception("API is currently not available")
         resp_json = resp.json()
@@ -72,22 +77,26 @@ class AutoNLP:
             logger.info(f"Created project: {resp_json['proj_name']}")
         else:
             logger.info(f"Project already exists. Loaded successfully: {resp_json['proj_name']}")
-        self.project_id = resp_json["id"]
+        self.project = Project.from_json_resp(resp_json)
         return self.get_project(name=name)
 
     def get_project(self, name):
         self._login_from_conf()
         if self.username is None:
             raise Exception("Please init/login AutoNLP first")
-        if self.project_id == -1:
+        if self.project is None or self.project.name != name:
             resp = requests.get(url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.username}/{name}")
             logger.info(resp.json())
             proj_id = resp.json().get("id")
             if proj_id is None:
                 raise Exception("Project not found, please create the project using create_project")
             else:
-                self.project_id = proj_id
-        return Project(proj_id=self.project_id, name=name, user=self.username)
+                resp = requests.get(
+                    url=config.HF_AUTONLP_BACKEND_API + f"/projects/{self.username}/{name}",
+                    headers=get_auth_headers(token=self.api_key),
+                ).json()
+                self.project = Project.from_json_resp(resp)
+        return self.project
 
 
 if __name__ == "__main__":
