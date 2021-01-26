@@ -19,7 +19,7 @@ from .utils import UnauthenticatedError, UnreachableAPIError, http_get, http_pos
 class AutoNLP:
     def __init__(self, config_dir: str = None) -> None:
         self.username = None
-        self.api_key = None
+        self.token = None
         self._project = None
         self.config_dir = config_dir
         if self.config_dir is None:
@@ -30,17 +30,17 @@ class AutoNLP:
     def get_token(self):
         """Retrieve API token, or raise UnauthenticatedError"""
         self._login_from_conf()
-        if self.api_key is None:
+        if self.token is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
-        return self.api_key
+        return self.token
 
-    def login(self, username: str, api_key: str):
+    def login(self, username: str, token: str):
         """Login to AutoNLP"""
         self.username = username
-        self.api_key = api_key
+        self.token = token
         # verify the user here and get the api key
         # save the api key in a json file
-        login_dict = {"username": self.username, "api_key": api_key}
+        login_dict = {"username": self.username, "token": token}
         # TODO: these credentials need to be passed with every request to the backend
         logger.info(f"🗝 Storing credentials in:  {self.config_dir}")
         with open(os.path.join(self.config_dir, "autonlp.json"), "w") as fp:
@@ -49,7 +49,7 @@ class AutoNLP:
     def _login_from_conf(self):
         """Retrieve credentials from local config"""
         conf_json = None
-        if self.username is None or self.api_key is None:
+        if self.username is None or self.token is None:
             logger.info("🗝 Retrieving credentials from config...")
             if os.path.isfile(os.path.join(self.config_dir, "autonlp.json")):
                 with open(os.path.join(self.config_dir, "autonlp.json"), "r") as conf_file:
@@ -58,7 +58,7 @@ class AutoNLP:
                         raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
                     else:
                         self.username = conf_json["username"]
-                        self.api_key = conf_json["api_key"]
+                        self.token = conf_json["token"]
 
     def create_project(self, name: str, task: str):
         """Create a project and return it"""
@@ -72,7 +72,7 @@ class AutoNLP:
             "task": task_id,
             "config": {"version": 0, "patch": 1},
         }
-        json_resp = http_post(path="/projects", payload=payload, token=self.api_key).json()
+        json_resp = http_post(path="/projects", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
         if json_resp["created"] is True:
             logger.info(f"✅ Successfully created project: '{proj_name}'!")
@@ -88,21 +88,22 @@ class AutoNLP:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
         if self._project is None or self._project.name != name:
             logger.info(f"☁ Retrieving project '{name}' from AutoNLP...")
-            json_resp = http_get(path=f"/projects/{self.username}/{name}", token=self.api_key).json()
+            json_resp = http_get(path=f"/projects/{self.username}/{name}", token=self.token).json()
             proj_id = json_resp.get("id")
             if proj_id is None:
-                raise ValueError(
-                    f"❌ Project '{self._project.name}' not found. Please create the project using create_project"
-                )
+                raise ValueError(f"❌ Project '{name}' not found. Please create the project using create_project")
             else:
-                self._project = Project.from_json_resp(json_resp)
+                self._project = Project.from_json_resp(json_resp, token=self.token)
+                self._project.update()
+        else:
+            self._project.update()
         logger.info(f"✅ Successfully loaded project: '{name}'!")
         return self._project
 
 
 if __name__ == "__main__":
     client = AutoNLP()
-    client.login(username="abhishek", api_key="TEST_KEY")
+    client.login(username="abhishek", token="TEST_KEY")
     project = client.create_project(name="imdb_test_4", task="binary_classification")
     token = client.get_token()
     # project = client.get_project(name="imdb_test_4")

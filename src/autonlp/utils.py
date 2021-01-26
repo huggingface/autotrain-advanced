@@ -1,6 +1,17 @@
+from loguru import logger
 import requests
 from typing import Optional, Dict, List
 from . import config
+
+
+FORMAT_TAG = "\033[{code}m"
+RESET_TAG = FORMAT_TAG.format(code=0)
+BOLD_TAG = FORMAT_TAG.format(code=1)
+GREEN_TAG = FORMAT_TAG.format(code=32)
+RED_TAG = FORMAT_TAG.format(code=31)
+PURPLE_TAG = FORMAT_TAG.format(code=35)
+CYAN_TAG = FORMAT_TAG.format(code=36)
+YELLOW_TAG = FORMAT_TAG.format(code=33)
 
 
 class UnauthenticatedError(Exception):
@@ -12,15 +23,22 @@ class UnreachableAPIError(Exception):
 
 
 def get_auth_headers(token: str):
-    return {"Authorization": f"autonlp {token}"}
+    # return {"Authorization": f"autonlp {token}"}
+    return {"autonlp-token": f"{token}"}
 
 
 def http_get(path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs) -> requests.Response:
     """HTTP GET request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
-        return requests.get(url=domain + path, headers=get_auth_headers(token=token), **kwargs)
+        response = requests.get(url=domain + path, headers=get_auth_headers(token=token), **kwargs)
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        logger.error(f"❌ Operation failed! Details: {err.response.text}")
+        raise
+    return response
 
 
 def http_post(
@@ -28,9 +46,15 @@ def http_post(
 ) -> requests.Response:
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
-        return requests.post(url=domain + path, json=payload, headers=get_auth_headers(token=token), **kwargs)
+        response = requests.post(url=domain + path, json=payload, headers=get_auth_headers(token=token), **kwargs)
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        logger.error(f"❌ Operation failed! Details: {err.response.text}")
+        raise
+    return response
 
 
 def http_upload_files(
@@ -38,6 +62,14 @@ def http_upload_files(
 ) -> requests.Response:
     """Uploads files to AutoNLP"""
     try:
-        return requests.post(url=domain + path, data=data, files=filepaths, headers=get_auth_headers(token), **kwargs)
+        response = requests.post(
+            url=domain + path, data=data, files=files_info, headers=get_auth_headers(token), **kwargs
+        )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        logger.error(f"❌ Operation failed! Details: {err.response.text}")
+        raise
+    return response

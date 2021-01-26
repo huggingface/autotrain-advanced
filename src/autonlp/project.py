@@ -9,13 +9,58 @@ from tqdm import tqdm
 
 from . import config
 from .tasks import TASKS
-from .utils import http_get, http_post, http_upload_files
+from .splits import TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT
+from .utils import (
+    http_get,
+    http_post,
+    http_upload_files,
+    RED_TAG,
+    GREEN_TAG,
+    RESET_TAG,
+    BOLD_TAG,
+    CYAN_TAG,
+    YELLOW_TAG,
+    PURPLE_TAG,
+)
+
+
+STATUS = (
+    "☁ Uploaded",
+    "⌚ Queued",
+    "⚙ In Progress...",
+    "✅ Success!",
+    "❌ Failed: file not found",
+    "❌ Failed: unsupported file type",
+    "❌ Failed: server error",
+)
+
+SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
+
+
+@dataclass
+class UploadedFile:
+    """A file uploaded to an AutoNLP project"""
+
+    filename: str
+    processing_status: str
+    split: str
+    col_mapping: Dict[str, str]
+
+    @classmethod
+    def from_json_resp(cls, json_resp: dict):
+        return cls(
+            filename=json_resp["fname"],
+            processing_status=STATUS[json_resp["download_status"] - 1],
+            split=SPLITS[json_resp["split"] - 1],
+            col_mapping=json_resp["col_mapping"],
+        )
 
 
 @dataclass
 class Project:
     """An AutoNLP project"""
 
+    _token: str
     proj_id: int
     name: str
     user: str
@@ -23,56 +68,78 @@ class Project:
     status: str
     created_at: datetime
     updated_at: datetime
-    files: Optional[List] = None
+    files: Optional[List[UploadedFile]] = None
     training_jobs: Optional[List] = None
 
     @classmethod
-    def from_json_resp(cls, json_resp: dict):
+    def from_json_resp(cls, json_resp: dict, token: str):
         """Build a Project from the API response, JSON-encoded"""
         return cls(
             proj_id=json_resp["id"],
             name=json_resp["proj_name"],
             user=json_resp["username"],
-            task=list(filter(lambda key: TASKS[key] == json_resp["task_id"], TASKS.keys())),
+            task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
             status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
+            _token=token,
         )
 
-    def __str__(self):
-        header = "\n".join(
-            [
-                f"AutoNLP Project (id # {self.proj_id}) - {self.status.upper()}",
-                "~" * 35,
-                f" - Name:        {self.name}",
-                f" - Owner:       {self.user}",
-                f" - Task:        {self.task.title().replace('_', ' ')}",
-                f" - Created at:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}"
-                f" - Last update: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
-            ]
-        )
-        printout = [header]
-        return "\n".join(printout)
+    def update(self):
+        logger.info("🔄 Refreshing uploaded files information...")
+        resp = http_get(path=f"/projects/{self.proj_id}/data/", token=self._token)
+        json_files = resp.json()
+        self.files = [UploadedFile.from_json_resp(file) for file in json_files]
 
-    def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str], token: str):
+    def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
         jdata = {"project": self.name, "username": self.user}
         for file_path in tqdm(filepaths, desc="Uploaded files"):
             base_name = os.path.basename(file_path)
             binary_file = open(file_path, "rb")
             files = [("files", (base_name, binary_file, "text/csv"))]
-            response = http_upload_files(path="/uploader/upload_files", data=jdata, files_info=files, token=token)
-            logger.debug(response.text)
+            response = http_upload_files(
+                path="/uploader/upload_files", data=jdata, files_info=files, token=self._token
+            )
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": base_name, "username": self.user}],
             }
-            logger.debug(payload)
-            response = http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=token)
-        logger.info(f"✅ Successfully uplaoded {len(file_path)} files to AutoNLP!")
+            response = http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
+        logger.info(f"✅ Successfully uploaded {len(filepaths)} files to AutoNLP!")
 
-    def train(self, token: str):
+    def train(self):
         """Starts training on the models"""
-        response = http_get(path=f"/projects/{self.proj_id}/data/start_process", token=token)
-        logger.info("🤗 Training started!")
+        response = http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
+        logger.info("🔥🔥 Training started!")
+
+    def __str__(self):
+        header = "\n".join(
+            [
+                f"AutoNLP Project (id # {self.proj_id}) - {self.status.upper()}",
+                "",
+                "~" * 35,
+                f" - {BOLD_TAG}Name{RESET_TAG}:        {PURPLE_TAG}{self.name}{RESET_TAG}",
+                f" - {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
+                f" - {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
+                f" - {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
+                f" - {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
+                "",
+            ]
+        )
+        printout = [header]
+        if self.files is not None:
+            files = sorted(self.files, key=lambda file: file.split)
+            descriptions = [
+                "\n".join(
+                    [
+                        f"📁 {CYAN_TAG}{file.filename}{RESET_TAG}",
+                        f"   > {BOLD_TAG}Split{RESET_TAG}:             {file.split}",
+                        f"   > {BOLD_TAG}Processing status{RESET_TAG}: {file.processing_status}",
+                    ]
+                )
+                for file in self.files
+            ]
+            printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
+        return "\n".join(printout)
