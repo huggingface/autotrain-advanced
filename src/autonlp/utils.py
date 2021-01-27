@@ -26,7 +26,7 @@ class UnreachableAPIError(Exception):
 
 def get_auth_headers(token: str):
     # return {"Authorization": f"autonlp {token}"}
-    return {"autonlp-token": f"{token}"}
+    return {"Authorization": f"autonlp {token}"}
 
 
 def http_get(path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs) -> requests.Response:
