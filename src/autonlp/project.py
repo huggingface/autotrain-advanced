@@ -3,11 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import requests
 from loguru import logger
 from tqdm import tqdm
 
-from . import config
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
 from .utils import (
@@ -15,7 +13,6 @@ from .utils import (
     CYAN_TAG,
     GREEN_TAG,
     PURPLE_TAG,
-    RED_TAG,
     RESET_TAG,
     YELLOW_TAG,
     http_get,
@@ -150,20 +147,18 @@ class Project:
             base_name = os.path.basename(file_path)
             binary_file = open(file_path, "rb")
             files = [("files", (base_name, binary_file, "text/csv"))]
-            response = http_upload_files(
-                path="/uploader/upload_files", data=jdata, files_info=files, token=self._token
-            )
+            http_upload_files(path="/uploader/upload_files", data=jdata, files_info=files, token=self._token)
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": base_name, "username": self.user}],
             }
-            response = http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
+            http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
         logger.info(f"✅ Successfully uploaded {len(filepaths)} files to AutoNLP!")
 
     def train(self):
         """Starts training on the models"""
-        response = http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
+        http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
         logger.info("🔥🔥 Training started!")
 
     def __str__(self):
@@ -189,8 +184,8 @@ class Project:
             if len(self.files) == 0:
                 descriptions = ["🤷‍♂ No files uploaded yet!"]
             else:
-                files = sorted(self.files, key=lambda file: file.split)  # Sort by split
-                descriptions = [str(file) for file in self.files]
+                sorted_files = sorted(self.files, key=lambda file: file.split)  # Sort by split
+                descriptions = [str(file) for file in sorted_files]
         printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
 
         # Training jobs information

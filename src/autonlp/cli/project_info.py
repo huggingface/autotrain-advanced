@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
-from ..tasks import TASKS
 from . import BaseAutoNLPCommand
 
 
