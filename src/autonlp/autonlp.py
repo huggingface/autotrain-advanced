@@ -89,13 +89,15 @@ class AutoNLP:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
         if self._project is None or self._project.name != name:
             logger.info(f"☁ Retrieving project '{name}' from AutoNLP...")
-            json_resp = http_get(path=f"/projects/{self.username}/{name}", token=self.token).json()
-            proj_id = json_resp.get("id")
-            if proj_id is None:
-                raise ValueError(f"❌ Project '{name}' not found. Please create the project using create_project")
-            else:
-                self._project = Project.from_json_resp(json_resp, token=self.token)
-                self._project.refresh()
+            try:
+                json_resp = http_get(path=f"/projects/{self.username}/{name}", token=self.token).json()
+            except requests.exceptions.HTTPError as err:
+                if err.response.status_code == 404:
+                    raise ValueError(f"❌ Project '{name}' not found. Please create the project using create_project")
+                else:
+                    raise
+            self._project = Project.from_json_resp(json_resp, token=self.token)
+            self._project.refresh()
         else:
             self._project.refresh()
         logger.info(f"✅ Successfully loaded project: '{name}'!")
@@ -112,9 +114,8 @@ if __name__ == "__main__":
 
     train_files = ["/home/abhishek/datasets/imdb_folds.csv"]
     valid_files = ["/home/abhishek/datasets/imdb_valid.csv"]
-    project.upload(train_files, split="train", col_mapping=col_mapping, token=token)
-    project.upload(valid_files, split="valid", col_mapping=col_mapping, token=token)
-
+    project.upload(train_files, split="train", col_mapping=col_mapping)
+    project.upload(valid_files, split="valid", col_mapping=col_mapping)
     project.train()
     project.refresh()
-    priint(project)
+    print(project)
