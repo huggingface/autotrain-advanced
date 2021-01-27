@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import requests
 from loguru import logger
@@ -24,7 +24,7 @@ from .utils import (
 )
 
 
-STATUS = (
+FILE_STATUS = (
     "☁ Uploaded",
     "⌚ Queued",
     "⚙ In Progress...",
@@ -85,9 +85,18 @@ class UploadedFile:
         return cls(
             file_id=json_resp["data_file_id"],
             filename=json_resp["fname"],
-            processing_status=STATUS[json_resp["download_status"] - 1],
+            processing_status=FILE_STATUS[json_resp["download_status"] - 1],
             split=SPLITS[json_resp["split"] - 1],
             col_mapping=json_resp["col_mapping"],
+        )
+
+    def __str__(self):
+        return "\n".join(
+            [
+                f"📁 {CYAN_TAG}{self.filename}{RESET_TAG} (id # {self.file_id})",
+                f"   • {BOLD_TAG}Split{RESET_TAG}:             {self.split}",
+                f"   • {BOLD_TAG}Processing status{RESET_TAG}: {self.processing_status}",
+            ]
         )
 
 
@@ -163,26 +172,35 @@ class Project:
                 f"AutoNLP Project (id # {self.proj_id}) - {self.status.upper()}",
                 "",
                 "~" * 35,
-                f" - {BOLD_TAG}Name{RESET_TAG}:        {PURPLE_TAG}{self.name}{RESET_TAG}",
-                f" - {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
-                f" - {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
-                f" - {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
-                f" - {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
+                f" • {BOLD_TAG}Name{RESET_TAG}:        {PURPLE_TAG}{self.name}{RESET_TAG}",
+                f" • {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
+                f" • {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
+                f" • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
+                f" • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
                 "",
             ]
         )
         printout = [header]
-        if self.files is not None:
-            files = sorted(self.files, key=lambda file: file.split)
-            descriptions = [
-                "\n".join(
-                    [
-                        f"📁 {CYAN_TAG}{file.filename}{RESET_TAG} (id # {file.file_id})",
-                        f"   > {BOLD_TAG}Split{RESET_TAG}:             {file.split}",
-                        f"   > {BOLD_TAG}Processing status{RESET_TAG}: {file.processing_status}",
-                    ]
-                )
-                for file in self.files
-            ]
-            printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
+
+        # Uploaded files information
+        if self.files is None:
+            descriptions = ["❓ Files information unknown, update the project"]
+        else:
+            if len(self.files) == 0:
+                descriptions = ["🤷‍♂ No files uploaded yet!"]
+            else:
+                files = sorted(self.files, key=lambda file: file.split)  # Sort by split
+                descriptions = [str(file) for file in self.files]
+        printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
+
+        # Training jobs information
+        if self.training_jobs is None:
+            descriptions = ["❓ Train jobs information unknown, update the project"]
+        else:
+            if len(self.training_jobs) == 0:
+                descriptions = ["🤷‍♂ No train jobs started yet!"]
+            else:
+                descriptions = [str(job) for job in self.training_jobs]
+        printout.append("\n".join(["~" * 12 + f" {BOLD_TAG}Train Jobs{RESET_TAG} " + "~" * 11, ""] + descriptions))
+
         return "\n".join(printout)
