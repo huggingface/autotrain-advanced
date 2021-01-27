@@ -1,6 +1,8 @@
-from loguru import logger
+from typing import Dict, List, Optional
+
 import requests
-from typing import Optional, Dict, List
+from loguru import logger
+
 from . import config
 
 

@@ -1,26 +1,26 @@
 import os
-
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Dict, List, Optional
+
 import requests
 from loguru import logger
-from typing import Optional, List, Dict
 from tqdm import tqdm
 
 from . import config
+from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
-from .splits import TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT
 from .utils import (
+    BOLD_TAG,
+    CYAN_TAG,
+    GREEN_TAG,
+    PURPLE_TAG,
+    RED_TAG,
+    RESET_TAG,
+    YELLOW_TAG,
     http_get,
     http_post,
     http_upload_files,
-    RED_TAG,
-    GREEN_TAG,
-    RESET_TAG,
-    BOLD_TAG,
-    CYAN_TAG,
-    YELLOW_TAG,
-    PURPLE_TAG,
 )
 
 
@@ -41,6 +41,7 @@ SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
 class UploadedFile:
     """A file uploaded to an AutoNLP project"""
 
+    file_id: int
     filename: str
     processing_status: str
     split: str
@@ -49,6 +50,7 @@ class UploadedFile:
     @classmethod
     def from_json_resp(cls, json_resp: dict):
         return cls(
+            file_id=json_resp["data_file_id"],
             filename=json_resp["fname"],
             processing_status=STATUS[json_resp["download_status"] - 1],
             split=SPLITS[json_resp["split"] - 1],
@@ -66,6 +68,7 @@ class Project:
     user: str
     task: str
     status: str
+    config: Dict[str, str]
     created_at: datetime
     updated_at: datetime
     files: Optional[List[UploadedFile]] = None
@@ -79,6 +82,7 @@ class Project:
             name=json_resp["proj_name"],
             user=json_resp["username"],
             task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
+            config=json_resp["config"],
             status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
@@ -134,7 +138,7 @@ class Project:
             descriptions = [
                 "\n".join(
                     [
-                        f"📁 {CYAN_TAG}{file.filename}{RESET_TAG}",
+                        f"📁 {CYAN_TAG}{file.filename}{RESET_TAG} (id # {file.file_id})",
                         f"   > {BOLD_TAG}Split{RESET_TAG}:             {file.split}",
                         f"   > {BOLD_TAG}Processing status{RESET_TAG}: {file.processing_status}",
                     ]
