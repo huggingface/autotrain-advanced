@@ -89,7 +89,8 @@ class Project:
             _token=token,
         )
 
-    def update(self):
+    def refresh(self):
+        """Update information about uploaded files and training jobs attached to the project"""
         logger.info("🔄 Refreshing uploaded files information...")
         resp = http_get(path=f"/projects/{self.proj_id}/data/", token=self._token)
         json_files = resp.json()

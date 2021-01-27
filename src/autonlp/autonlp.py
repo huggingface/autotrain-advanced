@@ -78,7 +78,8 @@ class AutoNLP:
             logger.info(f"✅ Successfully created project: '{proj_name}'!")
         else:
             logger.info(f"🤙 Project '{proj_name}' already exists, it was loaded successfully.")
-        self._project = Project.from_json_resp(json_resp)
+        self._project = Project.from_json_resp(json_resp, token=self.token)
+        self._project.refresh()
         return self._project
 
     def get_project(self, name):
@@ -94,9 +95,9 @@ class AutoNLP:
                 raise ValueError(f"❌ Project '{name}' not found. Please create the project using create_project")
             else:
                 self._project = Project.from_json_resp(json_resp, token=self.token)
-                self._project.update()
+                self._project.refresh()
         else:
-            self._project.update()
+            self._project.refresh()
         logger.info(f"✅ Successfully loaded project: '{name}'!")
         return self._project
 
@@ -115,3 +116,5 @@ if __name__ == "__main__":
     project.upload(valid_files, split="valid", col_mapping=col_mapping, token=token)
 
     project.train()
+    project.refresh()
+    priint(project)
