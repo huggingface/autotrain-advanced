@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 
 DOCLINES = __doc__.split("\n")
 
-INSTALL_REQUIRES = ["loguru==0.5.3"]
+INSTALL_REQUIRES = ["loguru==0.5.3", "requests==2.25.1", "tqdm==4.56.0"]
 
 QUALITY_REQUIRE = [
     "black",
