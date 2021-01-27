@@ -14,7 +14,7 @@ class LoginCommand(BaseAutoNLPCommand):
     def register_subcommand(parser: ArgumentParser):
         login_parser = parser.add_parser("login")
         login_parser.add_argument("--username", type=str, default=None, required=True, help="Username")
-        login_parser.add_argument("--api-key", type="str", required=True, help="API key")
+        login_parser.add_argument("--api-key", type=str, required=True, help="API key")
         login_parser.set_defaults(func=login_command_factory)
 
     def __init__(self, username: str, api_key: str):
@@ -26,4 +26,4 @@ class LoginCommand(BaseAutoNLPCommand):
 
         logger.info(f"Logging in using username: {self._username}")
         client = AutoNLP()
-        client.login(username=self._username, api_key=self._api_key)
+        client.login(username=self._username, token=self._api_key)

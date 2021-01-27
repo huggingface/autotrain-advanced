@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser
 
 from loguru import logger
@@ -25,5 +26,9 @@ class TrainCommand(BaseAutoNLPCommand):
         logger.info(f"Starting Training For Project: {self._name}")
 
         client = AutoNLP()
-        project = client.get_project(name=self._name)
+        try:
+            project = client.get_project(name=self._name)
+        except ValueError:
+            logger.error(f"Project {self._name} not found! You can create it using the create_project command.")
+            sys.exit(1)
         project.train()

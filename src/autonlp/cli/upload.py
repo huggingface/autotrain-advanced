@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser
 
 from loguru import logger
@@ -20,7 +21,9 @@ class UploadCommand(BaseAutoNLPCommand):
         upload_parser.add_argument(
             "--col_mapping", type=str, default=None, required=True, help="Column Mapping. E.g. col1:map1,col2:map2"
         )
-        upload_parser.add_argument("--files")
+        upload_parser.add_argument(
+            "--files", type=str, required=True, help="Paths to the files to upload, comma-separated"
+        )
         upload_parser.set_defaults(func=upload_command_factory)
 
     def __init__(self, name: str, split: str, col_mapping: str, files: str):
@@ -34,7 +37,11 @@ class UploadCommand(BaseAutoNLPCommand):
 
         logger.info(f"Uploading files for project: {self._name}")
         client = AutoNLP()
-        project = client.get_project(name=self._name)
+        try:
+            project = client.get_project(name=self._name)
+        except ValueError:
+            logger.error(f"Project {self._name} not found! You can create it using the create_project command.")
+            sys.exit(1)
         splits = self._col_mapping.split(",")
         col_maps = {}
         for s in splits:
@@ -43,4 +50,4 @@ class UploadCommand(BaseAutoNLPCommand):
         logger.info(f"Mapping: {col_maps}")
 
         files = self._files.split(",")
-        project.upload(files=files, split=self._split, col_mapping=col_maps)
+        project.upload(filepaths=files, split=self._split, col_mapping=col_maps)
