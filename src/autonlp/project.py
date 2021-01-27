@@ -34,7 +34,40 @@ STATUS = (
     "❌ Failed: server error",
 )
 
+JOB_STATUS = ("⌚ queued", "🚀 start", "⚙ data_munging", "🏃‍♂️ model_training", "✅ success", "❌ failed")
+
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
+
+
+@dataclass
+class TrainingJob:
+    """A training job in AutoNLP"""
+
+    job_id: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    config: Dict[str, Any]
+
+    @classmethod
+    def from_json_resp(cls, json_resp: dict):
+        return cls(
+            job_id=json_resp["id"],
+            config=json_resp["config"],
+            status=JOB_STATUS[json_resp["status"] - 1],
+            created_at=datetime.fromisoformat(json_resp["created_at"]),
+            updated_at=datetime.fromisoformat(json_resp["updated_at"]),
+        )
+
+    def __str__(self):
+        return "\n".join(
+            [
+                f"🏋️‍♀️ Training job # {self.job_id}",
+                f"   • {BOLD_TAG}Status{RESET_TAG}:      {self.status}",
+                f"   • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
+                f"   • {BOLD_TAG}Last update{RESET_TAG}: {self.status.strftime('%Y-%m-%d %H:%M Z')}",
+            ]
+        )
 
 
 @dataclass
@@ -95,6 +128,11 @@ class Project:
         resp = http_get(path=f"/projects/{self.proj_id}/data/", token=self._token)
         json_files = resp.json()
         self.files = [UploadedFile.from_json_resp(file) for file in json_files]
+
+        logger.info("🔄 Refreshing training jobs information...")
+        resp = http_get(path=f"/projects/{self.proj_id}/jobs/", token=self._token)
+        json_jobs = resp.json()
+        self.training_jobs = [TrainingJob.from_json_resp(job) for job in json_jobs]
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
