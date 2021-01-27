@@ -65,7 +65,7 @@ class TrainingJob:
                 f"🏋️‍♀️ Training job # {self.job_id}",
                 f"   • {BOLD_TAG}Status{RESET_TAG}:      {self.status}",
                 f"   • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
-                f"   • {BOLD_TAG}Last update{RESET_TAG}: {self.status.strftime('%Y-%m-%d %H:%M Z')}",
+                f"   • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
             ]
         )
 
