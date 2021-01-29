@@ -29,10 +29,27 @@ def get_auth_headers(token: str):
     return {"Authorization": f"autonlp {token}"}
 
 
+from requests import Session
+
+
+class NoRebuildAuthSession(Session):
+    def rebuild_auth(self, prepared_request, response):
+        """
+        No code here means requests will always preserve the Authorization
+        header when redirected.
+        Be careful not to leak your credentials to untrusted hosts!
+        """
+
+
+session = NoRebuildAuthSession()
+
+
 def http_get(path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs) -> requests.Response:
     """HTTP GET request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
-        response = requests.get(url=domain + path, headers=get_auth_headers(token=token), **kwargs)
+        response = session.get(
+            url=domain + path, headers=get_auth_headers(token=token), allow_redirects=True, **kwargs
+        )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
     try:
@@ -48,7 +65,9 @@ def http_post(
 ) -> requests.Response:
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
-        response = requests.post(url=domain + path, json=payload, headers=get_auth_headers(token=token), **kwargs)
+        response = session.post(
+            url=domain + path, json=payload, headers=get_auth_headers(token=token), allow_redirects=True, **kwargs
+        )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
     try:
@@ -65,7 +84,12 @@ def http_upload_files(
     """Uploads files to AutoNLP"""
     try:
         response = requests.post(
-            url=domain + path, data=data, files=files_info, headers=get_auth_headers(token), **kwargs
+            url=domain + path,
+            data=data,
+            files=files_info,
+            headers=get_auth_headers(token),
+            allow_redirects=True,
+            **kwargs,
         )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
