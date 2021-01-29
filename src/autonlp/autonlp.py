@@ -11,6 +11,7 @@ from typing import List, Union
 import requests
 from loguru import logger
 
+from . import config
 from .project import Project
 from .tasks import TASKS
 from .utils import UnauthenticatedError, UnreachableAPIError, http_get, http_post
@@ -34,14 +35,23 @@ class AutoNLP:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
         return self.token
 
-    def login(self, username: str, token: str):
+    def login(self, token: str):
         """Login to AutoNLP"""
-        self.username = username
+        try:
+            auth_resp = http_get(path="/whoami-v2", domain=config.HF_API, token=token, token_prefix="Bearer")
+        except requests.HTTPError as err:
+            if err.response.status_code == 401:
+                logger.error("❌ Failed to authneticate. Check the passed token is valid!")
+            raise
+        user_identity = auth_resp.json()
+        self.username = user_identity["name"]
+        logger.info(f"🗝 Successfully logged in as {self.username}")
+        orgs = []
+        if user_identity["type"] == "user":
+            orgs = [org["name"] for org in user_identity["orgs"]]
+        self.orgs = orgs
         self.token = token
-        # verify the user here and get the api key
-        # save the api key in a json file
-        login_dict = {"username": self.username, "token": token}
-        # TODO: these credentials need to be passed with every request to the backend
+        login_dict = {"username": self.username, "orgs": self.orgs, "token": token}
         logger.info(f"🗝 Storing credentials in:  {self.config_dir}")
         with open(os.path.join(self.config_dir, "autonlp.json"), "w") as fp:
             json.dump(login_dict, fp)
@@ -55,9 +65,10 @@ class AutoNLP:
                 with open(os.path.join(self.config_dir, "autonlp.json"), "r") as conf_file:
                     conf_json = json.load(conf_file)
                     if conf_json is None:
-                        raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
+                        raise UnauthenticatedError("❌ Credentials not found! Please login to AutoNLP first.")
                     else:
                         self.username = conf_json["username"]
+                        self.orgs = conf_json["orgs"]
                         self.token = conf_json["token"]
 
     def create_project(self, name: str, task: str):
@@ -106,7 +117,7 @@ class AutoNLP:
 
 if __name__ == "__main__":
     client = AutoNLP()
-    client.login(username="abhishek", token="TEST_KEY")
+    client.login(token="TEST_KEY")
     project = client.create_project(name="imdb_test_4", task="binary_classification")
     token = client.get_token()
     # project = client.get_project(name="imdb_test_4")

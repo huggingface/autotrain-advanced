@@ -24,15 +24,19 @@ class UnreachableAPIError(Exception):
     pass
 
 
-def get_auth_headers(token: str):
+def get_auth_headers(token: str, prefix: str = "autonlp"):
     # return {"Authorization": f"autonlp {token}"}
-    return {"Authorization": f"autonlp {token}"}
+    return {"Authorization": f"{prefix} {token}"}
 
 
-def http_get(path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs) -> requests.Response:
+def http_get(
+    path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, token_prefix: str = "autonlp", **kwargs
+) -> requests.Response:
     """HTTP GET request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
-        response = requests.get(url=domain + path, headers=get_auth_headers(token=token), **kwargs)
+        response = requests.get(
+            url=domain + path, headers=get_auth_headers(token=token, prefix=token_prefix), **kwargs
+        )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
     try:
