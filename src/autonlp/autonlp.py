@@ -106,8 +106,6 @@ class AutoNLP:
         if self.username is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
         try:
-            logger.info("hi")
-            logger.info(f"{model_id}, {self.username}, hi")
             json_resp = http_get(f"/models/{self.username}/{model_id}", token=self.token).json()
         except requests.exceptions.HTTPError as err:
             if err.response.status_code == 404:
@@ -117,6 +115,19 @@ class AutoNLP:
             json_resp=json_resp, token=self.token, username=self.username, model_id=model_id
         )
         return _model_info.print()
+
+    def predict(self, model_id, input_text):
+        self._login_from_conf()
+        if self.username is None:
+            raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
+        try:
+            payload = {"username": self.username, "model_id": model_id, "input_text": input_text}
+            json_resp = http_post(path="/models/predict", payload=payload, token=self.token).json()
+            return json_resp
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 404:
+                raise ValueError(f"❌ Model '{model_id}' not found.") from err
+            raise
 
 
 if __name__ == "__main__":
