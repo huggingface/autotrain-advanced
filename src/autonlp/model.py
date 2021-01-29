@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-import gnuplotlib as gp
-import numpy as np
-
 from .utils import BOLD_TAG, PURPLE_TAG, RESET_TAG
 
 
@@ -30,7 +27,7 @@ class Model:
 
         printout.append("⭐️ Training Log:")
         train_print_counter = 0
-        train_losses = [log["loss"] for log in training_log]
+        # train_losses = [log["loss"] for log in training_log]
         for log in training_log[-5:]:
             if train_print_counter < self.max_train_print_count:
                 printout.append(
@@ -41,12 +38,12 @@ class Model:
         print("\n".join(printout))
         printout = []
 
-        gp.plot(
-            (np.arange(len(train_losses)), np.asarray(train_losses)),
-            _with="lines",
-            terminal="dumb 50,15",
-            unset="grid",
-        )
+        # gp.plot(
+        #     (np.arange(len(train_losses)), np.asarray(train_losses)),
+        #     _with="lines",
+        #     terminal="dumb 50,15",
+        #     unset="grid",
+        # )
 
         printout.append("")
         printout.append("~" * 35)
