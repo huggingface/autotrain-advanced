@@ -4,15 +4,14 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
-from typing import List, Union
 
 import requests
 from loguru import logger
 
-from .project import Project
 from .model import Model
+from .project import Project
 from .tasks import TASKS
-from .utils import UnauthenticatedError, UnreachableAPIError, http_get, http_post
+from .utils import UnauthenticatedError, http_get, http_post
 
 
 class AutoNLP:

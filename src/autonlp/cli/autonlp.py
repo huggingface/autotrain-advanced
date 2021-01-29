@@ -2,10 +2,10 @@ import argparse
 
 from .create_project import CreateProjectCommand
 from .login import LoginCommand
+from .model_info import ModelInfoCommand
 from .project_info import ProjectInfoCommand
 from .train import TrainCommand
 from .upload import UploadCommand
-from .model_info import ModelInfoCommand
 
 
 def main():
