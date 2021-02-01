@@ -59,7 +59,7 @@ class TrainingJob:
     def __str__(self):
         return "\n".join(
             [
-                f"🏋️‍♀️ Training job # {self.job_id}",
+                f"📚 Model # {self.job_id}",
                 f"   • {BOLD_TAG}Status{RESET_TAG}:      {self.status}",
                 f"   • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
                 f"   • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
@@ -129,13 +129,13 @@ class Project:
         )
 
     def refresh(self):
-        """Update information about uploaded files and training jobs attached to the project"""
+        """Update information about uploaded files and models attached to the project"""
         logger.info("🔄 Refreshing uploaded files information...")
         resp = http_get(path=f"/projects/{self.proj_id}/data/", token=self._token)
         json_files = resp.json()
         self.files = [UploadedFile.from_json_resp(file) for file in json_files]
 
-        logger.info("🔄 Refreshing training jobs information...")
+        logger.info("🔄 Refreshing models information...")
         resp = http_get(path=f"/projects/{self.proj_id}/jobs/", token=self._token)
         json_jobs = resp.json()
         self.training_jobs = [TrainingJob.from_json_resp(job) for job in json_jobs]
@@ -190,12 +190,12 @@ class Project:
 
         # Training jobs information
         if self.training_jobs is None:
-            descriptions = ["❓ Train jobs information unknown, update the project"]
+            descriptions = ["❓ Models information unknown, update the project"]
         else:
             if len(self.training_jobs) == 0:
                 descriptions = ["🤷‍♂ No train jobs started yet!"]
             else:
                 descriptions = [str(job) for job in self.training_jobs]
-        printout.append("\n".join(["~" * 12 + f" {BOLD_TAG}Train Jobs{RESET_TAG} " + "~" * 11, ""] + descriptions))
+        printout.append("\n".join(["~" * 12 + f" {BOLD_TAG}Models{RESET_TAG} " + "~" * 11, ""] + descriptions))
 
         return "\n".join(printout)

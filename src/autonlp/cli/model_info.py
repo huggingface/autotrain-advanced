@@ -23,10 +23,10 @@ class ModelInfoCommand(BaseAutoNLPCommand):
     def run(self):
         from ..autonlp import AutoNLP
 
-        logger.info(f"Fetching info for job/model: {self._id}")
+        logger.info(f"Fetching info for model: {self._id}")
         client = AutoNLP()
         try:
             _ = client.get_model_info(model_id=self._id)
         except ValueError:
-            logger.error(f"Job/Model {self._id} not found!")
+            logger.error(f"Model {self._id} not found!")
             sys.exit(1)
