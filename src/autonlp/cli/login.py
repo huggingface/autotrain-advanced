@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 
-
 from . import BaseAutoNLPCommand
 
 
