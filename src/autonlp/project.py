@@ -131,12 +131,12 @@ class Project:
     def refresh(self):
         """Update information about uploaded files and training jobs attached to the project"""
         logger.info("🔄 Refreshing uploaded files information...")
-        resp = http_get(path=f"/projects/{self.proj_id}/data/", token=self._token)
+        resp = http_get(path=f"/projects/{self.proj_id}/data", token=self._token)
         json_files = resp.json()
         self.files = [UploadedFile.from_json_resp(file) for file in json_files]
 
         logger.info("🔄 Refreshing training jobs information...")
-        resp = http_get(path=f"/projects/{self.proj_id}/jobs/", token=self._token)
+        resp = http_get(path=f"/projects/{self.proj_id}/jobs", token=self._token)
         json_jobs = resp.json()
         self.training_jobs = [TrainingJob.from_json_resp(job) for job in json_jobs]
 
