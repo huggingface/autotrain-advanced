@@ -39,7 +39,7 @@ class AutoNLP:
             auth_resp = http_get(path="/whoami-v2", domain=config.HF_API, token=token, token_prefix="Bearer")
         except requests.HTTPError as err:
             if err.response.status_code == 401:
-                logger.error("❌ Failed to authneticate. Check the passed token is valid!")
+                logger.error("❌ Failed to authenticate. Check the passed token is valid!")
             raise
         user_identity = auth_resp.json()
         self.username = user_identity["name"]
@@ -81,7 +81,7 @@ class AutoNLP:
             "task": task_id,
             "config": {"version": 0, "patch": 1},
         }
-        json_resp = http_post(path="/projects", payload=payload, token=self.token).json()
+        json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
         if json_resp["created"] is True:
             logger.info(f"✅ Successfully created project: '{proj_name}'!")

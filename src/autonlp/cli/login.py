@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 
-from loguru import logger
 
 from . import BaseAutoNLPCommand
 
