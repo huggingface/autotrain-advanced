@@ -48,9 +48,9 @@ client.login(token="YOUR_HF_API_TOKEN")
 
 Creating a project and uploading files to it:
 ```python
-project = client.create_project(name="test_project", task="multi_class_classification", language="fr")
+project = client.create_project(name="test_project", task="multi_class_classification", language="en")
 project.upload(
-    filepaths=["itle_conf_train.csv"],
+    filepaths=["/path/to/title_conf_train.csv"],
     split="train",
     col_mapping={
         "Title": "text",
