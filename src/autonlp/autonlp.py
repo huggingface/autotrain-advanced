@@ -12,6 +12,7 @@ from . import config
 from .model import Model
 from .project import Project
 from .tasks import TASKS
+from .languages import SUPPORTED_LANGUAGES
 from .utils import UnauthenticatedError, http_get, http_post
 
 
@@ -72,17 +73,20 @@ class AutoNLP:
                         self.orgs = conf_json["orgs"]
                         self.token = conf_json["token"]
 
-    def create_project(self, name: str, task: str):
+    def create_project(self, name: str, task: str, language: str):
         """Create a project and return it"""
         self._login_from_conf()
         task_id = TASKS.get(task)
+        language = str(language).strip().lower()
+        if len(language) != 2 or language not in SUPPORTED_LANGUAGES:
+            raise ValueError(f"❌ Invalid language selected. Please choose one of {SUPPORTED_LANGUAGES}")
         if task_id is None:
             raise ValueError(f"❌ Invalid task specified. Please choose one of {list(TASKS.keys())}")
         payload = {
             "username": self.username,
             "proj_name": name,
             "task": task_id,
-            "config": {"version": 0, "patch": 1},
+            "config": {"version": 0, "patch": 1, "language": language},
         }
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
