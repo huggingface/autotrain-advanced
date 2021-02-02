@@ -2,8 +2,8 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
-from ..tasks import TASKS
 from ..languages import SUPPORTED_LANGUAGES
+from ..tasks import TASKS
 from . import BaseAutoNLPCommand
 
 

@@ -9,10 +9,10 @@ import requests
 from loguru import logger
 
 from . import config
+from .languages import SUPPORTED_LANGUAGES
 from .model import Model
 from .project import Project
 from .tasks import TASKS
-from .languages import SUPPORTED_LANGUAGES
 from .utils import UnauthenticatedError, http_get, http_post
 
 
