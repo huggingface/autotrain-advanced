@@ -2,62 +2,70 @@
 
 AutoNLP: faster and easier training and deployments of NLP models
 
-It's very easy to start a new project and train your models with AutoNLP! 
-
-
-### Step 0
+## Installation
 
 Install AutoNLP python package
 
     pip install .
 
+## Quick start - in the terminal
 
-### Step 1
+First, create a project. Only `fr`, `en` languages and `binary_classification`, `multi_class_classification` are supported at the moment.
+```bash
+autonlp login --api-key YOUR_HF_API_TOKEN
+autonlp create_project --name test_project --language en --task multi_class_classification
+```
 
-Log into autonlp using your hugging face credentials
+Upload files and start the training. Only CSV files are supported at the moment.
+```bash
+# Train split
+autonlp upload --project test_project --split train\
+               --col_mapping Title:text,Conference:target\
+               --files ~/datasets/title_conf_train.csv
+# Validation split
+autonlp upload --project test_project --split valid\
+               --col_mapping Title:text,Conference:target\
+               --files ~/datasets/title_conf_valid.csv
+autonlp train --project test_project
+```
 
-    $ autonlp login --username USERNAME
+Monitor the progress of your project.
+```bash
+# Project progress
+autonlp project_info --name test_project
+# Model metrics
+autonlp model_info --id MODEL_ID
+```
 
-You can skip this step if you have `~/.autonlp/autonlp.json` file. Please use `chmod 600` on this file after logging in.
+## Quick start - Python API
 
-The file looks like the following:
+Setting up
+```python
+from autonlp import AutoNLP
+client = AutoNLP()
+client.login(token="YOUR_HF_API_TOKEN")
+```
 
-    $ cat ~/.autonlp/autonlp.json
-    {"username": "abhishek", "token": "TEST_API_KEY"}
+Creating a project and uploading files to it:
+```python
+project = client.create_project(name="test_project", task="multi_class_classification", language="fr")
+project.upload(
+    filepaths=["itle_conf_train.csv"],
+    split="train",
+    col_mapping={
+        "Title": "text",
+        "Conference": "target",
+    })
+```
 
-### Step 2
+Start the training and monitor the progress:
+```python
+project.train()
+project.refresh()
+print(project)
+```
 
-Create a project. If the project is already created, it will be reused.
-
-    $ autonlp create_project --name test_proj --task binary_classification
-
-Valid task types are:
-
-    binary_classification
-    multi_class_classification
-    multi_label_classification
-    entity_extraction
-    question_answering
-    translation
-    multiple_choice
-    summarization
-    lm_training
-
-### Step 3
-
-Upload training files to your project
-
-    $ autonlp upload --project test_proj --split train --col_mapping review:text,sentiment:target --files ~/datasets/imdb_train.csv
-
-Please note that you need to provide col_mapping. And similarly for validation file
-
-    $ autonlp upload --project test_proj --split valid --col_mapping review:text,sentiment:target --files ~/datasets/imdb_valid.csv
-
-
-### Step 4
-
-After everything is done and you don't have anything errors, you are ready to train
-
-    $ autonlp train --project test_project
-
-Now, sit-back, relax and let the magic begin ;)
+After the training of your models has succeeded, you can test it with the 🤗 Inference API:
+```python
+client.predict(model_id=42, input_text="Measuring and Improving Consistency in Pretrained Language Models")
+```
