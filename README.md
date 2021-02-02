@@ -65,7 +65,8 @@ project.refresh()
 print(project)
 ```
 
-After the training of your models has succeeded, you can test it with the 🤗 Inference API:
+After the training of your models has succeeded, you can retrieve its metrics and test it with the 🤗 Inference API:
 ```python
+client.get_model_info(model_id=42)
 client.predict(model_id=42, input_text="Measuring and Improving Consistency in Pretrained Language Models")
 ```
