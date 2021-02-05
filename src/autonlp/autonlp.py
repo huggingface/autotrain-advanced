@@ -13,6 +13,7 @@ from .languages import SUPPORTED_LANGUAGES
 from .model import Model
 from .project import Project
 from .tasks import TASKS
+from .metrics import Metrics
 from .utils import UnauthenticatedError, http_get, http_post
 
 
@@ -141,6 +142,10 @@ class AutoNLP:
                 if err.response.status_code == 404:
                     raise ValueError(f"❌ Project '{project}' not found!") from err
                 raise
+            _metrics = Metrics.from_json_resp(
+                json_resp=json_resp, token=self.token, project_name=project, username=self.username
+            )
+            return _metrics.print()
 
     def predict(self, model_id, input_text):
         self._login_from_conf()
