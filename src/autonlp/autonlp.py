@@ -119,20 +119,28 @@ class AutoNLP:
         logger.info(f"✅ Successfully loaded project: '{name}'!")
         return self._project
 
-    def get_model_info(self, model_id):
+    def get_metrics(self, model_id, project):
         self._login_from_conf()
         if self.username is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
-        try:
-            json_resp = http_get(f"/models/{self.username}/{model_id}", token=self.token).json()
-        except requests.exceptions.HTTPError as err:
-            if err.response.status_code == 404:
-                raise ValueError(f"❌ Model '{model_id}' not found.") from err
-            raise
-        _model_info = Model.from_json_resp(
-            json_resp=json_resp, token=self.token, username=self.username, model_id=model_id
-        )
-        return _model_info.print()
+        if model_id is not None:
+            try:
+                json_resp = http_get(f"/models/{self.username}/{model_id}", token=self.token).json()
+            except requests.exceptions.HTTPError as err:
+                if err.response.status_code == 404:
+                    raise ValueError(f"❌ Model '{model_id}' not found.") from err
+                raise
+            _model_info = Model.from_json_resp(
+                json_resp=json_resp, token=self.token, username=self.username, model_id=model_id
+            )
+            return _model_info.print()
+        if project is not None:
+            try:
+                json_resp = http_get(path=f"/projects/{self.username}/{project}", token=self.token).json()
+            except requests.exceptions.HTTPError as err:
+                if err.response.status_code == 404:
+                    raise ValueError(f"❌ Project '{project}' not found!") from err
+                raise
 
     def predict(self, model_id, input_text):
         self._login_from_conf()
