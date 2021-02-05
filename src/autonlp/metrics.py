@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
 
-from .utils import BOLD_TAG, PURPLE_TAG, RESET_TAG, http_get, CYAN_TAG
+from .utils import BOLD_TAG, RESET_TAG, http_get
 
 
 @dataclass
