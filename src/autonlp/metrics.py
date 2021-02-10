@@ -1,3 +1,4 @@
+import requests
 from dataclasses import dataclass
 
 from .utils import BOLD_TAG, RESET_TAG, http_get
@@ -39,7 +40,10 @@ class Metrics:
         best_model = None
         for job in json_jobs:
             model_id = job["id"]
-            metrics = self.model_metrics(model_id=model_id)
+            try:
+                metrics = self.model_metrics(model_id=model_id)
+            except requests.exceptions.HTTPError:
+                continue
             eval_loss = metrics["eval_loss"]
             if eval_loss < best_loss:
                 best_loss = eval_loss
