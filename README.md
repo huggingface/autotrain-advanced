@@ -6,7 +6,7 @@ AutoNLP: faster and easier training and deployments of NLP models
 
 Install AutoNLP python package
 
-    pip install .
+    pip install autonlp
 
 ## Quick start - in the terminal
 
