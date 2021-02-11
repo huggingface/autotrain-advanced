@@ -42,13 +42,13 @@ class Metrics:
             model_id = job["id"]
             try:
                 metrics = self.model_metrics(model_id=model_id)
-            except requests.exceptions.HTTPError:
+                eval_loss = metrics["eval_loss"]
+                if eval_loss < best_loss:
+                    best_loss = eval_loss
+                    best_model = model_id
+                print(f"📚 {BOLD_TAG}Model{RESET_TAG} # {model_id}: 📊 eval_loss={eval_loss}")
+            except (requests.exceptions.HTTPError, TypeError):
                 continue
-            eval_loss = metrics["eval_loss"]
-            if eval_loss < best_loss:
-                best_loss = eval_loss
-                best_model = model_id
-            print(f"📚 {BOLD_TAG}Model{RESET_TAG} # {model_id}: 📊 eval_loss={eval_loss}")
 
         print("")
         print(f"🎖 Best Model: {best_model}, Best Loss: {best_loss}")
