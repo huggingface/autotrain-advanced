@@ -29,6 +29,7 @@ FILE_STATUS = (
     "❌ Failed: file not found",
     "❌ Failed: unsupported file type",
     "❌ Failed: server error",
+    "⚠ Invalid column mapping!",
 )
 
 JOB_STATUS = ("⌚ queued", "🚀 start", "⚙ data_munging", "🏃‍♂️ model_training", "✅ success", "❌ failed")
