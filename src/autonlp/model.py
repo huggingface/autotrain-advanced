@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
+from prettytable import PrettyTable
+
 from .utils import BOLD_TAG, PURPLE_TAG, RESET_TAG
 
 
@@ -26,16 +28,13 @@ class Model:
         valid_log = [log for log in self.json_resp if "eval_loss" in log]
 
         printout.append("⭐️ Training Log:")
-        train_print_counter = 0
+        print_training_logs = PrettyTable(["Epoch", "Loss"])
         # train_losses = [log["loss"] for log in training_log]
-        for log in training_log[-5:]:
-            if train_print_counter < self.max_train_print_count:
-                printout.append(
-                    f" • {BOLD_TAG}Epoch:{RESET_TAG} {log['epoch']}, {PURPLE_TAG}Loss: {log['loss']}{RESET_TAG}"
-                )
-                train_print_counter += 1
+        for log in training_log:
+            print_training_logs.add_row([log["epoch"], log["loss"]])
 
         print("\n".join(printout))
+        print(print_training_logs)
         printout = []
 
         # gp.plot(
@@ -55,6 +54,7 @@ class Model:
         printout.append("⭐️ Validation Log:")
         valid_losses = []
         for log in valid_log:
+            print(log)
             printout.append(
                 f" • {BOLD_TAG}Epoch:{RESET_TAG} {log['epoch']}, {PURPLE_TAG}Loss: {log['eval_loss']}{RESET_TAG}"
             )

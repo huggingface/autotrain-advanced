@@ -30,7 +30,12 @@ def get_auth_headers(token: str, prefix: str = "autonlp"):
 
 
 def http_get(
-    path: str, token: str, domain: str = config.HF_AUTONLP_BACKEND_API, token_prefix: str = "autonlp", **kwargs
+    path: str,
+    token: str,
+    domain: str = config.HF_AUTONLP_BACKEND_API,
+    token_prefix: str = "autonlp",
+    suppress_logs: bool = False,
+    **kwargs,
 ) -> requests.Response:
     """HTTP GET request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
@@ -42,13 +47,19 @@ def http_get(
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        logger.error(f"❌ Operation failed! Details: {err.response.text}")
+        if not suppress_logs:
+            logger.error(f"❌ Operation failed! Details: {err.response.text}")
         raise
     return response
 
 
 def http_post(
-    path: str, token: str, payload: Optional[Dict] = None, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs
+    path: str,
+    token: str,
+    payload: Optional[Dict] = None,
+    domain: str = config.HF_AUTONLP_BACKEND_API,
+    suppress_logs: bool = False,
+    **kwargs,
 ) -> requests.Response:
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
@@ -60,7 +71,8 @@ def http_post(
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        logger.error(f"❌ Operation failed! Details: {err.response.text}")
+        if not suppress_logs:
+            logger.error(f"❌ Operation failed! Details: {err.response.text}")
         raise
     return response
 
