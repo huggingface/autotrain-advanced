@@ -1,5 +1,6 @@
-import requests
 from dataclasses import dataclass
+
+import requests
 
 from .utils import BOLD_TAG, RESET_TAG, http_get
 
