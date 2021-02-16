@@ -2,9 +2,9 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
-from prettytable import PrettyTable
 
 from loguru import logger
+from prettytable import PrettyTable
 from tqdm import tqdm
 
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
