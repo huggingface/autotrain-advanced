@@ -50,7 +50,6 @@ class Metrics:
                     best_loss = eval_loss
                     best_model = model_id
                 print_logs.add_row([model_id, eval_loss])
-                # print(f"📚 {BOLD_TAG}Model{RESET_TAG} # {model_id}: 📊 eval_loss={eval_loss}")
             except (requests.exceptions.HTTPError, TypeError):
                 continue
         print(print_logs)

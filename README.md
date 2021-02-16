@@ -1,6 +1,6 @@
 # AutoNLP
 
-AutoNLP: faster and easier training and deployments of NLP models
+AutoNLP: faster and easier training and deployments of SOTA NLP models
 
 ## Installation
 
@@ -10,36 +10,55 @@ Install AutoNLP python package
 
 ## Quick start - in the terminal
 
-First, create a project. Only `fr`, `en` languages and `binary_classification`, `multi_class_classification` are supported at the moment.
+First, create a project. 
+
+Supported languages:
+
+    - English: en
+    - French: fr
+    - German: de
+    - Spanish: es
+    - Finnish: fi
+
+Supported tasks:
+
+    - binary_classification
+    - multi_class_classification
+    - entity_extraction
+
 ```bash
 autonlp login --api-key YOUR_HF_API_TOKEN
-autonlp create_project --name test_project --language en --task multi_class_classification
+autonlp create_project --name sentiment_detection --language en --task binary_classification
 ```
 
 Upload files and start the training. Only CSV files are supported at the moment.
 ```bash
 # Train split
-autonlp upload --project test_project --split train\
-               --col_mapping Title:text,Conference:target\
-               --files ~/datasets/title_conf_train.csv
+autonlp upload --project sentiment_detection --split train \
+               --col_mapping review:text,sentiment:target \
+               --files ~/datasets/train.csv
 # Validation split
-autonlp upload --project test_project --split valid\
-               --col_mapping Title:text,Conference:target\
-               --files ~/datasets/title_conf_valid.csv
-autonlp train --project test_project
+autonlp upload --project sentiment_detection --split valid \
+               --col_mapping review:text,sentiment:target \
+               --files ~/datasets/valid.csv
+```
+
+Once the files are uploaded, you can start training the model:
+```bash
+autonlp train --project sentiment_detection
 ```
 
 Monitor the progress of your project.
 ```bash
 # Project progress
-autonlp project_info --name test_project
+autonlp project_info --name sentiment_detection
 # Model metrics
 autonlp model_info --id MODEL_ID
 ```
 
 ## Quick start - Python API
 
-Setting up
+Setting up:
 ```python
 from autonlp import AutoNLP
 client = AutoNLP()
@@ -48,9 +67,9 @@ client.login(token="YOUR_HF_API_TOKEN")
 
 Creating a project and uploading files to it:
 ```python
-project = client.create_project(name="test_project", task="multi_class_classification", language="en")
+project = client.create_project(name="sentiment_detection", task="binary_classification", language="en")
 project.upload(
-    filepaths=["/path/to/title_conf_train.csv"],
+    filepaths=["/path/to/train.csv"],
     split="train",
     col_mapping={
         "Title": "text",
@@ -66,6 +85,7 @@ print(project)
 ```
 
 After the training of your models has succeeded, you can retrieve its metrics and test it with the 🤗 Inference API:
+
 ```python
 client.get_model_info(model_id=42)
 client.predict(model_id=42, input_text="Measuring and Improving Consistency in Pretrained Language Models")
