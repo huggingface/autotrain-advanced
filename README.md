@@ -10,21 +10,21 @@ Install AutoNLP python package
 
 ## Quick start - in the terminal
 
-First, create a project. 
-
 Supported languages:
 
-    - English: en
-    - French: fr
-    - German: de
-    - Spanish: es
-    - Finnish: fi
+- English: en
+- French: fr
+- German: de
+- Spanish: es
+- Finnish: fi
 
 Supported tasks:
 
-    - binary_classification
-    - multi_class_classification
-    - entity_extraction
+- binary_classification
+- multi_class_classification
+- entity_extraction
+
+First, create a project:
 
 ```bash
 autonlp login --api-key YOUR_HF_API_TOKEN
