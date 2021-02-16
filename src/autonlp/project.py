@@ -45,13 +45,11 @@ class TrainingJob:
     status: str
     created_at: datetime
     updated_at: datetime
-    config: Dict[str, Any]
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
         return cls(
             job_id=json_resp["id"],
-            config=json_resp["config"],
             status=JOB_STATUS[json_resp["status"] - 1],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
