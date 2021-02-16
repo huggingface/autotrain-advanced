@@ -1,7 +1,8 @@
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
+from prettytable import PrettyTable
 
 from loguru import logger
 from tqdm import tqdm
@@ -32,7 +33,14 @@ FILE_STATUS = (
     "⚠ Invalid column mapping!",
 )
 
-JOB_STATUS = ("⌚ queued", "🚀 start", "⚙ data_munging", "🏃‍♂️ model_training", "✅ success", "❌ failed")
+JOB_STATUS = (
+    ("⌚", "queued"),
+    ("🚀", "start"),
+    ("⚙", "data_munging"),
+    ("🏃‍♂️", "model_training"),
+    ("✅", "success"),
+    ("❌", "failed"),
+)
 
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
 
@@ -43,6 +51,7 @@ class TrainingJob:
 
     job_id: int
     status: str
+    status_emoji: str
     created_at: datetime
     updated_at: datetime
 
@@ -50,7 +59,8 @@ class TrainingJob:
     def from_json_resp(cls, json_resp: dict):
         return cls(
             job_id=json_resp["id"],
-            status=JOB_STATUS[json_resp["status"] - 1],
+            status_emoji=JOB_STATUS[json_resp["status"] - 1][0],
+            status=JOB_STATUS[json_resp["status"] - 1][1],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
         )
@@ -59,7 +69,7 @@ class TrainingJob:
         return "\n".join(
             [
                 f"📚 Model # {self.job_id}",
-                f"   • {BOLD_TAG}Status{RESET_TAG}:      {self.status}",
+                f"   • {BOLD_TAG}Status{RESET_TAG}:      {self.status_emoji} {self.status}",
                 f"   • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
                 f"   • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
             ]
@@ -189,12 +199,23 @@ class Project:
 
         # Training jobs information
         if self.training_jobs is None:
-            descriptions = ["❓ Models information unknown, update the project"]
+            jobs_str = "❓ Models information unknown, update the project"
         else:
             if len(self.training_jobs) == 0:
-                descriptions = ["🤷‍♂ No train jobs started yet!"]
+                jobs_str = "🤷‍♂ No train jobs started yet!"
             else:
-                descriptions = [str(job) for job in self.training_jobs]
-        printout.append("\n".join(["~" * 12 + f" {BOLD_TAG}Models{RESET_TAG} " + "~" * 11, ""] + descriptions))
+                model_table = PrettyTable(["", "ID", "Status", "Creation date", "Last update"])
+                for job in sorted(self.training_jobs, key=lambda job: job.job_id):
+                    model_table.add_row(
+                        [
+                            job.status_emoji,
+                            job.job_id,
+                            job.status,
+                            job.created_at.strftime("%Y-%m-%d %H:%M Z"),
+                            job.updated_at.strftime("%Y-%m-%d %H:%M Z"),
+                        ]
+                    )
+                jobs_str = str(model_table)
+        printout.append("\n".join(["", "~" * 12 + f" {BOLD_TAG}Models{RESET_TAG} " + "~" * 11, "", jobs_str]))
 
         return "\n".join(printout)
