@@ -3,8 +3,6 @@ from typing import Dict, List, Optional, Union
 
 from prettytable import PrettyTable
 
-from .utils import BOLD_TAG, PURPLE_TAG, RESET_TAG
-
 
 @dataclass
 class Model:
@@ -37,13 +35,6 @@ class Model:
         print(print_training_logs)
         printout = []
 
-        # gp.plot(
-        #     (np.arange(len(train_losses)), np.asarray(train_losses)),
-        #     _with="lines",
-        #     terminal="dumb 50,15",
-        #     unset="grid",
-        # )
-
         printout.append("")
         printout.append("~" * 35)
         printout.append("")
@@ -52,12 +43,9 @@ class Model:
         printout = []
 
         printout.append("⭐️ Validation Log:")
-        valid_losses = []
+        print_validation_logs = PrettyTable(["Epoch", "Loss"])
         for log in valid_log:
-            print(log)
-            printout.append(
-                f" • {BOLD_TAG}Epoch:{RESET_TAG} {log['epoch']}, {PURPLE_TAG}Loss: {log['eval_loss']}{RESET_TAG}"
-            )
-            valid_losses.append(log["eval_loss"])
+            print_validation_logs.add_row([log["epoch"], log["eval_loss"]])
 
         print("\n".join(printout))
+        print(print_validation_logs)
