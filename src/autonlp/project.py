@@ -30,7 +30,7 @@ FILE_STATUS = (
     "❌ Failed: file not found",
     "❌ Failed: unsupported file type",
     "❌ Failed: server error",
-    "⚠ Invalid column mapping!",
+    "❌ Invalid column mapping, please fix it and re-upload the file.",
 )
 
 JOB_STATUS = (
