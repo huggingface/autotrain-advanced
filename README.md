@@ -4,9 +4,9 @@ AutoNLP: faster and easier training and deployments of SOTA NLP models
 
 ## Installation
 
-Install AutoNLP python package
+You can Install AutoNLP python package via PIP. Please note you will need python >= 3.7 for AutoNLP to work properly.
 
-    pip install .
+    pip install autonlp
 
 ## Quick start - in the terminal
 
@@ -27,7 +27,7 @@ Supported tasks:
 First, create a project:
 
 ```bash
-autonlp login --api-key YOUR_HF_API_TOKEN
+autonlp login --api-key YOUR_HUGGING_FACE_API_TOKEN
 autonlp create_project --name sentiment_detection --language en --task binary_classification
 ```
 
@@ -62,7 +62,7 @@ Setting up:
 ```python
 from autonlp import AutoNLP
 client = AutoNLP()
-client.login(token="YOUR_HF_API_TOKEN")
+client.login(token="YOUR_HUGGING_FACE_API_TOKEN")
 ```
 
 Creating a project and uploading files to it:
@@ -77,9 +77,13 @@ project.upload(
     })
 ```
 
-Start the training and monitor the progress:
+Start the training of your models:
 ```python
 project.train()
+```
+
+To monitor the progressn of your training:
+```python
 project.refresh()
 print(project)
 ```
