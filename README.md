@@ -53,7 +53,7 @@ Monitor the progress of your project.
 # Project progress
 autonlp project_info --name sentiment_detection
 # Model metrics
-autonlp model_info --id MODEL_ID
+autonlp metrics --model MODEL_ID
 ```
 
 ## Quick start - Python API
