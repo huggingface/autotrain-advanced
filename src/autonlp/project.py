@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
 
+import requests
 from loguru import logger
 from prettytable import PrettyTable
-import requests
 
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
@@ -18,7 +18,6 @@ from .utils import (
     YELLOW_TAG,
     http_get,
     http_post,
-    http_upload_files,
 )
 
 
