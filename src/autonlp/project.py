@@ -3,23 +3,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
 
+import requests
 from loguru import logger
 from prettytable import PrettyTable
-from tqdm import tqdm
 
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
-from .utils import (
-    BOLD_TAG,
-    CYAN_TAG,
-    GREEN_TAG,
-    PURPLE_TAG,
-    RESET_TAG,
-    YELLOW_TAG,
-    http_get,
-    http_post,
-    http_upload_files,
-)
+from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
 
 
 FILE_STATUS = (
@@ -151,18 +141,37 @@ class Project:
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
-        jdata = {"project": self.name, "username": self.user}
-        for file_path in tqdm(filepaths, desc="Uploaded files"):
-            base_name = os.path.basename(file_path)
-            binary_file = open(file_path, "rb")
-            files = [("files", (base_name, binary_file, "text/csv"))]
-            http_upload_files(path="/uploader/upload_files", data=jdata, files_info=files, token=self._token)
+        response = http_get(path=f"/projects/{self.proj_id}/data/upload_url", token=self._token).json()
+        upload_url = response["url"]
+        upload_data = response["fields"]
+
+        for idx, file_path in enumerate(filepaths):
+            file_name = os.path.basename(file_path)
+            logger.info(f"☁ Uploading {file_name} ... [{idx + 1}/{len(filepaths)}]")
+            with open(file_path, "rb") as f:
+                files = {"file": (file_name, f)}
+                try:
+                    upload_repsonse = requests.post(url=upload_url, data=upload_data, files=files)
+                except requests.ConnectionError:
+                    logger.error(f"❌ Connection error while uploading, {file_name} has not been uploaded.")
+                    continue
+
+            if upload_repsonse.status_code != 204:
+                logger.error(
+                    f"❌ An error occurred while uploading, {file_name} has not been uploaded. Please report the following to the HuggingFace team:"
+                )
+                logger.error(f"HTTP status code: {upload_repsonse.status_code}")
+                logger.error(upload_repsonse.text)
+                continue
+
+            logger.info(f"✅ Successfully uploaded {file_name}! Adding the file to project: {self.name}")
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
-                "data_files": [{"fname": base_name, "username": self.user}],
+                "data_files": [{"fname": file_name, "username": self.user}],
             }
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
+
         logger.info(f"✅ Successfully uploaded {len(filepaths)} files to AutoNLP!")
 
     def train(self):
