@@ -157,7 +157,7 @@ class Project:
 
         for idx, file_path in enumerate(filepaths):
             file_name = os.path.basename(file_path)
-            logger.info(f"☁ Uploading {file_name} ... [{idx + 1}/{len(file_path)}]")
+            logger.info(f"☁ Uploading {file_name} ... [{idx + 1}/{len(filepaths)}]")
             with open(file_path, "rb") as f:
                 files = {"file": (file_name, f)}
                 try:
