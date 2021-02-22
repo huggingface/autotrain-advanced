@@ -29,7 +29,7 @@ class ListProjectsCommand(BaseAutoNLPCommand):
     def run(self):
         from ..autonlp import AutoNLP
 
-        logger.info(f"Fetching projects...")
+        logger.info("Fetching projects...")
         client = AutoNLP()
         projects = client.list_projects(username=self._username)
         if projects:
