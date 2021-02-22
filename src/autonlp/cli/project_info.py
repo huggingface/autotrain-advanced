@@ -6,16 +6,16 @@ from loguru import logger
 from . import BaseAutoNLPCommand
 
 
-def create_project_command_factory(args):
+def project_info_command_factory(args):
     return ProjectInfoCommand(args.name)
 
 
 class ProjectInfoCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        create_project_parser = parser.add_parser("project_info")
-        create_project_parser.add_argument("--name", type=str, default=None, required=True, help="Project Name")
-        create_project_parser.set_defaults(func=create_project_command_factory)
+        project_info_parser = parser.add_parser("project_info")
+        project_info_parser.add_argument("--name", type=str, default=None, required=True, help="Project Name")
+        project_info_parser.set_defaults(func=project_info_command_factory)
 
     def __init__(self, name: str):
         self._name = name
