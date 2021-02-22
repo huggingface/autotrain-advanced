@@ -31,7 +31,7 @@ autonlp login --api-key YOUR_HUGGING_FACE_API_TOKEN
 autonlp create_project --name sentiment_detection --language en --task binary_classification
 ```
 
-Upload files and start the training. Only CSV files are supported at the moment.
+Upload files and start the training. You need a training and a validation split. Only CSV files are supported at the moment.
 ```bash
 # Train split
 autonlp upload --project sentiment_detection --split train \
@@ -75,6 +75,8 @@ project.upload(
         "Title": "text",
         "Conference": "target",
     })
+
+# also upload a validation with split="valid"
 ```
 
 Start the training of your models:
