@@ -170,5 +170,5 @@ class AutoNLP:
             username = self.username
 
         logger.info(f"📄 Retrieving projects of user {username}...")
-        json_resp = http_get(path=f"/projects/list", token=self.token).json()
+        json_resp = http_get(path=f"/projects/list?username={username}", token=self.token).json()
         return [Project.from_json_resp(elt, token=self.token) for elt in json_resp]

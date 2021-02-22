@@ -32,18 +32,21 @@ class ListProjectsCommand(BaseAutoNLPCommand):
         logger.info(f"Fetching projects...")
         client = AutoNLP()
         projects = client.list_projects(username=self._username)
-        table = PrettyTable(field_names=["ID", "Name", "Owner", "Task", "Created at", "Last Update"])
-        table.add_rows(
-            [
+        if projects:
+            table = PrettyTable(field_names=["ID", "Name", "Owner", "Task", "Created at", "Last Update"])
+            table.add_rows(
                 [
-                    proj.proj_id,
-                    proj.name,
-                    proj.user,
-                    proj.task.title().replace("_", " "),
-                    proj.created_at.strftime("%Y-%m-%d %H:%M Z"),
-                    proj.updated_at.strftime("%Y-%m-%d %H:%M Z"),
+                    [
+                        proj.proj_id,
+                        proj.name,
+                        proj.user,
+                        proj.task.title().replace("_", " "),
+                        proj.created_at.strftime("%Y-%m-%d %H:%M Z"),
+                        proj.updated_at.strftime("%Y-%m-%d %H:%M Z"),
+                    ]
+                    for proj in projects
                 ]
-                for proj in projects
-            ]
-        )
-        print(table)
+            )
+            print(table)
+        else:
+            print("🚫 No projects yet! Create one with the create_project command to see something here")
