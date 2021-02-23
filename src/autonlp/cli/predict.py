@@ -1,8 +1,19 @@
 import json
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from ..utils import BOLD_TAG, GREEN_TAG, RESET_TAG, YELLOW_TAG
 from . import BaseAutoNLPCommand
+
+
+DESCRIPTION = (
+    "Make predictions using the 🤗 Inference API: https://api-inference.huggingface.co/docs/python/html/index.html"
+)
+
+EXAMPLE = """\
+Example:
+--------
+autonlp predict --model_id 42 --input "Please review attached document"
+"""
 
 
 def predict_command_factory(args):
@@ -12,7 +23,9 @@ def predict_command_factory(args):
 class PredictCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        predict_parser = parser.add_parser("predict")
+        predict_parser = parser.add_parser("predict", formatter_class=RawDescriptionHelpFormatter)
+        predict_parser.description = DESCRIPTION
+        predict_parser.epilog = EXAMPLE
         predict_parser.add_argument(
             "--model_id",
             type=int,
