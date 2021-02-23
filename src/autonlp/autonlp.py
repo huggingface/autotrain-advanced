@@ -4,6 +4,7 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
+from typing import Optional
 
 import requests
 from loguru import logger
@@ -160,19 +161,14 @@ class AutoNLP:
                 raise ValueError(f"❌ Model '{model_id}' not found.") from err
             raise
 
+    def list_projects(self, username: Optional[str] = None):
+        self._login_from_conf()
+        if self.username is None:
+            raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
+        # default to current user if username is not provided
+        if username is None:
+            username = self.username
 
-if __name__ == "__main__":
-    client = AutoNLP()
-    client.login(token="TEST_KEY")
-    project = client.create_project(name="imdb_test_4", task="binary_classification")
-    token = client.get_token()
-    # project = client.get_project(name="imdb_test_4")
-    col_mapping = {"sentiment": "target", "review": "text"}
-
-    train_files = ["/home/abhishek/datasets/imdb_folds.csv"]
-    valid_files = ["/home/abhishek/datasets/imdb_valid.csv"]
-    project.upload(train_files, split="train", col_mapping=col_mapping)
-    project.upload(valid_files, split="valid", col_mapping=col_mapping)
-    project.train()
-    project.refresh()
-    print(project)
+        logger.info(f"📄 Retrieving projects of user {username}...")
+        json_resp = http_get(path=f"/projects/list?username={username}", token=self.token).json()
+        return [Project.from_json_resp(elt, token=self.token) for elt in json_resp]

@@ -106,7 +106,6 @@ class Project:
     user: str
     task: str
     status: str
-    config: Dict[str, str]
     created_at: datetime
     updated_at: datetime
     files: Optional[List[UploadedFile]] = None
@@ -120,7 +119,6 @@ class Project:
             name=json_resp["proj_name"],
             user=json_resp["username"],
             task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
-            config=json_resp["config"],
             status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
