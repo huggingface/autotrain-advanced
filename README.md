@@ -95,3 +95,9 @@ After the training of your models has succeeded, you can retrieve its metrics an
 ```python
 client.predict(model_id=42, input_text="Measuring and Improving Consistency in Pretrained Language Models")
 ```
+
+or use command line:
+
+```bash
+autonlp predict --model_id 42 --sentence "Measuring and Improving Consistency in Pretrained Language Models"
+```

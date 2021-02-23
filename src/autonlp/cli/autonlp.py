@@ -4,6 +4,7 @@ from .create_project import CreateProjectCommand
 from .list_projects import ListProjectsCommand
 from .login import LoginCommand
 from .metrics import MetricsCommand
+from .predict import PredictCommand
 from .project_info import ProjectInfoCommand
 from .train import TrainCommand
 from .upload import UploadCommand
@@ -21,6 +22,7 @@ def main():
     TrainCommand.register_subcommand(commands_parser)
     MetricsCommand.register_subcommand(commands_parser)
     ListProjectsCommand.register_subcommand(commands_parser)
+    PredictCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
