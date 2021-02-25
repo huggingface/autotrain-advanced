@@ -12,13 +12,11 @@ class Metrics:
     username: str
     project_name: str
     project_id: int
-    language: str
 
     @classmethod
     def from_json_resp(cls, json_resp: dict, token: str, project_name: str, username: str):
         return cls(
             project_id=json_resp["id"],
-            language=json_resp["config"]["language"],
             _token=token,
             project_name=project_name,
             username=username,
