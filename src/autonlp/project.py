@@ -211,7 +211,18 @@ class Project:
             else:
                 sorted_files = sorted(self.files, key=lambda file: file.split)  # Sort by split
                 descriptions = [str(file) for file in sorted_files]
-        printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
+        printout.append(
+            "\n".join(
+                [
+                    "~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14,
+                    "",
+                    "Dataset URL:",
+                    f"{CYAN_TAG}{self.repo_url}{RESET_TAG}",
+                    "",
+                ]
+                + descriptions
+            )
+        )
 
         # Training jobs information
         if self.training_jobs is None:
