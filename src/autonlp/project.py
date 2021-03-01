@@ -1,9 +1,11 @@
 import os
+import shutil
 from dataclasses import dataclass
 from datetime import datetime
+from subprocess import CalledProcessError
 from typing import Dict, List, Optional
 
-import requests
+from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
 
@@ -108,6 +110,7 @@ class Project:
     status: str
     created_at: datetime
     updated_at: datetime
+    repo_url: Optional[str] = None
     files: Optional[List[UploadedFile]] = None
     training_jobs: Optional[List] = None
 
@@ -122,6 +125,7 @@ class Project:
             status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
+            repo_url=json_resp["repo_url"],
             _token=token,
         )
 
@@ -139,38 +143,43 @@ class Project:
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
-        response = http_get(path=f"/projects/{self.proj_id}/data/upload_url", token=self._token).json()
-        upload_url = response["url"]
-        upload_data = response["fields"]
+        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/autonlp-{self.name}")
+        if os.path.exists(local_dataset_dir):
+            clone_from = None
+        else:
+            clone_from = self.repo_url.strip("/")
+        dataset_repo = Repository(
+            local_dir=local_dataset_dir,
+            clone_from=clone_from,
+            use_auth_token=self._token,
+        )
+        dataset_repo.git_pull()
 
         for idx, file_path in enumerate(filepaths):
-            file_name = os.path.basename(file_path)
-            logger.info(f"☁ Uploading {file_name} ... [{idx + 1}/{len(filepaths)}]")
-            with open(file_path, "rb") as f:
-                files = {"file": (file_name, f)}
-                try:
-                    upload_repsonse = requests.post(url=upload_url, data=upload_data, files=files)
-                except requests.ConnectionError:
-                    logger.error(f"❌ Connection error while uploading, {file_name} has not been uploaded.")
-                    continue
-
-            if upload_repsonse.status_code != 204:
-                logger.error(
-                    f"❌ An error occurred while uploading, {file_name} has not been uploaded. Please report the following to the HuggingFace team:"
-                )
-                logger.error(f"HTTP status code: {upload_repsonse.status_code}")
-                logger.error(upload_repsonse.text)
+            if not os.path.isfile(file_path):
+                logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
                 continue
-
-            logger.info(f"✅ Successfully uploaded {file_name}! Adding the file to project: {self.name}")
+            file_name = os.path.basename(file_path)
+            src = os.path.expanduser(file_path)
+            dst = os.path.join(local_dataset_dir, file_name)
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
+            shutil.copyfile(src, dst)
+            dataset_repo.lfs_track([file_name])
+            try:
+                logger.info(f"[{idx + 1}/{len(filepaths)}] ☁ Uploading {file_name} to the dataset hub...")
+                dataset_repo.push_to_hub(commit_message=f"Upload {file_name} from AutoNLP CLI")
+                logger.info(
+                    f"[{idx + 1}/{len(filepaths)}] ✅ Successfully uploaded {file_name}! Adding the file to project: {self.name}"
+                )
+            except CalledProcessError:
+                logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ Something went wrong when uploading {file_name}!")
+                continue
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": file_name, "username": self.user}],
             }
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
-
-        logger.info(f"✅ Successfully uploaded {len(filepaths)} files to AutoNLP!")
 
     def train(self):
         """Starts training on the models"""
