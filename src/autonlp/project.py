@@ -161,7 +161,7 @@ class Project:
                 continue
             file_name = os.path.basename(file_path)
             src = os.path.expanduser(file_path)
-            dst = os.path.join(local_dataset_dir, file_name)
+            dst = os.path.join(local_dataset_dir, "raw", file_name)
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
             shutil.copyfile(src, dst)
             dataset_repo.lfs_track([file_name])
