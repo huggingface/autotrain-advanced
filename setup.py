@@ -30,7 +30,7 @@ EXTRAS_REQUIRE = {
 
 setup(
     name="autonlp",
-    version="0.0.6",
+    version="0.0.7",
     description=DOCLINES[0],
     long_description="\n".join(DOCLINES[2:]),
     author="HuggingFace Inc.",
