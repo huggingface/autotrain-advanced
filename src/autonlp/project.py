@@ -179,12 +179,13 @@ class Project:
                 logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
                 continue
             file_name = os.path.basename(file_path)
+            file_extension = file_name.split(".")[-1]
             src = os.path.expanduser(file_path)
             dst = os.path.join(local_dataset_dir, "raw", file_name)
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
-            dataset_repo.lfs_track([file_name])
+            dataset_repo.lfs_track(patterns=[f"**.{file_extension}"])
         try:
             logger.info("☁ Uploading files to the dataset hub...")
             dataset_repo.push_to_hub(commit_message="Upload from AutoNLP CLI")
