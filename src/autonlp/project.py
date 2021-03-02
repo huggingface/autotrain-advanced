@@ -183,6 +183,7 @@ class Project:
             src = os.path.expanduser(file_path)
             dst = os.path.join(local_dataset_dir, "raw", file_name)
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
             dataset_repo.lfs_track([file_name])
             try:
