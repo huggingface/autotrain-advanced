@@ -2,7 +2,6 @@ import os
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
-from subprocess import CalledProcessError
 from typing import Dict, List, Optional
 
 from huggingface_hub import Repository
@@ -187,15 +186,15 @@ class Project:
             shutil.copyfile(src, dst)
             dataset_repo.lfs_track([file_name])
         try:
-            logger.info(f"☁ Uploading files to the dataset hub...")
-            dataset_repo.push_to_hub(commit_message=f"Upload from AutoNLP CLI")
+            logger.info("☁ Uploading files to the dataset hub...")
+            dataset_repo.push_to_hub(commit_message="Upload from AutoNLP CLI")
             logger.info("✅ Successfully uploaded  the files!")
         except OSError as err:
             if "nothing to commit, working tree clean" in err.args[0]:
                 logger.info("❔ Files did not change since last upload!")
                 return
             else:
-                logger.error(f"❌ Something went wrong when uploading the files!")
+                logger.error("❌ Something went wrong when uploading the files!")
                 raise
 
         for idx, file_path in enumerate(filepaths):
