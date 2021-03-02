@@ -34,6 +34,17 @@ JOB_STATUS = (
     ("❌", "failed"),
 )
 
+PROJECT_STATUS = (
+    ("✨", "Created"),
+    ("🚀", "Data processing started"),
+    ("✅", "Data processing successful"),
+    ("❌", "Failed to download data files from the huggingface hub"),
+    ("❌", "Missing 'train' or 'valid' split in data files"),
+    ("❌", "Failed to process data files"),
+    ("❌", "Failed to upload processed data files to the huggingface hub"),
+)
+
+
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
 
 
@@ -112,6 +123,7 @@ class Project:
     name: str
     user: str
     task: str
+    status_emoji: str
     status: str
     created_at: datetime
     updated_at: datetime
@@ -127,7 +139,8 @@ class Project:
             name=json_resp["proj_name"],
             user=json_resp["username"],
             task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
-            status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
+            status_emoji=PROJECT_STATUS[json_resp["status"] - 1][0],
+            status=PROJECT_STATUS[json_resp["status"] - 1][1],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
             repo_url=json_resp["repo_url"],
@@ -194,11 +207,11 @@ class Project:
     def __str__(self):
         header = "\n".join(
             [
-                f"AutoNLP Project (id # {self.proj_id}) - {self.status.upper()}",
-                "",
+                f"AutoNLP Project (id # {self.proj_id})",
                 "~" * 35,
                 f" • {BOLD_TAG}Name{RESET_TAG}:        {PURPLE_TAG}{self.name}{RESET_TAG}",
                 f" • {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
+                f" • {BOLD_TAG}Status{RESET_TAG}:      {BOLD_TAG}{self.status_emoji} {self.status}{RESET_TAG}",
                 f" • {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
                 f" • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
                 f" • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
