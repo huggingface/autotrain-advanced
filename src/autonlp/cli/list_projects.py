@@ -33,11 +33,12 @@ class ListProjectsCommand(BaseAutoNLPCommand):
         client = AutoNLP()
         projects = client.list_projects(username=self._username)
         if projects:
-            table = PrettyTable(field_names=["ID", "Name", "Owner", "Task", "Created at", "Last Update"])
+            table = PrettyTable(field_names=["ID", "Status", "Name", "Owner", "Task", "Created at", "Last Update"])
             table.add_rows(
                 [
                     [
                         proj.proj_id,
+                        proj.status_emoji,
                         proj.name,
                         proj.user,
                         proj.task.title().replace("_", " "),
