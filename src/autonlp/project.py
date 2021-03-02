@@ -77,6 +77,8 @@ class UploadedFile:
     processing_status: str
     split: str
     col_mapping: Dict[str, str]
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
@@ -86,6 +88,8 @@ class UploadedFile:
             processing_status=FILE_STATUS[json_resp["download_status"] - 1],
             split=SPLITS[json_resp["split"] - 1],
             col_mapping=json_resp["col_mapping"],
+            created_at=datetime.fromisoformat(json_resp["created_at"]),
+            updated_at=datetime.fromisoformat(json_resp["updated_at"]),
         )
 
     def __str__(self):
@@ -94,6 +98,7 @@ class UploadedFile:
                 f"📁 {CYAN_TAG}{self.filename}{RESET_TAG} (id # {self.file_id})",
                 f"   • {BOLD_TAG}Split{RESET_TAG}:             {self.split}",
                 f"   • {BOLD_TAG}Processing status{RESET_TAG}: {self.processing_status}",
+                f"   • {BOLD_TAG}Last update{RESET_TAG}:       {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
             ]
         )
 
