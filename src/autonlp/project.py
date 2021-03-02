@@ -128,7 +128,7 @@ class Project:
     language: str
     created_at: datetime
     updated_at: datetime
-    repo_url: Optional[str] = None
+    dataset_id: str
     files: Optional[List[UploadedFile]] = None
     training_jobs: Optional[List] = None
 
@@ -144,7 +144,7 @@ class Project:
             status=PROJECT_STATUS[json_resp["status"] - 1][1],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
-            repo_url=json_resp["repo_url"],
+            dataset_id=json_resp["dataset_id"],
             language=json_resp["config"]["language"],
             _token=token,
         )
@@ -163,11 +163,11 @@ class Project:
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
-        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/autonlp-{self.name}")
+        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
         if os.path.exists(local_dataset_dir):
             clone_from = None
         else:
-            clone_from = self.repo_url.strip("/")
+            clone_from = "https://huggingface.co/datasets/" + self.dataset_id
         dataset_repo = Repository(
             local_dir=local_dataset_dir,
             clone_from=clone_from,
@@ -186,21 +186,28 @@ class Project:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
             dataset_repo.lfs_track([file_name])
-            try:
-                logger.info(f"[{idx + 1}/{len(filepaths)}] ☁ Uploading {file_name} to the dataset hub...")
-                dataset_repo.push_to_hub(commit_message=f"Upload {file_name} from AutoNLP CLI")
-                logger.info(
-                    f"[{idx + 1}/{len(filepaths)}] ✅ Successfully uploaded {file_name}! Adding the file to project: {self.name}"
-                )
-            except CalledProcessError:
-                logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ Something went wrong when uploading {file_name}!")
-                continue
+        try:
+            logger.info(f"☁ Uploading files to the dataset hub...")
+            dataset_repo.push_to_hub(commit_message=f"Upload from AutoNLP CLI")
+            logger.info("✅ Successfully uploaded  the files!")
+        except OSError as err:
+            if "nothing to commit, working tree clean" in err.args[0]:
+                logger.info("❔ Files did not change since last upload!")
+                return
+            else:
+                logger.error(f"❌ Something went wrong when uploading the files!")
+                raise
+
+        for idx, file_path in enumerate(filepaths):
+            file_name = os.path.basename(file_path)
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 📁 Registering file {file_name} into project '{file_name}'...")
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": file_name, "username": self.user}],
             }
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
+            logger.info(f"[{idx + 1}/{len(filepaths)}] ✅ Success!")
 
     def train(self):
         """Starts training on the models"""
@@ -237,8 +244,8 @@ class Project:
                 [
                     "~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14,
                     "",
-                    "Dataset URL:",
-                    f"{CYAN_TAG}{self.repo_url}{RESET_TAG}",
+                    "Dataset ID:",
+                    f"{CYAN_TAG}{self.dataset_id}{RESET_TAG}",
                     "",
                 ]
                 + descriptions
