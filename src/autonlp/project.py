@@ -125,6 +125,7 @@ class Project:
     task: str
     status_emoji: str
     status: str
+    language: str
     created_at: datetime
     updated_at: datetime
     repo_url: Optional[str] = None
@@ -144,6 +145,7 @@ class Project:
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
             repo_url=json_resp["repo_url"],
+            language=json_resp["config"]["language"],
             _token=token,
         )
 
