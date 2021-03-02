@@ -12,7 +12,7 @@ INSTALL_REQUIRES = [
     "requests==2.25.1",
     "tqdm==4.56.0",
     "prettytable==2.0.0",
-    "huggingface_hub==0.0.3rc2",
+    "huggingface_hub<0.1.0",
 ]
 
 QUALITY_REQUIRE = [
