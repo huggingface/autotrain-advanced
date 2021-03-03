@@ -7,7 +7,13 @@ from setuptools import find_packages, setup
 
 DOCLINES = __doc__.split("\n")
 
-INSTALL_REQUIRES = ["loguru==0.5.3", "requests==2.25.1", "tqdm==4.56.0", "prettytable==2.0.0"]
+INSTALL_REQUIRES = [
+    "loguru==0.5.3",
+    "requests==2.25.1",
+    "tqdm==4.56.0",
+    "prettytable==2.0.0",
+    "huggingface_hub<0.1.0",
+]
 
 QUALITY_REQUIRE = [
     "black",

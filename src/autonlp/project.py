@@ -1,9 +1,10 @@
 import os
+import shutil
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
 
-import requests
+from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
 
@@ -31,6 +32,17 @@ JOB_STATUS = (
     ("✅", "success"),
     ("❌", "failed"),
 )
+
+PROJECT_STATUS = (
+    ("✨", "Created"),
+    ("🚀", "Data processing started"),
+    ("✅", "Data processing successful"),
+    ("❌", "Failed to download data files from the huggingface hub"),
+    ("❌", "Missing 'train' or 'valid' split in data files"),
+    ("❌", "Failed to process data files"),
+    ("❌", "Failed to upload processed data files to the huggingface hub"),
+)
+
 
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
 
@@ -75,6 +87,8 @@ class UploadedFile:
     processing_status: str
     split: str
     col_mapping: Dict[str, str]
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
@@ -84,6 +98,8 @@ class UploadedFile:
             processing_status=FILE_STATUS[json_resp["download_status"] - 1],
             split=SPLITS[json_resp["split"] - 1],
             col_mapping=json_resp["col_mapping"],
+            created_at=datetime.fromisoformat(json_resp["created_at"]),
+            updated_at=datetime.fromisoformat(json_resp["updated_at"]),
         )
 
     def __str__(self):
@@ -92,6 +108,7 @@ class UploadedFile:
                 f"📁 {CYAN_TAG}{self.filename}{RESET_TAG} (id # {self.file_id})",
                 f"   • {BOLD_TAG}Split{RESET_TAG}:             {self.split}",
                 f"   • {BOLD_TAG}Processing status{RESET_TAG}: {self.processing_status}",
+                f"   • {BOLD_TAG}Last update{RESET_TAG}:       {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
             ]
         )
 
@@ -105,9 +122,12 @@ class Project:
     name: str
     user: str
     task: str
+    status_emoji: str
     status: str
+    language: str
     created_at: datetime
     updated_at: datetime
+    dataset_id: str
     files: Optional[List[UploadedFile]] = None
     training_jobs: Optional[List] = None
 
@@ -119,9 +139,12 @@ class Project:
             name=json_resp["proj_name"],
             user=json_resp["username"],
             task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
-            status="ACTIVE" if json_resp["status"] == 1 else "INACTIVE",
+            status_emoji=PROJECT_STATUS[json_resp["status"] - 1][0],
+            status=PROJECT_STATUS[json_resp["status"] - 1][1],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
+            dataset_id=json_resp["dataset_id"],
+            language=json_resp["config"]["language"],
             _token=token,
         )
 
@@ -139,38 +162,52 @@ class Project:
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
-        response = http_get(path=f"/projects/{self.proj_id}/data/upload_url", token=self._token).json()
-        upload_url = response["url"]
-        upload_data = response["fields"]
+        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
+        if os.path.exists(local_dataset_dir):
+            clone_from = None
+        else:
+            clone_from = "https://huggingface.co/datasets/" + self.dataset_id
+        dataset_repo = Repository(
+            local_dir=local_dataset_dir,
+            clone_from=clone_from,
+            use_auth_token=self._token,
+        )
+        dataset_repo.git_pull()
+
+        for idx, file_path in enumerate(filepaths):
+            if not os.path.isfile(file_path):
+                logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
+                continue
+            file_name = os.path.basename(file_path)
+            file_extension = file_name.split(".")[-1]
+            src = os.path.expanduser(file_path)
+            dst = os.path.join(local_dataset_dir, "raw", file_name)
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copyfile(src, dst)
+            dataset_repo.lfs_track(patterns=[f"**.{file_extension}"])
+        try:
+            logger.info("☁ Uploading files to the dataset hub...")
+            dataset_repo.push_to_hub(commit_message="Upload from AutoNLP CLI")
+            logger.info("✅ Successfully uploaded  the files!")
+        except OSError as err:
+            if "nothing to commit, working tree clean" in err.args[0]:
+                logger.info("❔ Files did not change since last upload!")
+                return
+            else:
+                logger.error("❌ Something went wrong when uploading the files!")
+                raise
 
         for idx, file_path in enumerate(filepaths):
             file_name = os.path.basename(file_path)
-            logger.info(f"☁ Uploading {file_name} ... [{idx + 1}/{len(filepaths)}]")
-            with open(file_path, "rb") as f:
-                files = {"file": (file_name, f)}
-                try:
-                    upload_repsonse = requests.post(url=upload_url, data=upload_data, files=files)
-                except requests.ConnectionError:
-                    logger.error(f"❌ Connection error while uploading, {file_name} has not been uploaded.")
-                    continue
-
-            if upload_repsonse.status_code != 204:
-                logger.error(
-                    f"❌ An error occurred while uploading, {file_name} has not been uploaded. Please report the following to the HuggingFace team:"
-                )
-                logger.error(f"HTTP status code: {upload_repsonse.status_code}")
-                logger.error(upload_repsonse.text)
-                continue
-
-            logger.info(f"✅ Successfully uploaded {file_name}! Adding the file to project: {self.name}")
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 📁 Registering file {file_name} into project '{file_name}'...")
             payload = {
                 "split": split,
                 "col_mapping": col_mapping,
                 "data_files": [{"fname": file_name, "username": self.user}],
             }
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
-
-        logger.info(f"✅ Successfully uploaded {len(filepaths)} files to AutoNLP!")
+            logger.info(f"[{idx + 1}/{len(filepaths)}] ✅ Success!")
 
     def train(self):
         """Starts training on the models"""
@@ -180,11 +217,11 @@ class Project:
     def __str__(self):
         header = "\n".join(
             [
-                f"AutoNLP Project (id # {self.proj_id}) - {self.status.upper()}",
-                "",
+                f"AutoNLP Project (id # {self.proj_id})",
                 "~" * 35,
                 f" • {BOLD_TAG}Name{RESET_TAG}:        {PURPLE_TAG}{self.name}{RESET_TAG}",
                 f" • {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
+                f" • {BOLD_TAG}Status{RESET_TAG}:      {BOLD_TAG}{self.status_emoji} {self.status}{RESET_TAG}",
                 f" • {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
                 f" • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
                 f" • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
@@ -202,7 +239,18 @@ class Project:
             else:
                 sorted_files = sorted(self.files, key=lambda file: file.split)  # Sort by split
                 descriptions = [str(file) for file in sorted_files]
-        printout.append("\n".join(["~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14, ""] + descriptions))
+        printout.append(
+            "\n".join(
+                [
+                    "~" * 14 + f" {BOLD_TAG}Files{RESET_TAG} " + "~" * 14,
+                    "",
+                    "Dataset ID:",
+                    f"{CYAN_TAG}{self.dataset_id}{RESET_TAG}",
+                    "",
+                ]
+                + descriptions
+            )
+        )
 
         # Training jobs information
         if self.training_jobs is None:
