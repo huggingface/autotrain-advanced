@@ -185,7 +185,7 @@ class Project:
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
-            dataset_repo.lfs_track(patterns=[f"**.{file_extension}"])
+            dataset_repo.lfs_track(patterns=[f"raw/**.{file_extension}"])
         try:
             logger.info("☁ Uploading files to the dataset hub...")
             dataset_repo.push_to_hub(commit_message="Upload from AutoNLP CLI")
