@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 from loguru import logger
 from prettytable import PrettyTable
 
+from ..utils import RED_TAG as RED
+from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand
 
 
@@ -13,13 +15,15 @@ def list_projects_command_factory(args):
 class ListProjectsCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        list_projects_parser = parser.add_parser("list_projects")
+        list_projects_parser = parser.add_parser(
+            "list_projects", description="📄 Lists AutoNLP projects belonging to the given user"
+        )
         list_projects_parser.add_argument(
             "--username",
             type=str,
             default=None,
             required=False,
-            help="Username of the owner of the projects, defaults to you.",
+            help="Username of the owner of the projects, defaults to you",
         )
         list_projects_parser.set_defaults(func=list_projects_command_factory)
 
@@ -50,4 +54,4 @@ class ListProjectsCommand(BaseAutoNLPCommand):
             )
             print(table)
         else:
-            print("🚫 No projects yet! Create one with the create_project command to see something here")
+            print(f"🚫 No projects yet! Create one with: {RED}autonlp create_project{RST}")

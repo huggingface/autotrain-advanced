@@ -13,8 +13,10 @@ def project_info_command_factory(args):
 class ProjectInfoCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        project_info_parser = parser.add_parser("project_info")
-        project_info_parser.add_argument("--name", type=str, default=None, required=True, help="Project Name")
+        project_info_parser = parser.add_parser(
+            "project_info", description="♻ Refreshes and displays information about a project"
+        )
+        project_info_parser.add_argument("--name", type=str, default=None, required=True, help="The project's name")
         project_info_parser.set_defaults(func=project_info_command_factory)
 
     def __init__(self, name: str):

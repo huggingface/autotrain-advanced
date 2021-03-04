@@ -4,6 +4,8 @@ from loguru import logger
 
 from ..languages import SUPPORTED_LANGUAGES
 from ..tasks import TASKS
+from ..utils import RED_TAG as RED
+from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand
 
 
@@ -14,13 +16,25 @@ def create_project_command_factory(args):
 class CreateProjectCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        create_project_parser = parser.add_parser("create_project")
-        create_project_parser.add_argument("--name", type=str, default=None, required=True, help="Project Name")
+        create_project_parser = parser.add_parser("create_project", description="✨ Creates a project in AutoNLP.")
+        create_project_parser.add_argument("--name", type=str, default=None, required=True, help="The project's name")
         create_project_parser.add_argument(
-            "--task", type=str, default=None, required=True, help="Project Task Type", choices=list(TASKS.keys())
+            "--task",
+            metavar="TASK",
+            type=str,
+            default=None,
+            required=True,
+            help=f"The project's task type, one of: {list(TASKS.keys())}",
+            choices=list(TASKS.keys()),
         )
         create_project_parser.add_argument(
-            "--language", type=str, default=None, required=True, help="Language", choices=SUPPORTED_LANGUAGES
+            "--language",
+            type=str,
+            default=None,
+            required=True,
+            metavar="LANGUAGE",
+            help=f"The project's language, one of: {SUPPORTED_LANGUAGES}",
+            choices=SUPPORTED_LANGUAGES,
         )
         create_project_parser.set_defaults(func=create_project_command_factory)
 
@@ -36,3 +50,4 @@ class CreateProjectCommand(BaseAutoNLPCommand):
         client = AutoNLP()
         project = client.create_project(name=self._name, task=self._task, language=self._lang)
         print(project)
+        print(f'Upload files to your project: {RED}autonlp upload --project "{project.name}"{RST}')

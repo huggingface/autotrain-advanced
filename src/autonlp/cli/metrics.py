@@ -13,8 +13,8 @@ def metrics_command_factory(args):
 class MetricsCommand(BaseAutoNLPCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        metrics_parser = parser.add_parser("metrics")
-        metrics_parser.add_argument("--project", type=str, default=None, required=True, help="Project ID")
+        metrics_parser = parser.add_parser("metrics", description="📊 Fetches models' metrics for a project in AutoNLP")
+        metrics_parser.add_argument("--project", type=str, default=None, required=True, help="The project ID")
         metrics_parser.set_defaults(func=metrics_command_factory)
 
     def __init__(self, project: str = None):
