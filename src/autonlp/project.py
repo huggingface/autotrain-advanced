@@ -13,6 +13,7 @@ from .tasks import TASKS
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
 from .validation import validate_file
 
+
 FILE_STATUS = (
     "☁ Uploaded",
     "⌚ Queued",

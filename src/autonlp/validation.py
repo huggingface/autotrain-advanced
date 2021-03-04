@@ -1,9 +1,7 @@
-from csv import Sniffer
-import os
 import json
+import os
+from csv import Sniffer
 from typing import Dict
-
-from autonlp.tasks import TASKS
 
 
 COLUMNS_PER_TASK = {
