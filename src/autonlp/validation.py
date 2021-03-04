@@ -42,10 +42,10 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
             else:
                 additional_help = ""
             raise InvalidFileError(
-                f"Incorrect delimiter '"
+                "Incorrect delimiter '"
                 + (r"\t" if actual_delimiter == "\t" else actual_delimiter)
                 + f"' for file '{file_name}'! "
-                + f"Expected delimiter is: '"
+                + "Expected delimiter is: '"
                 + (r"\t" if expected_delimiter == "\t" else actual_delimiter)
                 + "'."
                 + additional_help
@@ -75,7 +75,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
     invalid_columns_source = set(col_mapping.keys()) - set(column_names)
     if invalid_columns_source:
         raise InvalidColMappingError(
-            f"Columns "
+            "Columns "
             + ",".join([f"'{col_name}'" for col_name in invalid_columns_source])
             + " could not be found in the provided file (which has columns: "
             + ",".join([f"'{col_name}'" for col_name in column_names])
