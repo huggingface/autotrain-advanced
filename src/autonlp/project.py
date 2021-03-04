@@ -28,7 +28,7 @@ JOB_STATUS = (
     ("⌚", "queued"),
     ("🚀", "start"),
     ("⚙", "data_munging"),
-    ("🏃‍♂️", "model_training"),
+    ("🏃", "model_training"),
     ("✅", "success"),
     ("❌", "failed"),
 )
@@ -235,7 +235,7 @@ class Project:
             descriptions = ["❓ Files information unknown, update the project"]
         else:
             if len(self.files) == 0:
-                descriptions = ["🤷‍♂ No files uploaded yet!"]
+                descriptions = ["🤷 No files uploaded yet!"]
             else:
                 sorted_files = sorted(self.files, key=lambda file: file.split)  # Sort by split
                 descriptions = [str(file) for file in sorted_files]
@@ -257,7 +257,7 @@ class Project:
             jobs_str = "❓ Models information unknown, update the project"
         else:
             if len(self.training_jobs) == 0:
-                jobs_str = "🤷‍♂ No train jobs started yet!"
+                jobs_str = "🤷 No train jobs started yet!"
             else:
                 model_table = PrettyTable(["", "ID", "Status", "Creation date", "Last update"])
                 for job in sorted(self.training_jobs, key=lambda job: job.job_id):
