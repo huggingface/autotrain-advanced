@@ -12,7 +12,6 @@ from loguru import logger
 from . import config
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
-from .model import Model
 from .project import Project
 from .tasks import TASKS
 from .utils import UnauthenticatedError, http_get, http_post
@@ -121,44 +120,36 @@ class AutoNLP:
         logger.info(f"✅ Successfully loaded project: '{name}'!")
         return self._project
 
-    def get_metrics(self, model_id, project):
-        self._login_from_conf()
-        if self.username is None:
-            raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
-        if model_id is not None:
-            try:
-                json_resp = http_get(f"/models/{self.username}/{model_id}", token=self.token).json()
-            except requests.exceptions.HTTPError as err:
-                if err.response.status_code == 404:
-                    raise ValueError(f"❌ Model '{model_id}' not found.") from err
-                raise
-            _model_info = Model.from_json_resp(
-                json_resp=json_resp, token=self.token, username=self.username, model_id=model_id
-            )
-            return _model_info.print()
-        if project is not None:
-            try:
-                json_resp = http_get(path=f"/projects/{self.username}/{project}", token=self.token).json()
-            except requests.exceptions.HTTPError as err:
-                if err.response.status_code == 404:
-                    raise ValueError(f"❌ Project '{project}' not found!") from err
-                raise
-            _metrics = Metrics.from_json_resp(
-                json_resp=json_resp, token=self.token, project_name=project, username=self.username
-            )
-            return _metrics.print()
-
-    def predict(self, model_id, input_text):
+    def get_metrics(self, project):
         self._login_from_conf()
         if self.username is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
         try:
-            payload = {"username": self.username, "model_id": model_id, "input_text": input_text}
-            json_resp = http_post(path="/models/predict", payload=payload, token=self.token).json()
-            return json_resp
+            json_resp = http_get(path=f"/projects/{self.username}/{project}", token=self.token).json()
         except requests.exceptions.HTTPError as err:
             if err.response.status_code == 404:
-                raise ValueError(f"❌ Model '{model_id}' not found.") from err
+                raise ValueError(f"❌ Project '{project}' not found!") from err
+            raise
+        _metrics = Metrics.from_json_resp(
+            json_resp=json_resp, token=self.token, project_name=project, username=self.username
+        )
+        return _metrics.print()
+
+    def predict(self, project, model_id, input_text):
+        self._login_from_conf()
+        if self.username is None:
+            raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
+        try:
+            repo_name = f"autonlp-{project}-{model_id}"
+            api_url = f"https://api-inference.huggingface.co/models/{self.username}/{repo_name}"
+            payload = {"inputs": input_text}
+            payload = json.dumps(payload)
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.request("POST", api_url, headers=headers, data=payload)
+            return json.loads(response.content.decode("utf-8"))
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 404:
+                raise ValueError("❌ Model not found.") from err
             raise
 
     def list_projects(self, username: Optional[str] = None):

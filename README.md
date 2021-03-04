@@ -72,8 +72,8 @@ project.upload(
     filepaths=["/path/to/train.csv"],
     split="train",
     col_mapping={
-        "Title": "text",
-        "Conference": "target",
+        "review": "text",
+        "sentiment": "target",
     })
 
 # also upload a validation with split="valid"
@@ -93,11 +93,11 @@ print(project)
 After the training of your models has succeeded, you can retrieve its metrics and test it with the 🤗 Inference API:
 
 ```python
-client.predict(model_id=42, input_text="Measuring and Improving Consistency in Pretrained Language Models")
+client.predict(project="sentiment_detection", model_id=42, input_text="i love autonlp")
 ```
 
 or use command line:
 
 ```bash
-autonlp predict --model_id 42 --sentence "Measuring and Improving Consistency in Pretrained Language Models"
+autonlp predict --project sentiment_detection --model_id 42 --sentence "i love autonlp"
 ```
