@@ -9,11 +9,11 @@ from . import config
 FORMAT_TAG = "\033[{code}m"
 RESET_TAG = FORMAT_TAG.format(code=0)
 BOLD_TAG = FORMAT_TAG.format(code=1)
-GREEN_TAG = FORMAT_TAG.format(code=32)
-RED_TAG = FORMAT_TAG.format(code=31)
-PURPLE_TAG = FORMAT_TAG.format(code=35)
-CYAN_TAG = FORMAT_TAG.format(code=36)
-YELLOW_TAG = FORMAT_TAG.format(code=33)
+RED_TAG = FORMAT_TAG.format(code=91)
+GREEN_TAG = FORMAT_TAG.format(code=92)
+YELLOW_TAG = FORMAT_TAG.format(code=93)
+PURPLE_TAG = FORMAT_TAG.format(code=95)
+CYAN_TAG = FORMAT_TAG.format(code=96)
 
 
 class UnauthenticatedError(Exception):

@@ -11,8 +11,12 @@ from .upload import UploadCommand
 
 
 def main():
-    parser = argparse.ArgumentParser("AutoNLP CLI", usage="autonlp <command> [<args>]")
-    commands_parser = parser.add_subparsers(help="autonlp command helpers")
+    parser = argparse.ArgumentParser(
+        "AutoNLP CLI",
+        usage="autonlp <command> [<args>]",
+        epilog="For more information about a command, run: `autonlp <command> --help`",
+    )
+    commands_parser = parser.add_subparsers(help="commands")
 
     # Register commands
     LoginCommand.register_subcommand(commands_parser)

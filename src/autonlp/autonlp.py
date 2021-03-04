@@ -91,7 +91,8 @@ class AutoNLP:
         }
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
-        if json_resp["created"] is True:
+        created = json_resp["created"]
+        if created is True:
             logger.info(f"✅ Successfully created project: '{proj_name}'!")
         else:
             logger.info(f"🤙 Project '{proj_name}' already exists, it was loaded successfully.")
