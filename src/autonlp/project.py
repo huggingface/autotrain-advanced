@@ -187,6 +187,7 @@ class Project:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
 
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {dst} and column mapping...")
             validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
 
             dataset_repo.lfs_track(patterns=[f"raw/**.{file_extension}"])
