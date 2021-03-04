@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
+from autonlp.validation import InvalidColMappingError, InvalidFileError
+
 from . import BaseAutoNLPCommand
 
 
@@ -50,4 +52,15 @@ class UploadCommand(BaseAutoNLPCommand):
         logger.info(f"Mapping: {col_maps}")
 
         files = self._files.split(",")
-        project.upload(filepaths=files, split=self._split, col_mapping=col_maps)
+        try:
+            project.upload(filepaths=files, split=self._split, col_mapping=col_maps)
+        except InvalidFileError as err:
+            logger.error("❌ Sorry, AutoNLP is not able to process the files you want to upload")
+            logger.error("Details:")
+            for line in str(err).splitlines():
+                logger.error(line)
+        except InvalidColMappingError as err:
+            logger.error("❌ The column mapping you provided is incorrect!")
+            logger.error("Details:")
+            for line in str(err).splitlines():
+                logger.error(line)

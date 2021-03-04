@@ -11,7 +11,7 @@ from prettytable import PrettyTable
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
-
+from .validation import validate_file
 
 FILE_STATUS = (
     "☁ Uploaded",
@@ -185,6 +185,9 @@ class Project:
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
+
+            validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
+
             dataset_repo.lfs_track(patterns=[f"raw/**.{file_extension}"])
         try:
             logger.info("☁ Uploading files to the dataset hub...")
