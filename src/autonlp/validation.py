@@ -22,15 +22,16 @@ class InvalidColMappingError(ValueError):
 def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
     file_name = os.path.basename(path)
     if file_ext in ("csv", "tsv"):
+        if task == "entity_extraction":
+            raise InvalidFileError(
+                f"AutoNLP does not support '{file_ext}' files for entity_extraction tasks. Use .json or .jsonl files!"
+            )
         sniffer = Sniffer()
         with open(path, encoding="utf-8") as f:
             sample = "\n".join([f.readline() for _ in range(5)])
 
         # Validate delimiter
-        if task == "entity_extraction":
-            expected_delimiter = "\t"
-        else:
-            expected_delimiter = "\t" if file_ext == "tsv" else ","
+        expected_delimiter = "\t" if file_ext == "tsv" else ","
         actual_delimiter = sniffer.sniff(sample, delimiters=",;\t").delimiter
 
         if actual_delimiter != expected_delimiter:
