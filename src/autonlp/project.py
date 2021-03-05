@@ -190,23 +190,7 @@ class Project:
             logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {dst} and column mapping...")
             validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
 
-            LFS_PATTERNS = [
-                "raw/*.bin.*",
-                "raw/*.lfs.*",
-                "raw/*.bin",
-                "raw/*.h5",
-                "raw/*.tflite",
-                "raw/*.tar.gz",
-                "raw/*.ot",
-                "raw/*.onnx",
-                "raw/*.pt",
-                "raw/*.csv",
-                "raw/*.tsv",
-                "raw/*.json",
-                "raw/*.jsonl",
-            ]
-
-            dataset_repo.lfs_track(patterns=LFS_PATTERNS)
+            dataset_repo.lfs_track(patterns=[f"raw/*.{file_extension}"])
 
         dataset_repo.git_pull()
 
