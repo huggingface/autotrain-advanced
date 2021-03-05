@@ -15,8 +15,11 @@ Supported languages:
 - English: en
 - French: fr
 - German: de
-- Spanish: es
 - Finnish: fi
+- Hindi: hi
+- Spanish: es
+- Chinese: zh
+- Dutch: nl
 
 Supported tasks:
 
@@ -100,4 +103,13 @@ or use command line:
 
 ```bash
 autonlp predict --project sentiment_detection --model_id 42 --sentence "i love autonlp"
+```
+
+## How much do I have to pay?
+
+It's difficult to provide an exact answer to this question, however, we have an estimator that might help you.
+Just enter the number of samples and language and you will get an estimate. Please keep in mind that this is just an estimate and can easily over-estimate or under-estimate
+
+```bash
+autonlp estimate --num_train_samples 500000 --language en
 ```
