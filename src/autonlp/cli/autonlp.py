@@ -1,6 +1,7 @@
 import argparse
 
 from .create_project import CreateProjectCommand
+from .estimator import EstimatorCommand
 from .list_projects import ListProjectsCommand
 from .login import LoginCommand
 from .metrics import MetricsCommand
@@ -27,6 +28,7 @@ def main():
     MetricsCommand.register_subcommand(commands_parser)
     ListProjectsCommand.register_subcommand(commands_parser)
     PredictCommand.register_subcommand(commands_parser)
+    EstimatorCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
