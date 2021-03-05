@@ -28,7 +28,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
             )
         sniffer = Sniffer()
         with open(path, encoding="utf-8") as f:
-            sample = "\n".join([f.readline() for _ in range(5)])
+            sample = "\n".join([f.readline() for _ in range(500)])
 
         # Validate delimiter
         expected_delimiter = "\t" if file_ext == "tsv" else ","
