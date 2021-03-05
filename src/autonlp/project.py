@@ -191,19 +191,19 @@ class Project:
             validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
 
             LFS_PATTERNS = [
-                "*.bin.*",
-                "*.lfs.*",
-                "*.bin",
-                "*.h5",
-                "*.tflite",
-                "*.tar.gz",
-                "*.ot",
-                "*.onnx",
-                "*.pt",
-                "*.csv",
-                "*.tsv",
-                "*.json",
-                "*.jsonl",
+                "raw/*.bin.*",
+                "raw/*.lfs.*",
+                "raw/*.bin",
+                "raw/*.h5",
+                "raw/*.tflite",
+                "raw/*.tar.gz",
+                "raw/*.ot",
+                "raw/*.onnx",
+                "raw/*.pt",
+                "raw/*.csv",
+                "raw/*.tsv",
+                "raw/*.json",
+                "raw/*.jsonl",
             ]
 
             dataset_repo.lfs_track(patterns=LFS_PATTERNS)
