@@ -190,7 +190,10 @@ class Project:
             logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {dst} and column mapping...")
             validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
 
-            dataset_repo.lfs_track(patterns=[f"raw/**.{file_extension}"])
+            dataset_repo.lfs_track(patterns=[f"raw/*.{file_extension}"])
+
+        dataset_repo.git_pull()
+
         try:
             logger.info("☁ Uploading files to the dataset hub...")
             dataset_repo.push_to_hub(commit_message="Upload from AutoNLP CLI")
@@ -198,10 +201,10 @@ class Project:
         except OSError as err:
             if "nothing to commit, working tree clean" in err.args[0]:
                 logger.info("❔ Files did not change since last upload!")
+                dataset_repo.git_push()
                 return
-            else:
-                logger.error("❌ Something went wrong when uploading the files!")
-                raise
+            logger.error("❌ Something went wrong when uploading the files!")
+            raise
 
         for idx, file_path in enumerate(filepaths):
             file_name = os.path.basename(file_path)
