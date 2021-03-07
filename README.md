@@ -7,6 +7,8 @@ AutoNLP: faster and easier training and deployments of SOTA NLP models
 You can Install AutoNLP python package via PIP. Please note you will need python >= 3.7 for AutoNLP to work properly.
 
     pip install autonlp
+    
+Please make sure that you have git lfs installed. Check out the instructions here: https://github.com/git-lfs/git-lfs/wiki/Installation
 
 ## Quick start - in the terminal
 
