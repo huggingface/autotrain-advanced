@@ -1,8 +1,3 @@
-.. AutoNLP documentation master file, created by
-   sphinx-quickstart on Mon Mar  8 14:10:07 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 🤗 AutoNLP
 ===================================
 
@@ -22,14 +17,35 @@ Main features:
  - Immediate deployment after training
  - CLI and Python API available
 
+Supported Tasks
+----------------------------------------------------------------------------------------------------
+Currently, AutoNLP supports the following tasks:
+
+- Binary classification: one sentence has one target associated with it and there are two unique targets in the dataset
+- Multi-class classification: one sentence has one target associated with it and there are more than two unique targets in the dataset
+- Entity extraction: also known as named entity recognition or token classification. This task consists of one sentence and in the sentence, each token is associated to a particular label
+
+Supported Languages
+----------------------------------------------------------------------------------------------------
+Currently, AutoNLP supports the following languages:
+
+- English: en
+- French: fr
+- German: de
+- Finnish: fi
+- Hindi: hi
+- Spanish: es
+- Chinese: zh
+- Dutch: nl
+
+If the language you want to use is not listed, please create an issue here: https://github.com/huggingface/autonlp/issues and we will try our best to add the languages you need.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Getting Started
 
    installation
-   supported_languages
-   supported_tasks
    binary_classification
    multi_class_classification
    entity_extraction
