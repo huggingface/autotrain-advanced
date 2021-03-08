@@ -1,6 +1,5 @@
 import os
 import shutil
-import stat
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -47,18 +46,6 @@ PROJECT_STATUS = (
 
 
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
-
-
-def force_rm_tree(path):
-    def error_callback(_func, path, _exc):
-        os.chmod(path, stat.S_IWRITE)
-        if os.path.isdir(path):
-            shutil.rmtree(path, onerror=error_callback)
-            os.rmdir(path)
-        else:
-            os.remove(path)
-
-    shutil.rmtree(path, onerror=error_callback)
 
 
 @dataclass
@@ -181,7 +168,7 @@ class Project:
             if os.path.isdir(os.path.join(local_dataset_dir, "git")):
                 clone_from = None
             else:
-                force_rm_tree(local_dataset_dir)
+                shutil.rmtree(local_dataset_dir)
                 clone_from = "https://huggingface.co/datasets/" + self.dataset_id
         else:
             clone_from = "https://huggingface.co/datasets/" + self.dataset_id
