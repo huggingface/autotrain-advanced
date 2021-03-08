@@ -33,3 +33,4 @@ function deploy_doc(){
 }
 
 deploy_doc "main" main
+deploy_doc "main"
