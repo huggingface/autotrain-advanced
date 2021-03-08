@@ -165,7 +165,11 @@ class Project:
         """Uploads files to the project"""
         local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
         if os.path.exists(local_dataset_dir):
-            clone_from = None
+            if os.path.isdir(os.path.join(local_dataset_dir, "git")):
+                clone_from = None
+            else:
+                shutil.rmtree(local_dataset_dir)
+                clone_from = "https://huggingface.co/datasets/" + self.dataset_id
         else:
             clone_from = "https://huggingface.co/datasets/" + self.dataset_id
         dataset_repo = Repository(
