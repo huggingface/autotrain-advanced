@@ -1,4 +1,4 @@
-# AutoNLP
+# 🤗 AutoNLP
 
 AutoNLP: faster and easier training and deployments of SOTA NLP models
 
