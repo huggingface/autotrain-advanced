@@ -56,4 +56,4 @@ def setup(app):
     app.add_css_file("css/huggingface.css")
     app.add_css_file("css/code-snippets.css")
     app.add_css_file("css/s4defs-roles.css")
-    app.add_js_file("js/custom.js")
+    # app.add_js_file("js/custom.js")
