@@ -29,6 +29,9 @@ Supported tasks:
 - multi_class_classification
 - entity_extraction
 
+Note:
+AutoNLP is currently in beta release. To participate in the beta, just go to https://huggingface.co/autonlp and apply 🤗
+
 First, create a project:
 
 ```bash
@@ -89,13 +92,13 @@ Start the training of your models:
 project.train()
 ```
 
-To monitor the progressn of your training:
+To monitor the progress of your training:
 ```python
 project.refresh()
 print(project)
 ```
 
-After the training of your models has succeeded, you can retrieve its metrics and test it with the 🤗 Inference API:
+After the training of your models has succeeded, you can retrieve the metrics for each model and test them with the 🤗 Inference API:
 
 ```python
 client.predict(project="sentiment_detection", model_id=42, input_text="i love autonlp")
@@ -110,7 +113,7 @@ autonlp predict --project sentiment_detection --model_id 42 --sentence "i love a
 ## How much do I have to pay?
 
 It's difficult to provide an exact answer to this question, however, we have an estimator that might help you.
-Just enter the number of samples and language and you will get an estimate. Please keep in mind that this is just an estimate and can easily over-estimate or under-estimate
+Just enter the number of samples and language and you will get an estimate. Please keep in mind that this is just an estimate and can easily over-estimate or under-estimate (we are actively working on this).
 
 ```bash
 autonlp estimate --num_train_samples 500000 --language en
