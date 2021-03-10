@@ -8,6 +8,7 @@ COLUMNS_PER_TASK = {
     "binary_classification": ("text", "target"),
     "multi_class_classification": ("text", "target"),
     "entity_extraction": ("tokens", "tags"),
+    "single_column_regression": ("text", "target"),
 }
 
 
