@@ -22,6 +22,7 @@ Supported languages:
 - Spanish: es
 - Chinese: zh
 - Dutch: nl
+- Turkish: tr
 
 Supported tasks:
 

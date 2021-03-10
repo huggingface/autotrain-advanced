@@ -27,7 +27,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
                 f"AutoNLP does not support '{file_ext}' files for entity_extraction tasks. Use .json or .jsonl files!"
             )
         sniffer = Sniffer()
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding="utf-8", errors="replace") as f:
             sample = "\n".join([f.readline() for _ in range(500)])
 
         # Validate delimiter

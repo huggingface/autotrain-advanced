@@ -1,1 +1,1 @@
-SUPPORTED_LANGUAGES = ["de", "en", "es", "fi", "fr", "hi", "nl", "zh"]
+SUPPORTED_LANGUAGES = ["de", "en", "es", "fi", "fr", "hi", "nl", "tr", "zh"]
