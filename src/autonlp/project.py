@@ -2,7 +2,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from huggingface_hub import Repository
 from loguru import logger
@@ -15,14 +15,14 @@ from .validation import validate_file
 
 
 FILE_STATUS = (
-    "☁ Uploaded",
-    "⌚ Queued",
-    "⚙ In Progress...",
-    "✅ Success!",
-    "❌ Failed: file not found",
-    "❌ Failed: unsupported file type",
-    "❌ Failed: server error",
-    "❌ Invalid column mapping, please fix it and re-upload the file.",
+    ("☁", "Uploaded"),
+    ("⌚", "Queued"),
+    ("⚙", "In Progress..."),
+    ("✅", "Success!"),
+    ("❌", "Failed: file not found"),
+    ("❌", "Failed: unsupported file type"),
+    ("❌", "Failed: server error"),
+    ("❌", "Invalid column mapping, please fix it and re-upload the file."),
 )
 
 JOB_STATUS = (
@@ -37,15 +37,52 @@ JOB_STATUS = (
 PROJECT_STATUS = (
     ("✨", "Created"),
     ("🚀", "Data processing started"),
-    ("✅", "Data processing successful"),
+    ("⚙", "Preparing your models..."),
     ("❌", "Failed to download data files from the huggingface hub"),
     ("❌", "Missing 'train' or 'valid' split in data files"),
     ("❌", "Failed to process data files"),
     ("❌", "Failed to upload processed data files to the huggingface hub"),
+    ("❌", "Failed to prepare your models for training"),
+    ("✅", "Successfully queued your models for training!"),
 )
 
 
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
+
+
+def get_task(task_id: int) -> str:
+    for key, value in TASKS.items():
+        if value == task_id:
+            return key
+    return "❌ Unsupported task! Please update autonlp"
+
+
+def get_file_status(status_id: int) -> Tuple[str, str]:
+    try:
+        return FILE_STATUS[status_id - 1]
+    except IndexError:
+        return "❓", "Unhandled status! Please update autonlp"
+
+
+def get_job_status(status_id: int) -> Tuple[str, str]:
+    try:
+        return JOB_STATUS[status_id - 1]
+    except IndexError:
+        return "❓", "Unhandled status! Please update autonlp"
+
+
+def get_project_status(status_id: int) -> Tuple[str, str]:
+    try:
+        return PROJECT_STATUS[status_id - 1]
+    except IndexError:
+        return "❓", "Unhandled status! Please update autonlp"
+
+
+def get_split(split_id: int) -> str:
+    try:
+        return SPLITS[split_id - 1]
+    except IndexError:
+        return "❓ Unhandled split! Please update autonlp"
 
 
 @dataclass
@@ -60,10 +97,11 @@ class TrainingJob:
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
+        status_emoji, status = get_job_status(json_resp["status"])
         return cls(
             job_id=json_resp["id"],
-            status_emoji=JOB_STATUS[json_resp["status"] - 1][0],
-            status=JOB_STATUS[json_resp["status"] - 1][1],
+            status_emoji=status_emoji,
+            status=status,
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
         )
@@ -93,11 +131,12 @@ class UploadedFile:
 
     @classmethod
     def from_json_resp(cls, json_resp: dict):
+        file_status = " ".join(get_file_status(json_resp["download_status"]))
         return cls(
             file_id=json_resp["data_file_id"],
             filename=json_resp["fname"],
-            processing_status=FILE_STATUS[json_resp["download_status"] - 1],
-            split=SPLITS[json_resp["split"] - 1],
+            processing_status=file_status,
+            split=get_split(json_resp["split"]),
             col_mapping=json_resp["col_mapping"],
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
@@ -135,13 +174,15 @@ class Project:
     @classmethod
     def from_json_resp(cls, json_resp: dict, token: str):
         """Build a Project from the API response, JSON-encoded"""
+        status_emoji, status = get_project_status(json_resp["status"])
+        task = get_task(json_resp["task"])
         return cls(
             proj_id=json_resp["id"],
             name=json_resp["proj_name"],
             user=json_resp["username"],
-            task=list(filter(lambda key: TASKS[key] == json_resp["task"], TASKS.keys()))[0],
-            status_emoji=PROJECT_STATUS[json_resp["status"] - 1][0],
-            status=PROJECT_STATUS[json_resp["status"] - 1][1],
+            task=task,
+            status_emoji=status_emoji,
+            status=status,
             created_at=datetime.fromisoformat(json_resp["created_at"]),
             updated_at=datetime.fromisoformat(json_resp["updated_at"]),
             dataset_id=json_resp["dataset_id"],
