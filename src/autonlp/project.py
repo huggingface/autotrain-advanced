@@ -170,6 +170,7 @@ class Project:
     dataset_id: str
     files: Optional[List[UploadedFile]] = None
     training_jobs: Optional[List] = None
+    usd_cost: Optional[float] = None
 
     @classmethod
     def from_json_resp(cls, json_resp: dict, token: str):
@@ -201,6 +202,10 @@ class Project:
         resp = http_get(path=f"/projects/{self.proj_id}/jobs", token=self._token)
         json_jobs = resp.json()
         self.training_jobs = [TrainingJob.from_json_resp(job) for job in json_jobs]
+
+        logger.info("🔄 Refreshing cost information...")
+        resp = http_get(path=f"/zeus/cost/{self.proj_id}", token=self._token)
+        self.usd_cost = resp.json().get("cost_usd")
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
@@ -278,7 +283,9 @@ class Project:
                 f" • {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
                 f" • {BOLD_TAG}Created at{RESET_TAG}:  {self.created_at.strftime('%Y-%m-%d %H:%M Z')}",
                 f" • {BOLD_TAG}Last update{RESET_TAG}: {self.updated_at.strftime('%Y-%m-%d %H:%M Z')}",
-                "",
+                f"\n💰 Project current cost: {GREEN_TAG}USD {self.usd_cost:.2f}{RESET_TAG}\n"
+                if self.usd_cost is not None
+                else "",
             ]
         )
         printout = [header]
