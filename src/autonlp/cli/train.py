@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from loguru import logger
 
 from ..project import TrainingCancelledError
+from ..utils import CYAN_TAG as CYN
 from ..utils import RED_TAG as RED
 from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand
@@ -40,4 +41,6 @@ class TrainCommand(BaseAutoNLPCommand):
                 f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name}{RST}"
             )
         except TrainingCancelledError:
-            print("☹ Training cancelled! Tell us why on GitHub: https://github.com/huggingface/autonlp/issues/new")
+            print(
+                f"\n☹ Training cancelled! Tell us why on GitHub: {CYN}https://github.com/huggingface/autonlp/issues/new{RST}"
+            )
