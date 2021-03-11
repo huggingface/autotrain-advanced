@@ -1,6 +1,5 @@
 import os
 import shutil
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -50,6 +49,10 @@ PROJECT_STATUS = (
 
 
 SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
+
+
+class TrainingCancelledError(Exception):
+    pass
 
 
 def get_task(task_id: int) -> str:
@@ -277,8 +280,7 @@ class Project:
         if not noprompt:
             answer = input(f"Enter `{BOLD_TAG}yes{RESET_TAG}` to proceed with the training:  ")
             if answer.lower() != "yes":
-                print("☹ Training cancelled!\n")
-                sys.exit(0)
+                raise TrainingCancelledError
 
         http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
         logger.info("🔥🔥 Training started!")

@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
+from src.autonlp.project import TrainingCancelledError
+
 from ..utils import RED_TAG as RED
 from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand
@@ -33,5 +35,10 @@ class TrainCommand(BaseAutoNLPCommand):
         except ValueError:
             logger.error(f"Project {self._name} not found! You can create it using the create_project command.")
             sys.exit(1)
-        project.train()
-        print(f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name}{RST}")
+        try:
+            project.train()
+            print(
+                f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name}{RST}"
+            )
+        except TrainingCancelledError:
+            print("☹ Training cancelled!")
