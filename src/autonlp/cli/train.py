@@ -40,4 +40,4 @@ class TrainCommand(BaseAutoNLPCommand):
                 f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name}{RST}"
             )
         except TrainingCancelledError:
-            print("☹ Training cancelled!")
+            print("☹ Training cancelled! Tell us why on GitHub: https://github.com/huggingface/autonlp/issues/new")
