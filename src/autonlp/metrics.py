@@ -39,6 +39,6 @@ class Metrics:
             print(print_logs)
             print("")
             resp = http_get(path=f"/zeus/cost/{self.project_id}", token=self._token, suppress_logs=True).json()
-            print(f"Total cost incurred: {resp.get('cost_usd')}")
+            print(f"Total cost incurred: USD {resp.get('cost_usd'):.2f}")
         else:
             print("No models have finished training yet!")
