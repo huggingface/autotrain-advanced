@@ -273,8 +273,11 @@ class Project:
             raise
 
         print(
+            "\n"
             "💰 The cost for training this project should range from:\n"
-            f"  {BOLD_TAG}USD {cost_estimate['cost_min']} to USD {cost_estimate['cost_max']}.{RESET_TAG}\n"
+            f"  {BOLD_TAG}USD {cost_estimate['cost_min']} to USD {cost_estimate['cost_max']}.{RESET_TAG}\n\n"
+            f"⚠ This is a {BOLD_TAG}rough estimate{RESET_TAG} based on the {BOLD_TAG}number of lines{RESET_TAG} in the files you uploaded.\n"
+            "  The actual cost of training can be lower or higher depending on the type of your data!\n"
         )
 
         if not noprompt:
