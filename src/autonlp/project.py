@@ -1,9 +1,11 @@
 import os
 import shutil
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
+import requests
 from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
@@ -204,22 +206,8 @@ class Project:
 
     def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
         """Uploads files to the project"""
-        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
-        if os.path.exists(local_dataset_dir):
-            if os.path.isdir(os.path.join(local_dataset_dir, "git")):
-                clone_from = None
-            else:
-                shutil.rmtree(local_dataset_dir)
-                clone_from = "https://huggingface.co/datasets/" + self.dataset_id
-        else:
-            clone_from = "https://huggingface.co/datasets/" + self.dataset_id
-        dataset_repo = Repository(
-            local_dir=local_dataset_dir,
-            clone_from=clone_from,
-            use_auth_token=self._token,
-        )
-        dataset_repo.git_pull()
-
+        dataset_repo = self._clone_dataset_repo()
+        local_dataset_dir = dataset_repo.local_dir
         for idx, file_path in enumerate(filepaths):
             if not os.path.isfile(file_path):
                 logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
@@ -262,10 +250,56 @@ class Project:
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
             logger.info(f"[{idx + 1}/{len(filepaths)}] ✅ Success!")
 
-    def train(self):
+    def train(self, noprompt=False):
         """Starts training on the models"""
+        logger.info("🔎 Running an estimate of the training cost...")
+        dataset_repo = self._clone_dataset_repo()
+        local_dataset_dir = dataset_repo.local_dir
+        total_number_of_lines = 0
+
+        for root, dirs, files in os.walk(os.path.join(local_dataset_dir, "raw")):
+            # Efficient count of lines
+            total_number_of_lines += sum(sum(1 for _ in open(file_path, "rb")) for file_path in files)
+
+        try:
+            payload = {"username": self.user, "language": self.language, "num_train_samples": total_number_of_lines}
+            cost_estimate = http_post(path="/zeus/estimate", token=self._token, payload=payload).json()
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 404:
+                raise ValueError("❌ Unable to estimate") from err
+            raise
+
+        print(
+            "💰 The cost for training this project should range from:\n"
+            f"  {BOLD_TAG}USD {cost_estimate['cost_min']} to USD {cost_estimate['cost_max']}.{RESET_TAG}\n"
+        )
+
+        if not noprompt:
+            answer = input(f"Enter `{BOLD_TAG}yes{RESET_TAG}` to proceed with the training:  ")
+            if answer.lower() != "yes":
+                print("☹ Training cancelled!\n")
+                sys.exit(0)
+
         http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
         logger.info("🔥🔥 Training started!")
+
+    def _clone_dataset_repo(self) -> Repository:
+        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
+        if os.path.exists(local_dataset_dir):
+            if os.path.isdir(os.path.join(local_dataset_dir, ".git")):
+                clone_from = None
+            else:
+                shutil.rmtree(local_dataset_dir)
+                clone_from = "https://huggingface.co/datasets/" + self.dataset_id
+        else:
+            clone_from = "https://huggingface.co/datasets/" + self.dataset_id
+        dataset_repo = Repository(
+            local_dir=local_dataset_dir,
+            clone_from=clone_from,
+            use_auth_token=self._token,
+        )
+        dataset_repo.git_pull()
+        return dataset_repo
 
     def __str__(self):
         header = "\n".join(
