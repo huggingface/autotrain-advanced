@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
-from src.autonlp.project import TrainingCancelledError
-
+from ..project import TrainingCancelledError
 from ..utils import RED_TAG as RED
 from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand

@@ -261,9 +261,9 @@ class Project:
         total_number_of_lines = 0
 
         for root, dirs, files in os.walk(os.path.join(local_dataset_dir, "raw")):
-            # Efficient count of lines
-            total_number_of_lines += sum(sum(1 for _ in open(file_path, "rb")) for file_path in files)
-
+            for file_path in files:
+                with open(os.path.join(root, file_path), "r", encoding="utf-8", errors="ignore") as f:
+                    total_number_of_lines += sum(1 for line in f)
         try:
             payload = {"username": self.user, "language": self.language, "num_train_samples": total_number_of_lines}
             cost_estimate = http_post(path="/zeus/estimate", token=self._token, payload=payload).json()
