@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from prettytable import PrettyTable
 
-from .utils import BOLD_TAG, RESET_TAG, http_post, http_get
+from .utils import BOLD_TAG, RESET_TAG, http_get, http_post
 
 
 @dataclass
