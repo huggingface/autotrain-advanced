@@ -165,15 +165,9 @@ class AutoNLP:
         json_resp = http_get(path=f"/projects/list?username={username}", token=self.token).json()
         return [Project.from_json_resp(elt, token=self.token) for elt in json_resp]
 
-    def estimate(self, num_train_samples, language):
+    def estimate(self, num_train_samples: int, proj_name: str) -> dict:
         self._login_from_conf()
         if self.username is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
-        try:
-            payload = {"username": self.username, "language": language, "num_train_samples": num_train_samples}
-            json_resp = http_post(path="/zeus/estimate", token=self.token, payload=payload).json()
-            return json_resp
-        except requests.exceptions.HTTPError as err:
-            if err.response.status_code == 404:
-                raise ValueError("❌ Unable to estimate") from err
-            raise
+        project = self.get_project(name=proj_name)
+        return project.estimate_cost(num_train_samples)
