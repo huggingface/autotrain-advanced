@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
-from ..languages import SUPPORTED_LANGUAGES
 from . import BaseAutoNLPCommand
 
 
@@ -17,32 +16,25 @@ class EstimatorCommand(BaseAutoNLPCommand):
         estimator_parser = parser.add_parser(
             "estimate", description="💰 Fetches estimated cost for a project in AutoNLP"
         )
+        estimator_parser.add_argument("--num_train_samples", type=int, help="Number of training samples")
         estimator_parser.add_argument(
-            "--num_train_samples", type=int, default=None, required=True, help="Number of training samples"
-        )
-        estimator_parser.add_argument(
-            "--language",
+            "--project_name",
             type=str,
-            default=None,
-            required=True,
-            metavar="LANGUAGE",
-            help=f"The project's language, one of: {SUPPORTED_LANGUAGES}",
-            choices=SUPPORTED_LANGUAGES,
+            help="The project's name",
         )
         estimator_parser.set_defaults(func=estimator_command_factory)
 
-    def __init__(self, num_train_samples: int, language: str):
+    def __init__(self, num_train_samples: int, proj_name: str):
         self._num_train_samples = num_train_samples
-        self._language = language
+        self._proj_name = proj_name
 
     def run(self):
         from ..autonlp import AutoNLP
 
         client = AutoNLP()
         try:
-            resp = client.estimate(num_train_samples=self._num_train_samples, language=self._language)
+            resp = client.estimate(num_train_samples=self._num_train_samples, proj_name=self._proj_name)
             print(f"Cost range: {resp['cost_min']} - {resp['cost_max']} USD")
-            print("NOTE: This is only an estimate and actual cost may vary!")
         except ValueError:
             logger.error("Something bad happened. Couldn't make the estimate.")
             sys.exit(1)

@@ -260,7 +260,7 @@ class Project:
 
     def train(self, noprompt=False):
         """Starts training on the models"""
-        logger.info("🔎 Running an estimate of the training cost...")
+        logger.info("🔎 Calculating a cost estimate for the training...")
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
         total_number_of_lines = 0
@@ -269,20 +269,13 @@ class Project:
             for file_path in files:
                 with open(os.path.join(root, file_path), "r", encoding="utf-8", errors="ignore") as f:
                     total_number_of_lines += sum(1 for line in f)
-        try:
-            payload = {"username": self.user, "language": self.language, "num_train_samples": total_number_of_lines}
-            cost_estimate = http_post(path="/zeus/estimate", token=self._token, payload=payload).json()
-        except requests.exceptions.HTTPError as err:
-            if err.response.status_code == 404:
-                raise ValueError("❌ Unable to estimate") from err
-            raise
+        cost_estimate = self.estimate_cost(nb_samples=total_number_of_lines)
 
         print(
             "\n"
-            "💰 The cost for training this project should range from:\n"
-            f"  {BOLD_TAG}USD {cost_estimate['cost_min']} to USD {cost_estimate['cost_max']}.{RESET_TAG}\n\n"
-            f"⚠ This is a {BOLD_TAG}rough estimate{RESET_TAG} based on the {BOLD_TAG}number of lines{RESET_TAG} in the files you uploaded.\n"
-            "  The actual cost of training can be lower or higher!\n"
+            "💰 The training cost for this project will be in this range:\n"
+            f" {BOLD_TAG}USD {cost_estimate['cost_min']} to USD {cost_estimate['cost_max']}{RESET_TAG}\n\n"
+            " Once training is complete, we will send you an email invoice for the actual training cost within that range.\n"
         )
 
         if not noprompt:
@@ -292,6 +285,16 @@ class Project:
 
         http_get(path=f"/projects/{self.proj_id}/data/start_process", token=self._token)
         logger.info("🔥🔥 Training started!")
+
+    def estimate_cost(self, nb_samples: int) -> Dict[str, float]:
+        try:
+            payload = {"num_train_samples": nb_samples}
+            cost_estimate = http_post(path=f"/zeus/estimate/{self.proj_id}", token=self._token, payload=payload).json()
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 404:
+                raise ValueError("❌ Unable to estimate") from err
+            raise
+        return cost_estimate
 
     def _clone_dataset_repo(self) -> Repository:
         local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
