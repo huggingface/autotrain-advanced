@@ -24,6 +24,7 @@ FILE_STATUS = (
     ("❌", "Failed: unsupported file type"),
     ("❌", "Failed: server error"),
     ("❌", "Invalid column mapping, please fix it and re-upload the file."),
+    ("❌", "Invalid file"),
 )
 
 JOB_STATUS = (
