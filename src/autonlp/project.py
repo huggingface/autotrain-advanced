@@ -245,7 +245,7 @@ class Project:
             os.makedirs(os.path.dirname(audio_dst_dir), exist_ok=True)
             for audio_file_path in tqdm(audio_files, desc=f"📦 Copying audio files to {audio_dst_dir}"):
                 audio_file_name = os.path.basename(audio_file_path)
-                shutil.copyfile(audio_file_path, os.path.join(audio_dst_dir, audio_file_name))
+                shutil.copyfile(audio_file_path, audio_dst_dir)
 
         for idx, file_path in enumerate(filepaths):
             if not os.path.isfile(file_path):
