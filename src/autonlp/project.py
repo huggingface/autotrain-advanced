@@ -242,7 +242,7 @@ class Project:
             logger.info(f"  Found {len(audio_files)} audio files")
 
             audio_dst_dir = os.path.join(local_dataset_dir, "raw", "audio")
-            os.makedirs(os.path.dirname(audio_dst_dir), exist_ok=True)
+            os.makedirs(audio_dst_dir, exist_ok=True)
             for audio_file_path in tqdm(audio_files, desc=f"📦 Copying audio files to {audio_dst_dir}"):
                 audio_dst = os.path.join(audio_dst_dir, os.path.basename(audio_file_path))
                 shutil.copyfile(audio_file_path, audio_dst)
