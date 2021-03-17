@@ -260,7 +260,13 @@ class Project:
             shutil.copyfile(src, dst)
 
             logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {dst} and column mapping...")
-            validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
+            validate_file(
+                path=dst,
+                task=self.task,
+                file_ext=file_extension,
+                col_mapping=col_mapping,
+                local_repo_dir=dataset_repo.local_dir,
+            )
 
             dataset_repo.lfs_track(patterns=[f"raw/*.{file_extension}"])
 
