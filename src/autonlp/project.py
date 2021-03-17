@@ -297,15 +297,18 @@ class Project:
 
     def train(self, noprompt=False):
         """Starts training on the models"""
+        self.refresh()
         logger.info("🔎 Calculating a cost estimate for the training...")
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
         total_number_of_lines = 0
 
-        for root, dirs, files in os.walk(os.path.join(local_dataset_dir, "raw")):
-            for file_path in files:
-                with open(os.path.join(root, file_path), "r", encoding="utf-8", errors="ignore") as f:
-                    total_number_of_lines += sum(1 for line in f)
+        for file in self.files:
+            with open(
+                os.path.join(local_dataset_dir, "raw", file.filename), "r", encoding="utf-8", errors="ignore"
+            ) as f:
+                total_number_of_lines += sum(1 for line in f)
+
         cost_estimate = self.estimate_cost(nb_samples=total_number_of_lines)
 
         print(
