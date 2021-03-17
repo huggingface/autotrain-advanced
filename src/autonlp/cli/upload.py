@@ -42,11 +42,21 @@ Expected columns for AutoNLP tasks:
     {BLD}col_name2{RST} -> {BLD}tags{RST}    (The associated tags)
     Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}tokens{RST},{GRN}col_name2{RST}:{CYN}tags{RST}'
 
+{BLD}`speech_recognition`{RST}:
+    {BLD}col_name1{RST} -> {BLD}path{RST}  (The path to the audio file, only the file name matters)
+    {BLD}col_name2{RST} -> {BLD}text{RST}  (The matching speech transcription)
+    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}path{RST},{GRN}col_name2{RST}:{CYN}text{RST}'
 """
 
 
 def upload_command_factory(args):
-    return UploadCommand(args.project, args.split, args.col_mapping, args.files)
+    return UploadCommand(
+        name=args.project,
+        split=args.split,
+        col_mapping=args.col_mapping,
+        files=args.files,
+        path_to_audio=args.path_to_audio,
+    )
 
 
 class UploadCommand(BaseAutoNLPCommand):
