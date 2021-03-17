@@ -250,7 +250,7 @@ class Project:
         for idx, file_path in enumerate(filepaths):
             if not os.path.isfile(file_path):
                 logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
-                continue
+                raise FileNotFoundError(f"'{file_path}' does not exist or is not a file!")
             file_name = os.path.basename(file_path)
             file_extension = file_name.split(".")[-1]
             src = os.path.expanduser(file_path)
