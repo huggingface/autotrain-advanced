@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import requests
 from loguru import logger
@@ -73,28 +73,5 @@ def http_post(
     except requests.exceptions.HTTPError as err:
         if not suppress_logs:
             logger.error(f"❌ Operation failed! Details: {err.response.text}")
-        raise
-    return response
-
-
-def http_upload_files(
-    path: str, token: str, data: dict, files_info: List, domain: str = config.HF_AUTONLP_BACKEND_API, **kwargs
-) -> requests.Response:
-    """Uploads files to AutoNLP"""
-    try:
-        response = requests.post(
-            url=domain + path,
-            data=data,
-            files=files_info,
-            headers=get_auth_headers(token),
-            allow_redirects=True,
-            **kwargs,
-        )
-    except requests.exceptions.ConnectionError:
-        raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        logger.error(f"❌ Operation failed! Details: {err.response.text}")
         raise
     return response
