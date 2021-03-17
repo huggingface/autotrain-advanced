@@ -1,5 +1,6 @@
 import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
+from typing import Optional
 
 from loguru import logger
 
@@ -79,13 +80,24 @@ class UploadCommand(BaseAutoNLPCommand):
             required=True,
             help=COL_MAPPING_ARG_HELP,
         )
+        upload_parser.add_argument(
+            "--path_to_audio",
+            type=str,
+            default=None,
+            required=False,
+            help=(
+                "[Optional] Specific to the speech recognition task. "
+                f"Path to a {BLD}directory{RST} containing audio files"
+            ),
+        )
         upload_parser.set_defaults(func=upload_command_factory)
 
-    def __init__(self, name: str, split: str, col_mapping: str, files: str):
+    def __init__(self, name: str, split: str, col_mapping: str, files: str, path_to_audio: Optional[str]):
         self._name = name
         self._split = split
         self._col_mapping = col_mapping
         self._files = files
+        self._path_to_audio = path_to_audio
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -106,7 +118,15 @@ class UploadCommand(BaseAutoNLPCommand):
 
         files = self._files.split(",")
         try:
-            project.upload(filepaths=files, split=self._split, col_mapping=col_maps)
+            project.upload(filepaths=files, split=self._split, col_mapping=col_maps, path_to_audio=self._path_to_audio)
+            print(
+                "🎉 Yupee! Your files have been uploaded.\n"
+                f"Once you're done, starting a training here: {RED}autonlp train --project {project.name}{RST}"
+            )
+        except FileNotFoundError as err:
+            logger.error("❌ One path you provided is invalid!")
+            logger.error("Details:")
+            logger.error(str(err))
         except InvalidFileError as err:
             logger.error("❌ Sorry, AutoNLP is not able to process the files you want to upload")
             logger.error("Details:")
@@ -117,8 +137,3 @@ class UploadCommand(BaseAutoNLPCommand):
             logger.error("Details:")
             for line in str(err).splitlines():
                 logger.error(line)
-
-        print(
-            "🎉 Yupee! Your files have been uploaded.\n"
-            f"Once you're done, starting a training here: {RED}autonlp train --project {project.name}{RST}"
-        )
