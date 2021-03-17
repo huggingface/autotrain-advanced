@@ -78,6 +78,8 @@ class AutoNLP:
         """Create a project and return it"""
         self._login_from_conf()
         task_id = TASKS.get(task)
+        if task_id is None:
+            raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
         language = str(language).strip().lower()
         if len(language) != 2 or language not in SUPPORTED_LANGUAGES:
             raise ValueError(f"❌ Invalid language selected. Please choose one of {SUPPORTED_LANGUAGES}")
