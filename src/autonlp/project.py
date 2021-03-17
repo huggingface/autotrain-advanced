@@ -1,3 +1,4 @@
+import glob
 import os
 import shutil
 from dataclasses import dataclass
@@ -8,11 +9,12 @@ import requests
 from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
+from tqdm import tqdm
 
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
-from .validation import validate_file
+from .validation import SUPPORTED_AUDIO_FILE_FORMAT, validate_file
 
 
 FILE_STATUS = (
@@ -213,10 +215,38 @@ class Project:
         resp = http_get(path=f"/zeus/cost/{self.proj_id}", token=self._token)
         self.usd_cost = resp.json().get("cost_usd")
 
-    def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
+    def upload(
+        self, filepaths: List[str], split: str, col_mapping: Dict[str, str], path_to_audio: Optional[str] = None
+    ):
         """Uploads files to the project"""
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
+
+        if path_to_audio:
+            if self.task != "speech_recognition":
+                raise ValueError(
+                    f"'path_to_audio' argument is only supported for task 'speech_recognition' "
+                    "(got task: '{self.task}')"
+                )
+            dataset_repo.lfs_track(patterns=["raw/audio/*."] + [f"raw/*.{ext}" for ext in SUPPORTED_AUDIO_FILE_FORMAT])
+
+            path_to_audio = os.path.expanduser(path_to_audio)
+            if not os.path.isdir(path_to_audio):
+                raise FileNotFoundError(f"'{path_to_audio}' does not exist or is not a directory")
+
+            logger.info(f"🔎 Looking for audio files in '{path_to_audio}'...")
+            audio_files = sum(
+                (glob.glob(f"{path_to_audio}/*.{audio_file_ext}") for audio_file_ext in SUPPORTED_AUDIO_FILE_FORMAT),
+                [],
+            )
+            logger.info(f"  Found {len(audio_files)} audio files")
+
+            audio_dst_dir = os.path.join(local_dataset_dir, "raw", "audio")
+            os.makedirs(os.path.dirname(audio_dst_dir), exist_ok=True)
+            for audio_file_path in tqdm(audio_files, desc=f"📦 Copying audio files to {audio_dst_dir}"):
+                audio_file_name = os.path.basename(audio_file_path)
+                shutil.copyfile(audio_file_path, os.path.join(audio_dst_dir, audio_file_name))
+
         for idx, file_path in enumerate(filepaths):
             if not os.path.isfile(file_path):
                 logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
