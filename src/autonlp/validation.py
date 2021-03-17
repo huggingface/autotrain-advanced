@@ -10,7 +10,7 @@ COLUMNS_PER_TASK = {
     "multi_class_classification": ("text", "target"),
     "entity_extraction": ("tokens", "tags"),
     "single_column_regression": ("text", "target"),
-    "speech_recognition": ("speech", "audio_file_name"),
+    "speech_recognition": ("text", "path"),
 }
 
 SUPPORTED_AUDIO_FILE_FORMAT = ("mp3", "wav")
