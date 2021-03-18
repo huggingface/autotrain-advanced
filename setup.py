@@ -25,7 +25,7 @@ QUALITY_REQUIRE = [
 EXTRAS_REQUIRE = {
     "dev": INSTALL_REQUIRES + QUALITY_REQUIRE,
     "quality": INSTALL_REQUIRES + QUALITY_REQUIRE,
-    "docs": [
+    "docs": INSTALL_REQUIRES + [
         "recommonmark",
         "sphinx==3.1.2",
         "sphinx-markdown-tables",
