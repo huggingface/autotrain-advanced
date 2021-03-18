@@ -1,7 +1,6 @@
 from typing import Dict, Optional
 
 import requests
-from loguru import logger
 
 from . import config
 
@@ -44,12 +43,7 @@ def http_get(
         )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        if not suppress_logs:
-            logger.error(f"❌ Operation failed! Details: {err.response.text}")
-        raise
+    response.raise_for_status()
     return response
 
 
@@ -68,10 +62,5 @@ def http_post(
         )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        if not suppress_logs:
-            logger.error(f"❌ Operation failed! Details: {err.response.text}")
-        raise
+    response.raise_for_status()
     return response

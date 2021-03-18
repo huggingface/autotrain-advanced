@@ -1,4 +1,8 @@
 import argparse
+import sys
+
+from loguru import logger
+from requests import HTTPError
 
 from .. import __version__
 from .create_project import CreateProjectCommand
@@ -43,7 +47,22 @@ def main():
         exit(1)
 
     command = args.func(args)
-    command.run()
+
+    try:
+        command.run()
+    except HTTPError as err:
+        status_code = err.response.status_code
+        details = err.response.json().get("detail")
+        if status_code == 403:
+            logger.error("🛑 Forbidden operation")
+            if details:
+                logger.error(details)
+        else:
+            logger.error("❌ Oops! Something failed in AutoNLP backend..")
+            if not details:
+                details = err.response.text
+            logger.error(f"Error code: {status_code}; Details: '{details}'")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
