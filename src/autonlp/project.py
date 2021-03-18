@@ -14,7 +14,7 @@ from .audio_utils import SUPPORTED_AUDIO_FILE_FORMAT, audio_file_name_iter
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
-from .validation import validate_file, InvalidFileError
+from .validation import InvalidFileError, validate_file
 
 
 FILE_STATUS = (
