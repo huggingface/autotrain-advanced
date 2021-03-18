@@ -28,9 +28,3 @@ def audio_file_name_iter(transcription_file_path: str, col_mapping: Dict[str, st
 def json_line_iterator(f: TextIO) -> Iterable[dict]:
     for line in f:
         yield json.loads(line)
-
-
-def sample_to_file_name(sample_iterator: Iterable[dict], path_column: str) -> Iterable[str]:
-    for sample in sample_iterator:
-        path = sample[path_column]
-        yield os.path.basename(path)
