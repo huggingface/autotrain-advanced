@@ -96,8 +96,8 @@ class UploadCommand(BaseAutoNLPCommand):
             default=None,
             required=False,
             help=(
-                "[Optional] Specific to the speech recognition task. "
-                f"Path to a {BLD}directory{RST} containing audio files"
+                "Required for speech recognition task. "
+                f"Comma-separated paths to {BLD}directories{RST} containing audio files"
             ),
         )
         upload_parser.set_defaults(func=upload_command_factory)
@@ -133,6 +133,10 @@ class UploadCommand(BaseAutoNLPCommand):
                 "🎉 Yupee! Your files have been uploaded.\n"
                 f"Once you're done, starting a training here: {RED}autonlp train --project {project.name}{RST}"
             )
+        except ValueError as err:
+            logger.error("❌ Something went wrong!")
+            logger.error("Details:")
+            logger.error(str(err))
         except FileNotFoundError as err:
             logger.error("❌ One path you provided is invalid!")
             logger.error("Details:")

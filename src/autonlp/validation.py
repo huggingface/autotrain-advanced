@@ -1,8 +1,7 @@
 import csv
 import json
 import os
-from functools import partial
-from typing import Dict, Iterable, TextIO
+from typing import Dict
 
 
 COLUMNS_PER_TASK = {
@@ -13,8 +12,6 @@ COLUMNS_PER_TASK = {
     "speech_recognition": ("text", "path"),
 }
 
-SUPPORTED_AUDIO_FILE_FORMAT = ("mp3", "wav")
-
 
 class InvalidFileError(ValueError):
     pass
@@ -24,7 +21,7 @@ class InvalidColMappingError(ValueError):
     pass
 
 
-def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str], local_repo_dir: str):
+def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
     file_name = os.path.basename(path)
     if file_ext in ("csv", "tsv"):
         if task == "entity_extraction":
@@ -101,29 +98,3 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
                 ]
             )
         )
-
-    # Extra check for Speech recognition task
-    if task == "speech_recognition":
-        path_column = [src for src, dst in col_mapping.items() if dst == "path"][0]
-        # Iterate through the transcription files and check every specified
-        # audio file is found in the dataset repo
-        if file_ext in ("csv", "tsv"):
-            delimiter = "\t" if file_ext == "tsv" else ","
-            sample_iterator = partial(csv.DictReader, delimiter=delimiter)
-        else:
-            sample_iterator = json_line_iterator
-
-        with open(path, encoding="utf-8") as f:
-            for idx, sample in enumerate(sample_iterator(f)):
-                audio_file_path = sample[path_column]
-                audio_file_name = os.path.basename(audio_file_path)
-                if not os.path.exists(os.path.join(local_repo_dir, "raw", "audio", audio_file_name)):
-                    raise InvalidFileError(
-                        f"Audio file {audio_file_name} was not found! (sample #{idx} in {file_name}) "
-                        "Make sure you've added it with the 'path_to_audio' argument."
-                    )
-
-
-def json_line_iterator(f: TextIO) -> Iterable[dict]:
-    for line in f:
-        yield json.loads(line)
