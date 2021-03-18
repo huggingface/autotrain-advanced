@@ -1,6 +1,6 @@
+import csv
 import json
 import os
-from csv import Sniffer
 from typing import Dict
 
 
@@ -9,6 +9,7 @@ COLUMNS_PER_TASK = {
     "multi_class_classification": ("text", "target"),
     "entity_extraction": ("tokens", "tags"),
     "single_column_regression": ("text", "target"),
+    "speech_recognition": ("text", "path"),
 }
 
 
@@ -27,7 +28,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
             raise InvalidFileError(
                 f"AutoNLP does not support '{file_ext}' files for entity_extraction tasks. Use .json or .jsonl files!"
             )
-        sniffer = Sniffer()
+        sniffer = csv.Sniffer()
         with open(path, encoding="utf-8", errors="replace") as f:
             sample = "\n".join([f.readline() for _ in range(500)])
 

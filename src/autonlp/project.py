@@ -8,11 +8,13 @@ import requests
 from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
+from tqdm import tqdm
 
+from .audio_utils import SUPPORTED_AUDIO_FILE_FORMAT, audio_file_name_iter
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .tasks import TASKS
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
-from .validation import validate_file
+from .validation import InvalidFileError, validate_file
 
 
 FILE_STATUS = (
@@ -24,6 +26,7 @@ FILE_STATUS = (
     ("❌", "Failed: unsupported file type"),
     ("❌", "Failed: server error"),
     ("❌", "Invalid column mapping, please fix it and re-upload the file."),
+    ("❌", "Invalid file"),
 )
 
 JOB_STATUS = (
@@ -212,26 +215,72 @@ class Project:
         resp = http_get(path=f"/zeus/cost/{self.proj_id}", token=self._token)
         self.usd_cost = resp.json().get("cost_usd")
 
-    def upload(self, filepaths: List[str], split: str, col_mapping: Dict[str, str]):
+    def upload(
+        self, filepaths: List[str], split: str, col_mapping: Dict[str, str], path_to_audio: Optional[str] = None
+    ):
         """Uploads files to the project"""
+        if self.task == "speech_recognition" and not path_to_audio:
+            raise ValueError("'path_to_audio' must be provided when task is 'speech_recognition'")
+
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
+
         for idx, file_path in enumerate(filepaths):
             if not os.path.isfile(file_path):
                 logger.error(f"[{idx + 1}/{len(filepaths)}] ❌ '{file_path}' does not exist or is not a file!")
-                continue
+                raise FileNotFoundError(f"'{file_path}' does not exist or is not a file!")
             file_name = os.path.basename(file_path)
             file_extension = file_name.split(".")[-1]
-            src = os.path.expanduser(file_path)
+            file_path = os.path.expanduser(file_path)
+
+            # Validate
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {file_path} and column mapping...")
+            validate_file(
+                path=file_path,
+                task=self.task,
+                file_ext=file_extension,
+                col_mapping=col_mapping,
+            )
+
+            # Speech recognition: check and copy audio files
+            if self.task == "speech_recognition":
+                dataset_repo.lfs_track(patterns=["raw/audio/*"])
+
+                audio_dir_paths = [os.path.expanduser(path) for path in path_to_audio.split(",")]
+                for audio_dir in audio_dir_paths:
+                    if not os.path.isdir(audio_dir):
+                        raise FileNotFoundError(f"'{audio_dir}' does not exist or is not a directory")
+
+                audio_files_paths = []
+                for audio_file_name in tqdm(
+                    audio_file_name_iter(transcription_file_path=file_path, col_mapping=col_mapping),
+                    desc=f"🔎 Looking for audio files in '{audio_dir_paths}'...",
+                ):
+                    audio_file_ext = audio_file_name.split(".")[-1]
+                    if audio_file_ext not in SUPPORTED_AUDIO_FILE_FORMAT:
+                        raise InvalidFileError(
+                            f"Audio file '{audio_file_name}' has an unsupported extension, "
+                            f"supported extensions for audio files are: {SUPPORTED_AUDIO_FILE_FORMAT}"
+                        )
+
+                    full_paths = map(lambda dirpath: os.path.join(dirpath, audio_file_name), audio_dir_paths)
+                    try:
+                        audio_files_paths.append(next(path for path in full_paths if os.path.isfile(path)))
+                    except StopIteration as err:
+                        # Not found in the provided dirs
+                        raise FileNotFoundError(f"'{audio_file_name}' not found in {audio_dir_paths}") from err
+
+                audio_dst_dir = os.path.join(local_dataset_dir, "raw", "audio")
+                os.makedirs(audio_dst_dir, exist_ok=True)
+                for audio_file_path in tqdm(audio_files_paths, desc=f"📦 Copying audio files to {audio_dst_dir}"):
+                    audio_dst = os.path.join(audio_dst_dir, os.path.basename(audio_file_path))
+                    shutil.copyfile(audio_file_path, audio_dst)
+
+            # Copy to repo
             dst = os.path.join(local_dataset_dir, "raw", file_name)
-            logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {src} to {dst}...")
+            logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {file_path} to {dst}...")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copyfile(src, dst)
-
-            logger.info(f"[{idx + 1}/{len(filepaths)}] 🔎 Validating {dst} and column mapping...")
-            validate_file(path=dst, task=self.task, file_ext=file_extension, col_mapping=col_mapping)
-
-            dataset_repo.lfs_track(patterns=[f"raw/*.{file_extension}"])
+            shutil.copyfile(file_path, dst)
 
         dataset_repo.git_pull()
 
@@ -260,15 +309,18 @@ class Project:
 
     def train(self, noprompt=False):
         """Starts training on the models"""
+        self.refresh()
         logger.info("🔎 Calculating a cost estimate for the training...")
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
         total_number_of_lines = 0
 
-        for root, dirs, files in os.walk(os.path.join(local_dataset_dir, "raw")):
-            for file_path in files:
-                with open(os.path.join(root, file_path), "r", encoding="utf-8", errors="ignore") as f:
-                    total_number_of_lines += sum(1 for line in f)
+        for file in self.files:
+            with open(
+                os.path.join(local_dataset_dir, "raw", file.filename), "r", encoding="utf-8", errors="ignore"
+            ) as f:
+                total_number_of_lines += sum(1 for line in f)
+
         cost_estimate = self.estimate_cost(nb_samples=total_number_of_lines)
 
         print(
