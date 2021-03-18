@@ -1,5 +1,6 @@
 import argparse
 
+from .. import __version__
 from .create_project import CreateProjectCommand
 from .estimator import EstimatorCommand
 from .list_projects import ListProjectsCommand
@@ -17,6 +18,7 @@ def main():
         usage="autonlp <command> [<args>]",
         epilog="For more information about a command, run: `autonlp <command> --help`",
     )
+    parser.add_argument("--version", "-v", help="Display AutoNLP version", action="store_true")
     commands_parser = parser.add_subparsers(help="commands")
 
     # Register commands
@@ -31,6 +33,10 @@ def main():
     EstimatorCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
+
+    if args.version:
+        print(__version__)
+        exit(0)
 
     if not hasattr(args, "func"):
         parser.print_help()
