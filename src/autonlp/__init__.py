@@ -1,6 +1,5 @@
-# flake8: noqa
 # coding=utf-8
-# Copyright 2020 The HuggingFace AutoNLP Authors
+# Copyright 2020-2021 The HuggingFace AutoNLP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 # Lint as: python3
 # pylint: enable=line-too-long
 
-__version__ = "0.0.1"
+__version__ = "0.2.0"
+__all__ = ["AutoNLP"]
 
 from .autonlp import AutoNLP
