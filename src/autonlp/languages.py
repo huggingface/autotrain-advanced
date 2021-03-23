@@ -340,7 +340,6 @@ SUPPORTED_LANGUAGES = [
     "pra",
     "ps",
     "pt",
-    "qaa..qtz",
     "qu",
     "raj",
     "rap",
