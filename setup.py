@@ -1,11 +1,16 @@
 # Lint as: python3
 """ HuggingFace/AutoNLP
 """
+import os
 
 from setuptools import find_packages, setup
 
 
 DOCLINES = __doc__.split("\n")
+
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = [
     "loguru==0.5.3",
@@ -38,7 +43,8 @@ EXTRAS_REQUIRE = {
 setup(
     name="autonlp",
     description=DOCLINES[0],
-    long_description="\n".join(DOCLINES[2:]),
+    long_description=LONG_DESCRIPTION,
+    long_description_content_type="text/markdown",
     author="HuggingFace Inc.",
     author_email="abhishek@huggingface.co",
     url="https://github.com/huggingface/autonlp",
