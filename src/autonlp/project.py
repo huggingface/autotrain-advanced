@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -363,6 +364,17 @@ class Project:
             clone_from=clone_from,
             use_auth_token=self._token,
         )
+        try:
+            subprocess.run(
+                "git reset --hard".split(),
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                check=True,
+                encoding="utf-8",
+                cwd=dataset_repo.local_dir,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise EnvironmentError(exc.stderr)
         dataset_repo.git_pull()
         return dataset_repo
 
