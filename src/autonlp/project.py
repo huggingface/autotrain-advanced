@@ -282,6 +282,7 @@ class Project:
             logger.info(f"[{idx + 1}/{len(filepaths)}] 📦 Copying {file_path} to {dst}...")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(file_path, dst)
+            dataset_repo.lfs_track(patterns=[f"raw/*.{file_extension}"])
 
         dataset_repo.git_pull()
 
