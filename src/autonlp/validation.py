@@ -10,7 +10,7 @@ COLUMNS_PER_TASK = {
     "entity_extraction": ("tokens", "tags"),
     "single_column_regression": ("text", "target"),
     "speech_recognition": ("text", "path"),
-    "summarization": ("source", "target"),
+    "summarization": ("text", "target"),
 }
 
 
