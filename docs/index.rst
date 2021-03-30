@@ -32,6 +32,7 @@ Currently, AutoNLP supports the following tasks:
    :caption: Getting Started
 
    installation
+   supported_languages
    binary_classification
    multi_class_classification
    entity_extraction
