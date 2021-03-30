@@ -29,7 +29,7 @@ Currently, AutoNLP supports the following tasks:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started
+   :caption: Contents
 
    installation
    supported_languages
