@@ -12,23 +12,7 @@ Please make sure that you have git lfs installed. Check out the instructions her
 
 ## Quick start - in the terminal
 
-Supported languages:
-
-- English: en
-- French: fr
-- German: de
-- Finnish: fi
-- Hindi: hi
-- Spanish: es
-- Chinese: zh
-- Dutch: nl
-- Turkish: tr
-
-Supported tasks:
-
-- binary_classification
-- multi_class_classification
-- entity_extraction
+Please take a look at [AutoNLP Documentation](https://huggingface.co/docs/autonlp/) for a list of supported tasks and languages.
 
 Note:
 AutoNLP is currently in beta release. To participate in the beta, just go to https://huggingface.co/autonlp and apply 🤗
