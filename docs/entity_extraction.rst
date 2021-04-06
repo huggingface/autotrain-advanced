@@ -44,7 +44,7 @@ The original columns, thus, need to be mapped to text and target. This is done i
 .. code-block:: bash
 
     autonlp upload --project entity_model --split train \
-                --col_mapping sentence:text,label:target \
+                --col_mapping tokens:tokens,labels:tags \
                 --files ~/datasets/train.csv
 
 
@@ -53,7 +53,7 @@ Similarly, upload the validation file:
 .. code-block:: bash
 
     autonlp upload --project entity_model --split valid \
-                --col_mapping sentence:text,label:target \
+                --col_mapping tokens:tokens,labels:tags \
                 --files ~/datasets/valid.csv
 
 
