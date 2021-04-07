@@ -101,5 +101,5 @@ It's difficult to provide an exact answer to this question, however, we have an 
 Just enter the number of samples and language and you will get an estimate. Please keep in mind that this is just an estimate and can easily over-estimate or under-estimate (we are actively working on this).
 
 ```bash
-autonlp estimate --num_train_samples 500000 --language en
+autonlp estimate --num_train_samples 10000 --project_name sentiment_detection
 ```
