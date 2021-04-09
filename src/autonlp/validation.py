@@ -31,11 +31,10 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
             )
         sniffer = csv.Sniffer()
         with open(path, encoding="utf-8", errors="replace") as f:
-            sample = "\n".join([f.readline() for _ in range(500)])
-
-        # Validate delimiter
-        expected_delimiter = "\t" if file_ext == "tsv" else ","
-        actual_delimiter = sniffer.sniff(sample, delimiters=",;\t").delimiter
+            # Validate delimiter
+            sample = f.readline()
+            expected_delimiter = "\t" if file_ext == "tsv" else ","
+            actual_delimiter = sniffer.sniff(sample, delimiters=",;\t").delimiter
 
         if actual_delimiter != expected_delimiter:
             if task == "entity_extraction":
