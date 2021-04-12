@@ -21,7 +21,7 @@ en, fr, de, fi, hi, es, zh, nl, it
 summarization
 ----------------------------------------------------------------------------------------------------
 
-en
+en, fr, de, fi, hi, es, zh, nl, it
 
 
 If the language you want to use is not listed, please create an issue here: https://github.com/huggingface/autonlp/issues and we will try our best to add the languages you need.
