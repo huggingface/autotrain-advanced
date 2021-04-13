@@ -37,9 +37,6 @@ class AutoNLP:
 
     def login(self, token: str):
         """Login to AutoNLP"""
-        if token.startswith("api_org"):
-            logger.error("⚠ Authenticating as an organization is not allowed. Please provide a user API key.")
-            raise ValueError("Login with an organization API keys are not supported")
         try:
             auth_resp = http_get(path="/whoami-v2", domain=config.HF_API, token=token, token_prefix="Bearer")
         except requests.HTTPError as err:
