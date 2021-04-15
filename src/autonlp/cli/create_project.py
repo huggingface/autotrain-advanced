@@ -37,13 +37,13 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             default=None,
             required=True,
             metavar="LANGUAGE",
-            help="The project's language.....Please check supported languages in AutoNLP documentation.",
+            help="The project's language. Please check supported languages in AutoNLP documentation.",
             choices=SUPPORTED_LANGUAGES,
         )
         create_project_parser.add_argument(
             "--max_models",
             type=str,
-            default=None,
+            default=10,
             required=True,
             metavar="MAX_MODELS",
             help="Maximum number of models you want to train in this project. More models => higher chances of getting awesome models. Also, more models => higher expenses",
