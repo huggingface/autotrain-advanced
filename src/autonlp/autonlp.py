@@ -71,7 +71,7 @@ class AutoNLP:
                         self.orgs = conf_json["orgs"]
                         self.token = conf_json["token"]
 
-    def create_project(self, name: str, task: str, language: str):
+    def create_project(self, name: str, task: str, language: str, max_models: int):
         """Create a project and return it"""
         self._login_from_conf()
         task_id = TASKS.get(task)
@@ -86,7 +86,7 @@ class AutoNLP:
             "username": self.username,
             "proj_name": name,
             "task": task_id,
-            "config": {"version": 0, "patch": 1, "language": language},
+            "config": {"version": 0, "patch": 1, "language": language, "max_models": max_models},
         }
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
