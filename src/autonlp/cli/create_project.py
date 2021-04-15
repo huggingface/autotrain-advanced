@@ -42,7 +42,7 @@ class CreateProjectCommand(BaseAutoNLPCommand):
         )
         create_project_parser.add_argument(
             "--max_models",
-            type=str,
+            type=int,
             default=10,
             required=True,
             metavar="MAX_MODELS",
