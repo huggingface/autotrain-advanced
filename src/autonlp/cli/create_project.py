@@ -37,7 +37,7 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             default=None,
             required=True,
             metavar="LANGUAGE",
-            help="The project's language. Please check supported languages in AutoNLP documentation.",
+            help="The project's language.....Please check supported languages in AutoNLP documentation.",
             choices=SUPPORTED_LANGUAGES,
         )
         create_project_parser.add_argument(
