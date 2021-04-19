@@ -37,3 +37,4 @@ Currently, AutoNLP supports the following tasks:
    multi_class_classification
    entity_extraction
    summarization
+   speech_recognition
