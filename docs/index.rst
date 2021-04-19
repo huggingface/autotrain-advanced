@@ -25,6 +25,7 @@ Currently, AutoNLP supports the following tasks:
 - Multi-class classification: one sentence has one target associated with it and there are more than two unique targets in the dataset
 - Entity extraction: also known as named entity recognition or token classification. This task consists of one sentence and in the sentence, each token is associated to a particular label
 - Summarization: a sequence to sequence task in which the larger sequence is summarized to smaller sequence
+- Speech recognition: train your own automatic speech recognition model using AutoNLP
 
 
 .. toctree::
