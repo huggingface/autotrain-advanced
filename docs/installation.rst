@@ -8,3 +8,6 @@ To install, you can use `pip`:
 .. code-block:: bash
 
     $ pip install -U autonlp
+
+
+Please make sure that you have git lfs installed. Check out the instructions here: https://github.com/git-lfs/git-lfs/wiki/Installation
