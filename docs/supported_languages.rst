@@ -6,22 +6,22 @@ Languages depend on the type of task you select. Here is a list of supported tas
 binary_classification
 ----------------------------------------------------------------------------------------------------
 
-en, fr, de, fi, hi, es, zh, nl, it
+en, fr, de, fi, hi, es, zh, nl, it, ja
 
 multi_class_classification
 ----------------------------------------------------------------------------------------------------
 
-en, fr, de, fi, hi, es, zh, nl, it
+en, fr, de, fi, hi, es, zh, nl, it, ja
 
 entity_extraction
 ----------------------------------------------------------------------------------------------------
 
-en, fr, de, fi, hi, es, zh, nl, it
+en, fr, de, fi, hi, es, zh, nl, it, ja
 
 summarization
 ----------------------------------------------------------------------------------------------------
 
-en, fr, de, fi, hi, es, zh, nl, it
+en, fr, de, fi, hi, es, zh, nl, it, ja
 
 
 speech_recognition
