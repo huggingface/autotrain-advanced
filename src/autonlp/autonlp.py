@@ -23,6 +23,7 @@ class AutoNLP:
         self.username = None
         self.token = None
         self._project = None
+        self._eval_proj = None
         self.config_dir = config_dir
         if self.config_dir is None:
             home_dir = os.path.expanduser("~")
@@ -100,7 +101,7 @@ class AutoNLP:
         self._project.refresh()
         return self._project
 
-    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, subset: str):
+    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str):
         self._login_from_conf()
         task_id = TASKS.get(task)
         if task_id is None:
@@ -111,7 +112,7 @@ class AutoNLP:
             "task": task_id,
             "model": model,
             "col_mapping": col_mapping,
-            "subset": subset,
+            "split": split,
         }
         json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
         self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)

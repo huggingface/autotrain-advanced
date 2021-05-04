@@ -3,39 +3,8 @@ from argparse import ArgumentParser
 from loguru import logger
 
 from ..tasks import TASKS
-from ..utils import BOLD_TAG as BLD
-from ..utils import CYAN_TAG as CYN
-from ..utils import GREEN_TAG as GRN
-from ..utils import RESET_TAG as RST
 from . import BaseAutoNLPCommand
-
-
-COL_MAPPING_HELP = f"""\
-Expected columns for AutoNLP evaluation tasks:
---------------------------------------------------------
-
-{BLD}col_name1{RST} and {BLD}col_name2{RST} refer to columns in your files.
-
-{BLD}`binary_classification`{RST}:
-    {BLD}col_name1{RST} -> {BLD}text{RST}    (The text to classify)
-    {BLD}col_name2{RST} -> {BLD}target{RST}  (The label)
-    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text{RST},{GRN}col_name2{RST}:{CYN}target{RST}'
-
-{BLD}`multi_class_classification`{RST}:
-    {BLD}col_name1{RST} -> {BLD}text{RST}    (The text to classify)
-    {BLD}col_name2{RST} -> {BLD}target{RST}  (The label)
-    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text,{GRN}col_name2{RST}:{CYN}target{RST}'
-
-{BLD}`entity_extraction`{RST}:
-    {BLD}col_name1{RST} -> {BLD}tokens{RST}  (The tokens to tag)
-    {BLD}col_name2{RST} -> {BLD}tags{RST}    (The associated tags)
-    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}tokens{RST},{GRN}col_name2{RST}:{CYN}tags{RST}'
-
-{BLD}`speech_recognition`{RST}:
-    {BLD}col_name1{RST} -> {BLD}path{RST}  (The path to the audio file, only the file name matters)
-    {BLD}col_name2{RST} -> {BLD}text{RST}  (The matching speech transcription)
-    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}path{RST},{GRN}col_name2{RST}:{CYN}text{RST}'
-"""
+from .common import COL_MAPPING_HELP
 
 
 def create_evaluation_command_factory(args):
@@ -44,7 +13,7 @@ def create_evaluation_command_factory(args):
         args.dataset,
         args.model,
         args.col_mapping,
-        args.subset,
+        args.split,
     )
 
 
@@ -85,21 +54,21 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             help=COL_MAPPING_HELP,
         )
         create_evaluation_parser.add_argument(
-            "--subset",
+            "--split",
             type=str,
             default="test",
             required=False,
-            help="Which subset of dataset to use for evaluation. If not provided, this will default to 'test'.",
+            help="Which split of dataset to use for evaluation. If not provided, this will default to 'test'.",
         )
 
         create_evaluation_parser.set_defaults(func=create_evaluation_command_factory)
 
-    def __init__(self, task: str, dataset: str, model: str, col_mapping: str, subset: str):
+    def __init__(self, task: str, dataset: str, model: str, col_mapping: str, split: str):
         self._task = task
         self._model = model
         self._dataset = dataset
         self._col_mapping = col_mapping
-        self._subset = subset
+        self._split = split
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -111,6 +80,6 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             dataset=self._dataset,
             model=self._model,
             col_mapping=self._col_mapping,
-            subset=self._subset,
+            split=self._split,
         )
         print(eval_project)

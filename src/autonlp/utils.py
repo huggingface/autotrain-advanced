@@ -3,6 +3,7 @@ from typing import Dict, Optional
 import requests
 
 from . import config
+from .tasks import TASKS
 
 
 FORMAT_TAG = "\033[{code}m"
@@ -64,3 +65,10 @@ def http_post(
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
     response.raise_for_status()
     return response
+
+
+def get_task(task_id: int) -> str:
+    for key, value in TASKS.items():
+        if value == task_id:
+            return key
+    return "❌ Unsupported task! Please update autonlp"
