@@ -106,12 +106,19 @@ class AutoNLP:
         task_id = TASKS.get(task)
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
+
+        col_mapping = col_mapping.strip().split(",")
+        mapping_dict = {}
+        for c_m in col_mapping:
+            k, v = c_m.split(":")
+            mapping_dict[k] = v
+
         payload = {
             "username": self.username,
             "dataset": dataset,
             "task": task_id,
             "model": model,
-            "col_mapping": col_mapping,
+            "col_mapping": mapping_dict,
             "split": split,
         }
         json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()

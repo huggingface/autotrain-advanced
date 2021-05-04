@@ -35,7 +35,6 @@ class Evaluate:
                 f"AutoNLP Evaluation (id # {self.evaluation_id})",
                 "~" * 35,
                 f" • {BOLD_TAG}Owner{RESET_TAG}:       {GREEN_TAG}{self.user}{RESET_TAG}",
-                f" • {BOLD_TAG}Status{RESET_TAG}:      {BOLD_TAG}{self.status_emoji} {self.status}{RESET_TAG}",
                 f" • {BOLD_TAG}Task{RESET_TAG}:        {YELLOW_TAG}{self.task.title().replace('_', ' ')}{RESET_TAG}",
                 f" • {BOLD_TAG}Dataset{RESET_TAG}:       {GREEN_TAG}{self.dataset}{RESET_TAG}",
                 f" • {BOLD_TAG}Model{RESET_TAG}:       {GREEN_TAG}{self.model}{RESET_TAG}",
