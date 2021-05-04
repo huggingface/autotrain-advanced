@@ -13,8 +13,7 @@ from tqdm import tqdm
 
 from .audio_utils import SUPPORTED_AUDIO_FILE_FORMAT, audio_file_name_iter
 from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
-from .tasks import TASKS
-from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, http_get, http_post
+from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, get_task, http_get, http_post
 from .validation import InvalidFileError, validate_file
 
 
@@ -57,13 +56,6 @@ SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
 
 class TrainingCancelledError(Exception):
     pass
-
-
-def get_task(task_id: int) -> str:
-    for key, value in TASKS.items():
-        if value == task_id:
-            return key
-    return "❌ Unsupported task! Please update autonlp"
 
 
 def get_file_status(status_id: int) -> Tuple[str, str]:
