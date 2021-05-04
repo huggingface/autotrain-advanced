@@ -10,6 +10,7 @@ import requests
 from loguru import logger
 
 from . import config
+from .evaluate import Evaluate
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
@@ -98,6 +99,23 @@ class AutoNLP:
         self._project = Project.from_json_resp(json_resp, token=self.token)
         self._project.refresh()
         return self._project
+
+    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, subset: str):
+        self._login_from_conf()
+        task_id = TASKS.get(task)
+        if task_id is None:
+            raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
+        payload = {
+            "username": self.username,
+            "dataset": dataset,
+            "task": task_id,
+            "model": model,
+            "col_mapping": col_mapping,
+            "subset": subset,
+        }
+        json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
+        self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
+        return self._eval_proj
 
     def get_project(self, name):
         """Retrieves a project"""
