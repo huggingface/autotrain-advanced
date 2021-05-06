@@ -101,7 +101,7 @@ class AutoNLP:
         self._project.refresh()
         return self._project
 
-    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str):
+    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
         self._login_from_conf()
         task_id = TASKS.get(task)
         if task_id is None:
@@ -120,6 +120,7 @@ class AutoNLP:
             "model": model,
             "col_mapping": mapping_dict,
             "split": split,
+            "config": config,
         }
         json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
         self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
