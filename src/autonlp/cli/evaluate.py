@@ -8,13 +8,7 @@ from .common import COL_MAPPING_HELP
 
 
 def create_evaluation_command_factory(args):
-    return CreateEvaluationCommand(
-        args.task,
-        args.dataset,
-        args.model,
-        args.col_mapping,
-        args.split,
-    )
+    return CreateEvaluationCommand(args.task, args.dataset, args.model, args.col_mapping, args.split, args.config)
 
 
 class CreateEvaluationCommand(BaseAutoNLPCommand):
@@ -60,15 +54,23 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             required=False,
             help="Which split of dataset to use for evaluation. If not provided, this will default to 'test'.",
         )
+        create_evaluation_parser.add_argument(
+            "--config",
+            type=str,
+            default=None,
+            required=False,
+            help="Which config of dataset to use for evaluation. If not provided, this will default to None.",
+        )
 
         create_evaluation_parser.set_defaults(func=create_evaluation_command_factory)
 
-    def __init__(self, task: str, dataset: str, model: str, col_mapping: str, split: str):
+    def __init__(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
         self._task = task
         self._model = model
         self._dataset = dataset
         self._col_mapping = col_mapping
         self._split = split
+        self._config = config
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -81,5 +83,6 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             model=self._model,
             col_mapping=self._col_mapping,
             split=self._split,
+            config=self._config,
         )
         print(eval_project)
