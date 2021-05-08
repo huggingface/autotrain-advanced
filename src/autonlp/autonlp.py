@@ -5,6 +5,7 @@ Copyright 2020 The HuggingFace Team
 import json
 import os
 from typing import Optional
+from dataclasses import dataclass
 
 import requests
 from loguru import logger
@@ -18,17 +19,17 @@ from .tasks import TASKS
 from .utils import UnauthenticatedError, http_get, http_post
 
 
+@dataclass
 class AutoNLP:
-    def __init__(self, config_dir: str = None) -> None:
-        self.username = None
-        self.token = None
-        self._project = None
-        self._eval_proj = None
-        self.config_dir = config_dir
-        if self.config_dir is None:
-            home_dir = os.path.expanduser("~")
-            self.config_dir = os.path.join(home_dir, ".autonlp")
-        os.makedirs(self.config_dir, exist_ok=True)
+    username = None
+    token = None
+    _project = None
+    _eval_proj = None
+    config_dir: str = None
+    if config_dir is None:
+        home_dir = os.path.expanduser("~")
+        config_dir = os.path.join(home_dir, ".autonlp")
+    os.makedirs(config_dir, exist_ok=True)
 
     def get_token(self):
         """Retrieve API token, or raise UnauthenticatedError"""
