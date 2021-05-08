@@ -4,11 +4,11 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
-from typing import Optional
-from dataclasses import dataclass
-
 import requests
+
+from dataclasses import dataclass
 from loguru import logger
+from typing import Optional
 
 from . import config
 from .evaluate import Evaluate
