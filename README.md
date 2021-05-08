@@ -21,7 +21,7 @@ First, create a project:
 
 ```bash
 autonlp login --api-key YOUR_HUGGING_FACE_API_TOKEN
-autonlp create_project --name sentiment_detection --language en --task binary_classification -- max_models 5
+autonlp create_project --name sentiment_detection --language en --task binary_classification --max_models 5
 ```
 
 Upload files and start the training. You need a training and a validation split. Only CSV files are supported at the moment.
