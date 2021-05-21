@@ -343,7 +343,9 @@ class Project:
         return cost_estimate
 
     def _clone_dataset_repo(self) -> Repository:
-        local_dataset_dir = os.path.expanduser(f"~/.huggingface/autonlp/projects/{self.dataset_id}")
+        local_dataset_dir = os.path.join(
+            os.path.expanduser("~"), ".huggingface", "autonlp", "projects", self.dataset_id
+        )
         if os.path.exists(local_dataset_dir):
             if os.path.isdir(os.path.join(local_dataset_dir, ".git")):
                 clone_from = None
