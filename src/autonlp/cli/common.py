@@ -36,4 +36,10 @@ Expected columns for AutoNLP evaluation tasks:
     {BLD}col_name1{RST} -> {BLD}path{RST}  (The path to the audio file, only the file name matters)
     {BLD}col_name2{RST} -> {BLD}text{RST}  (The matching speech transcription)
     Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}path{RST},{GRN}col_name2{RST}:{CYN}text{RST}'
+
+{BLD}`summarization`{RST}:
+    {BLD}col_name1{RST} -> {BLD}text{RST}    (The text to summarize)
+    {BLD}col_name2{RST} -> {BLD}target{RST}  (The summarization)
+    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text{RST},{GRN}col_name2{RST}:{CYN}target{RST}'
+
 """
