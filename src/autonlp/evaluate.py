@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from datasets.load import import_main_class, prepare_module
+
 from .utils import BOLD_TAG, GREEN_TAG, RESET_TAG, YELLOW_TAG, get_task
 
 
@@ -43,3 +45,33 @@ class Evaluate:
             ]
         )
         return output
+
+
+def format_task(task: str, dataset: str, config: str = None):
+    task_templates = get_task_templates(dataset, config)
+    if task == "text_classification":
+        compatible_templates = [template for template in task_templates if template.task == "text-classification"]
+        if not compatible_templates:
+            raise ValueError(f"Task {task} is not compatible with this dataset! Available tasks: {task_templates}")
+        if len(compatible_templates) > 1:
+            raise ValueError(
+                f"Expected 1 task template but found {len(compatible_templates)}! Please ensure that `datasets.DatasetInfo.task_templates` contains a unique set of task types."
+            )
+        task_template = compatible_templates[0]
+        num_labels = len(task_template.labels)
+        if num_labels == 2:
+            task = "binary_classification"
+        elif num_labels > 2:
+            task = "multi_class_classification"
+        else:
+            raise ValueError(
+                f"Dataset `{dataset}` with configuration `{config}` is not suitable for text_classification!"
+            )
+    return task
+
+
+def get_task_templates(dataset: str, config: str = None):
+    module, module_hash = prepare_module(dataset)
+    builder_cls = import_main_class(module)
+    builder = builder_cls(hash=module_hash, name=config)
+    return builder.info.task_templates
