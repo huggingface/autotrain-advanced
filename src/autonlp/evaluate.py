@@ -52,7 +52,7 @@ AUTONLP_TO_DATASETS_TASKS = {
     "text_classification": "text-classification",
     "extractive_question_answering": "question-answering-extractive",
 }
-DATASETS_TO_AUTONLP_TASKS = {v: k for k, v in DATASETS_TASKS.items()}
+DATASETS_TO_AUTONLP_TASKS = {v: k for k, v in AUTONLP_TO_DATASETS_TASKS.items()}
 
 
 def format_datasets_task(task: str, dataset: str, config: str = None):
