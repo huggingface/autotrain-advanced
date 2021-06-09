@@ -10,7 +10,7 @@ import requests
 from loguru import logger
 
 from . import config
-from .evaluate import Evaluate, format_task
+from .evaluate import DATASETS_TASKS, Evaluate, format_datasets_task
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
@@ -104,7 +104,8 @@ class AutoNLP:
     def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
         self._login_from_conf()
 
-        task = format_task(task, dataset, config)
+        if task in DATASETS_TASKS:
+            task = format_datasets_task(task, dataset, config)
 
         task_id = TASKS.get(task)
         if task_id is None:
