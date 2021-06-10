@@ -81,8 +81,8 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             task=self._task,
             dataset=self._dataset,
             model=self._model,
-            col_mapping=self._col_mapping,
             split=self._split,
+            col_mapping=self._col_mapping,
             config=self._config,
         )
         print(eval_project)

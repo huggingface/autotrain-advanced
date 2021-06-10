@@ -4,13 +4,14 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
+from logging import warning
 from typing import Optional
 
 import requests
 from loguru import logger
 
 from . import config
-from .evaluate import DATASETS_TASKS, Evaluate, format_datasets_task
+from .evaluate import DatasetsTasks, Evaluate, format_datasets_task
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
@@ -101,11 +102,20 @@ class AutoNLP:
         self._project.refresh()
         return self._project
 
-    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
+    def create_evaluation(
+        self, task: str, dataset: str, model: str, split: str, col_mapping: str = None, config: str = None
+    ):
         self._login_from_conf()
 
-        if task in DATASETS_TASKS:
+        if task in DatasetsTasks.__members__:
             task = format_datasets_task(task, dataset, config)
+            if col_mapping:
+                warning.warn(f"A task template from `datasets` has been selected. Deleting `col_mapping` ...")
+                col_mapping = None
+        elif col_mapping is None:
+            raise ValueError(
+                f"❌ A column mapping must be provided for task {TASKS.keys()}. Please provide a value for `col_mapping`."
+            )
 
         task_id = TASKS.get(task)
         if task_id is None:

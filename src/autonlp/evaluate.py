@@ -1,3 +1,4 @@
+import enum
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -47,12 +48,14 @@ class Evaluate:
         return output
 
 
-DATASETS_TASKS = ["text_classification"]
+class DatasetsTasks(enum.IntEnum):
+    text_classification = 1
+
+
 AUTONLP_TO_DATASETS_TASKS = {
     "text_classification": "text-classification",
     "extractive_question_answering": "question-answering-extractive",
 }
-DATASETS_TO_AUTONLP_TASKS = {v: k for k, v in AUTONLP_TO_DATASETS_TASKS.items()}
 
 
 def format_datasets_task(task: str, dataset: str, config: str = None):
@@ -84,9 +87,7 @@ def get_compatible_task_template(task: str, dataset: str, config: str = None):
             template for template in templates if template.task == AUTONLP_TO_DATASETS_TASKS.get(task)
         ]
         if not compatible_templates:
-            raise ValueError(
-                f"❌ Task `{task}` is not compatible with dataset `{dataset}`! Available tasks: {[DATASETS_TO_AUTONLP_TASKS.get(t.task) for t in templates]}"
-            )
+            raise ValueError(f"❌ Task `{task}` is not compatible with dataset `{dataset}`!")
         if len(compatible_templates) > 1:
             raise ValueError(
                 f"❌ Expected 1 task template but found {len(compatible_templates)}! Please ensure that `datasets.DatasetInfo.task_templates` contains a unique set of task types."
