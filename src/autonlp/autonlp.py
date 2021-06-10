@@ -4,7 +4,6 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
-from logging import warning
 from typing import Optional
 
 import requests
@@ -110,7 +109,7 @@ class AutoNLP:
         if task in DATASETS_TASKS:
             task = format_datasets_task(task, dataset, config)
             if col_mapping:
-                warning.warn("A task template from `datasets` has been selected. Deleting `col_mapping` ...")
+                logger.warning("A task template from `datasets` has been selected. Deleting `col_mapping` ...")
                 col_mapping = None
         elif col_mapping is None:
             raise ValueError(
