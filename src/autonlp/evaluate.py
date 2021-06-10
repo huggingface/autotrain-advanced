@@ -48,28 +48,23 @@ class Evaluate:
         return output
 
 
-class DatasetsTasks(enum.IntEnum):
-    text_classification = 1
-
-
-AUTONLP_TO_DATASETS_TASKS = {
-    "text_classification": "text-classification",
-    "extractive_question_answering": "question-answering-extractive",
-}
+DATASETS_TASKS = ["text-classification", "question-answering-extractive"]
 
 
 def format_datasets_task(task: str, dataset: str, config: str = None):
     task_template = get_compatible_task_template(task, dataset, config)
     if task_template:
-        if task == "text_classification":
+        if task == "text-classification":
             num_labels = len(task_template.labels)
             if num_labels == 2:
                 task = "binary_classification"
             # TODO(lewtun): add logic for multilabel classification when implemented in `datasets`
             elif num_labels > 2:
                 task = "multi_class_classification"
-            else:
-                raise ValueError(f"❌ Dataset `{dataset}` with configuration `{config}` is not suitable for `{task}`!")
+        elif task == "question-answering-extractive":
+            task = "extractive_question_answering"
+        else:
+            raise ValueError(f"❌ Dataset `{dataset}` with configuration `{config}` is not suitable for `{task}`!")
     else:
         raise ValueError(
             f"❌ Dataset `{dataset}` with configuration `{config}` does not have a task template for `{task}`! Please select a different task and/or dataset."
@@ -83,9 +78,7 @@ def get_compatible_task_template(task: str, dataset: str, config: str = None):
     builder = builder_cls(hash=module_hash, name=config)
     templates = builder.info.task_templates
     if templates:
-        compatible_templates = [
-            template for template in templates if template.task == AUTONLP_TO_DATASETS_TASKS.get(task)
-        ]
+        compatible_templates = [template for template in templates if template.task == task]
         if not compatible_templates:
             raise ValueError(f"❌ Task `{task}` is not compatible with dataset `{dataset}`!")
         if len(compatible_templates) > 1:
