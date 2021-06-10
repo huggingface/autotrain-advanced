@@ -121,11 +121,12 @@ class AutoNLP:
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
 
-        col_mapping = col_mapping.strip().split(",")
-        mapping_dict = {}
-        for c_m in col_mapping:
-            k, v = c_m.split(":")
-            mapping_dict[k] = v
+        if col_mapping:
+            col_mapping = col_mapping.strip().split(",")
+            mapping_dict = {}
+            for c_m in col_mapping:
+                k, v = c_m.split(":")
+                mapping_dict[k] = v
 
         payload = {
             "username": self.username,
