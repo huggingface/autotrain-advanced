@@ -10,11 +10,11 @@ import requests
 from loguru import logger
 
 from . import config
-from .evaluate import Evaluate
+from .evaluate import Evaluate, format_datasets_task, get_dataset_splits
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
-from .tasks import TASKS
+from .tasks import DATASETS_TASKS, TASKS
 from .utils import UnauthenticatedError, http_get, http_post
 
 
@@ -101,17 +101,35 @@ class AutoNLP:
         self._project.refresh()
         return self._project
 
-    def create_evaluation(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
+    def create_evaluation(
+        self, task: str, dataset: str, model: str, split: str, col_mapping: str = None, config: str = None
+    ):
         self._login_from_conf()
+
+        splits = get_dataset_splits(dataset=dataset, config=config)
+        if split not in splits:
+            raise ValueError(f"❌ Split {split} not found in dataset {dataset}. Available splits: {splits}")
+
+        if task in DATASETS_TASKS:
+            task = format_datasets_task(task, dataset, config)
+            if col_mapping:
+                logger.warning("A task template from `datasets` has been selected. Deleting `col_mapping` ...")
+                col_mapping = None
+        elif col_mapping is None:
+            raise ValueError(
+                f"❌ A column mapping must be provided for task {task}. Please provide a value for `col_mapping`."
+            )
+
         task_id = TASKS.get(task)
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
 
-        col_mapping = col_mapping.strip().split(",")
         mapping_dict = {}
-        for c_m in col_mapping:
-            k, v = c_m.split(":")
-            mapping_dict[k] = v
+        if col_mapping:
+            col_mapping = col_mapping.strip().split(",")
+            for c_m in col_mapping:
+                k, v = c_m.split(":")
+                mapping_dict[k] = v
 
         payload = {
             "username": self.username,

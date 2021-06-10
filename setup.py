@@ -15,9 +15,10 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 INSTALL_REQUIRES = [
     "loguru==0.5.3",
     "requests==2.25.1",
-    "tqdm==4.56.0",
+    "tqdm==4.49",
     "prettytable==2.0.0",
     "huggingface_hub<0.1.0",
+    "datasets==1.8.0",
 ]
 
 QUALITY_REQUIRE = [
@@ -26,9 +27,11 @@ QUALITY_REQUIRE = [
     "flake8==3.7.9",
 ]
 
+TESTS_REQUIRE = ["pytest"]
+
 
 EXTRAS_REQUIRE = {
-    "dev": INSTALL_REQUIRES + QUALITY_REQUIRE,
+    "dev": INSTALL_REQUIRES + QUALITY_REQUIRE + TESTS_REQUIRE,
     "quality": INSTALL_REQUIRES + QUALITY_REQUIRE,
     "docs": INSTALL_REQUIRES
     + [

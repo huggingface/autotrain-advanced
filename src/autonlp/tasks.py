@@ -7,3 +7,5 @@ TASKS = {
     "single_column_regression": 10,
     "speech_recognition": 11,
 }
+
+DATASETS_TASKS = ["text-classification", "question-answering-extractive"]
