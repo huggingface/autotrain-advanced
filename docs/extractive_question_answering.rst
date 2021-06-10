@@ -24,7 +24,7 @@ The first step would be login to AutoNLP:
 
    $ autonlp login --api-key YOUR_HUGGING_FACE_API_TOKEN
 
-If you do not know your Hugging Face API token, please create an account on huggingface.co and you will find your api key in settings. 
+If you do not know your Hugging Face API token, please create an account on huggingface.co and you will find your api key in your profile settings. 
 Please do not share your api key with anyone!
 
 Once you have logged in, you can create a new project:
