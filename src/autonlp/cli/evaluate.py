@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
-from ..tasks import TASKS
+from ..tasks import DATASETS_TASKS, TASKS
 from . import BaseAutoNLPCommand
 from .common import COL_MAPPING_HELP
 
@@ -22,7 +22,7 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             default=None,
             required=True,
             help=f"The evaluation task type, one of: {list(TASKS.keys())}",
-            choices=list(TASKS.keys()),
+            choices=list(TASKS.keys()) + list(DATASETS_TASKS.keys()),
         )
         create_evaluation_parser.add_argument(
             "--dataset",

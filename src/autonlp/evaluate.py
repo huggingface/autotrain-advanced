@@ -47,9 +47,6 @@ class Evaluate:
         return output
 
 
-DATASETS_TASKS = ["text-classification", "question-answering-extractive"]
-
-
 def format_datasets_task(task: str, dataset: str, config: str = None):
     task_template = get_compatible_task_template(task, dataset, config)
     if task_template:
