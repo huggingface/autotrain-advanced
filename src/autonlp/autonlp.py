@@ -110,7 +110,7 @@ class AutoNLP:
         if task in DatasetsTasks.__members__:
             task = format_datasets_task(task, dataset, config)
             if col_mapping:
-                warning.warn(f"A task template from `datasets` has been selected. Deleting `col_mapping` ...")
+                warning.warn("A task template from `datasets` has been selected. Deleting `col_mapping` ...")
                 col_mapping = None
         elif col_mapping is None:
             raise ValueError(
