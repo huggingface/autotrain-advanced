@@ -1,7 +1,7 @@
-Speech Recognition
+Single Column Regression
 ===================================
 
-AutoNLP supports fine-tuning of speech models. So, you can train an automatic speech recognition model easily.
+Single column regression is a regression task where you have a text sample and associated to the text sample there is a target which is a real number.
 
 Let's assume our data is in CSV format and looks something like the following:
 
@@ -19,27 +19,27 @@ Let's assume our data is in CSV format and looks something like the following:
     <thead>
     <tr>
         <th class="tg-0pky"><span style="font-weight:bold">sentence</span></th>
-        <th class="tg-0pky"><span style="font-weight:bold">audio_path</span></th>
+        <th class="tg-0pky"><span style="font-weight:bold">label</span></th>
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td class="tg-0pky">hello, how are you?</td>
-        <td class="tg-0pky">a1.mp3</td>
+        <td class="tg-0pky">i love autonlp</td>
+        <td class="tg-0pky">0.1</td>
     </tr>
     <tr>
-        <td class="tg-0pky">i am fine</td>
-        <td class="tg-0pky"><span style="font-weight:400;font-style:normal">a2.mp3</span></td>
+        <td class="tg-0pky">i dont like this movie</td>
+        <td class="tg-0pky">0.5</td>
     </tr>
     <tr>
-        <td class="tg-0pky">training asr models</td>
-        <td class="tg-0pky"><span style="font-weight:400;font-style:normal">a3.mp3</span></td>
+        <td class="tg-0pky">this is the best tutorial ever</td>
+        <td class="tg-0pky">-1.5</td>
     </tr>
     </tbody>
     </table>
+    <br />
 
-Here, we see only three samples but you can have as many samples as you like: 5000, 10000, 100000 or even a million or more! 
-Please note that the specified audio files must exist on disk.
+Here, we see only three samples but you can have as many samples as you like: 5000, 10000, 100000 or even a million or more!
 
 Once you have the data in the format specified above, you are ready to train models using AutoNLP. Yes, it's that easy.
 
@@ -56,36 +56,34 @@ Once you have logged in, you can create a new project:
 
 .. code-block:: bash
 
-    $ autonlp create_project --name speech_model --language fr --task speech_recognition
+    $ autonlp create_project --name single_col_regression_project --language en --task single_column_regression
 
 During creation of project, you can choose the language using "--language" parameter.
 
 The next step is to upload files. Here, column mapping is very important. The columns from original data are mapped to AutoNLP column names.
-In the data above, the original columns are "sentence" and "audio_path". We do not need more columns for a speech recognition problem.
+In the data above, the original columns are "sentence" and "label". We do not need more columns for a single column regression problem.
 
-AutoNLP columns for speech recognition model are:
+AutoNLP columns for single column regression problem are:
 
 - text
-- path
+- target
 
-The original columns, thus, need to be mapped to text and path. This is done in upload command. You also need to tell AutoNLP what kind of split you are uploading: train or valid.
+The original columns, thus, need to be mapped to text and target. This is done in upload command. You also need to tell AutoNLP what kind of split you are uploading: train or valid.
 
 .. code-block:: bash
 
-    autonlp upload --project speech1 --split train \
-        --col_mapping sentence:text,path:path 
-        --files train.csv 
-        --path_to_audio ~/audio_data/clips
+    autonlp upload --project single_col_regression_project --split train \
+                --col_mapping sentence:text,label:target \
+                --files ~/datasets/train.csv
 
 
 Similarly, upload the validation file:
 
 .. code-block:: bash
 
-    autonlp upload --project speech1 --split valid \
-        --col_mapping sentence:text,path:path 
-        --files valid.csv 
-        --path_to_audio ~/audio_data/clips
+    autonlp upload --project single_col_regression_project --split valid \
+                --col_mapping sentence:text,label:target \
+                --files ~/datasets/valid.csv
 
 Column mapping is always from original column to AutoNLP column (original_column:autonlp_column).
 
@@ -96,7 +94,7 @@ Once you have uploaded the files successfully, you can start training by using t
 
 .. code-block:: bash
 
-    $ autonlp train --project speech1
+    $ autonlp train --project single_col_regression_project
 
 
 And that's it!
