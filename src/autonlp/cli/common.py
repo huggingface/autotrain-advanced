@@ -42,4 +42,11 @@ Expected columns for AutoNLP evaluation tasks:
     {BLD}col_name2{RST} -> {BLD}target{RST}  (The summarization)
     Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text{RST},{GRN}col_name2{RST}:{CYN}target{RST}'
 
+{BLD}`extractive_question_answering`{RST}:
+    {BLD}col_name1{RST} -> {BLD}context{RST}    (The context text)
+    {BLD}col_name2{RST} -> {BLD}question{RST}  (The question text)
+    {BLD}col_name3{RST} -> {BLD}answers.answer_start{RST}  (Start indicies of answers [a list of ints])
+    {BLD}col_name2{RST} -> {BLD}answers.text{RST}  (Actual answer texts [a list of strings])
+    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}context{RST},{GRN}col_name2{RST}:{CYN}question{RST},{GRN}col_name2{RST}:{CYN}answers.answer_start{RST},{GRN}col_name2{RST}:{CYN}answers.text{RST}'
+
 """
