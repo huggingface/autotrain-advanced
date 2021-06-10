@@ -39,3 +39,5 @@ Currently, AutoNLP supports the following tasks:
    entity_extraction
    summarization
    speech_recognition
+   single_column_regression
+   extractive_question_answering
