@@ -10,7 +10,7 @@ import requests
 from loguru import logger
 
 from . import config
-from .evaluate import Evaluate, format_datasets_task
+from .evaluate import Evaluate, format_datasets_task, get_dataset_splits
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
@@ -105,6 +105,10 @@ class AutoNLP:
         self, task: str, dataset: str, model: str, split: str, col_mapping: str = None, config: str = None
     ):
         self._login_from_conf()
+
+        splits = get_dataset_splits(dataset=dataset, config=config)
+        if split not in splits:
+            raise ValueError(f"❌ Split {split} not found in dataset {dataset}. Available splits: {splits}")
 
         if task in DATASETS_TASKS:
             task = format_datasets_task(task, dataset, config)

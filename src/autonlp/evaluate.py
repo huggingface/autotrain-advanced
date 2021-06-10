@@ -86,3 +86,11 @@ def get_compatible_task_template(task: str, dataset: str, config: str = None):
         return compatible_templates[0]
     else:
         return None
+
+
+def get_dataset_splits(dataset: str, config: str = None):
+    module, module_hash = prepare_module(dataset)
+    builder_cls = import_main_class(module)
+    builder = builder_cls(hash=module_hash, name=config)
+    splits = builder.info.splits.keys()
+    return list(splits)
