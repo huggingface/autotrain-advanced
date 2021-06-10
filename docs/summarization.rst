@@ -83,6 +83,7 @@ Similarly, upload the validation file:
                 --col_mapping document:text,summary:target \
                 --files ~/datasets/valid.csv
 
+Column mapping is always from original column to AutoNLP column (original_column:autonlp_column).
 
 Please note that you can upload multiple files by separating the paths by a comma, however, the column names must be the same in each file.
 
