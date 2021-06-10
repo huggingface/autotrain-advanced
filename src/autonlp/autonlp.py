@@ -10,11 +10,11 @@ import requests
 from loguru import logger
 
 from . import config
-from .evaluate import DATASETS_TASKS, Evaluate, format_datasets_task
+from .evaluate import Evaluate, format_datasets_task
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
-from .tasks import TASKS
+from .tasks import DATASETS_TASKS, TASKS
 from .utils import UnauthenticatedError, http_get, http_post
 
 
@@ -120,9 +120,9 @@ class AutoNLP:
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
 
+        mapping_dict = {}
         if col_mapping:
             col_mapping = col_mapping.strip().split(",")
-            mapping_dict = {}
             for c_m in col_mapping:
                 k, v = c_m.split(":")
                 mapping_dict[k] = v

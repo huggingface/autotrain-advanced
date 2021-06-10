@@ -8,6 +8,9 @@ from .common import COL_MAPPING_HELP
 
 
 def create_evaluation_command_factory(args):
+    if args.task not in DATASETS_TASKS:
+        if args.col_mapping is None:
+            raise Exception("`col_mapping` is required if task is not a datasets task")
     return CreateEvaluationCommand(args.task, args.dataset, args.model, args.col_mapping, args.split, args.config)
 
 
@@ -22,7 +25,7 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             default=None,
             required=True,
             help=f"The evaluation task type, one of: {list(TASKS.keys())}",
-            choices=list(TASKS.keys()) + list(DATASETS_TASKS.keys()),
+            choices=list(TASKS.keys()) + DATASETS_TASKS,
         )
         create_evaluation_parser.add_argument(
             "--dataset",
@@ -44,7 +47,7 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             "--col_mapping",
             type=str,
             default=None,
-            required=True,
+            required=False,
             help=COL_MAPPING_HELP,
         )
         create_evaluation_parser.add_argument(

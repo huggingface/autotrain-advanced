@@ -57,6 +57,8 @@ def format_datasets_task(task: str, dataset: str, config: str = None):
             # TODO(lewtun): add logic for multilabel classification when implemented in `datasets`
             elif num_labels > 2:
                 task = "multi_class_classification"
+            else:
+                raise Exception("Invalid `num_labels`")
         elif task == "question-answering-extractive":
             task = "extractive_question_answering"
         else:
