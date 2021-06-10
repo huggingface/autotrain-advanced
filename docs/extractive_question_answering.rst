@@ -4,7 +4,7 @@ Extractive Question Answering
 Extractive Question Answering is a task in Natural Language Processing where you are given a context and a question.
 The model's job is to to extract answer from the context.
 
-To train extractive question and answering model using AutoNLP, you need your data to be in JSONL format. An example is shown below:
+To train Extractive Question Answering models using AutoNLP, you need your data to be in JSONL format. An example is shown below:
 
 
 .. code-block:: text
