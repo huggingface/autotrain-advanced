@@ -114,7 +114,7 @@ class AutoNLP:
                 col_mapping = None
         elif col_mapping is None:
             raise ValueError(
-                f"❌ A column mapping must be provided for task {TASKS.keys()}. Please provide a value for `col_mapping`."
+                f"❌ A column mapping must be provided for task {task}. Please provide a value for `col_mapping`."
             )
 
         task_id = TASKS.get(task)
