@@ -48,6 +48,14 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             metavar="MAX_MODELS",
             help="Maximum number of models you want to train in this project. More models => higher chances of getting awesome models. Also, more models => higher expenses",
         )
+        create_project_parser.add_argument(
+            "--hub_model",
+            type=str,
+            default=None,
+            required=False,
+            metavar="HUB_MODEL",
+            help="Provide model from hub that you want to finetune. E.g. abhishek/my_awesome_model. Note that if you provide a hub model, AutoNLP will only finetune that model and won't try any other models.",
+        )
         create_project_parser.set_defaults(func=create_project_command_factory)
 
     def __init__(self, name: str, task: str, language: str, max_models: int):
