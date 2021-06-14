@@ -89,8 +89,6 @@ class AutoNLP:
             "proj_name": name,
             "task": task_id,
             "config": {
-                "version": 0,
-                "patch": 1,
                 "language": language,
                 "max_models": max_models,
                 "hub_model": hub_model,
