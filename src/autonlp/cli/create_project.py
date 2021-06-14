@@ -14,7 +14,9 @@ def create_project_command_factory(args):
         raise ValueError("max_models cannot be 0 or negative")
     if args.max_models > 150:
         raise ValueError("Please choose a value from 1 to 150 for max_models")
-    return CreateProjectCommand(args.name, args.task, args.language, args.max_models)
+    if args.hub_model is None and args.language == "unk":
+        raise ValueError("Please provide the `language` parameter")
+    return CreateProjectCommand(args.name, args.task, args.language, args.max_models, args.hub_model)
 
 
 class CreateProjectCommand(BaseAutoNLPCommand):
@@ -34,8 +36,8 @@ class CreateProjectCommand(BaseAutoNLPCommand):
         create_project_parser.add_argument(
             "--language",
             type=str,
-            default=None,
-            required=True,
+            default="unk",
+            required=False,
             metavar="LANGUAGE",
             help="The project's language. Please check supported languages in AutoNLP documentation.",
             choices=SUPPORTED_LANGUAGES,
@@ -48,13 +50,22 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             metavar="MAX_MODELS",
             help="Maximum number of models you want to train in this project. More models => higher chances of getting awesome models. Also, more models => higher expenses",
         )
+        create_project_parser.add_argument(
+            "--hub_model",
+            type=str,
+            default=None,
+            required=False,
+            metavar="HUB_MODEL",
+            help="Provide model from hub that you want to finetune. E.g. abhishek/my_awesome_model. Note that if you provide a hub model, AutoNLP will ignore `language` parameter and disable model search.",
+        )
         create_project_parser.set_defaults(func=create_project_command_factory)
 
-    def __init__(self, name: str, task: str, language: str, max_models: int):
+    def __init__(self, name: str, task: str, language: str, max_models: int, hub_model: str = None):
         self._name = name
         self._task = task
         self._lang = language
         self._max_models = max_models
+        self._hub_model = hub_model
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -62,7 +73,11 @@ class CreateProjectCommand(BaseAutoNLPCommand):
         logger.info(f"Creating project: {self._name} with task: {self._task}")
         client = AutoNLP()
         project = client.create_project(
-            name=self._name, task=self._task, language=self._lang, max_models=self._max_models
+            name=self._name,
+            task=self._task,
+            language=self._lang,
+            max_models=self._max_models,
+            hub_model=self._hub_model,
         )
         print(project)
         print(f'Upload files to your project: {RED}autonlp upload --project "{project.name}"{RST}')
