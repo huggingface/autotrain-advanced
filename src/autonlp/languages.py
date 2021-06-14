@@ -442,6 +442,7 @@ SUPPORTED_LANGUAGES = [
     "uk",
     "umb",
     "und",
+    "unk",
     "ur",
     "uz",
     "vai",
