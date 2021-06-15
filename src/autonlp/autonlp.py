@@ -80,7 +80,7 @@ class AutoNLP:
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
         language = str(language).strip().lower()
-        if len(language) != 2 or language not in SUPPORTED_LANGUAGES:
+        if language not in SUPPORTED_LANGUAGES:
             raise ValueError("❌ Invalid language selected. Please check supported languages in AutoNLP documentation.")
         if task_id is None:
             raise ValueError(f"❌ Invalid task specified. Please choose one of {list(TASKS.keys())}")
