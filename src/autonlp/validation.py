@@ -2,7 +2,7 @@ import csv
 import json
 import os
 from typing import Dict
-
+from .utils import flatten_dict
 
 COLUMNS_PER_TASK = {
     "binary_classification": ("text", "target"),
@@ -11,7 +11,12 @@ COLUMNS_PER_TASK = {
     "single_column_regression": ("text", "target"),
     "speech_recognition": ("text", "path"),
     "summarization": ("text", "target"),
-    "extractive_question_answering": ("context", "question", "answers.answer_start", "answers.text"),
+    "extractive_question_answering": (
+        "context",
+        "question",
+        "answers.answer_start",
+        "answers.text",
+    ),
 }
 
 
@@ -67,11 +72,16 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
             json.loads(second_line)
         except ValueError:
             raise InvalidFileError(
-                f"File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON object."
+                f"File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
             )
 
         # Extract column_names
-        column_names = list(json.loads(first_line).keys())
+        first_item = json.loads(first_line)
+        if not isinstance(first_item, dict):
+            raise InvalidFileError(
+                "File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
+            )
+        column_names = list(flatten_dict(first_item, 1).keys())
 
     else:
         raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
@@ -91,7 +101,10 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
         raise InvalidColMappingError(
             "\n".join(
                 ["Provided column mapping is:"]
-                + [f"   '{src_col}' -> '{dst_col}'" for src_col, dst_col in col_mapping.items()]
+                + [
+                    f"   '{src_col}' -> '{dst_col}'"
+                    for src_col, dst_col in col_mapping.items()
+                ]
                 + ["While expecting column mapping like:"]
                 + [
                     f"   'original_col_name' -> '{col_name}' (AutoNLP column name)"
