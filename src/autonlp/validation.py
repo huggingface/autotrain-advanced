@@ -2,7 +2,9 @@ import csv
 import json
 import os
 from typing import Dict
+
 from .utils import flatten_dict
+
 
 COLUMNS_PER_TASK = {
     "binary_classification": ("text", "target"),
@@ -101,10 +103,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
         raise InvalidColMappingError(
             "\n".join(
                 ["Provided column mapping is:"]
-                + [
-                    f"   '{src_col}' -> '{dst_col}'"
-                    for src_col, dst_col in col_mapping.items()
-                ]
+                + [f"   '{src_col}' -> '{dst_col}'" for src_col, dst_col in col_mapping.items()]
                 + ["While expecting column mapping like:"]
                 + [
                     f"   'original_col_name' -> '{col_name}' (AutoNLP column name)"
