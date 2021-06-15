@@ -36,6 +36,7 @@ Currently, AutoNLP supports the following tasks:
 
    installation
    supported_languages
+   training_hub_model
    binary_classification
    multi_class_classification
    entity_extraction
