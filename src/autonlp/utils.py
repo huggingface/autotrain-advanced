@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import requests
 
@@ -72,3 +72,19 @@ def get_task(task_id: int) -> str:
         if value == task_id:
             return key
     return "❌ Unsupported task! Please update autonlp"
+
+
+def flatten_dict(d: Dict[str, Union[str, Any]], max_depth: int):
+    """Recursively flattens a dict"""
+    flat_dict = {}
+
+    def _flatten(d: Dict[str, Union[str, Any]], max_depth: int, parent=None):
+        for key, value in d.items():
+            flat_key = key if parent is None else ".".join([parent, key])
+            if max_depth and isinstance(value, dict):
+                _flatten(value, max_depth - 1, flat_key)
+            else:
+                flat_dict[flat_key] = value
+
+    _flatten(d, max_depth, None)
+    return flat_dict
