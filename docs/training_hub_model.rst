@@ -65,4 +65,4 @@ The hub model, "abhishek/my_awesome_model" must consist of a tokenizer and must 
 You can also specify "--max_models" parameter to train different variations of the same model.
 When you specify "--hub_model", the language parameter is ignored and AutoNLP does everything but model search.
 
-Everything else remains the same.
+Everything else remains the same as any other task!
