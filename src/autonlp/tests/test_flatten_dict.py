@@ -16,3 +16,7 @@ def test_flatten_dict():
 
     flat_dict = flatten_dict(d, max_depth=1)
     assert flat_dict == {"a": 1, "c.a": 2, "c.b": {"x": 5, "y": 10}, "d": [1, 2, 3]}
+
+    d = {"a": [[1, 2], [3, 4]], "c": [{"d": 1, "e": "str"}, {"d": 2, "e": "float"}]}
+    flat_dict = flatten_dict(d, max_depth=5)
+    assert flat_dict == d
