@@ -167,8 +167,7 @@ class AutoNLP:
                     raise ValueError(
                         f"❌ Evaluation project '{name}' not found. Please create the project using autonlp evaluate"
                     )
-                else:
-                    raise
+                raise
             return format_eval_status(json_resp)
 
         if self._project is None or self._project.name != name:
