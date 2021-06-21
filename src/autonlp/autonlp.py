@@ -10,7 +10,7 @@ import requests
 from loguru import logger
 
 from . import config
-from .evaluate import Evaluate, format_datasets_task, get_dataset_splits
+from .evaluate import Evaluate, format_datasets_task, format_eval_status, get_dataset_splits
 from .languages import SUPPORTED_LANGUAGES
 from .metrics import Metrics
 from .project import Project
@@ -153,11 +153,24 @@ class AutoNLP:
         json_resp = http_get(path=f"/evaluate/status/{eval_job_id}", token=self.token).json()
         return json_resp["status"]
 
-    def get_project(self, name):
+    def get_project(self, name, is_eval):
         """Retrieves a project"""
         self._login_from_conf()
         if self.username is None:
             raise UnauthenticatedError("❌ Credentials not found ! Please login to AutoNLP first.")
+        if is_eval:
+            logger.info(f"☁ Retrieving evaluation project '{name}' from AutoNLP...")
+            try:
+                json_resp = http_get(path=f"/evaluate/status/{name}", token=self.token).json()
+            except requests.exceptions.HTTPError as err:
+                if err.response.status_code == 404:
+                    raise ValueError(
+                        f"❌ Evaluation project '{name}' not found. Please create the project using autonlp evaluate"
+                    )
+                else:
+                    raise
+            return format_eval_status(json_resp)
+
         if self._project is None or self._project.name != name:
             logger.info(f"☁ Retrieving project '{name}' from AutoNLP...")
             try:
