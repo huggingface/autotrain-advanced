@@ -1,9 +1,20 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Tuple
 
 from datasets.load import import_main_class, prepare_module
 
 from .utils import BOLD_TAG, GREEN_TAG, RESET_TAG, YELLOW_TAG, get_task
+
+
+EVAL_JOB_STATUS = (
+    ("⌚", "queued"),
+    ("🚀", "start"),
+    ("⚙", "data_munging"),
+    ("🏃", "model_evaluating"),
+    ("✅", "success"),
+    ("❌", "failed"),
+)
 
 
 @dataclass
@@ -45,6 +56,25 @@ class Evaluate:
             ]
         )
         return output
+
+
+def get_eval_job_status(status_id: int) -> Tuple[str, str]:
+    try:
+        return EVAL_JOB_STATUS[status_id - 1]
+    except IndexError:
+        return "❓", "Unhandled status! Please update autonlp"
+
+
+def format_eval_status(json_resp):
+    status_emoji, status = get_eval_job_status(json_resp["status"])
+    output = "\n".join(
+        [
+            f"AutoNLP Evaluation (id # {json_resp['id']})",
+            "~" * 35,
+            f" • {BOLD_TAG}Status{RESET_TAG}:       {status_emoji} {GREEN_TAG}{status}{RESET_TAG}",
+        ]
+    )
+    return output
 
 
 def format_datasets_task(task: str, dataset: str, config: str = None):
