@@ -153,7 +153,7 @@ class AutoNLP:
         json_resp = http_get(path=f"/evaluate/status/{eval_job_id}", token=self.token).json()
         return json_resp["status"]
 
-    def get_project(self, name, is_eval):
+    def get_project(self, name: str, is_eval: bool = False):
         """Retrieves a project"""
         self._login_from_conf()
         if self.username is None:
