@@ -226,7 +226,7 @@ class Project:
                 if value == "text":
                     temp_mapping[key] = "text"
                 else:
-                    for sub_key in key.split(","):
+                    for sub_key in key.split(";"):
                         temp_mapping[sub_key] = value
             col_mapping = temp_mapping
 
