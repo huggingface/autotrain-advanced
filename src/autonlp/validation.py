@@ -13,12 +13,8 @@ COLUMNS_PER_TASK = {
     "single_column_regression": ("text", "target"),
     "speech_recognition": ("text", "path"),
     "summarization": ("text", "target"),
-    "extractive_question_answering": (
-        "context",
-        "question",
-        "answers.answer_start",
-        "answers.text",
-    ),
+    "extractive_question_answering": ("context", "question", "answers.answer_start", "answers.text"),
+    "multi_label_classification": ("text", "targets"),
 }
 
 
