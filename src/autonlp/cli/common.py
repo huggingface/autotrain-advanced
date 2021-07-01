@@ -27,6 +27,12 @@ Expected columns for AutoNLP evaluation tasks:
     {BLD}col_name2{RST} -> {BLD}target{RST}  (The label)
     Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text,{GRN}col_name2{RST}:{CYN}target{RST}'
 
+{BLD}`multi_label_classification`{RST}:
+    {BLD}col_name1{RST} -> {BLD}text{RST}    (The text to classify)
+    {BLD}col_name2,col_name3,col_name4{RST} -> {BLD}targets{RST}  (The labels)
+    Example col_mapping: --col_mapping '{GRN}col_name1{RST}:{CYN}text,{GRN}col_name2{RST}:{CYN}target{RST}'
+
+
 {BLD}`entity_extraction`{RST}:
     {BLD}col_name1{RST} -> {BLD}tokens{RST}  (The tokens to tag)
     {BLD}col_name2{RST} -> {BLD}tags{RST}    (The associated tags)

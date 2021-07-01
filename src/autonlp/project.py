@@ -219,13 +219,6 @@ class Project:
         if self.task == "speech_recognition" and not path_to_audio:
             raise ValueError("'path_to_audio' must be provided when task is 'speech_recognition'")
 
-        if self.task == "multi_label_classification":
-            temp_targets = col_mapping["targets"]
-            temp_targets = temp_targets.split(",")
-            del col_mapping["targets"]
-            for i, temp_target in enumerate(temp_targets):
-                col_mapping[f"target_{i+1}"] = temp_target
-
         dataset_repo = self._clone_dataset_repo()
         local_dataset_dir = dataset_repo.local_dir
 
