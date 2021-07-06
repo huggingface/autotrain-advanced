@@ -15,6 +15,7 @@ from .predict import PredictCommand
 from .project_info import ProjectInfoCommand
 from .train import TrainCommand
 from .upload import UploadCommand
+from .benchmark import CreateBenchmarkCommand
 
 
 def main():
@@ -37,6 +38,7 @@ def main():
     PredictCommand.register_subcommand(commands_parser)
     EstimatorCommand.register_subcommand(commands_parser)
     CreateEvaluationCommand.register_subcommand(commands_parser)
+    CreateBenchmarkCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

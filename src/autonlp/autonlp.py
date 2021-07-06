@@ -4,6 +4,7 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
+from re import sub
 from typing import Optional
 
 import requests
@@ -143,6 +144,23 @@ class AutoNLP:
             "col_mapping": mapping_dict,
             "split": split,
             "config": config,
+        }
+        json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
+        self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
+        return self._eval_proj
+
+    def create_benchmark(self, dataset: str, submission: str):
+        self._login_from_conf()
+        task_id = 1
+        payload = {
+            "username": self.username,
+            "dataset": dataset,
+            "task": task_id,
+            "model": "autonlp/benchmark",
+            "submission_dataset": submission,
+            "col_mapping": {},
+            "split": "test",
+            "config": None,
         }
         json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
         self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
