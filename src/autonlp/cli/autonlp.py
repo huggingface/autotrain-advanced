@@ -5,6 +5,7 @@ from loguru import logger
 from requests import HTTPError
 
 from .. import __version__
+from .benchmark import CreateBenchmarkCommand
 from .create_project import CreateProjectCommand
 from .estimator import EstimatorCommand
 from .evaluate import CreateEvaluationCommand
@@ -15,7 +16,6 @@ from .predict import PredictCommand
 from .project_info import ProjectInfoCommand
 from .train import TrainCommand
 from .upload import UploadCommand
-from .benchmark import CreateBenchmarkCommand
 
 
 def main():

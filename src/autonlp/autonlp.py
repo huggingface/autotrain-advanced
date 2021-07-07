@@ -4,7 +4,6 @@ Copyright 2020 The HuggingFace Team
 
 import json
 import os
-from re import sub
 from typing import Optional
 
 import requests
