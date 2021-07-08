@@ -148,6 +148,23 @@ class AutoNLP:
         self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
         return self._eval_proj
 
+    def create_benchmark(self, dataset: str, submission: str):
+        self._login_from_conf()
+        task_id = 1
+        payload = {
+            "username": self.username,
+            "dataset": dataset,
+            "task": task_id,
+            "model": "autonlp/benchmark",
+            "submission_dataset": submission,
+            "col_mapping": {},
+            "split": "test",
+            "config": None,
+        }
+        json_resp = http_post(path="/evaluate/create", payload=payload, token=self.token).json()
+        self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
+        return self._eval_proj
+
     def get_eval_job_status(self, eval_job_id: int) -> int:
         self._login_from_conf()
         json_resp = http_get(path=f"/evaluate/status/{eval_job_id}", token=self.token).json()

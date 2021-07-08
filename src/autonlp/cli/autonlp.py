@@ -5,6 +5,7 @@ from loguru import logger
 from requests import HTTPError
 
 from .. import __version__
+from .benchmark import CreateBenchmarkCommand
 from .create_project import CreateProjectCommand
 from .estimator import EstimatorCommand
 from .evaluate import CreateEvaluationCommand
@@ -37,6 +38,7 @@ def main():
     PredictCommand.register_subcommand(commands_parser)
     EstimatorCommand.register_subcommand(commands_parser)
     CreateEvaluationCommand.register_subcommand(commands_parser)
+    CreateBenchmarkCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
