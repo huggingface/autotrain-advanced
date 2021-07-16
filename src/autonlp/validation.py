@@ -67,10 +67,15 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
         raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
 
     state = {}
-    for chunk in rows_iter:
-        validation_error = validate_chunk(chunk, task=task, col_mapping=col_mapping, state=state)
-        if validation_error is not None:
-            raise InvalidFileError(validation_error)
+    try:
+        for chunk in rows_iter:
+            validation_error = validate_chunk(chunk, task=task, col_mapping=col_mapping, state=state)
+            if validation_error is not None:
+                raise InvalidFileError(validation_error)
+    except (pd.errors.ParserError, ValueError) as err:
+        if isinstance(err, InvalidFileError):
+            raise err
+        raise InvalidFileError(f"Malformed file") from err
 
     validation_error = validate_state(state, task=task)
     if validation_error is not None:
