@@ -45,6 +45,15 @@ def find_columns_in_mapping(column_name: str, col_mapping: Dict[str, str]) -> Li
     return matching_columns
 
 
+def get_rows_iter(path: str, file_ext: str):
+    if file_ext in ("csv", "tsv"):
+        return pd.read_csv(path, header=0, delimiter=None, chunksize=1000)
+    elif file_ext in ("json", "jsonl"):
+        return pd.read_json(path, lines=True, chunksize=1000)
+    else:
+        raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
+
+
 def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
     """Validates a given file before uploading it
 
@@ -58,13 +67,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
         col_mapping (``dict``)
     """
     validate_col_mapping(col_mapping, task)
-
-    if file_ext in ("csv", "tsv"):
-        rows_iter = pd.read_csv(path, header=0, delimiter=None, chunksize=1000)
-    elif file_ext in ("json", "jsonl"):
-        rows_iter = pd.read_json(path, lines=True, chunksize=1000)
-    else:
-        raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
+    rows_iter = get_rows_iter(path, file_ext)
 
     state = {}
     try:
@@ -112,9 +115,9 @@ def validate_chunk(chunk: pd.DataFrame, task: str, col_mapping: Dict[str, str], 
 
     # Check for missing (NaN) values
     if chunk.isna().any(axis=None):
-        isna = chunk.isna().any(axis=0)
+        isna = chunk.isna().any(axis=1)
         rows_with_na = isna[isna].index.values.tolist()
-        return f"Rows with index {rows_with_na} have missing values"
+        return f"Row(s) with index {rows_with_na} have missing values"
 
     if task in ("binary_classification", "multi_class_classification"):
         target_column = find_columns_in_mapping("target", col_mapping)[0]
@@ -125,7 +128,7 @@ def validate_chunk(chunk: pd.DataFrame, task: str, col_mapping: Dict[str, str], 
         try:
             pd.to_numeric(chunk[target_column], errors="raise")
         except (ValueError, TypeError) as err:
-            return f"Column {target_column} cannot be interpreted as a number: {err}"
+            return f"Some value in column {target_column} cannot be interpreted as a number: {err}"
 
     return None
 
