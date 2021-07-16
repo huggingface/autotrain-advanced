@@ -78,7 +78,7 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
     except (pd.errors.ParserError, ValueError) as err:
         if isinstance(err, InvalidFileError):
             raise err
-        raise InvalidFileError(f"Malformed file") from err
+        raise InvalidFileError("Malformed file") from err
 
     validation_error = validate_state(state, task=task)
     if validation_error is not None:
