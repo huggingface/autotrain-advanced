@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from autonlp.validation import InvalidColMappingError, validate_col_mapping, validate_chunk, validate_state
+
+from autonlp.validation import InvalidColMappingError, validate_chunk, validate_col_mapping, validate_state
 
 
 def test_validate_col_mapping():
