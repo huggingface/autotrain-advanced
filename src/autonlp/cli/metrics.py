@@ -22,7 +22,6 @@ class MetricsCommand(BaseAutoNLPCommand):
             required=False,
             help="The user or org that owns the project, defaults to the selected identity",
         )
-        metrics_parser.add_arge
         metrics_parser.set_defaults(func=metrics_command_factory)
 
     def __init__(self, project: str, username: str = None):
