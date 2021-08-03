@@ -1,6 +1,5 @@
 import sys
 from argparse import ArgumentParser
-from typing_extensions import Required
 
 from loguru import logger
 
