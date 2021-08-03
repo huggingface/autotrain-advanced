@@ -1,5 +1,5 @@
 Training A Model From Hugging Face Hub
-===================================
+==============================================
 
 Using AutoNLP you can also finetune a model that is hosted on Hugging Face Hub. You can choose from one of the
 10K+ models hosted here: http://hf.co/models. The model must have it's own tokenizer!
