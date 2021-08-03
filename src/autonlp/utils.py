@@ -16,10 +16,6 @@ PURPLE_TAG = FORMAT_TAG.format(code=95)
 CYAN_TAG = FORMAT_TAG.format(code=96)
 
 
-class UnauthenticatedError(Exception):
-    pass
-
-
 class UnreachableAPIError(Exception):
     pass
 
