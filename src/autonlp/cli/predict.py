@@ -4,7 +4,7 @@ from . import BaseAutoNLPCommand
 
 
 def predict_command_factory(args):
-    return PredictCommand(args.model_id, args.sentence, args.project)
+    return PredictCommand(args.model_id, args.sentence, args.project, args.username)
 
 
 class PredictCommand(BaseAutoNLPCommand):
@@ -28,16 +28,27 @@ class PredictCommand(BaseAutoNLPCommand):
             required=True,
             help="The input sentence to make predictions on! Don't forget to quote it 😉",
         )
+        predict_parser.add_argument(
+            "--username",
+            type=str,
+            default=None,
+            required=False,
+            help="The user or org that owns the project, defaults to the selected identity",
+        )
+
         predict_parser.set_defaults(func=predict_command_factory)
 
-    def __init__(self, model_id: int, sentence: str, project: str):
+    def __init__(self, model_id: int, sentence: str, project: str, username: str = None):
         self._model_id = model_id
         self._sentence = sentence
         self._project_name = project
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
 
         client = AutoNLP()
-        prediction = client.predict(project=self._project_name, model_id=self._model_id, input_text=self._sentence)
+        prediction = client.predict(
+            project=self._project_name, model_id=self._model_id, input_text=self._sentence, username=self._username
+        )
         print(prediction)

@@ -20,6 +20,7 @@ def upload_command_factory(args):
         col_mapping=args.col_mapping,
         files=args.files,
         path_to_audio=args.path_to_audio,
+        username=args.username,
     )
 
 
@@ -64,24 +65,37 @@ class UploadCommand(BaseAutoNLPCommand):
                 f"Comma-separated paths to {BLD}directories{RST} containing audio files"
             ),
         )
+        upload_parser.add_argument(
+            "--username",
+            type=str,
+            default=None,
+            required=False,
+            help="The user or organization that owns the project, defaults to the selected identity",
+        )
+
         upload_parser.set_defaults(func=upload_command_factory)
 
-    def __init__(self, name: str, split: str, col_mapping: str, files: str, path_to_audio: Optional[str]):
+    def __init__(
+        self, name: str, split: str, col_mapping: str, files: str, path_to_audio: Optional[str], username: str = None
+    ):
         self._name = name
         self._split = split
         self._col_mapping = col_mapping
         self._files = files
         self._path_to_audio = path_to_audio
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
 
-        logger.info(f"Uploading files for project: {self._name}")
+        logger.info(f"Uploading files for project: {self._username}/{self._name}")
         client = AutoNLP()
         try:
-            project = client.get_project(name=self._name)
+            project = client.get_project(name=self._name, username=self._username)
         except ValueError:
-            logger.error(f"Project {self._name} not found! You can create it using the create_project command.")
+            logger.error(
+                f"Project {self._username}/{self._name} not found! You can create it using the create_project command."
+            )
             sys.exit(1)
         splits = self._col_mapping.split(",")
         col_maps = {}
@@ -95,7 +109,7 @@ class UploadCommand(BaseAutoNLPCommand):
             project.upload(filepaths=files, split=self._split, col_mapping=col_maps, path_to_audio=self._path_to_audio)
             print(
                 "🎉 Yupee! Your files have been uploaded.\n"
-                f"Once you're done, starting a training here: {RED}autonlp train --project {project.name}{RST}"
+                f"Once you're done, starting a training here: {RED}autonlp train --project {project.name} --username {project.username}{RST}"
             )
         except ValueError as err:
             logger.error("❌ Something went wrong!")

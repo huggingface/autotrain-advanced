@@ -11,7 +11,9 @@ def create_evaluation_command_factory(args):
     if args.task not in DATASETS_TASKS:
         if args.col_mapping is None:
             raise Exception("`col_mapping` is required if task is not a datasets task")
-    return CreateEvaluationCommand(args.task, args.dataset, args.model, args.col_mapping, args.split, args.config)
+    return CreateEvaluationCommand(
+        args.task, args.dataset, args.model, args.col_mapping, args.split, args.config, args.username
+    )
 
 
 class CreateEvaluationCommand(BaseAutoNLPCommand):
@@ -64,16 +66,33 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             required=False,
             help="Which config of dataset to use for evaluation. If not provided, this will default to None.",
         )
+        create_evaluation_parser.add_argument(
+            "--username",
+            type=str,
+            default=None,
+            required=False,
+            help="The user or organization that will own the evaluation project. Defaults to the selected identity.",
+        )
 
         create_evaluation_parser.set_defaults(func=create_evaluation_command_factory)
 
-    def __init__(self, task: str, dataset: str, model: str, col_mapping: str, split: str, config: str = None):
+    def __init__(
+        self,
+        task: str,
+        dataset: str,
+        model: str,
+        col_mapping: str,
+        split: str,
+        config: str = None,
+        username: str = None,
+    ):
         self._task = task
         self._model = model
         self._dataset = dataset
         self._col_mapping = col_mapping
         self._split = split
         self._config = config
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -87,5 +106,6 @@ class CreateEvaluationCommand(BaseAutoNLPCommand):
             split=self._split,
             col_mapping=self._col_mapping,
             config=self._config,
+            username=self._username,
         )
         print(eval_project)

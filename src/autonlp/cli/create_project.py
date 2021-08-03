@@ -16,7 +16,7 @@ def create_project_command_factory(args):
         raise ValueError("Please choose a value from 1 to 150 for max_models")
     if args.hub_model is None and args.language == "unk":
         raise ValueError("Please provide the `language` parameter")
-    return CreateProjectCommand(args.name, args.task, args.language, args.max_models, args.hub_model)
+    return CreateProjectCommand(args.name, args.task, args.language, args.max_models, args.hub_model, args.username)
 
 
 class CreateProjectCommand(BaseAutoNLPCommand):
@@ -58,14 +58,25 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             metavar="HUB_MODEL",
             help="Provide model from hub that you want to finetune. E.g. abhishek/my_awesome_model. Note that if you provide a hub model, AutoNLP will ignore `language` parameter and disable model search.",
         )
+        create_project_parser.add_argument(
+            "--username",
+            type=str,
+            default=None,
+            required=False,
+            help="The user or organization name that will own the project. Defaults to the selected identiity.",
+        )
+
         create_project_parser.set_defaults(func=create_project_command_factory)
 
-    def __init__(self, name: str, task: str, language: str, max_models: int, hub_model: str = None):
+    def __init__(
+        self, name: str, task: str, language: str, max_models: int, hub_model: str = None, username: str = None
+    ):
         self._name = name
         self._task = task
         self._lang = language
         self._max_models = max_models
         self._hub_model = hub_model
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -78,6 +89,10 @@ class CreateProjectCommand(BaseAutoNLPCommand):
             language=self._lang,
             max_models=self._max_models,
             hub_model=self._hub_model,
+            username=self._username,
         )
+
         print(project)
-        print(f'Upload files to your project: {RED}autonlp upload --project "{project.name}"{RST}')
+        print(
+            f'Upload files to your project: {RED}autonlp upload --project "{project.name}" --username "{project.user}"{RST}'
+        )

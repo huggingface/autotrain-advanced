@@ -11,7 +11,7 @@ from . import BaseAutoNLPCommand
 
 
 def train_command_factory(args):
-    return TrainCommand(args.project)
+    return TrainCommand(args.project, args.username)
 
 
 class TrainCommand(BaseAutoNLPCommand):
@@ -19,10 +19,18 @@ class TrainCommand(BaseAutoNLPCommand):
     def register_subcommand(parser: ArgumentParser):
         train_parser = parser.add_parser("train", description="🚀 Start the training for your project!")
         train_parser.add_argument("--project", type=str, default=None, required=True, help="The project name")
+        train_parser.add_argument(
+            "--username",
+            type=str,
+            default=None,
+            required=False,
+            help="The user or org that owns the project, defaults to the selected identity",
+        )
         train_parser.set_defaults(func=train_command_factory)
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, username: str = None):
         self._name = name
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -31,14 +39,14 @@ class TrainCommand(BaseAutoNLPCommand):
 
         client = AutoNLP()
         try:
-            project = client.get_project(name=self._name)
+            project = client.get_project(name=self._name, username=self._username)
         except ValueError:
             logger.error(f"Project {self._name} not found! You can create it using the create_project command.")
             sys.exit(1)
         try:
             project.train()
             print(
-                f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name}{RST}"
+                f"🚀 Awesome!! Monitor you training progress here: {RED}autonlp project_info --name {project.name} --username {project.username}{RST}"
             )
         except TrainingCancelledError:
             print(

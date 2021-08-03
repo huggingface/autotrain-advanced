@@ -6,7 +6,7 @@ from . import BaseAutoNLPCommand
 
 
 def create_benchmark_command_factory(args):
-    return CreateBenchmarkCommand(args.dataset, args.submission, args.eval_name)
+    return CreateBenchmarkCommand(args.dataset, args.submission, args.eval_name, args.username)
 
 
 class CreateBenchmarkCommand(BaseAutoNLPCommand):
@@ -34,13 +34,21 @@ class CreateBenchmarkCommand(BaseAutoNLPCommand):
             default=None,
             required=True,
         )
+        create_benchmark_parser.add_argument(
+            "--username",
+            metavar="USERNAME",
+            type=str,
+            default=None,
+            required=False,
+        )
 
         create_benchmark_parser.set_defaults(func=create_benchmark_command_factory)
 
-    def __init__(self, dataset, submission, eval_name):
+    def __init__(self, dataset, submission, eval_name, username):
         self._dataset = dataset
         self._submission = submission
         self._eval_name = eval_name
+        self._username = username
 
     def run(self):
         from ..autonlp import AutoNLP
@@ -48,8 +56,6 @@ class CreateBenchmarkCommand(BaseAutoNLPCommand):
         logger.info("Creating benchmark")
         client = AutoNLP()
         eval_project = client.create_benchmark(
-            dataset=self._dataset,
-            submission=self._submission,
-            eval_name=self._eval_name,
+            dataset=self._dataset, submission=self._submission, eval_name=self._eval_name, username=self._username
         )
         print(eval_project)

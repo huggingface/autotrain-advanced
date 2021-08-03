@@ -23,7 +23,7 @@ class ListProjectsCommand(BaseAutoNLPCommand):
             type=str,
             default=None,
             required=False,
-            help="Username of the owner of the projects, defaults to you",
+            help="Username of the owner of the projects, defaults to the selected identity",
         )
         list_projects_parser.set_defaults(func=list_projects_command_factory)
 
