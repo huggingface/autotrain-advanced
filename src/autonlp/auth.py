@@ -1,6 +1,5 @@
 import json
 import os
-from dataclasses import dataclass
 from json.decoder import JSONDecodeError
 from typing import List, Optional
 
@@ -30,13 +29,7 @@ class ForbiddenError(ValueError):
     pass
 
 
-@dataclass
-class AutoNLPIdentity:
-    name: str
-    full_name: str
-    is_org: bool
-
-
+AutoNLPIdentity = TypedDict("AutoNLPIdentity", {"name": str, "full_name": str, "is_org": bool})
 LoginInfo = TypedDict("LoginInfo", {"token": str, "identities": List[AutoNLPIdentity], "selected_identity": str})
 
 
@@ -87,10 +80,10 @@ def _save_identities(
         os.makedirs(save_dir)
 
     if selected_identity is None:
-        selected_identity = identities[0].name
+        selected_identity = identities[0]["name"]
 
     login_dict = LoginInfo(token=token, identities=identities, selected_identity=selected_identity)
-    save_path = os.path.join(save_dir, "autonlp.json")
+    save_path = os.path.join(save_dir, "auth.json")
     with open(save_path, "w") as fp:
         json.dump(login_dict, fp)
 
@@ -101,7 +94,7 @@ def login_from_conf(save_dir: Optional[str] = None) -> LoginInfo:
     if save_dir is None:
         save_dir = "~/.autonlp"
     save_dir = os.path.expanduser(save_dir)
-    save_path = os.path.join(save_dir, "autonlp.json")
+    save_path = os.path.join(save_dir, "auth.json")
     if not os.path.isfile(save_path):
         raise NotAuthenticatedError(f"{save_path} not found")
 
@@ -117,7 +110,7 @@ def login_from_conf(save_dir: Optional[str] = None) -> LoginInfo:
 
 def select_identity(new_identity: str, save_dir: Optional[str] = None):
     login_info = login_from_conf(save_dir)
-    if new_identity not in [identity.name for identity in login_info["identities"]]:
+    if new_identity not in [identity["name"] for identity in login_info["identities"]]:
         raise ForbiddenError(f"Cannot impersonate {new_identity}: if it's an org, make sure you're a member of it")
     new_login_info = {
         **login_info,

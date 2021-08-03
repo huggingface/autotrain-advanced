@@ -28,10 +28,10 @@ class ListIdentitiesCommand(BaseAutoNLPCommand):
         table.add_rows(
             [
                 [
-                    f"{GREEN}X{RST}" if identity.name == login_info["selected_identity"] else " ",
-                    identity.name,
-                    identity.full_name,
-                    identity.is_org,
+                    f"{GREEN}X{RST}" if identity["name"] == login_info["selected_identity"] else " ",
+                    identity["name"],
+                    identity["full_name"],
+                    identity["is_org"],
                 ]
                 for identity in login_info["identities"]
             ]

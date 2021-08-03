@@ -4,16 +4,20 @@ import sys
 from loguru import logger
 from requests import HTTPError
 
+from autonlp.auth import ForbiddenError, NotAuthenticatedError
+
 from .. import __version__
 from .benchmark import CreateBenchmarkCommand
 from .create_project import CreateProjectCommand
 from .estimator import EstimatorCommand
 from .evaluate import CreateEvaluationCommand
+from .list_identities import ListIdentitiesCommand
 from .list_projects import ListProjectsCommand
 from .login import LoginCommand
 from .metrics import MetricsCommand
 from .predict import PredictCommand
 from .project_info import ProjectInfoCommand
+from .select_identity import SelectidentityCommand
 from .train import TrainCommand
 from .upload import UploadCommand
 
@@ -39,6 +43,8 @@ def main():
     EstimatorCommand.register_subcommand(commands_parser)
     CreateEvaluationCommand.register_subcommand(commands_parser)
     CreateBenchmarkCommand.register_subcommand(commands_parser)
+    ListIdentitiesCommand.register_subcommand(commands_parser)
+    SelectidentityCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
@@ -54,18 +60,21 @@ def main():
 
     try:
         command.run()
+    except NotAuthenticatedError:
+        logger.error("🔐 Not authenticated, please run autonlp login first")
+        sys.exit(1)
+    except ForbiddenError as err:
+        logger.error(f"⛔ Forbidden: {err}")
+        sys.exit(1)
     except HTTPError as err:
         status_code = err.response.status_code
         details = err.response.json().get("detail")
         if status_code == 403:
-            logger.error("🛑 Forbidden operation")
-            if details:
-                logger.error(details)
+            logger.error(f"⛔ Forbidden: {details}")
         else:
-            logger.error("❌ Oops! Something failed in AutoNLP backend..")
-            if not details:
-                details = err.response.text
-            logger.error(f"Error code: {status_code}; Details: '{details}'")
+            logger.error(f"❌ [Error: {status_code}] Something failed in AutoNLP backend..")
+            if details:
+                logger.error(f"{details}")
         sys.exit(1)
 
 

@@ -68,7 +68,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         task_id = TASKS.get(task)
@@ -114,7 +114,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating evaluation project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         splits = get_dataset_splits(dataset=dataset, config=config)
@@ -165,7 +165,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating benhchmark project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         task_id = 1
@@ -193,7 +193,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating benhchmark project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         if is_eval:
@@ -229,7 +229,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating benhchmark project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         try:
@@ -248,7 +248,7 @@ class AutoNLP:
         if username is None:
             username = login_info["selected_identity"]
             logger.warning(f"Creating benhchmark project under identity: '{username}'")
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         try:
@@ -268,7 +268,7 @@ class AutoNLP:
         login_info = login_from_conf()
         if username is None:
             username = login_info["selected_identity"]
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
 
         logger.info(f"📄 Retrieving projects of user {username}...")
@@ -279,7 +279,7 @@ class AutoNLP:
         login_info = login_from_conf()
         if username is None:
             username = login_info["selected_identity"]
-        if username not in [identity.name for identity in login_info["identities"]]:
+        if username not in [identity["name"] for identity in login_info["identities"]]:
             raise ForbiddenError(f"Cannot impersonate '{username}'")
         project = self.get_project(name=proj_name)
         return project.estimate_cost(num_train_samples)
