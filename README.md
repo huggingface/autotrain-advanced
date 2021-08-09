@@ -70,6 +70,7 @@ project.upload(
     })
 
 # also upload a validation with split="valid"
+# if you've already created the project use `project = client.get_project("sentiment_detection")` instead
 ```
 
 Start the training of your models:
