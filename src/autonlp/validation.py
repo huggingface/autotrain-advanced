@@ -1,9 +1,6 @@
-import csv
-import json
-import os
-from typing import Dict
+from typing import Dict, Iterable, List, Optional
 
-from .utils import flatten_dict
+import pandas as pd
 
 
 COLUMNS_PER_TASK = {
@@ -30,84 +27,161 @@ class InvalidColMappingError(ValueError):
     pass
 
 
-def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
-    file_name = os.path.basename(path)
+def find_duplicate(iterable: Iterable) -> list:
+    duplicates = []
+    seen = set()
+    for value in iterable:
+        if value in seen:
+            duplicates.append(value)
+        else:
+            seen.add(value)
+    return duplicates
+
+
+def find_columns_in_mapping(column_name: str, col_mapping: Dict[str, str]) -> List[str]:
+    """Returns a list of keys such that col_mapping[key] == column_name"""
+    assert column_name in set(col_mapping.values())
+    matching_columns = [src for src, dst in col_mapping.items() if dst == column_name]
+    return matching_columns
+
+
+def get_rows_iter(path: str, file_ext: str):
     if file_ext in ("csv", "tsv"):
-        if task == "entity_extraction":
-            raise InvalidFileError(
-                f"AutoNLP does not support '{file_ext}' files for entity_extraction tasks. Use .json or .jsonl files!"
-            )
-        sniffer = csv.Sniffer()
-        with open(path, encoding="utf-8", errors="replace") as f:
-            # Validate delimiter
-            sample = f.readline()
-            expected_delimiter = "\t" if file_ext == "tsv" else ","
-            actual_delimiter = sniffer.sniff(sample, delimiters=",;\t").delimiter
-
-        if actual_delimiter != expected_delimiter:
-            if task == "entity_extraction":
-                additional_help = (
-                    "\nFor entity_extraction tasks, AutoNLP expects tokens / tags to be tab-separated "
-                    "and sentences to be empty-line separated."
-                )
-            else:
-                additional_help = ""
-            raise InvalidFileError(
-                "Incorrect delimiter '"
-                + (r"\t" if actual_delimiter == "\t" else actual_delimiter)
-                + f"' for file '{file_name}'! "
-                + "Expected delimiter is: '"
-                + (r"\t" if expected_delimiter == "\t" else actual_delimiter)
-                + "'."
-                + additional_help
-            )
-
-        # Extract column_names
-        column_names = sample.splitlines()[0].split(actual_delimiter)
-
+        return pd.read_csv(path, header=0, delimiter=None, chunksize=1000)
     elif file_ext in ("json", "jsonl"):
-        with open(path, encoding="utf-8") as f:
-            first_line = f.readline()
-            second_line = f.readline()
-        try:
-            json.loads(first_line)
-            json.loads(second_line)
-        except ValueError:
-            raise InvalidFileError(
-                f"File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
-            )
-
-        # Extract column_names
-        first_item = json.loads(first_line)
-        if not isinstance(first_item, dict):
-            raise InvalidFileError(
-                "File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
-            )
-        column_names = list(flatten_dict(first_item, 1).keys())
-
+        return pd.read_json(path, lines=True, chunksize=1000)
     else:
         raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
 
-    invalid_columns_source = set(col_mapping.keys()) - set(column_names)
-    if invalid_columns_source:
-        raise InvalidColMappingError(
-            "Columns "
-            + ",".join([f"'{col_name}'" for col_name in invalid_columns_source])
-            + " could not be found in the provided file (which has columns: "
-            + ",".join([f"'{col_name}'" for col_name in column_names])
-            + ")"
+
+def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
+    """Validates a given file before uploading it
+
+    Args:
+        path (``str``):
+            Path to the file being validated
+        task (``str``):
+            Task name of the project
+        file_ext (``str``):
+            The file's extension (eg 'csv')
+        col_mapping (``dict``)
+    """
+    validate_col_mapping(col_mapping, task)
+    rows_iter = get_rows_iter(path, file_ext)
+
+    state = {}
+    try:
+        for chunk in rows_iter:
+            validation_error = validate_chunk(chunk, task=task, col_mapping=col_mapping, state=state)
+            if validation_error is not None:
+                raise InvalidFileError(validation_error)
+    except (pd.errors.ParserError, ValueError) as err:
+        if isinstance(err, InvalidFileError):
+            raise err
+        raise InvalidFileError("Malformed file") from err
+
+    validation_error = validate_state(state, task=task)
+    if validation_error is not None:
+        raise InvalidFileError(validation_error)
+
+
+def validate_chunk(chunk: pd.DataFrame, task: str, col_mapping: Dict[str, str], state: dict) -> Optional[str]:
+    """Validates a chunk of data
+
+    Args:
+        chunk (``pandas.DataFrame``):
+            The chunk to validate
+        task (``str``):
+            The task name of the project
+        col_mapping (``dict``):
+            A mapping from the chunk's column names to the AutoNLP column names
+        state (``dict``):
+            A dictionary that stores state between chunks
+
+    Returns:
+        ``None`` if the chunk is valid, or an ``str`` error message otherwise
+    """
+    # Check column names
+    actual_column_names = set(chunk.columns)
+    missing_columns = set(col_mapping.keys()) - actual_column_names
+    if missing_columns:
+        start, end = chunk.index[0], chunk.index[-1]
+        return (
+            f"Columns {','.join(missing_columns)} could not be found between rows with index {start} {end} "
+            f"(which has columns {actual_column_names})"
         )
 
-    invalid_columns_target = set(COLUMNS_PER_TASK[task]) - set(col_mapping.values())
-    if invalid_columns_target:
-        raise InvalidColMappingError(
-            "\n".join(
-                ["Provided column mapping is:"]
-                + [f"   '{src_col}' -> '{dst_col}'" for src_col, dst_col in col_mapping.items()]
-                + ["While expecting column mapping like:"]
-                + [
-                    f"   'original_col_name' -> '{col_name}' (AutoNLP column name)"
-                    for col_name in COLUMNS_PER_TASK[task]
-                ]
+    chunk = chunk[list(col_mapping.keys())]
+
+    # Check for missing (NaN) values
+    if chunk.isna().any(axis=None):
+        isna = chunk.isna().any(axis=1)
+        rows_with_na = isna[isna].index.values.tolist()
+        return f"Row(s) with index {rows_with_na} have missing values"
+
+    if task in ("binary_classification", "multi_class_classification"):
+        target_column = find_columns_in_mapping("target", col_mapping)[0]
+        state["unique_labels"] = state.get("unique_labels", set()) | set(chunk[target_column].values)
+
+    if task == "single_column_regression":
+        target_column = find_columns_in_mapping("target", col_mapping)[0]
+        try:
+            pd.to_numeric(chunk[target_column], errors="raise")
+        except (ValueError, TypeError) as err:
+            return f"Some value in column {target_column} cannot be interpreted as a number: {err}"
+
+    return None
+
+
+def validate_state(state: dict, task: str) -> Optional[str]:
+    """Validates the state dictionary after :func:``validate_chunk`` has been run on the whole file
+
+    Args:
+        state (``dict``):
+            The state dictionary
+        task (``str``):
+            The task name of the project
+
+    Returns:
+        ``None`` if the state is valid, or an ``str`` error message otherwise
+    """
+    if task == "binary_classification":
+        unique_labels = state["unique_labels"]
+        if len(unique_labels) != 2:
+            return f"Invalid number of labels. Expected 2 unique labels for binary_classification, got {len(unique_labels)}: {unique_labels}"
+
+    if task == "multi_class_classification":
+        unique_labels = state["unique_labels"]
+        if len(unique_labels) <= 2:
+            return (
+                f"Invalid number of labels. Expected at least 3 unique labels for multi_class_classification, got {len(unique_labels)}: {unique_labels};"
+                " Consider creating a binary_classification project if this is expected."
             )
-        )
+
+
+def validate_col_mapping(col_mapping: Dict[str, str], task: str) -> Optional[str]:
+    """Validates the given col_mapping against the project's task
+
+    Args:
+        col_mapping (``dict``):
+            The provided col_mapping, mapping the file's column names to the AutoNLP column names
+        task (``str``):
+            The task name of the project
+
+    Returns:
+        ``None`` if the column_mapping is valid, or an ``str`` error message otherwise
+    """
+    if sorted(col_mapping.values()) != sorted(COLUMNS_PER_TASK[task]):
+        if len(list(col_mapping.values())) >= len(COLUMNS_PER_TASK[task]):
+            extra_columns = set(col_mapping.values()) - set(COLUMNS_PER_TASK[task])
+            if not extra_columns:
+                duplicate_columns = find_duplicate(list(col_mapping.values()))
+                reason = f"Duplicate column(s) in column mapping: {duplicate_columns}."
+            else:
+                reason = f"Unexpected column(s) in col_mapping: {extra_columns}."
+            raise InvalidColMappingError(reason + f" Expected columns for task {task} are: {COLUMNS_PER_TASK[task]}")
+        else:
+            missing_columns = set(COLUMNS_PER_TASK[task]) - set(col_mapping.values())
+            raise InvalidColMappingError(
+                f"Missing column(s) in col_mapping: {missing_columns}. Expected columns for task {task} are: {COLUMNS_PER_TASK[task]}"
+            )
