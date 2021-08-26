@@ -33,10 +33,6 @@ class InvalidColMappingError(ValueError):
 def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
     file_name = os.path.basename(path)
     if file_ext in ("csv", "tsv"):
-        if task == "entity_extraction":
-            raise InvalidFileError(
-                f"AutoNLP does not support '{file_ext}' files for entity_extraction tasks. Use .json or .jsonl files!"
-            )
         sniffer = csv.Sniffer()
         with open(path, encoding="utf-8", errors="replace") as f:
             # Validate delimiter
