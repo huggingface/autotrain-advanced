@@ -6,7 +6,7 @@ from . import BaseAutoNLPCommand
 
 
 def create_benchmark_command_factory(args):
-    return CreateBenchmarkCommand(args.dataset, args.submission, args.eval_name)
+    return CreateBenchmarkCommand(args.dataset, args.submission, args.submission_id, args.eval_name)
 
 
 class CreateBenchmarkCommand(BaseAutoNLPCommand):
@@ -28,6 +28,13 @@ class CreateBenchmarkCommand(BaseAutoNLPCommand):
             required=True,
         )
         create_benchmark_parser.add_argument(
+            "--submission_id",
+            metavar="SUBMISSION_ID",
+            type=str,
+            default=None,
+            required=True,
+        )
+        create_benchmark_parser.add_argument(
             "--eval_name",
             metavar="EVAL_NAME",
             type=str,
@@ -37,9 +44,10 @@ class CreateBenchmarkCommand(BaseAutoNLPCommand):
 
         create_benchmark_parser.set_defaults(func=create_benchmark_command_factory)
 
-    def __init__(self, dataset, submission, eval_name):
+    def __init__(self, dataset, submission, submission_id, eval_name):
         self._dataset = dataset
         self._submission = submission
+        self._submission_id = submission_id
         self._eval_name = eval_name
 
     def run(self):
@@ -50,6 +58,7 @@ class CreateBenchmarkCommand(BaseAutoNLPCommand):
         eval_project = client.create_benchmark(
             dataset=self._dataset,
             submission=self._submission,
+            submission_id=self._submission_id,
             eval_name=self._eval_name,
         )
         print(eval_project)

@@ -148,7 +148,7 @@ class AutoNLP:
         self._eval_proj = Evaluate.from_json_resp(json_resp, token=self.token)
         return self._eval_proj
 
-    def create_benchmark(self, dataset: str, submission: str, eval_name: str):
+    def create_benchmark(self, dataset: str, submission: str, submission_id: str, eval_name: str):
         self._login_from_conf()
         task_id = 1
         payload = {
@@ -157,6 +157,7 @@ class AutoNLP:
             "task": task_id,
             "model": eval_name,
             "submission_dataset": submission,
+            "submission_id": submission_id,
             "col_mapping": {},
             "split": "test",
             "config": None,
