@@ -1,9 +1,7 @@
-import csv
-import json
 import os
 from typing import Dict
 
-from .utils import flatten_dict
+from datasets import Dataset, load_dataset
 
 
 COLUMNS_PER_TASK = {
@@ -32,58 +30,19 @@ class InvalidColMappingError(ValueError):
 
 def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
     file_name = os.path.basename(path)
-    if file_ext in ("csv", "tsv"):
-        sniffer = csv.Sniffer()
-        with open(path, encoding="utf-8", errors="replace") as f:
-            # Validate delimiter
-            sample = f.readline()
-            expected_delimiter = "\t" if file_ext == "tsv" else ","
-            actual_delimiter = sniffer.sniff(sample, delimiters=",;\t").delimiter
+    try:
+        if file_ext in ("csv", "tsv"):
+            sample: Dataset = load_dataset("csv", data_files=path, split="train[:100]", sep=None, header=0)
+        elif file_ext in ("json", "jsonl"):
+            sample: Dataset = load_dataset("json", data_files=path, split="train[:100]")
+        else:
+            raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
+    except Exception as err:
+        if isinstance(err, InvalidFileError):
+            raise err
+        raise InvalidFileError(f"{file_name} could not be loaded with datasets!\nError: {err}") from err
 
-        if actual_delimiter != expected_delimiter:
-            if task == "entity_extraction":
-                additional_help = (
-                    "\nFor entity_extraction tasks, AutoNLP expects tokens / tags to be tab-separated "
-                    "and sentences to be empty-line separated."
-                )
-            else:
-                additional_help = ""
-            raise InvalidFileError(
-                "Incorrect delimiter '"
-                + (r"\t" if actual_delimiter == "\t" else actual_delimiter)
-                + f"' for file '{file_name}'! "
-                + "Expected delimiter is: '"
-                + (r"\t" if expected_delimiter == "\t" else actual_delimiter)
-                + "'."
-                + additional_help
-            )
-
-        # Extract column_names
-        column_names = sample.splitlines()[0].split(actual_delimiter)
-
-    elif file_ext in ("json", "jsonl"):
-        with open(path, encoding="utf-8") as f:
-            first_line = f.readline()
-            second_line = f.readline()
-        try:
-            json.loads(first_line)
-            json.loads(second_line)
-        except ValueError:
-            raise InvalidFileError(
-                f"File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
-            )
-
-        # Extract column_names
-        first_item = json.loads(first_line)
-        if not isinstance(first_item, dict):
-            raise InvalidFileError(
-                "File `{file_name}` is not a valid JSON-lines file! Each line must be a valid JSON mapping."
-            )
-        column_names = list(flatten_dict(first_item, 1).keys())
-
-    else:
-        raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
-
+    column_names = sample.flatten().column_names
     invalid_columns_source = set(col_mapping.keys()) - set(column_names)
     if invalid_columns_source:
         raise InvalidColMappingError(
