@@ -6,7 +6,7 @@ from . import BaseAutoNLPCommand
 
 
 def create_benchmark_command_factory(args):
-    return CreateBenchmarkCommand(args.dataset, args.submission, args.eval_name)
+    return CreateBenchmarkCommand(args.dataset, args.submission, args.submission_id, args.eval_name)
 
 
 class CreateBenchmarkCommand(BaseAutoNLPCommand):
