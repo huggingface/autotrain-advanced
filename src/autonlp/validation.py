@@ -32,9 +32,9 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
     file_name = os.path.basename(path)
     try:
         if file_ext in ("csv", "tsv"):
-            sample: Dataset = load_dataset("csv", data_files=path, split="train[:100]", sep=None, header=0)
+            sample: Dataset = load_dataset("csv", data_files=path, split="train[:5%]", sep=None, header=0)
         elif file_ext in ("json", "jsonl"):
-            sample: Dataset = load_dataset("json", data_files=path, split="train[:100]")
+            sample: Dataset = load_dataset("json", data_files=path, split="train[:5%]")
         else:
             raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
     except Exception as err:
