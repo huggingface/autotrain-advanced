@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Dict, List
 
 from datasets import Dataset, load_dataset
 
@@ -28,21 +28,7 @@ class InvalidColMappingError(ValueError):
     pass
 
 
-def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
-    file_name = os.path.basename(path)
-    try:
-        if file_ext in ("csv", "tsv"):
-            sample: Dataset = load_dataset("csv", data_files=path, split="train[:5%]", sep=None, header=0)
-        elif file_ext in ("json", "jsonl"):
-            sample: Dataset = load_dataset("json", data_files=path, split="train[:5%]")
-        else:
-            raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
-    except Exception as err:
-        if isinstance(err, InvalidFileError):
-            raise err
-        raise InvalidFileError(f"{file_name} could not be loaded with datasets!\nError: {err}") from err
-
-    column_names = sample.flatten().column_names
+def validate_column_mapping(col_mapping: Dict[str, str], task: str, column_names: List[str]):
     invalid_columns_source = set(col_mapping.keys()) - set(column_names)
     if invalid_columns_source:
         raise InvalidColMappingError(
@@ -66,3 +52,21 @@ def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, st
                 ]
             )
         )
+
+
+def validate_file(path: str, task: str, file_ext: str, col_mapping: Dict[str, str]):
+    file_name = os.path.basename(path)
+    try:
+        if file_ext in ("csv", "tsv"):
+            sample: Dataset = load_dataset("csv", data_files=path, split="train[:5%]", sep=None, header=0)
+        elif file_ext in ("json", "jsonl"):
+            sample: Dataset = load_dataset("json", data_files=path, split="train[:5%]")
+        else:
+            raise InvalidFileError(f"AutoNLP does not support `.{file_ext}` files yet!")
+    except Exception as err:
+        if isinstance(err, InvalidFileError):
+            raise err
+        raise InvalidFileError(f"{file_name} could not be loaded with datasets!\nError: {err}") from err
+
+    column_names = sample.flatten().column_names
+    validate_column_mapping(col_mapping, task, column_names)

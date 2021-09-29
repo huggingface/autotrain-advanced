@@ -3,18 +3,21 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from datasets.arrow_dataset import Dataset
+from datasets.iterable_dataset import IterableDataset
+from datasets.load import load_dataset
 from huggingface_hub import Repository
 from loguru import logger
 from prettytable import PrettyTable
 from tqdm import tqdm
 
 from .audio_utils import SUPPORTED_AUDIO_FILE_FORMAT, audio_file_name_iter
-from .splits import TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
+from .splits import AUTO_SPLIT, TEST_SPLIT, TRAIN_SPLIT, VALID_SPLIT
 from .utils import BOLD_TAG, CYAN_TAG, GREEN_TAG, PURPLE_TAG, RESET_TAG, YELLOW_TAG, get_task, http_get, http_post
-from .validation import InvalidFileError, validate_file
+from .validation import InvalidFileError, validate_column_mapping, validate_file
 
 
 FILE_STATUS = (
@@ -51,7 +54,7 @@ PROJECT_STATUS = (
 )
 
 
-SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT)
+SPLITS = (TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, AUTO_SPLIT)
 
 
 class TrainingCancelledError(Exception):
@@ -170,6 +173,7 @@ class Project:
     updated_at: datetime
     dataset_id: str
     files: Optional[List[UploadedFile]] = None
+    datasets: Optional[List[Any]] = None
     training_jobs: Optional[List] = None
     usd_cost: Optional[float] = None
 
@@ -201,7 +205,8 @@ class Project:
         logger.info("🔄 Refreshing uploaded files information...")
         resp = http_get(path=f"/projects/{self.proj_id}/data", token=self._token)
         json_files = resp.json()
-        self.files = [UploadedFile.from_json_resp(file) for file in json_files]
+        self.files = [UploadedFile.from_json_resp(file) for file in json_files if file["type"] == "user_file"]
+        self.datasets = [dset for dset in json_files if dset["type"] != "user_file"]
 
         logger.info("🔄 Refreshing models information...")
         resp = http_get(path=f"/projects/{self.proj_id}/jobs", token=self._token)
@@ -305,6 +310,42 @@ class Project:
             http_post(path=f"/projects/{self.proj_id}/data/add", payload=payload, token=self._token)
             logger.info(f"[{idx + 1}/{len(filepaths)}] ✅ Success!")
 
+    def add_dataset(
+        self,
+        dataset_id: str,
+        dataset_split: str,
+        split: str,
+        col_mapping: Dict[str, str],
+        config_name: Optional[str] = None,
+    ):
+        try:
+            split_idx = SPLITS.index(split) + 1
+        except ValueError:
+            raise ValueError(f"Invalid split, must be one of: {[s for s in SPLITS if s != 'test']}")
+        try:
+            iter_dset = load_dataset(dataset_id, name=config_name, split=dataset_split, streaming=True)
+            assert isinstance(iter_dset, IterableDataset)
+            features = iter_dset.features
+        except NotImplementedError:
+            logger.warning(
+                f"⚠ Dataset '{dataset_id}' (config:'{config_name}') is not streamable. "
+                "AutoNLP will download the data to perform sanity checks."
+            )
+            dset = load_dataset(dataset_id, name=config_name, split=f"{dataset_split}[:10]")
+            assert isinstance(dset, Dataset)
+            features = dset.flatten().features
+
+        validate_column_mapping(col_mapping, self.task, list(features.keys()))
+
+        payload = payload = {
+            "split": split_idx,
+            "col_mapping": col_mapping,
+        }
+        query = f"type=dataset&split_name={dataset_split}" + (
+            f"&config_name={config_name}" if config_name is not None else ""
+        )
+        http_post(path=f"/projects/{self.proj_id}/data/{dataset_id}?{query}", payload=payload, token=self._token)
+
     def train(self, noprompt=False):
         """Starts training on the models"""
         self.refresh()
@@ -399,11 +440,14 @@ class Project:
         if self.files is None:
             descriptions = ["❓ Files information unknown, update the project"]
         else:
-            if len(self.files) == 0:
-                descriptions = ["🤷 No files uploaded yet!"]
+            sources = sorted(
+                self.files + self.datasets,
+                key=lambda src: src.split if isinstance(src, UploadedFile) else src["split"],
+            )
+            if len(sources) == 0:
+                descriptions = ["🤷 No data sources yet!"]
             else:
-                sorted_files = sorted(self.files, key=lambda file: file.split)  # Sort by split
-                descriptions = [str(file) for file in sorted_files]
+                descriptions = [str(source) for source in sources]
         printout.append(
             "\n".join(
                 [
