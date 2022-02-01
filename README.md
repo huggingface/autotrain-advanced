@@ -1,3 +1,7 @@
+** AutoNLP CLI / Python API are now deprecated. Please use the UI: https://ui.autonlp.huggingface.co/ **
+
+If CLI / Python API are the only ways you can use AutoNLP, please contact us: autonlp [at] huggingface [dot] co
+
 # 🤗 AutoNLP
 
 AutoNLP: faster and easier training and deployments of SOTA NLP models
