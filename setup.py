@@ -1,5 +1,6 @@
 # Lint as: python3
-""" HuggingFace/AutoNLP
+"""
+HuggingFace / AutoTrain Advanced
 """
 import os
 
@@ -44,21 +45,20 @@ EXTRAS_REQUIRE = {
 }
 
 setup(
-    name="autonlp",
+    name="autotrain-advanced",
     description=DOCLINES[0],
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     author="HuggingFace Inc.",
-    author_email="abhishek@huggingface.co",
-    url="https://github.com/huggingface/autonlp",
-    download_url="https://github.com/huggingface/autonlp/tags",
+    author_email="autotrain@huggingface.co",
+    url="https://github.com/huggingface/autotrain-advanced",
+    download_url="https://github.com/huggingface/autotrain-advanced/tags",
     license="Apache 2.0",
     package_dir={"": "src"},
     packages=find_packages("src"),
-    scripts=["scripts/autonlp"],
     extras_require=EXTRAS_REQUIRE,
     install_requires=INSTALL_REQUIRES,
-    entry_points={"console_scripts": ["autonlp=autonlp.cli.autonlp:main"]},
+    entry_points={"console_scripts": ["autotrain=autotrain.cli.autotrain:main"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -66,10 +66,10 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
-    keywords="automl autonlp huggingface",
+    keywords="automl autonlp autotrain huggingface",
 )

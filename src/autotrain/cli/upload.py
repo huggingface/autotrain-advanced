@@ -2,9 +2,8 @@ import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Optional
 
-from loguru import logger
-
 from autonlp.validation import InvalidColMappingError, InvalidFileError
+from loguru import logger
 
 from ..utils import BOLD_TAG as BLD
 from ..utils import RED_TAG as RED

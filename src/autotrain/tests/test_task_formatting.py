@@ -1,8 +1,7 @@
 import unittest
 
-from datasets import tasks
-
 from autonlp.evaluate import format_datasets_task, get_compatible_task_template
+from datasets import tasks
 
 
 class TestFormatDatasetsTask(unittest.TestCase):

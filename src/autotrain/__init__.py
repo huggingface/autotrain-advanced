@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020-2021 The HuggingFace AutoNLP Authors
+# Copyright 2020-2021 The HuggingFace AutoTrain Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # Lint as: python3
 # pylint: enable=line-too-long
 
-__version__ = "0.3.7"
-__all__ = ["AutoNLP"]
+__version__ = "0.4.0"
+__all__ = ["AutoTrain"]
 
-from .autonlp import AutoNLP
+from .autotrain import AutoTrain
