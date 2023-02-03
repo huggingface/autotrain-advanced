@@ -1,9 +1,11 @@
 from typing import Dict, Optional
 
 import requests
+from huggingface_hub import HfFolder
+from loguru import logger
 
-from . import config
-from .tasks import TASKS
+from autotrain import config
+from autotrain.tasks import TASKS
 
 
 FORMAT_TAG = "\033[{code}m"
@@ -24,8 +26,7 @@ class UnreachableAPIError(Exception):
     pass
 
 
-def get_auth_headers(token: str, prefix: str = "autonlp"):
-    # return {"Authorization": f"autonlp {token}"}
+def get_auth_headers(token: str, prefix: str = "Bearer"):
     return {"Authorization": f"{prefix} {token}"}
 
 
@@ -33,7 +34,7 @@ def http_get(
     path: str,
     token: str,
     domain: str = config.HF_AUTONLP_BACKEND_API,
-    token_prefix: str = "autonlp",
+    token_prefix: str = "Bearer",
     suppress_logs: bool = False,
     **kwargs,
 ) -> requests.Response:
@@ -72,3 +73,27 @@ def get_task(task_id: int) -> str:
         if value == task_id:
             return key
     return "❌ Unsupported task! Please update autonlp"
+
+
+def get_user_token():
+    return HfFolder.get_token()
+
+
+def user_authentication(token):
+    headers = {}
+    cookies = {}
+    if token.startswith("hf_"):
+        headers["Authorization"] = f"Bearer {token}"
+    else:
+        cookies = {"token": token}
+    try:
+        response = requests.get(
+            config.HF_API + "/api/whoami-v2",
+            headers=headers,
+            cookies=cookies,
+            timeout=3,
+        )
+    except (requests.Timeout, ConnectionError) as err:
+        logger.error(f"Failed to request whoami-v2 - {repr(err)}")
+        raise Exception("Hugging Face Hub is unreachable, please try again later.")
+    return response.json()

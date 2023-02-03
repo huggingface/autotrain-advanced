@@ -17,6 +17,3 @@
 # pylint: enable=line-too-long
 
 __version__ = "0.4.0"
-__all__ = ["AutoTrain"]
-
-from .autotrain import AutoTrain

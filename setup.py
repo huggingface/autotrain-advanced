@@ -14,12 +14,12 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = [
-    "loguru==0.5.3",
+    "loguru==0.6.0",
     "requests==2.25.1",
-    "tqdm==4.49",
+    "tqdm==4.64.1",
     "prettytable==2.0.0",
-    "huggingface_hub==0.0.12",
-    "datasets==1.11.0",
+    "huggingface_hub==0.12.0",
+    "datasets==2.9.0",
 ]
 
 QUALITY_REQUIRE = [
