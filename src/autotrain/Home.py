@@ -1,6 +1,8 @@
 import re
 
+import pandas as pd
 import streamlit as st
+from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder
 
 from autotrain.project import Project
 from autotrain.tasks import NLP_TASKS, TABULAR_TASKS, VISION_TASKS
@@ -26,7 +28,8 @@ def verify_project_name(project_name):
 
 
 def _app():
-    pass
+    df = pd.read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv")
+    AgGrid(df)
 
 
 def app():  # username, valid_orgs):
@@ -88,7 +91,7 @@ def app():  # username, valid_orgs):
 
     st.sidebar.markdown("### Parameters")
     if model_choice == "AutoTrain":
-        st.sidebar.markdown("Advanced parameters are not available for AutoTrain models")
+        st.sidebar.markdown("Parameters are selected automagically for AutoTrain models")
     else:
         learning_rate = st.sidebar.number_input("Learning rate", min_value=0.0, max_value=1.0, value=0.001)
         batch_size = st.sidebar.number_input("Batch size", min_value=1, max_value=1000, value=32)
@@ -106,6 +109,14 @@ def app():  # username, valid_orgs):
                     "batch_size": batch_size,
                     "epochs": epochs,
                     "max_seq_length": max_seq_length,
+                    # "learning_rate2": learning_rate,
+                    # "batch_size2": batch_size,
+                    # "epochs2": epochs,
+                    # "max_seq_length2": max_seq_length,
+                    # "learning_rate3": learning_rate,
+                    # "batch_size3": batch_size,
+                    # "epochs3": epochs,
+                    # "max_seq_length3": max_seq_length,
                 }
             )
 
@@ -114,7 +125,40 @@ def app():  # username, valid_orgs):
 
     if "jobs" in st.session_state:
         if len(st.session_state.jobs) > 0:
-            st.dataframe(st.session_state.jobs)
+            df = pd.DataFrame(st.session_state.jobs)
+            gb = GridOptionsBuilder.from_dataframe(df)
+            gb.configure_default_column(
+                cellStyle={"color": "black", "font-size": "12px"},
+                suppressMenu=True,
+                wrapHeaderText=True,
+                autoHeaderHeight=True,
+            )
+            gb.configure_selection(selection_mode="multiple", use_checkbox=True)
+            custom_css = {
+                ".ag-header-cell-text": {"font-size": "12px", "text-overflow": "revert;", "font-weight": 700},
+                # ".ag-theme-streamlit": {"transform": "scale(0.8)", "transform-origin": "0 0"},
+            }
+            gridOptions = gb.build()
+            ag_resp = AgGrid(
+                df,
+                gridOptions=gridOptions,
+                custom_css=custom_css,
+                # allow_unsafe_jscode=True,
+                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                theme=AgGridTheme.STREAMLIT,  # Only choices: AgGridTheme.STREAMLIT, AgGridTheme.ALPINE, AgGridTheme.BALHAM, AgGridTheme.MATERIAL
+                # width='100%',
+            )
+            ag_resp_sel = ag_resp["selected_rows"]
+            delete_selected_jobs = st.button("Delete selected jobs")
+
+            if ag_resp_sel:
+                selected_rows = [
+                    int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
+                ]
+                if delete_selected_jobs:
+                    st.session_state.jobs = [
+                        job for i, job in enumerate(st.session_state.jobs) if i not in selected_rows
+                    ]
 
     create_project_button = st.button("Create Project")
 
