@@ -2,7 +2,7 @@ import re
 
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder
+from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
 from autotrain.project import Project
 from autotrain.tasks import NLP_TASKS, TABULAR_TASKS, VISION_TASKS
@@ -93,9 +93,14 @@ def app():  # username, valid_orgs):
     if model_choice == "AutoTrain":
         st.sidebar.markdown("Parameters are selected automagically for AutoTrain models")
     else:
-        learning_rate = st.sidebar.number_input("Learning rate", min_value=0.0, max_value=1.0, value=0.001)
+        optimizer = st.sidebar.selectbox("Optimizer", ["Adam", "SGD"])
+        scheduler = st.sidebar.selectbox("Scheduler", ["Linear", "Cosine"])
+        learning_rate = st.sidebar.number_input(
+            "Learning rate", min_value=0.0, max_value=1.0, value=0.001, format="%.6f"
+        )
         batch_size = st.sidebar.number_input("Batch size", min_value=1, max_value=1000, value=32)
         epochs = st.sidebar.number_input("Epochs", min_value=1, max_value=1000, value=10)
+        percentage_warmup = st.sidebar.number_input("Percentage warmup", min_value=0.0, max_value=1.0, value=0.1)
         max_seq_length = st.sidebar.number_input("Max sequence length", min_value=1, max_value=1000, value=128)
         add_job = st.sidebar.button("Add job")
         delete_all_jobs = st.sidebar.button("Delete all jobs")
@@ -109,6 +114,9 @@ def app():  # username, valid_orgs):
                     "batch_size": batch_size,
                     "epochs": epochs,
                     "max_seq_length": max_seq_length,
+                    "percentage_warmup": percentage_warmup,
+                    "optimizer": optimizer,
+                    "scheduler": scheduler,
                     # "learning_rate2": learning_rate,
                     # "batch_size2": batch_size,
                     # "epochs2": epochs,
@@ -133,7 +141,12 @@ def app():  # username, valid_orgs):
                 wrapHeaderText=True,
                 autoHeaderHeight=True,
             )
-            gb.configure_selection(selection_mode="multiple", use_checkbox=True)
+            gb.configure_selection(
+                selection_mode="multiple",
+                use_checkbox=True,
+                pre_selected_rows=list(range(len(df))),
+                header_checkbox=True,
+            )
             custom_css = {
                 ".ag-header-cell-text": {"font-size": "12px", "text-overflow": "revert;", "font-weight": 700},
                 # ".ag-theme-streamlit": {"transform": "scale(0.8)", "transform-origin": "0 0"},
@@ -147,33 +160,32 @@ def app():  # username, valid_orgs):
                 columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
                 theme=AgGridTheme.STREAMLIT,  # Only choices: AgGridTheme.STREAMLIT, AgGridTheme.ALPINE, AgGridTheme.BALHAM, AgGridTheme.MATERIAL
                 # width='100%',
+                update_mode=GridUpdateMode.MODEL_CHANGED,
+                update_on="MANUAL",
+                reload_data=False,
             )
             ag_resp_sel = ag_resp["selected_rows"]
-            delete_selected_jobs = st.button("Delete selected jobs")
-
+            selected_rows = []
             if ag_resp_sel:
                 selected_rows = [
                     int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
                 ]
-                if delete_selected_jobs:
-                    st.session_state.jobs = [
-                        job for i, job in enumerate(st.session_state.jobs) if i not in selected_rows
-                    ]
 
-    create_project_button = st.button("Create Project")
+            st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
+            create_project_button = st.button("Create Project")
 
-    if create_project_button:
-        if not verify_project_name(project_name):
-            return
-        project = Project(token=user_token)
-        project.create(
-            name=project_name,
-            username=autotrain_username,
-            task=task,
-            language="en",
-            max_models=1,
-            hub_model=hub_model,
-        )
+            if create_project_button:
+                if not verify_project_name(project_name):
+                    return
+                project = Project(token=user_token)
+                project.create(
+                    name=project_name,
+                    username=autotrain_username,
+                    task=task,
+                    language="en",
+                    max_models=1,
+                    hub_model=hub_model,
+                )
 
 
 if __name__ == "__main__":
