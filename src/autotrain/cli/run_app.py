@@ -41,7 +41,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
 
     def run(self):
         dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, "..", "Home.py")
+        filename = os.path.join(dirname, "..", "app.py")
         cmd = [
             "streamlit",
             "run",
