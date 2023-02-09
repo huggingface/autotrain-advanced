@@ -58,6 +58,14 @@ class GradientAccumulationSteps(enum.Enum):
     STREAMLIT_INPUT = "number_input"
 
 
+class WeightDecay(enum.Enum):
+    TYPE = "float"
+    MIN_VALUE = 0.0
+    MAX_VALUE = 1.0
+    DEFAULT = 0.0
+    STREAMLIT_INPUT = "number_input"
+
+
 @dataclass
 class Params:
     task: str
@@ -77,6 +85,7 @@ class Params:
             "epochs": Epochs,
             "percentage_warmup": PercentageWarmup,
             "gradient_accumulation_steps": GradientAccumulationSteps,
+            "weight_decay": WeightDecay,
         }
 
     def _nlp_multi_class_classification(self):
