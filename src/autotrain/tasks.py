@@ -29,3 +29,22 @@ TASKS = {
     **VISION_TASKS,
     **TABULAR_TASKS,
 }
+
+COLUMN_MAPPING = {
+    "binary_classification": ("text", "label"),
+    "multi_class_classification": ("text", "label"),
+    "entity_extraction": ("text", "tokens"),
+    "extractive_question_answering": ("text", "context", "question", "answer"),
+    "summarization": ("text", "summary"),
+    "single_column_regression": ("text", "label"),
+    "speech_recognition": ("audio", "text"),
+    "natural_language_inference": ("premise", "hypothesis", "label"),
+    "image_binary_classification": ("image", "label"),
+    "image_multi_class_classification": ("image", "label"),
+    "image_single_column_regression": ("image", "label"),
+    # "dreambooth": ("image", "label"),
+    "tabular_binary_classification": ("id", "label"),
+    "tabular_multi_class_classification": ("id", "label"),
+    "tabular_multi_label_classification": ("id", "label"),
+    "tabular_single_column_regression": ("id", "label"),
+}

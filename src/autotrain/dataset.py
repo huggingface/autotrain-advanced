@@ -3,6 +3,7 @@ from typing import Optional
 
 import pandas as pd
 from loguru import logger
+from sklearn.model_selection import train_test_split
 
 
 @dataclass
@@ -11,6 +12,7 @@ class Dataset:
     task: str
     token: str
     project_name: str
+    column_mapping: Optional[str] = None
     valid_data: Optional[str] = None
     percent_valid: Optional[float] = None
 
@@ -49,5 +51,21 @@ class Dataset:
 
     def prepare(self):
         logger.info(self.train_data)
-        train_df = pd.read_csv(self.train_data[0])
-        logger.info(train_df)
+        train_df = []
+        for file in self.train_data:
+            train_df.append(pd.read_csv(file))
+        train_df = pd.concat(train_df)
+
+        valid_df = None
+        if self.valid_data is not None:
+            valid_df = []
+            for file in self.valid_data:
+                valid_df.append(pd.read_csv(file))
+            valid_df = pd.concat(valid_df)
+
+        # apply column mapping
+
+        # if valid_df is None, then we need to split the train_df
+
+        if self.task in self.stratified_split_tasks:
+            train_df, valid_df = self.stratified_split(train_df, valid_df)
