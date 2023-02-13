@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
+from datasets import Dataset
+from loguru import logger
 from sklearn.model_selection import train_test_split
 
 
@@ -13,11 +15,14 @@ class TextBinaryClassificationPreprocessor:
     train_data: pd.DataFrame
     text_column: str
     label_column: str
+    username: str
+    project_name: str
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
 
     def __post_init__(self):
+        logger.info(self.train_data.columns)
         # check if text_column and label_column are in train_data
         if self.text_column not in self.train_data.columns:
             raise ValueError(f"{self.text_column} not in train data")
@@ -66,6 +71,10 @@ class TextBinaryClassificationPreprocessor:
     def prepare(self):
         train_df, valid_df = self.split()
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
+        train_df = Dataset.from_pandas(train_df)
+        valid_df = Dataset.from_pandas(valid_df)
+        train_df.push_to_hub(f"{self.username}/autotrain-data-{self.project_name}", split="train", private=True)
+        valid_df.push_to_hub(f"{self.username}/autotrain-data-{self.project_name}", split="validation", private=True)
         return train_df, valid_df
 
 

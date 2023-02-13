@@ -1,16 +1,18 @@
+import copy
 import re
 
 import pandas as pd
 import streamlit as st
+from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
 from autotrain.dataset import Dataset
 from autotrain.project import Project
-from autotrain.tasks import NLP_TASKS, TABULAR_TASKS, VISION_TASKS
+from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, VISION_TASKS
 from autotrain.utils import get_user_token, user_authentication
 
 
-def verify_project_name(project_name):
+def verify_project_name(project_name, username):
     if project_name == "":
         st.error("Project name cannot be empty")
         return False
@@ -25,6 +27,8 @@ def verify_project_name(project_name):
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
+    data_repo_name = f"{username}/{project_name}"
+
     return True
 
 
@@ -132,6 +136,20 @@ def app():  # username, valid_orgs):
         if delete_all_jobs:
             st.session_state.jobs = []
 
+    if training_data:
+        st.markdown("##### Column mapping")
+        # read column names
+        temp_train_data = copy.deepcopy(training_data[0])
+        if temp_train_data.name.endswith(".csv"):
+            df = pd.read_csv(temp_train_data, nrows=0)
+        elif temp_train_data.name.endswith(".jsonl"):
+            df = pd.read_json(temp_train_data, lines=True, nrows=0)
+        else:
+            raise ValueError("Unknown file type")
+        columns = list(df.columns)
+        for map_name in COLUMN_MAPPING[task]:
+            st.selectbox(f"Map `{map_name}` to:", columns, key=f"map_{map_name}")
+
     if "jobs" in st.session_state:
         if len(st.session_state.jobs) > 0:
             df = pd.DataFrame(st.session_state.jobs)
@@ -174,24 +192,24 @@ def app():  # username, valid_orgs):
 
             st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
 
-    if training_data:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("")
-
     create_project_button = st.button("Create Project")
 
     if create_project_button:
-        if not verify_project_name(project_name):
+        if not verify_project_name(project_name=project_name, username=autotrain_username):
             return
+        logger.info(st.session_state)
         dset = Dataset(
+            train_data=training_data,
+            task=task,
             token=user_token,
             project_name=project_name,
-            task=task,
-            train_data=training_data,
+            username=autotrain_username,
+            column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
             valid_data=validation_data,
+            percent_valid=None,  # TODO: add to UI
         )
-        dset.prepare()
+        with st.spinner("Munging data and uploading to 🤗 Hub..."):
+            dset.prepare()
         # project = Project(token=user_token)
         # project.create(
         #     name=project_name,

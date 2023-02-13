@@ -5,7 +5,7 @@ Copyright 2023 The HuggingFace Team
 import json
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, List, Optional
 
 import requests
 from loguru import logger
@@ -17,7 +17,14 @@ from autotrain.utils import http_post, user_authentication
 
 @dataclass
 class Project:
-    token: Optional[str] = None
+    token: str
+    name: str
+    username: str
+    task: str
+    language: str
+    max_models: int
+    hub_model: Optional[str] = None
+    jobs: Optional[List[Dict]] = None
 
     def __post_init__(self):
         if self.token is None:
