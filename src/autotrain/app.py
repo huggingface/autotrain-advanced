@@ -108,11 +108,11 @@ def app():  # username, valid_orgs):
         else:
             raise ValueError("Unknown file type")
         columns = list(df.columns)
-        for map_name in COLUMN_MAPPING[task]:
-            st.selectbox(f"Map `{map_name}` to:", columns, key=f"map_{map_name}")
+        for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
+            st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.markdown("###### Model choice")
-        model_choice = st.selectbox("", ["AutoTrain", "HuggingFace Hub"], label_visibility="collapsed")
+        model_choice = st.selectbox("Model Choice", ["AutoTrain", "HuggingFace Hub"], label_visibility="collapsed")
         hub_model = None
         if model_choice == "HuggingFace Hub":
             hub_model = st.text_input("Model name", "bert-base-uncased")
