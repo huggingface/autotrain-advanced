@@ -7,6 +7,7 @@ from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
 from autotrain.dataset import Dataset
+from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, VISION_TASKS
 from autotrain.utils import get_user_token, user_authentication
@@ -27,9 +28,12 @@ def verify_project_name(project_name, username):
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
-    data_repo_name = f"{username}/{project_name}"
-
+    # data_repo_name = f"{username}/{project_name}"
     return True
+
+
+def get_job_params(task):
+    pass
 
 
 def _app():
@@ -38,6 +42,10 @@ def _app():
 
 
 def app():  # username, valid_orgs):
+    st.sidebar.markdown(
+        "<p style='text-align: center; font-size: 20px; font-weight: bold;'>AutoTrain Advanced</p>",
+        unsafe_allow_html=True,
+    )
     user_token = get_user_token()
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
@@ -83,61 +91,14 @@ def app():  # username, valid_orgs):
         elif project_type == "Tabular":
             task = st.selectbox("Task", list(TABULAR_TASKS.keys()))
 
-    model_choice = st.selectbox("Model choice", ["AutoTrain", "HuggingFace Hub"])
-    hub_model = None
-    if model_choice == "HuggingFace Hub":
-        hub_model = st.text_input("Model name", "bert-base-cased")
-
     col1, col2 = st.columns(2)
     with col1:
         training_data = st.file_uploader("Training data", type=["csv", "jsonl"], accept_multiple_files=True)
     with col2:
         validation_data = st.file_uploader("Validation data", type=["csv", "jsonl"], accept_multiple_files=True)
 
-    st.sidebar.markdown("### Parameters")
-    if model_choice == "AutoTrain":
-        st.sidebar.markdown("Parameters are selected automagically for AutoTrain models")
-    else:
-        optimizer = st.sidebar.selectbox("Optimizer", ["Adam", "AdamW", "SGD"])
-        scheduler = st.sidebar.selectbox("Scheduler", ["Linear", "Cosine"])
-        learning_rate = st.sidebar.number_input(
-            "Learning rate", min_value=0.0, max_value=1.0, value=0.001, format="%.6f"
-        )
-        batch_size = st.sidebar.number_input("Batch size", min_value=1, max_value=1000, value=32)
-        epochs = st.sidebar.number_input("Epochs", min_value=1, max_value=1000, value=10)
-        percentage_warmup = st.sidebar.number_input("Percentage warmup", min_value=0.0, max_value=1.0, value=0.1)
-        max_seq_length = st.sidebar.number_input("Max sequence length", min_value=1, max_value=1000, value=128)
-        add_job = st.sidebar.button("Add job")
-        delete_all_jobs = st.sidebar.button("Delete all jobs")
-
-        if add_job:
-            if "jobs" not in st.session_state:
-                st.session_state.jobs = []
-            st.session_state.jobs.append(
-                {
-                    "learning_rate": learning_rate,
-                    "batch_size": batch_size,
-                    "epochs": epochs,
-                    "max_seq_length": max_seq_length,
-                    "percentage_warmup": percentage_warmup,
-                    "optimizer": optimizer,
-                    "scheduler": scheduler,
-                    # "learning_rate2": learning_rate,
-                    # "batch_size2": batch_size,
-                    # "epochs2": epochs,
-                    # "max_seq_length2": max_seq_length,
-                    # "learning_rate3": learning_rate,
-                    # "batch_size3": batch_size,
-                    # "epochs3": epochs,
-                    # "max_seq_length3": max_seq_length,
-                }
-            )
-
-        if delete_all_jobs:
-            st.session_state.jobs = []
-
     if training_data:
-        st.markdown("##### Column mapping")
+        st.markdown("###### Column mapping")
         # read column names
         temp_train_data = copy.deepcopy(training_data[0])
         if temp_train_data.name.endswith(".csv"):
@@ -149,6 +110,45 @@ def app():  # username, valid_orgs):
         columns = list(df.columns)
         for map_name in COLUMN_MAPPING[task]:
             st.selectbox(f"Map `{map_name}` to:", columns, key=f"map_{map_name}")
+
+        st.markdown("###### Model choice")
+        model_choice = st.selectbox("", ["AutoTrain", "HuggingFace Hub"], label_visibility="collapsed")
+        hub_model = None
+        if model_choice == "HuggingFace Hub":
+            hub_model = st.text_input("Model name", "bert-base-uncased")
+
+        st.sidebar.markdown("### Parameters")
+        if model_choice == "AutoTrain":
+            st.sidebar.markdown("Parameters are selected automagically for AutoTrain models")
+        else:
+            params = Params(task=task)
+            params = params.get()
+            logger.info(params)
+            for key, value in params.items():
+                logger.info(value.STREAMLIT_INPUT)
+                if value.STREAMLIT_INPUT == "selectbox":
+                    _ = st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
+                elif value.STREAMLIT_INPUT == "number_input":
+                    _ = st.sidebar.number_input(
+                        value.PRETTY_NAME,
+                        value.MIN_VALUE,
+                        value.MAX_VALUE,
+                        value.DEFAULT,
+                        key=f"params__{key}",
+                    )
+
+            add_job = st.sidebar.button("Add job")
+            delete_all_jobs = st.sidebar.button("Delete all jobs")
+
+            if add_job:
+                if "jobs" not in st.session_state:
+                    st.session_state.jobs = []
+                st.session_state.jobs.append(
+                    {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
+                )
+
+            if delete_all_jobs:
+                st.session_state.jobs = []
 
     if "jobs" in st.session_state:
         if len(st.session_state.jobs) > 0:
@@ -189,7 +189,7 @@ def app():  # username, valid_orgs):
                 selected_rows = [
                     int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
                 ]
-
+                logger.info(selected_rows)
             st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
 
     create_project_button = st.button("Create Project")
@@ -197,6 +197,13 @@ def app():  # username, valid_orgs):
     if create_project_button:
         if not verify_project_name(project_name=project_name, username=autotrain_username):
             return
+        if model_choice != "AutoTrain":
+            if "jobs" not in st.session_state:
+                st.error("Please add at least one job")
+                return
+            if len(st.session_state.jobs) == 0:
+                st.error("Please add at least one job")
+                return
         logger.info(st.session_state)
         dset = Dataset(
             train_data=training_data,

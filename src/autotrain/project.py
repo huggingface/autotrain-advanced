@@ -24,39 +24,46 @@ class Project:
     language: str
     max_models: int
     hub_model: Optional[str] = None
-    jobs: Optional[List[Dict]] = None
+    job_params: Optional[List[Dict]] = None
 
     def __post_init__(self):
         if self.token is None:
             raise ValueError("❌ Please login using `huggingface-cli login`")
 
-    def create(self, name: str, username: str, task: str, language: str, max_models: int, hub_model: str = None):
+    def create(self):
         """Create a project and return it"""
-        task_id = TASKS.get(task)
+        task_id = TASKS.get(self.task)
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")
-        language = str(language).strip().lower()
-        if language not in SUPPORTED_LANGUAGES:
-            raise ValueError("❌ Invalid language selected. Please check supported languages in AutoNLP documentation.")
+        language = str(self.language).strip().lower()
         if task_id is None:
             raise ValueError(f"❌ Invalid task specified. Please choose one of {list(TASKS.keys())}")
+
+        if self.hub_model is not None:
+            language = "unk"
+
+        if language not in SUPPORTED_LANGUAGES:
+            raise ValueError("❌ Invalid language. Please check supported languages in AutoTrain documentation.")
+
         payload = {
-            "username": username,
-            "proj_name": name,
+            "username": self.username,
+            "proj_name": self.name,
             "task": task_id,
             "config": {
+                "advanced": True,
                 "language": language,
-                "max_models": max_models,
-                "hub_model": hub_model,
+                "max_models": self.max_models,
+                "hub_model": self.hub_model,
+                "params": self.job_params,
             },
         }
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
         created = json_resp["created"]
         if created is True:
-            logger.info(f"✅ Successfully created project: '{proj_name}'!")
+            return proj_name
         else:
-            logger.info(f"🤙 Project '{proj_name}' already exists, it was loaded successfully.")
+            raise ValueError(f"❌ Project with name {proj_name} already exists.")
 
     # def get_project(self, name: str, is_eval: bool = False):
     #     """Retrieves a project"""

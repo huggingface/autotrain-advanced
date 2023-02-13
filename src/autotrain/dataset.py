@@ -59,7 +59,7 @@ class Dataset:
         if valid_df is not None:
             logger.info(valid_df.head())
 
-        if self.task == "binary_classification":
+        if self.task == "text_binary_classification":
             text_column = self.column_mapping["text"]
             label_column = self.column_mapping["label"]
             preprocessor = TextBinaryClassificationPreprocessor(
