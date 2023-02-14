@@ -1,6 +1,7 @@
 import enum
 from dataclasses import dataclass
 
+from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 
 
@@ -74,9 +75,35 @@ class WeightDecay:
     PRETTY_NAME = "Weight Decay"
 
 
+class SourceLanguage:
+    TYPE = "str"
+    DEFAULT = "en"
+    CHOICES = SUPPORTED_LANGUAGES
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "Source Language"
+
+
+class TargetLanguage:
+    TYPE = "str"
+    DEFAULT = "en"
+    CHOICES = SUPPORTED_LANGUAGES
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "Target Language"
+
+
+class NumModels:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 25
+    DEFAULT = 5
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "Number of Models"
+
+
 @dataclass
 class Params:
     task: str
+    training_type: str
 
     def __post_init__(self):
         # task should be one of the keys in TASKS
@@ -84,16 +111,24 @@ class Params:
             raise ValueError(f"task must be one of {TASKS.keys()}")
         self.task_id = TASKS[self.task]
 
+        if self.training_type not in ("autotrain", "hub_model"):
+            raise ValueError("training_type must be either autotrain or hub_model")
+
     def _text_binary_classification(self):
+        if self.training_type == "hub_model":
+            return {
+                "learning_rate": LearningRate,
+                "optimizer": Optimizer,
+                "scheduler": Scheduler,
+                "batch_size": BatchSize,
+                "epochs": Epochs,
+                "percentage_warmup": PercentageWarmup,
+                "gradient_accumulation_steps": GradientAccumulationSteps,
+                "weight_decay": WeightDecay,
+            }
         return {
-            "learning_rate": LearningRate,
-            "optimizer": Optimizer,
-            "scheduler": Scheduler,
-            "batch_size": BatchSize,
-            "epochs": Epochs,
-            "percentage_warmup": PercentageWarmup,
-            "gradient_accumulation_steps": GradientAccumulationSteps,
-            "weight_decay": WeightDecay,
+            "source_language": SourceLanguage,
+            "num_models": NumModels,
         }
 
     def _text_multi_class_classification(self):

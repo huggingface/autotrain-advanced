@@ -32,7 +32,7 @@ def verify_project_name(project_name, username):
     return True
 
 
-def get_job_params(task):
+def get_job_params(task, params):
     pass
 
 
@@ -118,25 +118,29 @@ def app():  # username, valid_orgs):
             hub_model = st.text_input("Model name", "bert-base-uncased")
 
         st.sidebar.markdown("### Parameters")
-        if model_choice == "AutoTrain":
-            st.sidebar.markdown("Parameters are selected automagically for AutoTrain models")
-        else:
-            params = Params(task=task)
-            params = params.get()
-            logger.info(params)
-            for key, value in params.items():
-                logger.info(value.STREAMLIT_INPUT)
-                if value.STREAMLIT_INPUT == "selectbox":
-                    _ = st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
-                elif value.STREAMLIT_INPUT == "number_input":
-                    _ = st.sidebar.number_input(
-                        value.PRETTY_NAME,
-                        value.MIN_VALUE,
-                        value.MAX_VALUE,
-                        value.DEFAULT,
-                        key=f"params__{key}",
-                    )
+        params = Params(task=task, training_type="autotrain" if model_choice == "AutoTrain" else "hub_model")
+        params = params.get()
 
+        if model_choice == "AutoTrain":
+            st.sidebar.markdown("Hyperparameters are selected automagically for AutoTrain models")
+
+        for key, value in params.items():
+            if value.STREAMLIT_INPUT == "selectbox":
+                st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
+            elif value.STREAMLIT_INPUT == "number_input":
+                st.sidebar.number_input(
+                    value.PRETTY_NAME,
+                    value.MIN_VALUE,
+                    value.MAX_VALUE,
+                    value.DEFAULT,
+                    key=f"params__{key}",
+                )
+        if model_choice == "AutoTrain":
+            st.session_state.jobs = []
+            st.session_state.jobs.append(
+                {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
+            )
+        else:
             add_job = st.sidebar.button("Add job")
             delete_all_jobs = st.sidebar.button("Delete all jobs")
 
@@ -150,7 +154,7 @@ def app():  # username, valid_orgs):
             if delete_all_jobs:
                 st.session_state.jobs = []
 
-    if "jobs" in st.session_state:
+    if "jobs" in st.session_state and model_choice != "AutoTrain":
         if len(st.session_state.jobs) > 0:
             df = pd.DataFrame(st.session_state.jobs)
             gb = GridOptionsBuilder.from_dataframe(df)
@@ -217,15 +221,17 @@ def app():  # username, valid_orgs):
         )
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
-        # project = Project(token=user_token)
-        # project.create(
-        #     name=project_name,
-        #     username=autotrain_username,
-        #     task=task,
-        #     language="en",
-        #     max_models=1,
-        #     hub_model=hub_model,
-        # )
+        project = Project(
+            token=user_token,
+            name=project_name,
+            username=autotrain_username,
+            task=task,
+            language=language,
+            max_models=max_models,
+            hub_model=hub_model,
+            job_params=get_job_params(st.session_state.jobs, selected_rows, task),
+        )
+        project.create()
 
 
 if __name__ == "__main__":
