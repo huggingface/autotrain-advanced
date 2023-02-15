@@ -29,16 +29,22 @@ def verify_project_name(project_name, username):
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
     # data_repo_name = f"{username}/{project_name}"
+    # TODO: make sure that data repo does not exist
     return True
 
 
-def get_job_params(task, params):
-    pass
-
-
-def _app():
-    df = pd.read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/airline-safety/airline-safety.csv")
-    AgGrid(df)
+def get_job_params(job_params, selected_rows, task, model_choice):
+    if model_choice == "AutoTrain":
+        if len(job_params) > 1:
+            raise ValueError("❌ Only one job parameter is allowed for AutoTrain.")
+        job_params[0].update({"task": task})
+    elif model_choice == "HuggingFace Hub":
+        for i in range(len(job_params)):
+            job_params[i].update({"task": task})
+        job_params = [job_params[i] for i in selected_rows]
+    logger.info("***")
+    logger.info(job_params)
+    return job_params
 
 
 def app():  # username, valid_orgs):
@@ -61,7 +67,7 @@ def app():  # username, valid_orgs):
 
     if user_can_pay is False and len(valid_orgs) == 0:
         st.error(
-            "Please attach a CC to your account or join an organization with a CC attached to it to create a project"
+            "Please attach a CC to your account / join an organization with a CC attached to it to create a project"
         )
         return
 
@@ -112,7 +118,11 @@ def app():  # username, valid_orgs):
             st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.markdown("###### Model choice")
-        model_choice = st.selectbox("Model Choice", ["AutoTrain", "HuggingFace Hub"], label_visibility="collapsed")
+        model_choice = st.selectbox(
+            "Model Choice",
+            ["AutoTrain", "HuggingFace Hub"],
+            label_visibility="collapsed",
+        )
         hub_model = None
         if model_choice == "HuggingFace Hub":
             hub_model = st.text_input("Model name", "bert-base-uncased")
@@ -154,7 +164,10 @@ def app():  # username, valid_orgs):
             if delete_all_jobs:
                 st.session_state.jobs = []
 
+    selected_rows = []
     if "jobs" in st.session_state and model_choice != "AutoTrain":
+        if len(st.session_state.jobs) == 1 and "num_models" in st.session_state.jobs[0]:
+            st.session_state.jobs = []
         if len(st.session_state.jobs) > 0:
             df = pd.DataFrame(st.session_state.jobs)
             gb = GridOptionsBuilder.from_dataframe(df)
@@ -188,7 +201,6 @@ def app():  # username, valid_orgs):
                 reload_data=False,
             )
             ag_resp_sel = ag_resp["selected_rows"]
-            selected_rows = []
             if ag_resp_sel:
                 selected_rows = [
                     int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
@@ -209,6 +221,7 @@ def app():  # username, valid_orgs):
                 st.error("Please add at least one job")
                 return
         logger.info(st.session_state)
+
         dset = Dataset(
             train_data=training_data,
             task=task,
@@ -221,15 +234,14 @@ def app():  # username, valid_orgs):
         )
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
+
         project = Project(
             token=user_token,
             name=project_name,
             username=autotrain_username,
             task=task,
-            language=language,
-            max_models=max_models,
             hub_model=hub_model,
-            job_params=get_job_params(st.session_state.jobs, selected_rows, task),
+            job_params=get_job_params(st.session_state.jobs, selected_rows, task, model_choice),
         )
         project.create()
 

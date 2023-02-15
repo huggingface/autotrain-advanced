@@ -30,13 +30,13 @@ class Scheduler:
     PRETTY_NAME = "Scheduler"
 
 
-class BatchSize:
+class TrainBatchSize:
     TYPE = "int"
     MIN_VALUE = 1
     MAX_VALUE = 128
     DEFAULT = 8
     STREAMLIT_INPUT = "number_input"
-    PRETTY_NAME = "Batch Size"
+    PRETTY_NAME = "Train Batch Size"
 
 
 class Epochs:
@@ -120,7 +120,7 @@ class Params:
                 "learning_rate": LearningRate,
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
-                "batch_size": BatchSize,
+                "train_batch_size": TrainBatchSize,
                 "epochs": Epochs,
                 "percentage_warmup": PercentageWarmup,
                 "gradient_accumulation_steps": GradientAccumulationSteps,

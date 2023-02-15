@@ -4,8 +4,9 @@ import sys
 from loguru import logger
 
 
-HF_AUTONLP_BACKEND_API = os.getenv("HF_AUTONLP_BACKEND_API", "https://api-staging.autonlp.huggingface.co")
+AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 
 HF_API = os.getenv("HF_API", "https://huggingface.co")
+
 
 logger.configure(handlers=[dict(sink=sys.stderr, format="> <level>{level:<7} {message}</level>")])

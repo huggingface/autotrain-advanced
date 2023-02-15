@@ -21,8 +21,6 @@ class Project:
     name: str
     username: str
     task: str
-    language: str
-    max_models: int
     hub_model: Optional[str] = None
     job_params: Optional[List[Dict]] = None
 
@@ -30,18 +28,30 @@ class Project:
         if self.token is None:
             raise ValueError("❌ Please login using `huggingface-cli login`")
 
-        if self.job_params is None:
-            self.job_params = []
-
-        if len(self.job_params) > 0:
-            if self.hub_model is None:
-                raise ValueError("❌ Hub model is required when job parameters are specified.")
-
         if self.hub_model is not None and len(self.job_params) == 0:
             raise ValueError("❌ Job parameters are required when hub model is specified.")
 
-        if self.hub_model is not None and len(self.job_params) > 0:
-            self.max_models = len(self.job_params)
+        if len(self.job_params) == 1 and self.hub_model is None:
+            if "source_language" in self.job_params[0] and "target_language" not in self.job_params[0]:
+                self.language = self.job_params[0]["source_language"]
+                # remove source language from job params
+                self.job_params[0].pop("source_language")
+            elif "source_language" in self.job_params[0] and "target_language" in self.job_params[0]:
+                self.language = f'{self.job_params[0]["target_language"]}2{self.job_params[0]["source_language"]}'
+                # remove source and target language from job params
+                self.job_params[0].pop("source_language")
+                self.job_params[0].pop("target_language")
+            else:
+                self.language = "unk"
+
+            if "max_models" in self.job_params[0]:
+                self.max_models = self.job_params[0]["max_models"]
+                self.job_params[0].pop("max_models")
+            elif "max_models" not in self.job_params[0] and "source_language" in self.job_params[0]:
+                raise ValueError("❌ Please specify max_models in job_params when using AutoTrain model")
+        else:
+            self.language = "unk"
+            self.max_models = 1
 
     def create(self):
         """Create a project and return it"""
@@ -70,6 +80,7 @@ class Project:
                 "params": self.job_params,
             },
         }
+        logger.info(payload)
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
         created = json_resp["created"]

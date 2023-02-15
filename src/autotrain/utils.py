@@ -33,7 +33,7 @@ def get_auth_headers(token: str, prefix: str = "Bearer"):
 def http_get(
     path: str,
     token: str,
-    domain: str = config.HF_AUTONLP_BACKEND_API,
+    domain: str = config.AUTOTRAIN_BACKEND_API,
     token_prefix: str = "Bearer",
     suppress_logs: bool = False,
     **kwargs,
@@ -53,7 +53,7 @@ def http_post(
     path: str,
     token: str,
     payload: Optional[Dict] = None,
-    domain: str = config.HF_AUTONLP_BACKEND_API,
+    domain: str = config.AUTOTRAIN_BACKEND_API,
     suppress_logs: bool = False,
     **kwargs,
 ) -> requests.Response:
