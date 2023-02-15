@@ -114,6 +114,20 @@ class Params:
         if self.training_type not in ("autotrain", "hub_model"):
             raise ValueError("training_type must be either autotrain or hub_model")
 
+    def _tabular_binary_classification(self):
+        return {
+            "num_models": NumModels,
+        }
+
+    def _tabular_multi_class_classification(self):
+        return self._tabular_binary_classification()
+
+    def _tabular_single_column_regression(self):
+        return self._tabular_binary_classification()
+
+    def tabular_multi_label_classification(self):
+        return self._tabular_binary_classification()
+
     def _text_binary_classification(self):
         if self.training_type == "hub_model":
             return {
@@ -155,5 +169,20 @@ class Params:
 
         if self.task == "text_single_column_regression":
             return self._text_single_column_regression()
+
+        if self.task == "text_natural_language_inference":
+            return self._text_natural_language_inference()
+
+        if self.task == "tabular_binary_classification":
+            return self._tabular_binary_classification()
+
+        if self.task == "tabular_multi_class_classification":
+            return self._tabular_multi_class_classification()
+
+        if self.task == "tabular_single_column_regression":
+            return self._tabular_single_column_regression()
+
+        if self.task == "tabular_multi_label_classification":
+            return self.tabular_multi_label_classification()
 
         raise ValueError(f"task {self.task} not supported")

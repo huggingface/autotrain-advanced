@@ -31,6 +31,9 @@ class Project:
         if self.hub_model is not None and len(self.job_params) == 0:
             raise ValueError("❌ Job parameters are required when hub model is specified.")
 
+        if self.hub_model is None and len(self.job_params) > 1:
+            raise ValueError("❌ Only one job parameter is allowed in AutoTrain mode.")
+
         if len(self.job_params) == 1 and self.hub_model is None:
             if "source_language" in self.job_params[0] and "target_language" not in self.job_params[0]:
                 self.language = self.job_params[0]["source_language"]
@@ -44,11 +47,11 @@ class Project:
             else:
                 self.language = "unk"
 
-            if "max_models" in self.job_params[0]:
-                self.max_models = self.job_params[0]["max_models"]
-                self.job_params[0].pop("max_models")
-            elif "max_models" not in self.job_params[0] and "source_language" in self.job_params[0]:
-                raise ValueError("❌ Please specify max_models in job_params when using AutoTrain model")
+            if "num_models" in self.job_params[0]:
+                self.max_models = self.job_params[0]["num_models"]
+                self.job_params[0].pop("num_models")
+            elif "num_models" not in self.job_params[0] and "source_language" in self.job_params[0]:
+                raise ValueError("❌ Please specify num_models in job_params when using AutoTrain model")
         else:
             self.language = "unk"
             self.max_models = 1

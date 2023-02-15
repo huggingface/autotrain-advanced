@@ -198,7 +198,7 @@ def app():  # username, valid_orgs):
         st.markdown("###### Model choice")
         model_choice = st.selectbox(
             "Model Choice",
-            ["AutoTrain", "HuggingFace Hub"],
+            ["AutoTrain", "HuggingFace Hub"] if not task.startswith("tabular") else ["AutoTrain"],
             label_visibility="collapsed",
         )
         hub_model = None
@@ -244,18 +244,19 @@ def app():  # username, valid_orgs):
 
     # show the grid with parameters for hub_model training
     selected_rows = []
-    if "jobs" in st.session_state and model_choice != "AutoTrain":
-        if len(st.session_state.jobs) == 1 and "num_models" in st.session_state.jobs[0]:
-            st.session_state.jobs = []
-        if len(st.session_state.jobs) > 0:
-            ag_resp = create_grid(st.session_state.jobs)
-            ag_resp_sel = ag_resp["selected_rows"]
-            if ag_resp_sel:
-                selected_rows = [
-                    int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
-                ]
-                logger.info(selected_rows)
-            st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
+    if "jobs" in st.session_state and "model_choice" in locals():
+        if model_choice != "AutoTrain":
+            if len(st.session_state.jobs) == 1 and "num_models" in st.session_state.jobs[0]:
+                st.session_state.jobs = []
+            if len(st.session_state.jobs) > 0:
+                ag_resp = create_grid(st.session_state.jobs)
+                ag_resp_sel = ag_resp["selected_rows"]
+                if ag_resp_sel:
+                    selected_rows = [
+                        int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
+                    ]
+                    logger.info(selected_rows)
+                st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
 
     # create project button
     create_project_button = st.button("Create Project")
