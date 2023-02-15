@@ -134,9 +134,26 @@ class Params:
     def _text_multi_class_classification(self):
         return self._text_binary_classification()
 
+    def _text_entity_extraction(self):
+        return self._text_binary_classification()
+
+    def _text_single_column_regression(self):
+        return self._text_binary_classification()
+
+    def _text_natural_language_inference(self):
+        return self._text_binary_classification()
+
     def get(self):
         if self.task == "text_binary_classification":
             return self._text_binary_classification()
 
         if self.task == "text_multi_class_classification":
             return self._text_multi_class_classification()
+
+        if self.task == "text_entity_extraction":
+            return self._text_entity_extraction()
+
+        if self.task == "text_single_column_regression":
+            return self._text_single_column_regression()
+
+        raise ValueError(f"task {self.task} not supported")
