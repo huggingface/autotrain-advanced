@@ -190,7 +190,10 @@ def app():  # username, valid_orgs):
             raise ValueError("Unknown file type")
         columns = list(df.columns)
         for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
-            st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
+            if map_name == "id" and task.startswith("tabular"):
+                st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+            else:
+                st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.markdown("###### Model choice")
         model_choice = st.selectbox(
