@@ -5,7 +5,16 @@ import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from autotrain.preprocessor.text import TextBinaryClassificationPreprocessor, TextMultiClassClassificationPreprocessor
+from autotrain.preprocessor.tabular import (
+    TabularBinaryClassificationPreprocessor,
+    TabularMultiClassClassificationPreprocessor,
+    TabularSingleColumnRegressionPreprocessor,
+)
+from autotrain.preprocessor.text import (
+    TextBinaryClassificationPreprocessor,
+    TextMultiClassClassificationPreprocessor,
+    TextSingleColumnRegressionPreprocessor,
+)
 
 
 @dataclass
@@ -65,6 +74,84 @@ class Dataset:
             preprocessor = TextBinaryClassificationPreprocessor(
                 train_data=train_df,
                 text_column=text_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=valid_df,
+                test_size=self.percent_valid,
+                seed=42,
+            )
+            preprocessor.prepare()
+
+        elif self.task == "text_multi_class_classification":
+            text_column = self.column_mapping["text"]
+            label_column = self.column_mapping["label"]
+            preprocessor = TextMultiClassClassificationPreprocessor(
+                train_data=train_df,
+                text_column=text_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=valid_df,
+                test_size=self.percent_valid,
+                seed=42,
+            )
+            preprocessor.prepare()
+
+        elif self.task == "text_single_column_regression":
+            text_column = self.column_mapping["text"]
+            label_column = self.column_mapping["label"]
+            preprocessor = TextSingleColumnRegressionPreprocessor(
+                train_data=train_df,
+                text_column=text_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=valid_df,
+                test_size=self.percent_valid,
+                seed=42,
+            )
+            preprocessor.prepare()
+        elif self.task == "tabular_binary_classification":
+            id_column = self.column_mapping["id"]
+            label_column = self.column_mapping["label"]
+            if len(id_column.strip()) == 0:
+                id_column = None
+            preprocessor = TabularBinaryClassificationPreprocessor(
+                train_data=train_df,
+                id_column=id_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=valid_df,
+                test_size=self.percent_valid,
+                seed=42,
+            )
+            preprocessor.prepare()
+        elif self.task == "tabular_multi_class_classification":
+            id_column = self.column_mapping["id"]
+            label_column = self.column_mapping["label"]
+            if len(id_column.strip()) == 0:
+                id_column = None
+            preprocessor = TabularMultiClassClassificationPreprocessor(
+                train_data=train_df,
+                id_column=id_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=valid_df,
+                test_size=self.percent_valid,
+                seed=42,
+            )
+            preprocessor.prepare()
+        elif self.task == "tabular_single_column_regression":
+            id_column = self.column_mapping["id"]
+            label_column = self.column_mapping["label"]
+            if len(id_column.strip()) == 0:
+                id_column = None
+            preprocessor = TabularSingleColumnRegressionPreprocessor(
+                train_data=train_df,
+                id_column=id_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,

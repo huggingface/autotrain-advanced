@@ -3,6 +3,8 @@ import re
 
 import pandas as pd
 import streamlit as st
+from huggingface_hub import HfApi
+from huggingface_hub.utils import RepositoryNotFoundError
 from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
@@ -11,6 +13,14 @@ from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, VISION_TASKS
 from autotrain.utils import get_user_token, user_authentication
+
+
+def does_repo_exist(repo_id, repo_type) -> bool:
+    try:
+        HfApi().repo_info(repo_id=repo_id, repo_type=repo_type)
+        return True
+    except RepositoryNotFoundError:
+        return False
 
 
 def verify_project_name(project_name, username):
@@ -34,8 +44,10 @@ def verify_project_name(project_name, username):
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
-    # data_repo_name = f"{username}/{project_name}"
-    # TODO: make sure that data repo does not exist
+    data_repo_name = f"{username}/{project_name}"
+    if does_repo_exist(data_repo_name, "dataset"):
+        st.error("A project with this name already exists")
+        return False
     return True
 
 
@@ -278,18 +290,18 @@ def app():  # username, valid_orgs):
                 return
         logger.info(st.session_state)
 
-        # dset = Dataset(
-        #     train_data=training_data,
-        #     task=task,
-        #     token=user_token,
-        #     project_name=project_name,
-        #     username=autotrain_username,
-        #     column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
-        #     valid_data=validation_data,
-        #     percent_valid=None,  # TODO: add to UI
-        # )
-        # with st.spinner("Munging data and uploading to 🤗 Hub..."):
-        #     dset.prepare()
+        dset = Dataset(
+            train_data=training_data,
+            task=task,
+            token=user_token,
+            project_name=project_name,
+            username=autotrain_username,
+            column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
+            valid_data=validation_data,
+            percent_valid=None,  # TODO: add to UI
+        )
+        with st.spinner("Munging data and uploading to 🤗 Hub..."):
+            dset.prepare()
 
         project = Project(
             token=user_token,
