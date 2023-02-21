@@ -54,7 +54,7 @@ class Project:
                 raise ValueError("❌ Please specify num_models in job_params when using AutoTrain model")
         else:
             self.language = "unk"
-            self.max_models = 1
+            self.max_models = len(self.job_params)
 
     def create(self):
         """Create a project and return it"""
@@ -77,6 +77,9 @@ class Project:
             "task": task_id,
             "config": {
                 "advanced": True,
+                "autotrain": True
+                if self.hub_model is None
+                else False,  # TODO: autotrain should work with hub_model too. beacause, why not!
                 "language": language,
                 "max_models": self.max_models,
                 "hub_model": self.hub_model,
