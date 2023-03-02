@@ -1,12 +1,12 @@
 NLP_TASKS = {
     "text_binary_classification": 1,
-    "text_multi_class_classification": 2,
-    "text_entity_extraction": 4,
-    "text_extractive_question_answering": 5,
-    "text_summarization": 8,
-    "text_single_column_regression": 10,
+    # "text_multi_class_classification": 2,
+    # "text_entity_extraction": 4,
+    # "text_extractive_question_answering": 5,
+    # "text_summarization": 8,
+    # "text_single_column_regression": 10,
     # "speech_recognition": 11,
-    "natural_language_inference": 22,
+    # "natural_language_inference": 22,
 }
 
 VISION_TASKS = {
@@ -26,8 +26,8 @@ TABULAR_TASKS = {
 
 TASKS = {
     **NLP_TASKS,
-    **VISION_TASKS,
-    **TABULAR_TASKS,
+    # **VISION_TASKS,
+    # **TABULAR_TASKS,
 }
 
 COLUMN_MAPPING = {

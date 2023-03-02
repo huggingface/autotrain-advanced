@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     "prettytable==2.0.0",
     "huggingface_hub==0.12.0",
     "datasets==2.9.0",
+    "streamlit==1.19.0",
 ]
 
 QUALITY_REQUIRE = [
