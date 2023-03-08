@@ -334,7 +334,14 @@ def app():  # username, valid_orgs):
             hub_model=hub_model,
             job_params=get_job_params(st.session_state.jobs, selected_rows, task, model_choice),
         )
-        project.create()
+        with st.spinner("Creating project..."):
+            project_id = project.create()
+        with st.spinner("Approving project for training..."):
+            project.approve(project_id)
+
+        st.success(
+            "Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/projects)."
+        )
 
 
 if __name__ == "__main__":

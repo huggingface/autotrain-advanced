@@ -125,6 +125,15 @@ class DBPriorPreservation:
     PRETTY_NAME = "Prior preservation"
 
 
+class ImageSize:
+    TYPE = "int"
+    MIN_VALUE = 128
+    MAX_VALUE = 2048
+    DEFAULT = 512
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "Image Size"
+
+
 @dataclass
 class Params:
     task: str
@@ -141,6 +150,7 @@ class Params:
 
     def _dreambooth(self):
         return {
+            "image_size": ImageSize,
             "learning_rate": LearningRate,
             "train_batch_size": TrainBatchSize,
             "num_steps": DBNumSteps,

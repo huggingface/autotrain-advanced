@@ -4,6 +4,7 @@ Copyright 2023 The HuggingFace Team
 
 import json
 import os
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -12,7 +13,7 @@ from loguru import logger
 
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
-from autotrain.utils import http_post, user_authentication
+from autotrain.utils import http_get, http_post
 
 
 @dataclass
@@ -89,9 +90,35 @@ class Project:
         logger.info(payload)
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
+        proj_id = json_resp["id"]
         created = json_resp["created"]
 
         if created is True:
-            return proj_name
-        else:
-            raise ValueError(f"❌ Project with name {proj_name} already exists.")
+            return proj_id
+        raise ValueError(f"❌ Project with name {proj_name} already exists.")
+
+    def approve(self, project_id):
+
+        # Process data
+        _ = http_post(
+            path=f"/projects/{project_id}/data/start_processing",
+            token=self.token,
+        ).json()
+
+        logger.info("⏳ Waiting for data processing to complete ...")
+        is_data_processing_success = False
+        while is_data_processing_success is not True:
+            project_status = http_get(
+                path=f"/projects/{project_id}",
+                token=self.token,
+            ).json()
+            # See database.database.enums.ProjectStatus for definitions of `status`
+            if project_status["status"] == 3:
+                is_data_processing_success = True
+                logger.info("✅ Data processing complete!")
+            time.sleep(3)
+        # Approve training job
+        _ = http_post(
+            path=f"/projects/{project_id}/start_training",
+            token=self.token,
+        ).json()
