@@ -10,9 +10,9 @@ NLP_TASKS = {
 }
 
 VISION_TASKS = {
-    "image_binary_classification": 17,
-    "image_multi_class_classification": 18,
-    "image_single_column_regression": 24,
+    # "image_binary_classification": 17,
+    # "image_multi_class_classification": 18,
+    # "image_single_column_regression": 24,
     "dreambooth": 25,
 }
 
@@ -26,7 +26,7 @@ TABULAR_TASKS = {
 
 TASKS = {
     **NLP_TASKS,
-    # **VISION_TASKS,
+    **VISION_TASKS,
     # **TABULAR_TASKS,
 }
 

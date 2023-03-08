@@ -100,6 +100,31 @@ class NumModels:
     PRETTY_NAME = "Number of Models"
 
 
+class DBNumSteps:
+    TYPE = "int"
+    MIN_VALUE = 100
+    MAX_VALUE = 10000
+    DEFAULT = 1500
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "Number of Steps"
+
+
+class DBTextEncoderStepsPercentage:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 100
+    DEFAULT = 30
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "Text encoder steps percentage"
+
+
+class DBPriorPreservation:
+    TYPE = "bool"
+    DEFAULT = False
+    STREAMLIT_INPUT = "checkbox"
+    PRETTY_NAME = "Prior preservation"
+
+
 @dataclass
 class Params:
     task: str
@@ -113,6 +138,15 @@ class Params:
 
         if self.training_type not in ("autotrain", "hub_model"):
             raise ValueError("training_type must be either autotrain or hub_model")
+
+    def _dreambooth(self):
+        return {
+            "learning_rate": LearningRate,
+            "train_batch_size": TrainBatchSize,
+            "num_steps": DBNumSteps,
+            "text_encoder_steps_percentage": DBTextEncoderStepsPercentage,
+            "prior_preservation": DBPriorPreservation,
+        }
 
     def _tabular_binary_classification(self):
         return {
@@ -184,5 +218,8 @@ class Params:
 
         if self.task == "tabular_multi_label_classification":
             return self.tabular_multi_label_classification()
+
+        if self.task == "dreambooth":
+            return self._dreambooth()
 
         raise ValueError(f"task {self.task} not supported")

@@ -8,7 +8,7 @@ from huggingface_hub.utils import RepositoryNotFoundError
 from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
-from autotrain.dataset import Dataset
+from autotrain.dataset import Dataset, DreamboothDataset
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, VISION_TASKS
@@ -169,8 +169,14 @@ def app():  # username, valid_orgs):
         tabs = st.tabs([f"Concept {i + 1}" for i in range(number_of_concepts)])
         for i in range(number_of_concepts):
             with tabs[i]:
-                st.text_input(f"Concept {i + 1} token", key=f"dreambooth_concept_{i + 1}")
-                st.file_uploader(f"Concept {i + 1} images", key=f"dreambooth_concept_images_{i + 1}", type=["zip"])
+                st.text_input(f"Concept {i + 1} token", key=f"dreambooth_concept_name_{i + 1}")
+                st.file_uploader(
+                    f"Concept {i + 1} images",
+                    key=f"dreambooth_concept_images_{i + 1}",
+                    type=["png", "jpg", "jpeg"],
+                    accept_multiple_files=True,
+                )
+        training_data = "dreambooth"
     else:
         tab1, tab2 = st.tabs(["Training", "Validation"])
         with tab1:
@@ -191,28 +197,31 @@ def app():  # username, valid_orgs):
                 validation_images = st.file_uploader("Validation Images", type=["zip"])
 
     if "training_data" in locals() and training_data:
-        st.markdown("###### Column mapping")
-        # read column names
-        temp_train_data = copy.deepcopy(training_data[0])
-        if temp_train_data.name.endswith(".csv"):
-            df = pd.read_csv(temp_train_data, nrows=0)
-        elif temp_train_data.name.endswith(".jsonl"):
-            df = pd.read_json(temp_train_data, lines=True, nrows=0)
-        else:
-            raise ValueError("Unknown file type")
-        columns = list(df.columns)
-        for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
-            if map_name == "id" and task.startswith("tabular"):
-                st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+        if task != "dreambooth":
+            st.markdown("###### Column mapping")
+            # read column names
+            temp_train_data = copy.deepcopy(training_data[0])
+            if temp_train_data.name.endswith(".csv"):
+                df = pd.read_csv(temp_train_data, nrows=0)
+            elif temp_train_data.name.endswith(".jsonl"):
+                df = pd.read_json(temp_train_data, lines=True, nrows=0)
             else:
-                st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
+                raise ValueError("Unknown file type")
+            columns = list(df.columns)
+            for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
+                if map_name == "id" and task.startswith("tabular"):
+                    st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+                else:
+                    st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.markdown("###### Model choice")
-        model_choice = st.selectbox(
-            "Model Choice",
-            ["AutoTrain", "HuggingFace Hub"] if not task.startswith("tabular") else ["AutoTrain"],
-            label_visibility="collapsed",
-        )
+        if task.startswith("tabular"):
+            model_choice_label = ["AutoTrain"]
+        elif task == "dreambooth":
+            model_choice_label = ["HuggingFace Hub"]
+        else:
+            model_choice_label = ["AutoTrain", "HuggingFace Hub"]
+        model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
         hub_model = None
         if model_choice == "HuggingFace Hub":
             hub_model = st.text_input("Model name", "bert-base-uncased")
@@ -290,16 +299,30 @@ def app():  # username, valid_orgs):
                 return
         logger.info(st.session_state)
 
-        dset = Dataset(
-            train_data=training_data,
-            task=task,
-            token=user_token,
-            project_name=project_name,
-            username=autotrain_username,
-            column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
-            valid_data=validation_data,
-            percent_valid=None,  # TODO: add to UI
-        )
+        if task == "dreambooth":
+            dset = DreamboothDataset(
+                num_concepts=number_of_concepts,
+                concept_images=[
+                    st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)
+                ],
+                concept_names=[
+                    st.session_state[f"dreambooth_concept_name_{i + 1}"] for i in range(number_of_concepts)
+                ],
+                token=user_token,
+                project_name=project_name,
+                username=autotrain_username,
+            )
+        else:
+            dset = Dataset(
+                train_data=training_data,
+                task=task,
+                token=user_token,
+                project_name=project_name,
+                username=autotrain_username,
+                column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
+                valid_data=validation_data,
+                percent_valid=None,  # TODO: add to UI
+            )
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
 

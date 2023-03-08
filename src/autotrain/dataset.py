@@ -1,10 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
+from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
     TabularMultiClassClassificationPreprocessor,
@@ -15,6 +16,35 @@ from autotrain.preprocessor.text import (
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
 )
+
+
+@dataclass
+class DreamboothDataset:
+    num_concepts: int
+    concept_images: List[List[str]]
+    concept_names: List[str]
+    token: str
+    project_name: str
+    username: str
+
+    def __str__(self) -> str:
+        info = f"Dataset: {self.project_name} ({self.task})\n"
+        return info
+
+    def __post_init__(self):
+        self.task = "dreambooth"
+        logger.info(self.__str__())
+
+    def prepare(self):
+        preprocessor = DreamboothPreprocessor(
+            num_concepts=self.num_concepts,
+            concept_images=self.concept_images,
+            concept_names=self.concept_names,
+            token=self.token,
+            project_name=self.project_name,
+            username=self.username,
+        )
+        preprocessor.prepare()
 
 
 @dataclass
