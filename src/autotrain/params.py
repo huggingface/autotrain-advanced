@@ -1,4 +1,3 @@
-import enum
 from dataclasses import dataclass
 
 from autotrain.languages import SUPPORTED_LANGUAGES

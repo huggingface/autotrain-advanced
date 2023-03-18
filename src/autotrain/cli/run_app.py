@@ -9,6 +9,7 @@ def run_app_command_factory(args):
     return RunAutoTrainAppCommand(
         args.port,
         args.host,
+        args.task,
     )
 
 
@@ -33,11 +34,18 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             help="Host to run the app on",
             required=False,
         )
+        run_app_parser.add_argument(
+            "--task",
+            type=str,
+            required=False,
+            help="Task to run",
+        )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
-    def __init__(self, port, host):
+    def __init__(self, port, host, task):
         self.port = port
         self.host = host
+        self.task = task
 
     def run(self):
         dirname = os.path.dirname(__file__)
@@ -55,6 +63,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             "--theme.base",
             "light",
         ]
+        if self.task:
+            cmd.extend(["--", "--task", self.task])
 
         proc = subprocess.Popen(
             cmd,

@@ -2,13 +2,10 @@
 Copyright 2023 The HuggingFace Team
 """
 
-import json
-import os
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-import requests
 from loguru import logger
 
 from autotrain.languages import SUPPORTED_LANGUAGES

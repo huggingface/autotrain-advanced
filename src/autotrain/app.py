@@ -1,3 +1,4 @@
+import argparse
 import copy
 import re
 
@@ -11,8 +12,22 @@ from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuild
 from autotrain.dataset import Dataset, DreamboothDataset
 from autotrain.params import Params
 from autotrain.project import Project
-from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, VISION_TASKS
+from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, TASK_TYPE_MAPPING, VISION_TASKS
 from autotrain.utils import get_user_token, user_authentication
+
+
+def parse_args():
+    """
+    Parse command line arguments
+    :return: parsed arguments
+    """
+    parser = argparse.ArgumentParser(description="AutoTrain app")
+    parser.add_argument(
+        "--task",
+        type=str,
+        required=False,
+    )
+    return parser.parse_args()
 
 
 def does_repo_exist(repo_id, repo_type) -> bool:
@@ -121,7 +136,13 @@ def app():  # username, valid_orgs):
     )
     user_token = get_user_token()
     if user_token is None:
-        st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
+        # st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
+        # return
+        st.error(
+            "You need to be logged in to create a project. Please login using `huggingface-cli login` or enter your token below"
+        )
+        user_token = st.text_input("Please enter your HuggingFace token", type="password")
+    if len(user_token) == 0:
         return
     user_info = user_authentication(token=user_token)
     username = user_info["name"]
@@ -146,23 +167,27 @@ def app():  # username, valid_orgs):
     with col2:
         project_name = st.text_input("Project name", "my-project")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        project_type = st.selectbox(
-            "Project Type",
-            [
-                "Natural Language Processing",
-                "Computer Vision",
-                "Tabular",
-            ],
-        )
-    with col2:
-        if project_type == "Natural Language Processing":
-            task = st.selectbox("Task", list(NLP_TASKS.keys()))
-        elif project_type == "Computer Vision":
-            task = st.selectbox("Task", list(VISION_TASKS.keys()))
-        elif project_type == "Tabular":
-            task = st.selectbox("Task", list(TABULAR_TASKS.keys()))
+    if "task" in st.session_state:
+        project_type = TASK_TYPE_MAPPING[st.session_state.task]
+        task = st.session_state.task
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            project_type = st.selectbox(
+                "Project Type",
+                [
+                    "Natural Language Processing",
+                    "Computer Vision",
+                    "Tabular",
+                ],
+            )
+        with col2:
+            if project_type == "Natural Language Processing":
+                task = st.selectbox("Task", list(NLP_TASKS.keys()))
+            elif project_type == "Computer Vision":
+                task = st.selectbox("Task", list(VISION_TASKS.keys()))
+            elif project_type == "Tabular":
+                task = st.selectbox("Task", list(TABULAR_TASKS.keys()))
 
     if task == "dreambooth":
         number_of_concepts = st.number_input("Number of concepts", min_value=1, max_value=5, value=1)
@@ -216,15 +241,19 @@ def app():  # username, valid_orgs):
 
         st.markdown("###### Model choice")
         if task.startswith("tabular"):
-            model_choice_label = ["AutoTrain"]
+            model_choice = "AutoTrain"
         elif task == "dreambooth":
-            model_choice_label = ["HuggingFace Hub"]
+            model_choice = "HuggingFace Hub"
         else:
             model_choice_label = ["AutoTrain", "HuggingFace Hub"]
-        model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
+            model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
+
         hub_model = None
         if model_choice == "HuggingFace Hub":
-            hub_model = st.text_input("Model name", "bert-base-uncased")
+            default_hub_model = "bert-base-uncased"
+            if task == "dreambooth":
+                default_hub_model = "stabilityai/stable-diffusion-2-1-base"
+            hub_model = st.text_input("Model name", default_hub_model)
 
         st.sidebar.markdown("### Parameters")
         params = Params(task=task, training_type="autotrain" if model_choice == "AutoTrain" else "hub_model")
@@ -345,4 +374,6 @@ def app():  # username, valid_orgs):
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    st.session_state.task = args.task
     app()

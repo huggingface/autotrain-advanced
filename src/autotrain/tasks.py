@@ -48,3 +48,22 @@ COLUMN_MAPPING = {
     "tabular_multi_label_classification": ("id", "label"),
     "tabular_single_column_regression": ("id", "label"),
 }
+
+TASK_TYPE_MAPPING = {
+    "text_binary_classification": "Natural Language Processing",
+    "text_multi_class_classification": "Natural Language Processing",
+    "text_entity_extraction": "Natural Language Processing",
+    "text_extractive_question_answering": "Natural Language Processing",
+    "text_summarization": "Natural Language Processing",
+    "text_single_column_regression": "Natural Language Processing",
+    "speech_recognition": "Natural Language Processing",
+    "natural_language_inference": "Natural Language Processing",
+    "image_binary_classification": "Computer Vision",
+    "image_multi_class_classification": "Computer Vision",
+    "image_single_column_regression": "Computer Vision",
+    "dreambooth": "Computer Vision",
+    "tabular_binary_classification": "Tabular",
+    "tabular_multi_class_classification": "Tabular",
+    "tabular_multi_label_classification": "Tabular",
+    "tabular_single_column_regression": "Tabular",
+}
