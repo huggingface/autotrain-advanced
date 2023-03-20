@@ -9,6 +9,8 @@ class LearningRate:
     MIN_VALUE = 1e-7
     MAX_VALUE = 1e-1
     DEFAULT = 1e-3
+    STEP = 1e-6
+    FORMAT = "%.6f"
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Learning Rate"
 
@@ -126,7 +128,7 @@ class DBPriorPreservation:
 
 class ImageSize:
     TYPE = "int"
-    MIN_VALUE = 128
+    MIN_VALUE = 64
     MAX_VALUE = 2048
     DEFAULT = 512
     STREAMLIT_INPUT = "number_input"

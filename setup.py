@@ -18,7 +18,7 @@ INSTALL_REQUIRES = [
     "requests==2.25.1",
     "tqdm==4.64.1",
     "prettytable==2.0.0",
-    "huggingface_hub==0.12.0",
+    "huggingface_hub==0.13.2",
     "datasets==2.9.0",
     "streamlit==1.19.0",
 ]

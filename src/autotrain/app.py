@@ -1,5 +1,6 @@
 import argparse
 import copy
+import os
 import re
 
 import pandas as pd
@@ -139,9 +140,10 @@ def app():  # username, valid_orgs):
         # st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         # return
         st.error(
-            "You need to be logged in to create a project. Please login using `huggingface-cli login` or enter your token below"
+            "You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`"
         )
-        user_token = st.text_input("Please enter your HuggingFace token", type="password")
+        # user_token = st.text_input("Please enter your HuggingFace token", type="password")
+        user_token = os.environ.get("HF_TOKEN", "")
     if len(user_token) == 0:
         return
     user_info = user_authentication(token=user_token)
@@ -266,7 +268,25 @@ def app():  # username, valid_orgs):
             if value.STREAMLIT_INPUT == "selectbox":
                 st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
             elif value.STREAMLIT_INPUT == "number_input":
+                try:
+                    step = value.STEP
+                except AttributeError:
+                    step = None
+                try:
+                    _format = value.FORMAT
+                except AttributeError:
+                    _format = None
                 st.sidebar.number_input(
+                    value.PRETTY_NAME,
+                    value.MIN_VALUE,
+                    value.MAX_VALUE,
+                    value.DEFAULT,
+                    step=step,
+                    format=_format,
+                    key=f"params__{key}",
+                )
+            elif value.STREAMLIT_INPUT == "slider":
+                st.sidebar.slider(
                     value.PRETTY_NAME,
                     value.MIN_VALUE,
                     value.MAX_VALUE,
