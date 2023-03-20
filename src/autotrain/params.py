@@ -10,7 +10,7 @@ class LearningRate:
     MAX_VALUE = 1e-1
     DEFAULT = 1e-3
     STEP = 1e-6
-    FORMAT = "%.6f"
+    FORMAT = "%.2E"
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Learning Rate"
 
