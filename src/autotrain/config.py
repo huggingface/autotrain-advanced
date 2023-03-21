@@ -4,7 +4,7 @@ import sys
 from loguru import logger
 
 
-AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
+AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API", "https://api.autotrain.huggingface.co")
 
 HF_API = os.getenv("HF_API", "https://huggingface.co")
 

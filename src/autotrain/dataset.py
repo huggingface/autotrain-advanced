@@ -77,7 +77,10 @@ class Dataset:
         logger.info(self.train_data)
         train_df = []
         for file in self.train_data:
-            train_df.append(pd.read_csv(file))
+            if isinstance(file, pd.DataFrame):
+                train_df.append(file)
+            else:
+                train_df.append(pd.read_csv(file))
         if len(train_df) > 1:
             train_df = pd.concat(train_df)
         else:
@@ -87,7 +90,10 @@ class Dataset:
         if len(self.valid_data) > 0:
             valid_df = []
             for file in self.valid_data:
-                valid_df.append(pd.read_csv(file))
+                if isinstance(file, pd.DataFrame):
+                    valid_df.append(file)
+                else:
+                    valid_df.append(pd.read_csv(file))
             if len(valid_df) > 1:
                 valid_df = pd.concat(valid_df)
             else:
