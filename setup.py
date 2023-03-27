@@ -15,11 +15,12 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 INSTALL_REQUIRES = [
     "loguru==0.6.0",
-    "requests==2.25.1",
+    "requests==2.28.2",
     "tqdm==4.64.1",
-    "prettytable==2.0.0",
+    "pandas==1.5.3",
     "huggingface_hub==0.13.2",
     "datasets~=2.10.0",
+    "scikit-learn==1.2.2",
     "streamlit==1.19.0",
 ]
 
