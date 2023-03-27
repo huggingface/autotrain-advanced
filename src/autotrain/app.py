@@ -135,15 +135,13 @@ def app():  # username, valid_orgs):
         "<p style='text-align: center; font-size: 20px; font-weight: bold;'>AutoTrain Advanced</p>",
         unsafe_allow_html=True,
     )
-    user_token = get_user_token()
+    user_token = os.environ.get("HF_TOKEN", "")
+    if len(user_token) == 0:
+        user_token = get_user_token()
     if user_token is None:
-        # st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
-        # return
         st.error(
             "You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`"
         )
-        # user_token = st.text_input("Please enter your HuggingFace token", type="password")
-        user_token = os.environ.get("HF_TOKEN", "")
     if len(user_token) == 0:
         return
     user_info = user_authentication(token=user_token)
