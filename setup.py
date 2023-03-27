@@ -22,6 +22,7 @@ INSTALL_REQUIRES = [
     "datasets~=2.10.0",
     "scikit-learn==1.2.2",
     "streamlit==1.19.0",
+    "streamlit-aggrid==0.3.3",
 ]
 
 QUALITY_REQUIRE = [
