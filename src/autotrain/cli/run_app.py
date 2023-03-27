@@ -63,6 +63,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             "--theme.base",
             "light",
         ]
+        if "SPACE_ID" in os.environ:
+            cmd.extend(["--server.enableXsrfProtection=false"])
         if self.task:
             cmd.extend(["--", "--task", self.task])
 
