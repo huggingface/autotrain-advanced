@@ -65,6 +65,10 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         ]
         if "SPACE_ID" in os.environ:
             cmd.extend(["--server.enableXsrfProtection", "false"])
+            cmd.extend(["--server.headless", "true"])
+            cmd.extend(["--server.enableCORS", "false"])
+            cmd.extend(["--server.fileWatcherType", "none"])
+
         if self.task:
             cmd.extend(["--", "--task", self.task])
 
