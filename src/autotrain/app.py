@@ -14,7 +14,7 @@ from autotrain.dataset import Dataset, DreamboothDataset
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, TASK_TYPE_MAPPING, VISION_TASKS
-from autotrain.utils import get_user_token, user_authentication
+from autotrain.utils import get_project_cost, get_user_token, user_authentication
 
 
 def parse_args():
@@ -39,7 +39,7 @@ def does_repo_exist(repo_id, repo_type) -> bool:
         return False
 
 
-def verify_project_name(project_name, username):
+def verify_project_name(project_name, username, user_token):
     """
     Verify that the project name is valid
     :param project_name: name of the project
@@ -56,7 +56,6 @@ def verify_project_name(project_name, username):
     if not re.match(pattern, project_name):
         st.error("Project name can only contain letters, numbers and hyphens")
         return False
-    user_token = get_user_token()
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
@@ -140,8 +139,10 @@ def app():  # username, valid_orgs):
         user_token = get_user_token()
     if user_token is None:
         st.error(
-            "You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`"
+            """You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`
+            \nIf you are running this app in Hugging Face Space, please clone it to your own user and add `HF_TOKEN` as a secret."""
         )
+        return
     if len(user_token) == 0:
         return
     user_info = user_authentication(token=user_token)
@@ -326,26 +327,25 @@ def app():  # username, valid_orgs):
                     logger.info(selected_rows)
                 st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
 
-    # create project button
-    create_project_button = st.button("Create Project")
-
     # create project
     # step1: process dataset
     # step2: create project using AutoTrain API
     # step3: estimate costs
     # step4: start training if user confirms
-    if create_project_button:
-        if not verify_project_name(project_name=project_name, username=autotrain_username):
+    if not verify_project_name(project_name=project_name, username=autotrain_username, user_token=user_token):
+        return
+    if model_choice != "AutoTrain":
+        if "jobs" not in st.session_state:
+            st.error("Please add at least one job")
             return
-        if model_choice != "AutoTrain":
-            if "jobs" not in st.session_state:
-                st.error("Please add at least one job")
-                return
-            if len(st.session_state.jobs) == 0:
-                st.error("Please add at least one job")
-                return
-        logger.info(st.session_state)
-
+        if len(st.session_state.jobs) == 0:
+            st.error("Please add at least one job")
+            return
+        if len(selected_rows) == 0:
+            st.error("Please select at least one job")
+            return
+    logger.info(st.session_state)
+    try:
         if task == "dreambooth":
             dset = DreamboothDataset(
                 num_concepts=number_of_concepts,
@@ -370,6 +370,26 @@ def app():  # username, valid_orgs):
                 valid_data=validation_data,
                 percent_valid=None,  # TODO: add to UI
             )
+
+        logger.info(f"Number of samples: {dset.num_samples}")
+
+        estimated_cost = get_project_cost(
+            username=autotrain_username,
+            token=user_token,
+            task=task,
+            num_samples=dset.num_samples,
+            num_models=len(selected_rows) if model_choice != "AutoTrain" else st.session_state.jobs[0]["num_models"],
+        )
+        st.write(f"Estimated cost: {estimated_cost} USD")
+    except Exception as e:
+        logger.error(e)
+        st.error("Error while creating project. Please check your inputs and try again.")
+        return
+
+    # create project button
+    create_project_button = st.button("Create Project")
+
+    if create_project_button:
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
 

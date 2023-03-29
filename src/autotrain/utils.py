@@ -97,3 +97,12 @@ def user_authentication(token):
         logger.error(f"Failed to request whoami-v2 - {repr(err)}")
         raise Exception("Hugging Face Hub is unreachable, please try again later.")
     return response.json()
+
+
+def get_project_cost(username, token, task, num_samples, num_models):
+    task_id = TASKS[task]
+    pricing = http_get(
+        path=f"/pricing/compute?username={username}&task_id={task_id}&num_samples={num_samples}&num_models={num_models}",
+        token=token,
+    )
+    return pricing.json()["price"]
