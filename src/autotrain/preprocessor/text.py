@@ -17,6 +17,7 @@ class TextBinaryClassificationPreprocessor:
     label_column: str
     username: str
     project_name: str
+    token: str
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
@@ -73,8 +74,18 @@ class TextBinaryClassificationPreprocessor:
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
-        train_df.push_to_hub(f"{self.username}/autotrain-data-{self.project_name}", split="train", private=True)
-        valid_df.push_to_hub(f"{self.username}/autotrain-data-{self.project_name}", split="validation", private=True)
+        train_df.push_to_hub(
+            f"{self.username}/autotrain-data-{self.project_name}",
+            split="train",
+            private=True,
+            token=self.token,
+        )
+        valid_df.push_to_hub(
+            f"{self.username}/autotrain-data-{self.project_name}",
+            split="validation",
+            private=True,
+            token=self.token,
+        )
         return train_df, valid_df
 
 

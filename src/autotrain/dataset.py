@@ -150,6 +150,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
@@ -165,6 +166,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
@@ -180,6 +182,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
@@ -196,6 +199,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
@@ -212,6 +216,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
@@ -228,6 +233,7 @@ class AutoTrainDataset:
                 project_name=self.project_name,
                 valid_data=valid_df,
                 test_size=self.percent_valid,
+                token=self.token,
                 seed=42,
             )
             preprocessor.prepare()
