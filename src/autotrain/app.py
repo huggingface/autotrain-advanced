@@ -10,7 +10,7 @@ from huggingface_hub.utils import RepositoryNotFoundError
 from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
-from autotrain.dataset import Dataset, DreamboothDataset
+from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, TASK_TYPE_MAPPING, VISION_TASKS
@@ -347,7 +347,7 @@ def app():  # username, valid_orgs):
     logger.info(st.session_state)
     try:
         if task == "dreambooth":
-            dset = DreamboothDataset(
+            dset = AutoTrainDreamboothDataset(
                 num_concepts=number_of_concepts,
                 concept_images=[
                     st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)
@@ -360,7 +360,7 @@ def app():  # username, valid_orgs):
                 username=autotrain_username,
             )
         else:
-            dset = Dataset(
+            dset = AutoTrainDataset(
                 train_data=training_data,
                 task=task,
                 token=user_token,
@@ -394,10 +394,7 @@ def app():  # username, valid_orgs):
             dset.prepare()
 
         project = Project(
-            token=user_token,
-            name=project_name,
-            username=autotrain_username,
-            task=task,
+            dataset=dset,
             hub_model=hub_model,
             job_params=get_job_params(st.session_state.jobs, selected_rows, task, model_choice),
         )
