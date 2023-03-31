@@ -1,6 +1,6 @@
 NLP_TASKS = {
     "text_binary_classification": 1,
-    # "text_multi_class_classification": 2,
+    "text_multi_class_classification": 2,
     # "text_entity_extraction": 4,
     # "text_extractive_question_answering": 5,
     # "text_summarization": 8,
