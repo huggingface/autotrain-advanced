@@ -16,5 +16,4 @@
 # Lint as: python3
 # pylint: enable=line-too-long
 
-__version__ = "0.5.1"
-gi
+__version__ = "0.5.2"
