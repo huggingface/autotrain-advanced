@@ -18,7 +18,7 @@ from autotrain.preprocessor.text import (
 
 
 @dataclass
-class DreamboothDataset:
+class AutoTrainDreamboothDataset:
     num_concepts: int
     concept_images: List[List[str]]
     concept_names: List[str]
@@ -51,7 +51,7 @@ class DreamboothDataset:
 
 
 @dataclass
-class Dataset:
+class AutoTrainDataset:
     train_data: str
     task: str
     token: str

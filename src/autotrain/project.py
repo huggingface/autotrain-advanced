@@ -4,10 +4,11 @@ Copyright 2023 The HuggingFace Team
 
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from loguru import logger
 
+from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 from autotrain.utils import http_get, http_post
@@ -15,14 +16,16 @@ from autotrain.utils import http_get, http_post
 
 @dataclass
 class Project:
-    token: str
-    name: str
-    username: str
-    task: str
+    dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset]
     hub_model: Optional[str] = None
     job_params: Optional[List[Dict]] = None
 
     def __post_init__(self):
+        self.token = self.dataset.token
+        self.name = self.dataset.project_name
+        self.username = self.dataset.username
+        self.task = self.dataset.task
+
         if self.token is None:
             raise ValueError("❌ Please login using `huggingface-cli login`")
 

@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from datasets import load_dataset
 
-from autotrain.dataset import Dataset
+from autotrain.dataset import AutoTrainDataset
 from autotrain.project import Project
 
 
@@ -14,7 +14,7 @@ TASK = "text_binary_classification"
 MODEL = "bert-base-uncased"
 
 USERNAME = os.environ["AUTOTRAIN_USERNAME"]
-TOKEN = os.environ["AUTOTRAIN_TOKEN"]
+TOKEN = os.environ["HF_TOKEN"]
 
 
 if __name__ == "__main__":
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     validation_df = validation.to_pandas()
 
     # prepare dataset for AutoTrain
-    dset = Dataset(
+    dset = AutoTrainDataset(
         train_data=[train_df],
         valid_data=[validation_df],
         task=TASK,
@@ -72,6 +72,6 @@ if __name__ == "__main__":
     }
 
     jobs = [job1, job2, job3]
-    project = Project(token=TOKEN, name=PROJECT_NAME, username=USERNAME, task=TASK, hub_model=MODEL, job_params=jobs)
+    project = Project(dataset=dset, hub_model=MODEL, job_params=jobs)
     project_id = project.create()
     project.approve(project_id)
