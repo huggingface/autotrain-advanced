@@ -35,7 +35,7 @@ class TrainBatchSize:
     TYPE = "int"
     MIN_VALUE = 1
     MAX_VALUE = 128
-    DEFAULT = 8
+    DEFAULT = 2
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Train Batch Size"
 
