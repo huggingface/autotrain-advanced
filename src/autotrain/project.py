@@ -98,7 +98,6 @@ class Project:
         raise ValueError(f"❌ Project with name {proj_name} already exists.")
 
     def approve(self, project_id):
-
         # Process data
         _ = http_post(
             path=f"/projects/{project_id}/data/start_processing",
