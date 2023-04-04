@@ -38,7 +38,7 @@ class TrainBatchSize:
     DEFAULT = 2
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Train Batch Size"
-cd
+
 
 class Epochs:
     TYPE = "int"
