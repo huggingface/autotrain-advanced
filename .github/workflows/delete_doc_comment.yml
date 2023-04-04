@@ -10,4 +10,5 @@ jobs:
     uses: huggingface/doc-builder/.github/workflows/delete_doc_comment.yml@main
     with:
       pr_number: ${{ github.event.number }}
-      package: autotrain
+      package: autotrain-advanced
+      package_name: autotrain
