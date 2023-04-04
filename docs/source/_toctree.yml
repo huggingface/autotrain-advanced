@@ -1,0 +1,8 @@
+- sections: 
+  - local: index
+    title: 🤗 AutoTrain
+  - local: quickstart
+    title: Quickstart
+  - local: installation
+    title: Installation
+  title: Get started
