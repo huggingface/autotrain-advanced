@@ -143,7 +143,7 @@ def app():  # username, valid_orgs):
     if user_token is None:
         st.error(
             """You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`
-            \nIf you are running this app in Hugging Face Space, please clone it to your own user and add `HF_TOKEN` as a secret."""
+            \nIf you are running this app in Hugging Face Space, please [duplicate this space](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true) to your own user and add `HF_TOKEN` as a secret."""
         )
         return
     if len(user_token) == 0:
