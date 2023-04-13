@@ -10,7 +10,7 @@ from huggingface_hub.utils import RepositoryNotFoundError
 from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
-from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
+from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, TASK_TYPE_MAPPING, VISION_TASKS
@@ -190,6 +190,29 @@ def app():  # username, valid_orgs):
             elif project_type == "Tabular":
                 task = st.selectbox("Task", list(TABULAR_TASKS.keys()))
 
+    if task == "image_classification":
+        task = "image_binary_classification"
+    if task == "text_classification":
+        task = "text_binary_classification"
+
+    st.markdown("###### Model choice")
+    if task.startswith("tabular"):
+        model_choice = "AutoTrain"
+    elif task == "dreambooth":
+        model_choice = "HuggingFace Hub"
+    else:
+        model_choice_label = ["AutoTrain", "HuggingFace Hub"]
+        model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
+
+    hub_model = None
+    if model_choice == "HuggingFace Hub":
+        default_hub_model = "bert-base-uncased"
+        if task == "dreambooth":
+            default_hub_model = "stabilityai/stable-diffusion-2-1-base"
+        if task.startswith("image"):
+            default_hub_model = "google/vit-base-patch16-224"
+        hub_model = st.text_input("Model name", default_hub_model)
+
     if task == "dreambooth":
         number_of_concepts = st.number_input("Number of concepts", min_value=1, max_value=5, value=1)
         tabs = st.tabs([f"Concept {i + 1}" for i in range(number_of_concepts)])
@@ -204,26 +227,25 @@ def app():  # username, valid_orgs):
                 )
         training_data = "dreambooth"
     else:
-        tab1, tab2 = st.tabs(["Training", "Validation"])
+        tab1, tab2 = st.tabs(["Training", "Validation (Optional)"])
         with tab1:
-            training_data = st.file_uploader(
-                "Training Data" if project_type != "Computer Vision" else "Training Labels",
-                type=["csv", "jsonl"] if project_type != "Computer Vision" else ["csv"],
-                accept_multiple_files=True if project_type != "Computer Vision" else False,
-            )
             if project_type == "Computer Vision":
                 training_images = st.file_uploader("Training Images", type=["zip"])
+                training_data = task
+            else:
+                training_data = st.file_uploader("Training Data", type=["csv", "jsonl"], accept_multiple_files=True)
+
         with tab2:
-            validation_data = st.file_uploader(
-                "Validation Data" if project_type != "Computer Vision" else "Validation Labels",
-                type=["csv", "jsonl"] if project_type != "Computer Vision" else ["csv"],
-                accept_multiple_files=True if project_type != "Computer Vision" else False,
-            )
             if project_type == "Computer Vision":
                 validation_images = st.file_uploader("Validation Images", type=["zip"])
+                validation_data = task
+            else:
+                validation_data = st.file_uploader(
+                    "Validation Data", type=["csv", "jsonl"], accept_multiple_files=True
+                )
 
     if "training_data" in locals() and training_data:
-        if task != "dreambooth":
+        if task not in ("dreambooth", "image_binary_classification"):
             st.markdown("###### Column mapping")
             # read column names
             temp_train_data = copy.deepcopy(training_data[0])
@@ -239,22 +261,6 @@ def app():  # username, valid_orgs):
                     st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
                 else:
                     st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
-
-        st.markdown("###### Model choice")
-        if task.startswith("tabular"):
-            model_choice = "AutoTrain"
-        elif task == "dreambooth":
-            model_choice = "HuggingFace Hub"
-        else:
-            model_choice_label = ["AutoTrain", "HuggingFace Hub"]
-            model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
-
-        hub_model = None
-        if model_choice == "HuggingFace Hub":
-            default_hub_model = "bert-base-uncased"
-            if task == "dreambooth":
-                default_hub_model = "stabilityai/stable-diffusion-2-1-base"
-            hub_model = st.text_input("Model name", default_hub_model)
 
         st.sidebar.markdown("### Parameters")
         params = Params(task=task, training_type="autotrain" if model_choice == "AutoTrain" else "hub_model")
@@ -345,6 +351,9 @@ def app():  # username, valid_orgs):
             st.error("Please select at least one job")
             return
     logger.info(st.session_state)
+
+    # estimated_cost_button = st.button("Estimate Cost")
+    # dset_available = False
     try:
         if task == "dreambooth":
             dset = AutoTrainDreamboothDataset(
@@ -359,6 +368,15 @@ def app():  # username, valid_orgs):
                 project_name=project_name,
                 username=autotrain_username,
             )
+        elif task.startswith("image"):
+            dset = AutoTrainImageClassificationDataset(
+                train_data=training_images,
+                token=user_token,
+                project_name=project_name,
+                username=autotrain_username,
+                valid_data=validation_images,
+                percent_valid=None,  # TODO: add to UI
+            )
         else:
             dset = AutoTrainDataset(
                 train_data=training_data,
@@ -372,7 +390,6 @@ def app():  # username, valid_orgs):
             )
 
         logger.info(f"Number of samples: {dset.num_samples}")
-
         estimated_cost = get_project_cost(
             username=autotrain_username,
             token=user_token,
@@ -380,16 +397,20 @@ def app():  # username, valid_orgs):
             num_samples=dset.num_samples,
             num_models=len(selected_rows) if model_choice != "AutoTrain" else st.session_state.jobs[0]["num_models"],
         )
-        st.write(f"Estimated cost: {estimated_cost} USD")
+        st.info(f"Estimated cost: {estimated_cost} USD")
+        # dset_available = True
     except Exception as e:
         logger.error(e)
-        st.error("Error while creating project. Please check your inputs and try again.")
+        st.error("Error estimating costs. Please check your inputs and try again.")
         return
 
     # create project button
     create_project_button = st.button("Create Project")
 
     if create_project_button:
+        # if not dset_available:
+        #     st.error("Please estimate cost first.")
+
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
 
@@ -410,5 +431,6 @@ def app():  # username, valid_orgs):
 
 if __name__ == "__main__":
     args = parse_args()
-    st.session_state.task = args.task
+    if args.task is not None:
+        st.session_state.task = args.task
     app()

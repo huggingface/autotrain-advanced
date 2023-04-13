@@ -17,8 +17,8 @@ class LearningRate:
 
 class Optimizer:
     TYPE = "str"
-    DEFAULT = "adam"
-    CHOICES = ["adam", "sgd"]
+    DEFAULT = "adamw_torch"
+    CHOICES = ["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Optimizer"
 
@@ -202,6 +202,25 @@ class Params:
     def _text_natural_language_inference(self):
         return self._text_binary_classification()
 
+    def _image_binary_classification(self):
+        if self.training_type == "hub_model":
+            return {
+                "learning_rate": LearningRate,
+                "optimizer": Optimizer,
+                "scheduler": Scheduler,
+                "train_batch_size": TrainBatchSize,
+                "epochs": Epochs,
+                "percentage_warmup": PercentageWarmup,
+                "gradient_accumulation_steps": GradientAccumulationSteps,
+                "weight_decay": WeightDecay,
+            }
+        return {
+            "num_models": NumModels,
+        }
+
+    def _image_multi_class_classification(self):
+        return self._image_binary_classification()
+
     def get(self):
         if self.task == "text_binary_classification":
             return self._text_binary_classification()
@@ -229,6 +248,12 @@ class Params:
 
         if self.task == "tabular_multi_label_classification":
             return self.tabular_multi_label_classification()
+
+        if self.task == "image_binary_classification":
+            return self._image_binary_classification()
+
+        if self.task == "image_multi_class_classification":
+            return self._image_multi_class_classification()
 
         if self.task == "dreambooth":
             return self._dreambooth()
