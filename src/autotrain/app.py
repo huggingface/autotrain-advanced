@@ -1,7 +1,9 @@
 import argparse
 import copy
 import os
+import random
 import re
+import string
 
 import pandas as pd
 import streamlit as st
@@ -10,6 +12,7 @@ from huggingface_hub.utils import RepositoryNotFoundError
 from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
+from autotrain import help
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.params import Params
 from autotrain.project import Project
@@ -156,17 +159,20 @@ def app():  # username, valid_orgs):
 
     if user_can_pay is False and len(valid_orgs) == 0:
         st.error(
-            "Please attach a CC to your account / join an organization with a CC attached to it to create a project"
+            "Please attach a payment method to your account / join an organization with a valid payment method attached to it to create a project"
         )
         return
 
     who_is_training = [username] + valid_orgs
-
+    st.markdown("###### Project Info")
+    random_proj_string = "".join(random.choices(string.ascii_lowercase + string.digits, k=7))
     col1, col2 = st.columns(2)
     with col1:
-        autotrain_username = st.selectbox("Who is training?", who_is_training)
+        autotrain_username = st.selectbox("Who is training?", who_is_training, help=help.APP_AUTOTRAIN_USERNAME)
     with col2:
-        project_name = st.text_input("Project name", "my-project")
+        project_name = st.text_input(
+            "Project name", f"autotrain-project-{random_proj_string}", help=help.APP_PROJECT_NAME
+        )
 
     if "task" in st.session_state:
         project_type = TASK_TYPE_MAPPING[st.session_state.task]
@@ -179,7 +185,7 @@ def app():  # username, valid_orgs):
                 [
                     "Natural Language Processing",
                     "Computer Vision",
-                    "Tabular",
+                    # "Tabular",
                 ],
             )
         with col2:
@@ -194,7 +200,7 @@ def app():  # username, valid_orgs):
         task = "image_binary_classification"
     if task == "text_classification":
         task = "text_binary_classification"
-
+    # st.markdown("""---""")
     st.markdown("###### Model choice")
     if task.startswith("tabular"):
         model_choice = "AutoTrain"
@@ -212,7 +218,8 @@ def app():  # username, valid_orgs):
         if task.startswith("image"):
             default_hub_model = "google/vit-base-patch16-224"
         hub_model = st.text_input("Model name", default_hub_model)
-
+    # st.markdown("""---""")
+    st.markdown("###### Data")
     if task == "dreambooth":
         number_of_concepts = st.number_input("Number of concepts", min_value=1, max_value=5, value=1)
         tabs = st.tabs([f"Concept {i + 1}" for i in range(number_of_concepts)])
@@ -230,14 +237,18 @@ def app():  # username, valid_orgs):
         tab1, tab2 = st.tabs(["Training", "Validation (Optional)"])
         with tab1:
             if project_type == "Computer Vision":
-                training_images = st.file_uploader("Training Images", type=["zip"])
+                training_images = st.file_uploader(
+                    "Training Images", type=["zip"], help=help.APP_IMAGE_CLASSIFICATION_DATA_HELP
+                )
                 training_data = task
             else:
                 training_data = st.file_uploader("Training Data", type=["csv", "jsonl"], accept_multiple_files=True)
 
         with tab2:
             if project_type == "Computer Vision":
-                validation_images = st.file_uploader("Validation Images", type=["zip"])
+                validation_images = st.file_uploader(
+                    "Validation Images", type=["zip"], help=help.APP_IMAGE_CLASSIFICATION_DATA_HELP
+                )
                 validation_data = task
             else:
                 validation_data = st.file_uploader(

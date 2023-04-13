@@ -62,6 +62,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             str(self.port),
             "--theme.base",
             "light",
+            "--server.maxUploadSize",
+            "5000",
         ]
         if "SPACE_ID" in os.environ:
             cmd.extend(["--server.enableXsrfProtection", "false"])

@@ -142,6 +142,12 @@ class Params:
 
     def __post_init__(self):
         # task should be one of the keys in TASKS
+        if self.task == "image_binary_classification":
+            self.task = "image_classification"
+
+        if self.task == "text_binary_classification":
+            self.task = "text_classification"
+
         if self.task not in TASKS:
             raise ValueError(f"task must be one of {TASKS.keys()}")
         self.task_id = TASKS[self.task]
@@ -222,11 +228,8 @@ class Params:
         return self._image_binary_classification()
 
     def get(self):
-        if self.task == "text_binary_classification":
+        if self.task in ("text_binary_classification", "text_multi_class_classification", "text_classification"):
             return self._text_binary_classification()
-
-        if self.task == "text_multi_class_classification":
-            return self._text_multi_class_classification()
 
         if self.task == "text_entity_extraction":
             return self._text_entity_extraction()
@@ -249,11 +252,8 @@ class Params:
         if self.task == "tabular_multi_label_classification":
             return self.tabular_multi_label_classification()
 
-        if self.task == "image_binary_classification":
+        if self.task in ("image_binary_classification", "image_multi_class_classification", "image_classification"):
             return self._image_binary_classification()
-
-        if self.task == "image_multi_class_classification":
-            return self._image_multi_class_classification()
 
         if self.task == "dreambooth":
             return self._dreambooth()
