@@ -51,6 +51,38 @@ class AutoTrainDreamboothDataset:
 
 
 @dataclass
+class AutoTrainImageClassificationDataset:
+    train_data: str
+    train_csv: str
+    token: str
+    project_name: str
+    username: str
+    column_mapping: Optional[str] = None
+    valid_data: Optional[str] = None
+    valid_csv: Optional[str] = None
+    percent_valid: Optional[float] = None
+
+    def __str__(self) -> str:
+        info = f"Dataset: {self.project_name} ({self.task})\n"
+        info += f"Train data: {self.train_data}\n"
+        info += f"Valid data: {self.valid_data}\n"
+        info += f"Column mapping: {self.column_mapping}\n"
+        return info
+
+    def __post_init__(self):
+        if not self.valid_data and self.percent_valid is None:
+            self.percent_valid = 0.2
+        elif self.valid_data and self.percent_valid is not None:
+            raise ValueError("You can only specify one of valid_data or percent_valid")
+        elif self.valid_data:
+            self.percent_valid = 0.0
+        logger.info(self.__str__())
+
+    def _unzip_files(self):
+        pass
+
+
+@dataclass
 class AutoTrainDataset:
     train_data: str
     task: str
