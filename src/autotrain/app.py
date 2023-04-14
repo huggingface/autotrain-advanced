@@ -176,7 +176,7 @@ def app():  # username, valid_orgs):
 
     if user_can_pay is False and len(valid_orgs) == 0:
         st.error(
-            "Please attach a payment method to your account / join an organization with a valid payment method attached to it to create a project"
+            "Please attach a payment method to your account / join an organization with a [valid payment method](https://huggingface.co/settings/billing) attached to it to create a project"
         )
         return
 
