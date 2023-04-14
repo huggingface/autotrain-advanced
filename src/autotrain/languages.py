@@ -15,4 +15,5 @@ SUPPORTED_LANGUAGES = [
     "sv",
     "tr",
     "zh",
+    "unk",
 ]
