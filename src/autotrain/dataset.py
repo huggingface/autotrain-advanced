@@ -19,7 +19,28 @@ from autotrain.preprocessor.text import (
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
 )
-from autotrain.preprocessor.vision import ImageBinaryClassificationPreprocessor
+from autotrain.preprocessor.vision import ImageClassificationPreprocessor
+
+
+def remove_non_image_files(folder):
+    # Define allowed image file extensions
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"}
+
+    # Iterate through all files in the folder
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            # Get the file extension
+            file_extension = os.path.splitext(file)[1]
+
+            # If the file extension is not in the allowed list, remove the file
+            if file_extension.lower() not in allowed_extensions:
+                file_path = os.path.join(root, file)
+                os.remove(file_path)
+                print(f"Removed file: {file_path}")
+
+        # Recursively call the function on each subfolder
+        for subfolder in dirs:
+            remove_non_image_files(os.path.join(root, subfolder))
 
 
 @dataclass
@@ -130,6 +151,7 @@ class AutoTrainImageClassificationDataset:
             macosx_dir = os.path.join(train_dir, "__MACOSX")
             if os.path.exists(macosx_dir):
                 os.system(f"rm -rf {macosx_dir}")
+            remove_non_image_files(train_dir)
 
         valid_dir = None
         if self.valid_data:
@@ -147,8 +169,9 @@ class AutoTrainImageClassificationDataset:
                 macosx_dir = os.path.join(valid_dir, "__MACOSX")
                 if os.path.exists(macosx_dir):
                     os.system(f"rm -rf {macosx_dir}")
+                remove_non_image_files(valid_dir)
 
-        preprocessor = ImageBinaryClassificationPreprocessor(
+        preprocessor = ImageClassificationPreprocessor(
             train_data=train_dir,
             valid_data=valid_dir,
             token=self.token,

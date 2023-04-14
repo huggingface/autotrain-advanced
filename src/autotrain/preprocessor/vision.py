@@ -9,8 +9,11 @@ from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 
 
+ALLOWED_EXTENSIONS = ("jpeg", "png", "jpg", "JPG", "JPEG", "PNG")
+
+
 @dataclass
-class ImageBinaryClassificationPreprocessor:
+class ImageClassificationPreprocessor:
     train_data: str
     username: str
     project_name: str
@@ -31,10 +34,9 @@ class ImageBinaryClassificationPreprocessor:
 
         # Check if each subfolder contains at least 5 image files in jpeg, png or jpg format only
         for subfolder in subfolders:
-            image_files = [f for f in os.listdir(subfolder) if f.endswith(("jpeg", "png", "jpg"))]
+            image_files = [f for f in os.listdir(subfolder) if f.endswith(ALLOWED_EXTENSIONS)]
             if len(image_files) < 5:
                 raise ValueError(f"{subfolder} should contain at least 5 jpeg, png or jpg files.")
-
             # Check if there are no other files except image files in the subfolder
             if len(image_files) != len(os.listdir(subfolder)):
                 raise ValueError(f"{subfolder} should not contain any other files except image files.")
@@ -51,12 +53,19 @@ class ImageBinaryClassificationPreprocessor:
 
             # Check if valid data path contains at least 2 folders
             subfolders = [f.path for f in os.scandir(self.valid_data) if f.is_dir()]
+
+            # make sure that the subfolders in train and valid data are the same
+            train_subfolders = set(os.path.basename(f.path) for f in os.scandir(self.train_data) if f.is_dir())
+            valid_subfolders = set(os.path.basename(f.path) for f in os.scandir(self.valid_data) if f.is_dir())
+            if train_subfolders != valid_subfolders:
+                raise ValueError(f"{self.valid_data} should have the same subfolders as {self.train_data}.")
+
             if len(subfolders) < 2:
                 raise ValueError(f"{self.valid_data} should contain at least 2 subfolders.")
 
             # Check if each subfolder contains at least 5 image files in jpeg, png or jpg format only
             for subfolder in subfolders:
-                image_files = [f for f in os.listdir(subfolder) if f.endswith(("jpeg", "png", "jpg"))]
+                image_files = [f for f in os.listdir(subfolder) if f.endswith(ALLOWED_EXTENSIONS)]
                 if len(image_files) < 5:
                     raise ValueError(f"{subfolder} should contain at least 5 jpeg, png or jpg files.")
 
