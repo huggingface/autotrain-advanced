@@ -180,7 +180,7 @@ def app():  # username, valid_orgs):
         )
         return
 
-    who_is_training = [username] + valid_orgs
+    who_is_training = [username] + valid_orgs if user_can_pay else valid_orgs
     st.markdown("###### Project Info")
     col1, col2 = st.columns(2)
     with col1:
