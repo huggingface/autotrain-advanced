@@ -59,6 +59,7 @@ class Project:
 
     def create(self):
         """Create a project and return it"""
+        logger.info(f"🚀 Creating project {self.name}, task: {self.task}")
         task_id = TASKS.get(self.task)
         if task_id is None:
             raise ValueError(f"❌ Invalid task selected. Please choose one of {TASKS.keys()}")

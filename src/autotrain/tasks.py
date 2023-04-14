@@ -1,19 +1,18 @@
 NLP_TASKS = {
-    "text_classification": 1,
-    # "text_multi_class_classification": 2,
-    # "text_entity_extraction": 4,
-    # "text_extractive_question_answering": 5,
-    # "text_summarization": 8,
-    # "text_single_column_regression": 10,
-    # "speech_recognition": 11,
-    # "natural_language_inference": 22,
+    "text_binary_classification": 1,
+    "text_multi_class_classification": 2,
+    "text_entity_extraction": 4,
+    "text_extractive_question_answering": 5,
+    "text_summarization": 8,
+    "text_single_column_regression": 10,
+    "speech_recognition": 11,
+    "natural_language_inference": 22,
 }
 
 VISION_TASKS = {
-    "image_classification": 17,
-    # "image_binary_classification": 17,
-    # "image_multi_class_classification": 18,
-    # "image_single_column_regression": 24,
+    "image_binary_classification": 17,
+    "image_multi_class_classification": 18,
+    "image_single_column_regression": 24,
     "dreambooth": 25,
 }
 
@@ -28,7 +27,7 @@ TABULAR_TASKS = {
 TASKS = {
     **NLP_TASKS,
     **VISION_TASKS,
-    # **TABULAR_TASKS,
+    **TABULAR_TASKS,
 }
 
 COLUMN_MAPPING = {
@@ -61,7 +60,6 @@ TASK_TYPE_MAPPING = {
     "natural_language_inference": "Natural Language Processing",
     "image_binary_classification": "Computer Vision",
     "image_multi_class_classification": "Computer Vision",
-    "image_classification": "Computer Vision",
     "image_single_column_regression": "Computer Vision",
     "dreambooth": "Computer Vision",
     "tabular_binary_classification": "Tabular",

@@ -16,8 +16,27 @@ from autotrain import help
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.params import Params
 from autotrain.project import Project
-from autotrain.tasks import COLUMN_MAPPING, NLP_TASKS, TABULAR_TASKS, TASK_TYPE_MAPPING, VISION_TASKS
+from autotrain.tasks import COLUMN_MAPPING
 from autotrain.utils import get_project_cost, get_user_token, user_authentication
+
+
+APP_TASKS = {
+    "Natural Language Processing": ["Text Classification"],
+    # "Tabular": TABULAR_TASKS,
+    "Computer Vision": ["Image Classification", "Dreambooth"],
+}
+
+APP_TASKS_MAPPING = {
+    "Text Classification": "text_multi_class_classification",
+    "Image Classification": "image_multi_class_classification",
+    "Dreambooth": "dreambooth",
+}
+
+APP_TASK_TYPE_MAPPING = {
+    "text_classification": "Natural Language Processing",
+    "image_classification": "Computer Vision",
+    "dreambooth": "Computer Vision",
+}
 
 
 def parse_args():
@@ -165,41 +184,32 @@ def app():  # username, valid_orgs):
 
     who_is_training = [username] + valid_orgs
     st.markdown("###### Project Info")
-    random_proj_string = "".join(random.choices(string.ascii_lowercase + string.digits, k=7))
+    random_proj_string1 = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+    random_proj_string2 = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+    random_proj_string = f"{random_proj_string1}-{random_proj_string2}"
     col1, col2 = st.columns(2)
     with col1:
         autotrain_username = st.selectbox("Who is training?", who_is_training, help=help.APP_AUTOTRAIN_USERNAME)
     with col2:
-        project_name = st.text_input(
-            "Project name", f"autotrain-project-{random_proj_string}", help=help.APP_PROJECT_NAME
-        )
+        project_name = st.text_input("Project name", f"{random_proj_string}", help=help.APP_PROJECT_NAME)
 
     if "task" in st.session_state:
-        project_type = TASK_TYPE_MAPPING[st.session_state.task]
+        project_type = APP_TASK_TYPE_MAPPING[st.session_state.task]
         task = st.session_state.task
     else:
         col1, col2 = st.columns(2)
         with col1:
-            project_type = st.selectbox(
-                "Project Type",
-                [
-                    "Natural Language Processing",
-                    "Computer Vision",
-                    # "Tabular",
-                ],
-            )
+            project_type = st.selectbox("Project Type", list(APP_TASKS.keys()))
         with col2:
             if project_type == "Natural Language Processing":
-                task = st.selectbox("Task", list(NLP_TASKS.keys()))
+                task = st.selectbox("Task", APP_TASKS[project_type])
             elif project_type == "Computer Vision":
-                task = st.selectbox("Task", list(VISION_TASKS.keys()))
+                task = st.selectbox("Task", APP_TASKS[project_type])
             elif project_type == "Tabular":
-                task = st.selectbox("Task", list(TABULAR_TASKS.keys()))
+                task = st.selectbox("Task", APP_TASKS[project_type])
 
-    if task == "image_classification":
-        task = "image_binary_classification"
-    if task == "text_classification":
-        task = "text_binary_classification"
+    task = APP_TASKS_MAPPING[task]
+
     # st.markdown("""---""")
     st.markdown("###### Model choice")
     if task.startswith("tabular"):
@@ -256,7 +266,7 @@ def app():  # username, valid_orgs):
                 )
 
     if "training_data" in locals() and training_data:
-        if task not in ("dreambooth", "image_binary_classification"):
+        if task not in ("dreambooth", "image_multi_class_classification"):
             st.markdown("###### Column mapping")
             # read column names
             temp_train_data = copy.deepcopy(training_data[0])

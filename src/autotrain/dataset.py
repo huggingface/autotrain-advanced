@@ -71,7 +71,7 @@ class AutoTrainImageClassificationDataset:
         return info
 
     def __post_init__(self):
-        self.task = "image_classification"
+        self.task = "image_multi_class_classification"
         if not self.valid_data and self.percent_valid is None:
             self.percent_valid = 0.2
         elif self.valid_data and self.percent_valid is not None:
@@ -183,41 +183,11 @@ class AutoTrainDataset:
             raise ValueError("You can only specify one of valid_data or percent_valid")
         elif self.valid_data:
             self.percent_valid = 0.0
+
+        self.train_df, self.valid_df = self._preprocess_data()
         logger.info(self.__str__())
 
-    @property
-    def num_samples(self):
-        train_df = []
-        for file in self.train_data:
-            if isinstance(file, pd.DataFrame):
-                train_df.append(file)
-            else:
-                train_df.append(pd.read_csv(file))
-        if len(train_df) > 1:
-            train_df = pd.concat(train_df)
-        else:
-            train_df = train_df[0]
-
-        valid_df = None
-        if len(self.valid_data) > 0:
-            valid_df = []
-            for file in self.valid_data:
-                if isinstance(file, pd.DataFrame):
-                    valid_df.append(file)
-                else:
-                    valid_df.append(pd.read_csv(file))
-            if len(valid_df) > 1:
-                valid_df = pd.concat(valid_df)
-            else:
-                valid_df = valid_df[0]
-
-        logger.info(train_df.head())
-        if valid_df is not None:
-            logger.info(valid_df.head())
-
-        return len(train_df) + len(valid_df) if valid_df is not None else len(train_df)
-
-    def prepare(self):
+    def _preprocess_data(self):
         logger.info(self.train_data)
         train_df = []
         for file in self.train_data:
@@ -247,16 +217,23 @@ class AutoTrainDataset:
         if valid_df is not None:
             logger.info(valid_df.head())
 
+        return train_df, valid_df
+
+    @property
+    def num_samples(self):
+        return len(self.train_df) + len(self.valid_df) if self.valid_df is not None else len(self.train_df)
+
+    def prepare(self):
         if self.task == "text_binary_classification":
             text_column = self.column_mapping["text"]
             label_column = self.column_mapping["label"]
             preprocessor = TextBinaryClassificationPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 text_column=text_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
@@ -267,12 +244,12 @@ class AutoTrainDataset:
             text_column = self.column_mapping["text"]
             label_column = self.column_mapping["label"]
             preprocessor = TextMultiClassClassificationPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 text_column=text_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
@@ -283,12 +260,12 @@ class AutoTrainDataset:
             text_column = self.column_mapping["text"]
             label_column = self.column_mapping["label"]
             preprocessor = TextSingleColumnRegressionPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 text_column=text_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
@@ -300,12 +277,12 @@ class AutoTrainDataset:
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularBinaryClassificationPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 id_column=id_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
@@ -317,12 +294,12 @@ class AutoTrainDataset:
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularMultiClassClassificationPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 id_column=id_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
@@ -334,12 +311,12 @@ class AutoTrainDataset:
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularSingleColumnRegressionPreprocessor(
-                train_data=train_df,
+                train_data=self.train_df,
                 id_column=id_column,
                 label_column=label_column,
                 username=self.username,
                 project_name=self.project_name,
-                valid_data=valid_df,
+                valid_data=self.valid_df,
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
