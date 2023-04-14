@@ -112,7 +112,7 @@ class AutoTrainImageClassificationDataset:
         if isinstance(self.train_data, str):
             raise NotImplementedError
         else:
-            if not self.train_data.type == "application/zip":
+            if self.train_data.type not in ("application/zip", "application/x-zip-compressed"):
                 raise ValueError("Train data must be a zip file")
             zip_ref = zipfile.ZipFile(self.train_data, "r")
             for _ in zip_ref.namelist():
@@ -121,7 +121,7 @@ class AutoTrainImageClassificationDataset:
             if isinstance(self.valid_data, str):
                 raise NotImplementedError
             else:
-                if not self.valid_data.type == "application/zip":
+                if self.valid_data.type not in ("application/zip", "application/x-zip-compressed"):
                     raise ValueError("Valid data must be a zip file")
                 zip_ref = zipfile.ZipFile(self.valid_data, "r")
                 for _ in zip_ref.namelist():
@@ -136,7 +136,7 @@ class AutoTrainImageClassificationDataset:
             # extract the zip file to the temp directory
             # pass the temp directory to the preprocessor
             # delete the temp directory
-            if not self.train_data.type == "application/zip":
+            if self.train_data.type not in ("application/zip", "application/x-zip-compressed"):
                 raise ValueError("Train data must be a zip file")
             cache_dir = os.environ.get("HF_HOME")
             if not cache_dir:
@@ -158,7 +158,7 @@ class AutoTrainImageClassificationDataset:
             if isinstance(self.valid_data, str):
                 raise NotImplementedError
             else:
-                if not self.valid_data.type == "application/zip":
+                if self.valid_data.type not in ("application/zip", "application/x-zip-compressed"):
                     raise ValueError("Valid data must be a zip file")
                 random_uuid = uuid.uuid4()
                 valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
