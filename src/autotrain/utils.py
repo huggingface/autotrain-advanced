@@ -100,6 +100,10 @@ def user_authentication(token):
 
 
 def get_project_cost(username, token, task, num_samples, num_models):
+    if task == "image_binary_classification":
+        task = "image_classification"
+    if task == "text_binary_classification":
+        task = "text_classification"
     task_id = TASKS[task]
     pricing = http_get(
         path=f"/pricing/compute?username={username}&task_id={task_id}&num_samples={num_samples}&num_models={num_models}",

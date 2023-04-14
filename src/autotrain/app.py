@@ -412,7 +412,7 @@ def app():  # username, valid_orgs):
         # dset_available = True
     except Exception as e:
         logger.error(e)
-        st.error("Error estimating costs. Please check your inputs and try again.")
+        st.warning("Unable to estimate cost. Please check your inputs.")
         return
 
     # create project button
