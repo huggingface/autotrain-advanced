@@ -1,9 +1,7 @@
 import argparse
 import copy
 import os
-import random
 import re
-import string
 
 import pandas as pd
 import streamlit as st
@@ -184,14 +182,11 @@ def app():  # username, valid_orgs):
 
     who_is_training = [username] + valid_orgs
     st.markdown("###### Project Info")
-    random_proj_string1 = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
-    random_proj_string2 = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
-    random_proj_string = f"{random_proj_string1}-{random_proj_string2}"
     col1, col2 = st.columns(2)
     with col1:
         autotrain_username = st.selectbox("Who is training?", who_is_training, help=help.APP_AUTOTRAIN_USERNAME)
     with col2:
-        project_name = st.text_input("Project name", f"{random_proj_string}", help=help.APP_PROJECT_NAME)
+        project_name = st.text_input("Project name", "my-project", help=help.APP_PROJECT_NAME)
 
     if "task" in st.session_state:
         project_type = APP_TASK_TYPE_MAPPING[st.session_state.task]
