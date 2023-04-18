@@ -5,11 +5,11 @@
     title: Quickstart
   title: Get started
 - sections: 
-  - local: text-classification
+  - local: text_classification
     title: Text Classification
   title: Text Tasks
 - sections:
-  - local: image-classification
+  - local: image_classification
     title: Image Classification
   - local: dreambooth
     title: Dreambooth
