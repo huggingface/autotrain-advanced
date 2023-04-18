@@ -3,6 +3,14 @@
     title: 🤗 AutoTrain
   - local: quickstart
     title: Quickstart
-  - local: installation
-    title: Installation
   title: Get started
+- sections: 
+  - local: text-classification
+    title: Text Classification
+  title: Text Tasks
+- sections:
+  - local: image-classification
+    title: Image Classification
+  - local: dreambooth
+    title: Dreambooth
+  title: Image Tasks

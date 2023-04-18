@@ -158,11 +158,16 @@ def app():  # username, valid_orgs):
     if len(user_token) == 0:
         user_token = get_user_token()
     if user_token is None:
-        st.error(
-            """You need to be logged in to create a project. Please login using `huggingface-cli login` or pass your HF token in an environment variable called `HF_TOKEN`
-            \nIf you are running this app in Hugging Face Space, please [duplicate this space](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true) to your own user and add `HF_TOKEN` as a secret."""
+        st.markdown(
+            """Please login with a write [token](https://huggingface.co/settings/tokens). Note: it is recommended to [duplicate this space](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true) to avoid any waiting time for data processing
+            When duplicated, you can pass your HF token in an environment variable called `HF_TOKEN` to avoid having to enter it every time.
+            """
         )
+        user_token = st.text_input("HuggingFace Token", type="password")
+
+    if user_token is None:
         return
+
     if len(user_token) == 0:
         return
     user_info = user_authentication(token=user_token)

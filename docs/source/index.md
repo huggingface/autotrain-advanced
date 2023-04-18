@@ -1,3 +1,34 @@
 # AutoTrain
 
-AutoTrain python package for training models from hugggingface hub.
+🤗 AutoTrain is a no-code tool for training state-of-the-art models for Natural Language Processing (NLP) tasks, for Computer Vision (CV) tasks, and for Speech tasks and even for Tabular tasks. It is built on top of the awesome tools developed by the Hugging Face team, and it is designed to be easy to use.
+
+## Who should use AutoTrain?
+
+AutoTrain is for anyone who wants to train a state-of-the-art model for a NLP, CV, Speech or Tabular task, but doesn't want to spend time on the technical details of training a model. AutoTrain is also for anyone who wants to train a model for a custom dataset, but doesn't want to spend time on the technical details of training a model. Our goal is to make it easy for anyone to train a state-of-the-art model for any task and our focus is not just data scientists or machine learning engineers, but also non-technical users.
+
+## How to use AutoTrain?
+
+We offer several ways to use AutoTrain:
+
+- No code users with small number of data samples can use AutoTrain using the UI located at: https://ui.autotrain.huggingface.co/projects
+
+- No code users with large number of data samples can use AutoTrain Advanced by duplicating this space: https://huggingface.co/spaces/autotrain-projects/autotrain-advanced
+
+- Developers can access and build on top of AutoTrain using python api. The python api is available in the `autotrain-advanced` package. You can install it using pip:
+
+```bash
+pip install autotrain-advanced
+```
+
+- Developers can also use the AutoTrain API directly. The API is available at: https://api.autotrain.huggingface.co/docs
+
+
+## What is AutoTrain Advanced?
+
+AutoTrain Advanced processes your data either in a Hugging Face Space or locally (if installed locally using pip). This saves one time since the data processing is not done by the AutoTrain backend, resulting in your job not being queued. AutoTrain Advanced also allows you to use your own hardware (better CPU and RAM) to process the data, thus, making the data processing faster.
+
+Using AutoTrain Advanced, advanced users can also control the hyperparameters used for training per job. This allows you to train multiple models with different hyperparameters and compare the results.
+
+Everything else is the same as AutoTrain. You can use AutoTrain Advanced to train models for NLP, CV, Speech and Tabular tasks.
+
+We recommend using [AutoTrain Advanced](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced) since it is faster, more flexible and will have more supported tasks and features in the future.
