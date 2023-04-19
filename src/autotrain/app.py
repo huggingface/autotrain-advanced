@@ -446,7 +446,7 @@ def app():  # username, valid_orgs):
             project.approve(project_id)
 
         st.success(
-            "Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/projects)."
+            f"Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/{project_id}/trainings)."
         )
 
 
