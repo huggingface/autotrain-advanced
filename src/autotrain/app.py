@@ -19,19 +19,21 @@ from autotrain.utils import get_project_cost, get_user_token, user_authenticatio
 
 
 APP_TASKS = {
-    "Natural Language Processing": ["Text Classification"],
+    "Natural Language Processing": ["Text Classification", "LLM Finetuning"],
     # "Tabular": TABULAR_TASKS,
     "Computer Vision": ["Image Classification", "Dreambooth"],
 }
 
 APP_TASKS_MAPPING = {
     "Text Classification": "text_multi_class_classification",
+    "LLM Finetuning": "lm_training",
     "Image Classification": "image_multi_class_classification",
     "Dreambooth": "dreambooth",
 }
 
 APP_TASK_TYPE_MAPPING = {
     "text_classification": "Natural Language Processing",
+    "lm_training": "Natural Language Processing",
     "image_classification": "Computer Vision",
     "dreambooth": "Computer Vision",
 }
@@ -216,6 +218,8 @@ def app():  # username, valid_orgs):
         model_choice = "AutoTrain"
     elif task == "dreambooth":
         model_choice = "HuggingFace Hub"
+    elif task == "lm_training":
+        model_choice = "HuggingFace Hub"
     else:
         model_choice_label = ["AutoTrain", "HuggingFace Hub"]
         model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
@@ -225,6 +229,8 @@ def app():  # username, valid_orgs):
         default_hub_model = "bert-base-uncased"
         if task == "dreambooth":
             default_hub_model = "stabilityai/stable-diffusion-2-1-base"
+        if task == "lm_training":
+            default_hub_model = "stabilityai/stablelm-tuned-alpha-7b"
         if task.startswith("image"):
             default_hub_model = "google/vit-base-patch16-224"
         hub_model = st.text_input("Model name", default_hub_model)
@@ -277,11 +283,38 @@ def app():  # username, valid_orgs):
             else:
                 raise ValueError("Unknown file type")
             columns = list(df.columns)
-            for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
-                if map_name == "id" and task.startswith("tabular"):
-                    st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+            if task == "lm_training":
+                col_mapping_options = st.multiselect(
+                    "Which columns do you have in your data?",
+                    ["Prompt", "Response", "Context", "Text", "Prompt Start"],
+                    ["Prompt", "Context", "Response"],
+                )
+                if "Prompt" in col_mapping_options:
+                    st.selectbox("Map `prompt` to:", columns, key="map_prompt")
                 else:
-                    st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
+                    st.session_state["map_prompt"] = None
+                if "Context" in col_mapping_options:
+                    st.selectbox("Map `context` to:", columns, key="map_context")
+                else:
+                    st.session_state["map_context"] = None
+                if "Response" in col_mapping_options:
+                    st.selectbox("Map `response` to:", columns, key="map_response")
+                else:
+                    st.session_state["map_response"] = None
+                if "Text" in col_mapping_options:
+                    st.selectbox("Map `text` to:", columns, key="map_text")
+                else:
+                    st.session_state["map_text"] = None
+                if "Prompt Start" in col_mapping_options:
+                    st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
+                else:
+                    st.session_state["map_prompt_start"] = None
+            else:
+                for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
+                    if map_name == "id" and task.startswith("tabular"):
+                        st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+                    else:
+                        st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.sidebar.markdown("### Parameters")
         params = Params(task=task, training_type="autotrain" if model_choice == "AutoTrain" else "hub_model")

@@ -164,6 +164,18 @@ class Params:
             "num_models": NumModels,
         }
 
+    def _lm_training(self):
+        return {
+            "learning_rate": LearningRate,
+            "optimizer": Optimizer,
+            "scheduler": Scheduler,
+            "train_batch_size": TrainBatchSize,
+            "epochs": Epochs,
+            "percentage_warmup": PercentageWarmup,
+            "gradient_accumulation_steps": GradientAccumulationSteps,
+            "weight_decay": WeightDecay,
+        }
+
     def _tabular_multi_class_classification(self):
         return self._tabular_binary_classification()
 
@@ -251,5 +263,8 @@ class Params:
 
         if self.task == "dreambooth":
             return self._dreambooth()
+
+        if self.task == "lm_training":
+            return self._lm_training()
 
         raise ValueError(f"task {self.task} not supported")

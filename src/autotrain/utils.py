@@ -64,6 +64,7 @@ def http_post(
         )
     except requests.exceptions.ConnectionError:
         raise UnreachableAPIError("❌ Failed to reach AutoNLP API, check your internet connection")
+    logger.info(response.json())
     response.raise_for_status()
     return response
 
