@@ -125,7 +125,6 @@ class LLMPreprocessor:
     response_column: Optional[str] = None
 
     def __post_init__(self):
-
         # user can either provide text_column or prompt_column and response_column
         if self.text_column is not None and (self.prompt_column is not None or self.response_column is not None):
             raise ValueError("Please provide either text_column or prompt_column and response_column")
