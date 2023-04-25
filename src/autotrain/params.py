@@ -46,7 +46,7 @@ class LearningRate:
 
 
 class LMLearningRate(LearningRate):
-    DEFAULT = 5e-4
+    DEFAULT = 5e-5
 
 
 class Optimizer:
