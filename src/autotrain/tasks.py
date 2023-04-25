@@ -7,6 +7,7 @@ NLP_TASKS = {
     "text_single_column_regression": 10,
     "speech_recognition": 11,
     "natural_language_inference": 22,
+    "lm_training": 9,
 }
 
 VISION_TASKS = {
@@ -47,6 +48,7 @@ COLUMN_MAPPING = {
     "tabular_multi_class_classification": ("id", "label"),
     "tabular_multi_label_classification": ("id", "label"),
     "tabular_single_column_regression": ("id", "label"),
+    "lm_training": ("text", "prompt_start", "prompt", "context", "response"),
 }
 
 TASK_TYPE_MAPPING = {
@@ -56,6 +58,7 @@ TASK_TYPE_MAPPING = {
     "text_extractive_question_answering": "Natural Language Processing",
     "text_summarization": "Natural Language Processing",
     "text_single_column_regression": "Natural Language Processing",
+    "lm_training": "Natural Language Processing",
     "speech_recognition": "Natural Language Processing",
     "natural_language_inference": "Natural Language Processing",
     "image_binary_classification": "Computer Vision",

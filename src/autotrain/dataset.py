@@ -15,6 +15,7 @@ from autotrain.preprocessor.tabular import (
     TabularSingleColumnRegressionPreprocessor,
 )
 from autotrain.preprocessor.text import (
+    LLMPreprocessor,
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
@@ -294,6 +295,33 @@ class AutoTrainDataset:
                 seed=42,
             )
             preprocessor.prepare()
+
+        elif self.task == "lm_training":
+            text_column = self.column_mapping.get("text", None)
+            if text_column is None:
+                prompt_column = self.column_mapping["prompt"]
+                response_column = self.column_mapping["response"]
+            else:
+                prompt_column = None
+                response_column = None
+            context_column = self.column_mapping.get("context", None)
+            prompt_start_column = self.column_mapping.get("prompt_start", None)
+            preprocessor = LLMPreprocessor(
+                train_data=self.train_df,
+                text_column=text_column,
+                prompt_column=prompt_column,
+                response_column=response_column,
+                context_column=context_column,
+                prompt_start_column=prompt_start_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+            )
+            preprocessor.prepare()
+
         elif self.task == "tabular_binary_classification":
             id_column = self.column_mapping["id"]
             label_column = self.column_mapping["label"]

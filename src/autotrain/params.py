@@ -4,6 +4,36 @@ from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 
 
+class LoraR:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 100
+    DEFAULT = 16
+    STEP = 1
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA R"
+
+
+class LoraAlpha:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 256
+    DEFAULT = 32
+    STEP = 1
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA Alpha"
+
+
+class LoraDropout:
+    TYPE = "float"
+    MIN_VALUE = 0.0
+    MAX_VALUE = 1.0
+    DEFAULT = 0.05
+    STEP = 0.01
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA Dropout"
+
+
 class LearningRate:
     TYPE = "float"
     MIN_VALUE = 1e-7
@@ -15,12 +45,24 @@ class LearningRate:
     PRETTY_NAME = "Learning Rate"
 
 
+class LMLearningRate(LearningRate):
+    DEFAULT = 5e-4
+
+
 class Optimizer:
     TYPE = "str"
     DEFAULT = "adamw_torch"
     CHOICES = ["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Optimizer"
+
+
+class LMTrainingType:
+    TYPE = "str"
+    DEFAULT = "generic"
+    CHOICES = ["generic", "chat"]
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "LM Training Type"
 
 
 class Scheduler:
@@ -40,6 +82,10 @@ class TrainBatchSize:
     PRETTY_NAME = "Train Batch Size"
 
 
+class LMTrainBatchSize(TrainBatchSize):
+    DEFAULT = 4
+
+
 class Epochs:
     TYPE = "int"
     MIN_VALUE = 1
@@ -47,6 +93,10 @@ class Epochs:
     DEFAULT = 10
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Epochs"
+
+
+class LMEpochs(Epochs):
+    DEFAULT = 1
 
 
 class PercentageWarmup:
@@ -164,6 +214,22 @@ class Params:
             "num_models": NumModels,
         }
 
+    def _lm_training(self):
+        return {
+            "learning_rate": LMLearningRate,
+            "optimizer": Optimizer,
+            "scheduler": Scheduler,
+            "train_batch_size": LMTrainBatchSize,
+            "num_train_epochs": LMEpochs,
+            "percentage_warmup": PercentageWarmup,
+            "gradient_accumulation_steps": GradientAccumulationSteps,
+            "weight_decay": WeightDecay,
+            "lora_r": LoraR,
+            "lora_alpha": LoraAlpha,
+            "lora_dropout": LoraDropout,
+            "training_type": LMTrainingType,
+        }
+
     def _tabular_multi_class_classification(self):
         return self._tabular_binary_classification()
 
@@ -180,7 +246,7 @@ class Params:
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
                 "train_batch_size": TrainBatchSize,
-                "epochs": Epochs,
+                "num_train_epochs": Epochs,
                 "percentage_warmup": PercentageWarmup,
                 "gradient_accumulation_steps": GradientAccumulationSteps,
                 "weight_decay": WeightDecay,
@@ -209,7 +275,7 @@ class Params:
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
                 "train_batch_size": TrainBatchSize,
-                "epochs": Epochs,
+                "num_train_epochs": Epochs,
                 "percentage_warmup": PercentageWarmup,
                 "gradient_accumulation_steps": GradientAccumulationSteps,
                 "weight_decay": WeightDecay,
@@ -251,5 +317,8 @@ class Params:
 
         if self.task == "dreambooth":
             return self._dreambooth()
+
+        if self.task == "lm_training":
+            return self._lm_training()
 
         raise ValueError(f"task {self.task} not supported")
