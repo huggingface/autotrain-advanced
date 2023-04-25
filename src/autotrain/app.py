@@ -169,7 +169,6 @@ def app():  # username, valid_orgs):
 
     if user_token is None:
         return
-    
 
     if len(user_token) == 0:
         return
