@@ -15,10 +15,10 @@ from autotrain.preprocessor.tabular import (
     TabularSingleColumnRegressionPreprocessor,
 )
 from autotrain.preprocessor.text import (
+    LLMPreprocessor,
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
-    LLMPreprocessor,
 )
 from autotrain.preprocessor.vision import ImageClassificationPreprocessor
 
@@ -301,6 +301,9 @@ class AutoTrainDataset:
             if text_column is None:
                 prompt_column = self.column_mapping["prompt"]
                 response_column = self.column_mapping["response"]
+            else:
+                prompt_column = None
+                response_column = None
             context_column = self.column_mapping.get("context", None)
             prompt_start_column = self.column_mapping.get("prompt_start", None)
             preprocessor = LLMPreprocessor(

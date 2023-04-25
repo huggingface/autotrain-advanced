@@ -4,6 +4,36 @@ from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 
 
+class LoraR:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 100
+    DEFAULT = 16
+    STEP = 1
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA R"
+
+
+class LoraAlpha:
+    TYPE = "int"
+    MIN_VALUE = 1
+    MAX_VALUE = 256
+    DEFAULT = 32
+    STEP = 1
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA Alpha"
+
+
+class LoraDropout:
+    TYPE = "float"
+    MIN_VALUE = 0.0
+    MAX_VALUE = 1.0
+    DEFAULT = 0.05
+    STEP = 0.01
+    STREAMLIT_INPUT = "number_input"
+    PRETTY_NAME = "LoRA Dropout"
+
+
 class LearningRate:
     TYPE = "float"
     MIN_VALUE = 1e-7
@@ -21,6 +51,14 @@ class Optimizer:
     CHOICES = ["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Optimizer"
+
+
+class LMTrainingType:
+    TYPE = "str"
+    DEFAULT = "generic"
+    CHOICES = ["generic", "chat"]
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "LM Training Type"
 
 
 class Scheduler:
@@ -174,6 +212,10 @@ class Params:
             "percentage_warmup": PercentageWarmup,
             "gradient_accumulation_steps": GradientAccumulationSteps,
             "weight_decay": WeightDecay,
+            "lora_r": LoraR,
+            "lora_alpha": LoraAlpha,
+            "lora_dropout": LoraDropout,
+            "training_type": LMTrainingType,
         }
 
     def _tabular_multi_class_classification(self):

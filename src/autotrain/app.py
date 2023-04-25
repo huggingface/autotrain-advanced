@@ -212,6 +212,18 @@ def app():  # username, valid_orgs):
 
     task = APP_TASKS_MAPPING[task]
 
+    if task == "lm_training":
+        lm_subtask = st.selectbox(
+            "Subtask", ["Masked Language Modeling", "Causal Language Modeling"], index=1, disabled=True
+        )
+        if lm_subtask == "Causal Language Modeling":
+            lm_training_type = st.selectbox(
+                "Training Type",
+                ["Generic", "Chat"],
+                index=0,
+                key="lm_training_type_choice",
+            )
+
     # st.markdown("""---""")
     st.markdown("###### Model choice")
     if task.startswith("tabular"):
@@ -230,7 +242,7 @@ def app():  # username, valid_orgs):
         if task == "dreambooth":
             default_hub_model = "stabilityai/stable-diffusion-2-1-base"
         if task == "lm_training":
-            default_hub_model = "stabilityai/stablelm-tuned-alpha-7b"
+            default_hub_model = "EleutherAI/pythia-70m"
         if task.startswith("image"):
             default_hub_model = "google/vit-base-patch16-224"
         hub_model = st.text_input("Model name", default_hub_model)
@@ -284,30 +296,27 @@ def app():  # username, valid_orgs):
                 raise ValueError("Unknown file type")
             columns = list(df.columns)
             if task == "lm_training":
-                col_mapping_options = st.multiselect(
-                    "Which columns do you have in your data?",
-                    ["Prompt", "Response", "Context", "Text", "Prompt Start"],
-                    ["Prompt", "Context", "Response"],
-                )
-                if "Prompt" in col_mapping_options:
+                if lm_training_type == "Chat":
+                    col_mapping_options = st.multiselect(
+                        "Which columns do you have in your data?",
+                        ["Prompt", "Response", "Context", "Prompt Start"],
+                        ["Prompt", "Context", "Response"],
+                    )
                     st.selectbox("Map `prompt` to:", columns, key="map_prompt")
-                else:
-                    st.session_state["map_prompt"] = None
-                if "Context" in col_mapping_options:
                     st.selectbox("Map `context` to:", columns, key="map_context")
-                else:
-                    st.session_state["map_context"] = None
-                if "Response" in col_mapping_options:
                     st.selectbox("Map `response` to:", columns, key="map_response")
-                else:
-                    st.session_state["map_response"] = None
-                if "Text" in col_mapping_options:
-                    st.selectbox("Map `text` to:", columns, key="map_text")
-                else:
+
+                    if "Prompt Start" in col_mapping_options:
+                        st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
+                    else:
+                        st.session_state["map_prompt_start"] = None
+
                     st.session_state["map_text"] = None
-                if "Prompt Start" in col_mapping_options:
-                    st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
                 else:
+                    st.selectbox("Map `text` to:", columns, key="map_text")
+                    st.session_state["map_prompt"] = None
+                    st.session_state["map_context"] = None
+                    st.session_state["map_response"] = None
                     st.session_state["map_prompt_start"] = None
             else:
                 for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
@@ -325,7 +334,11 @@ def app():  # username, valid_orgs):
 
         for key, value in params.items():
             if value.STREAMLIT_INPUT == "selectbox":
-                st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
+                if value.PRETTY_NAME == "LM Training Type":
+                    _choice = [lm_training_type.lower()]
+                    st.sidebar.selectbox(value.PRETTY_NAME, _choice, 0, key=f"params__{key}", disabled=True)
+                else:
+                    st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
             elif value.STREAMLIT_INPUT == "number_input":
                 try:
                     step = value.STEP
