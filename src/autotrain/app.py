@@ -222,6 +222,7 @@ def app():  # username, valid_orgs):
                 ["Generic", "Chat"],
                 index=0,
                 key="lm_training_type_choice",
+                help=help.APP_LM_TRAINING_TYPE,
             )
 
     # st.markdown("""---""")

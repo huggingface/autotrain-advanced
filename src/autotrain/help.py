@@ -15,3 +15,14 @@ APP_IMAGE_CLASSIFICATION_DATA_HELP = """The data for the Image Classification ta
 - There should not be any other files in the zip file.
 - There should not be any other folders inside the zip folder.
 """
+
+APP_LM_TRAINING_TYPE = """There are two types of Language Model Training:
+- generic
+- chat
+
+In the generic mode, you provide a CSV with a text column which has already been formatted by you for training a language model.
+In the chat mode, you provide a CSV with two or three text columns: prompt, context (optional) and response.
+Context column can be empty for samples if not needed. You can also have a "prompt start" column. If provided, "prompt start" will be prepended before the prompt column.
+
+Please see [this](https://huggingface.co/datasets/tatsu-lab/alpaca) dataset which has both formats in the same dataset.
+"""

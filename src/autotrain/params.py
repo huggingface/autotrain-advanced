@@ -45,6 +45,10 @@ class LearningRate:
     PRETTY_NAME = "Learning Rate"
 
 
+class LMLearningRate(LearningRate):
+    DEFAULT = 5e-4
+
+
 class Optimizer:
     TYPE = "str"
     DEFAULT = "adamw_torch"
@@ -78,6 +82,10 @@ class TrainBatchSize:
     PRETTY_NAME = "Train Batch Size"
 
 
+class LMTrainBatchSize(TrainBatchSize):
+    DEFAULT = 4
+
+
 class Epochs:
     TYPE = "int"
     MIN_VALUE = 1
@@ -85,6 +93,10 @@ class Epochs:
     DEFAULT = 10
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Epochs"
+
+
+class LMEpochs(Epochs):
+    DEFAULT = 1
 
 
 class PercentageWarmup:
@@ -204,11 +216,11 @@ class Params:
 
     def _lm_training(self):
         return {
-            "learning_rate": LearningRate,
+            "learning_rate": LMLearningRate,
             "optimizer": Optimizer,
             "scheduler": Scheduler,
-            "train_batch_size": TrainBatchSize,
-            "num_train_epochs": Epochs,
+            "train_batch_size": LMTrainBatchSize,
+            "num_train_epochs": LMEpochs,
             "percentage_warmup": PercentageWarmup,
             "gradient_accumulation_steps": GradientAccumulationSteps,
             "weight_decay": WeightDecay,
