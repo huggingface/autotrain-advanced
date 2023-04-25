@@ -161,14 +161,15 @@ def app():  # username, valid_orgs):
         user_token = get_user_token()
     if user_token is None:
         st.markdown(
-            """Please login with a write [token](https://huggingface.co/settings/tokens). Note: it is recommended to [duplicate this space](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true) to avoid any waiting time for data processing
-            When duplicated, you can pass your HF token in an environment variable called `HF_TOKEN` to avoid having to enter it every time.
+            """Please login with a write [token](https://huggingface.co/settings/tokens).
+            You can also pass your HF token in an environment variable called `HF_TOKEN` to avoid having to enter it every time.
             """
         )
         user_token = st.text_input("HuggingFace Token", type="password")
 
     if user_token is None:
         return
+    
 
     if len(user_token) == 0:
         return
