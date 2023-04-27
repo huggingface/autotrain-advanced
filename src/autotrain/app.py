@@ -1,5 +1,4 @@
 import argparse
-import copy
 import os
 import re
 
@@ -288,14 +287,16 @@ def app():  # username, valid_orgs):
         if task not in ("dreambooth", "image_multi_class_classification"):
             st.markdown("###### Column mapping")
             # read column names
-            temp_train_data = copy.deepcopy(training_data[0])
-            if temp_train_data.name.endswith(".csv"):
-                df = pd.read_csv(temp_train_data, nrows=0)
-            elif temp_train_data.name.endswith(".jsonl"):
-                df = pd.read_json(temp_train_data, lines=True, nrows=0)
+            # uploaded_file.seek(0)
+            # temp_train_data = copy.deepcopy(training_data[0])
+            if training_data[0].name.endswith(".csv"):
+                df = pd.read_csv(training_data[0], nrows=0)
+            elif training_data[0].name.endswith(".jsonl"):
+                df = pd.read_json(training_data[0], lines=True, nrows=0)
             else:
                 raise ValueError("Unknown file type")
-            del temp_train_data
+            training_data[0].seek(0)
+            # del temp_train_data
             columns = list(df.columns)
             if task == "lm_training":
                 if lm_training_type == "Chat":
