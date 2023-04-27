@@ -295,6 +295,7 @@ def app():  # username, valid_orgs):
                 df = pd.read_json(temp_train_data, lines=True, nrows=0)
             else:
                 raise ValueError("Unknown file type")
+            del temp_train_data
             columns = list(df.columns)
             if task == "lm_training":
                 if lm_training_type == "Chat":
