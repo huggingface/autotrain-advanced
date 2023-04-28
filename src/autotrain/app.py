@@ -87,26 +87,35 @@ def verify_project_name(project_name, username, user_token):
     return True
 
 
-def get_job_params(job_params, selected_rows, task, model_choice):
+def get_job_params(job_params, selected_rows, task, param_choice):
     """
     Get job parameters list of dicts for AutoTrain and HuggingFace Hub models
     :param job_params: job parameters
     :param selected_rows: selected rows
     :param task: task
-    :param model_choice: model choice
+    :param param_choice: model choice
     :return: job parameters list of dicts
     """
-    if model_choice == "AutoTrain":
+    if param_choice == "AutoTrain":
         if len(job_params) > 1:
             raise ValueError("❌ Only one job parameter is allowed for AutoTrain.")
         job_params[0].update({"task": task})
-    elif model_choice == "HuggingFace Hub":
+    elif param_choice.lower() == "manual":
         for i in range(len(job_params)):
             job_params[i].update({"task": task})
         job_params = [job_params[i] for i in selected_rows]
     logger.info("***")
     logger.info(job_params)
     return job_params
+
+
+def on_change_reset_jobs():
+    # check if "jobs" exists in session_state
+    if "jobs" in st.session_state:
+        len_jobs = [len(j) for j in st.session_state.jobs]
+        # if all lengths are not same, reset jobs
+        if len(set(len_jobs)) != 1:
+            st.session_state.jobs = []
 
 
 def create_grid(jobs):
@@ -234,7 +243,12 @@ def app():  # username, valid_orgs):
         model_choice = "HuggingFace Hub"
     else:
         model_choice_label = ["AutoTrain", "HuggingFace Hub"]
-        model_choice = st.selectbox("Model Choice", model_choice_label, label_visibility="collapsed")
+        model_choice = st.selectbox(
+            "Model Choice",
+            model_choice_label,
+            label_visibility="collapsed",
+            on_change=on_change_reset_jobs(),
+        )
 
     hub_model = None
     if model_choice == "HuggingFace Hub":
@@ -329,11 +343,25 @@ def app():  # username, valid_orgs):
                         st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
 
         st.sidebar.markdown("### Parameters")
-        params = Params(task=task, training_type="autotrain" if model_choice == "AutoTrain" else "hub_model")
-        params = params.get()
-
-        if model_choice == "AutoTrain":
+        if model_choice != "AutoTrain":
+            # on_change reset st.session_stat["jobs"]
+            param_choice = st.sidebar.selectbox(
+                "Parameter Choice",
+                ["AutoTrain", "Manual"],
+                key="param_choice",
+                on_change=on_change_reset_jobs(),
+            )
+        else:
+            param_choice = st.sidebar.selectbox(
+                "Parameter Choice", ["AutoTrain", "Manual"], key="param_choice", index=0, disabled=True
+            )
             st.sidebar.markdown("Hyperparameters are selected automagically for AutoTrain models")
+        params = Params(
+            task=task,
+            param_choice="autotrain" if param_choice == "AutoTrain" else "manual",
+            model_choice="autotrain" if model_choice == "AutoTrain" else "hub_model",
+        )
+        params = params.get()
 
         for key, value in params.items():
             if value.STREAMLIT_INPUT == "selectbox":
@@ -368,7 +396,7 @@ def app():  # username, valid_orgs):
                     value.DEFAULT,
                     key=f"params__{key}",
                 )
-        if model_choice == "AutoTrain":
+        if param_choice == "AutoTrain":
             st.session_state.jobs = []
             st.session_state.jobs.append(
                 {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
@@ -389,8 +417,8 @@ def app():  # username, valid_orgs):
 
     # show the grid with parameters for hub_model training
     selected_rows = []
-    if "jobs" in st.session_state and "model_choice" in locals():
-        if model_choice != "AutoTrain":
+    if "jobs" in st.session_state and "param_choice" in locals():
+        if param_choice != "AutoTrain":
             if len(st.session_state.jobs) == 1 and "num_models" in st.session_state.jobs[0]:
                 st.session_state.jobs = []
             if len(st.session_state.jobs) > 0:
@@ -410,7 +438,7 @@ def app():  # username, valid_orgs):
     # step4: start training if user confirms
     if not verify_project_name(project_name=project_name, username=autotrain_username, user_token=user_token):
         return
-    if model_choice != "AutoTrain":
+    if param_choice != "AutoTrain":
         if "jobs" not in st.session_state:
             st.error("Please add at least one job")
             return
@@ -424,55 +452,51 @@ def app():  # username, valid_orgs):
 
     # estimated_cost_button = st.button("Estimate Cost")
     # dset_available = False
-    try:
-        if task == "dreambooth":
-            dset = AutoTrainDreamboothDataset(
-                num_concepts=number_of_concepts,
-                concept_images=[
-                    st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)
-                ],
-                concept_names=[
-                    st.session_state[f"dreambooth_concept_name_{i + 1}"] for i in range(number_of_concepts)
-                ],
-                token=user_token,
-                project_name=project_name,
-                username=autotrain_username,
-            )
-        elif task.startswith("image"):
-            dset = AutoTrainImageClassificationDataset(
-                train_data=training_images,
-                token=user_token,
-                project_name=project_name,
-                username=autotrain_username,
-                valid_data=validation_images,
-                percent_valid=None,  # TODO: add to UI
-            )
-        else:
-            dset = AutoTrainDataset(
-                train_data=training_data,
-                task=task,
-                token=user_token,
-                project_name=project_name,
-                username=autotrain_username,
-                column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
-                valid_data=validation_data,
-                percent_valid=None,  # TODO: add to UI
-            )
-
-        logger.info(f"Number of samples: {dset.num_samples}")
-        estimated_cost = get_project_cost(
-            username=autotrain_username,
+    # try:
+    if task == "dreambooth":
+        dset = AutoTrainDreamboothDataset(
+            num_concepts=number_of_concepts,
+            concept_images=[st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)],
+            concept_names=[st.session_state[f"dreambooth_concept_name_{i + 1}"] for i in range(number_of_concepts)],
             token=user_token,
-            task=task,
-            num_samples=dset.num_samples,
-            num_models=len(selected_rows) if model_choice != "AutoTrain" else st.session_state.jobs[0]["num_models"],
+            project_name=project_name,
+            username=autotrain_username,
         )
-        st.info(f"Estimated cost: {estimated_cost} USD")
-        # dset_available = True
-    except Exception as e:
-        logger.error(e)
-        st.warning("Unable to estimate cost. Please check your inputs.")
-        return
+    elif task.startswith("image"):
+        dset = AutoTrainImageClassificationDataset(
+            train_data=training_images,
+            token=user_token,
+            project_name=project_name,
+            username=autotrain_username,
+            valid_data=validation_images,
+            percent_valid=None,  # TODO: add to UI
+        )
+    else:
+        dset = AutoTrainDataset(
+            train_data=training_data,
+            task=task,
+            token=user_token,
+            project_name=project_name,
+            username=autotrain_username,
+            column_mapping={map_name: st.session_state[f"map_{map_name}"] for map_name in COLUMN_MAPPING[task]},
+            valid_data=validation_data,
+            percent_valid=None,  # TODO: add to UI
+        )
+
+    logger.info(f"Number of samples: {dset.num_samples}")
+    estimated_cost = get_project_cost(
+        username=autotrain_username,
+        token=user_token,
+        task=task,
+        num_samples=dset.num_samples,
+        num_models=len(selected_rows) if param_choice != "AutoTrain" else st.session_state.jobs[0]["num_models"],
+    )
+    st.info(f"Estimated cost: {estimated_cost} USD")
+    # dset_available = True
+    # except Exception as e:
+    #     logger.error(e)
+    #     st.warning("Unable to estimate cost. Please check your inputs.")
+    #     return
 
     # create project button
     create_project_button = st.button("Create Project")
@@ -486,8 +510,9 @@ def app():  # username, valid_orgs):
 
         project = Project(
             dataset=dset,
+            param_choice=param_choice,
             hub_model=hub_model,
-            job_params=get_job_params(st.session_state.jobs, selected_rows, task, model_choice),
+            job_params=get_job_params(st.session_state.jobs, selected_rows, task, param_choice),
         )
         with st.spinner("Creating project..."):
             project_id = project.create()

@@ -17,6 +17,7 @@ from autotrain.utils import http_get, http_post
 @dataclass
 class Project:
     dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset]
+    param_choice: Optional[str] = "autotrain"
     hub_model: Optional[str] = None
     job_params: Optional[List[Dict]] = None
 
@@ -25,6 +26,8 @@ class Project:
         self.name = self.dataset.project_name
         self.username = self.dataset.username
         self.task = self.dataset.task
+
+        self.param_choice = self.param_choice.lower()
 
         if self.token is None:
             raise ValueError("❌ Please login using `huggingface-cli login`")
@@ -35,7 +38,7 @@ class Project:
         if self.hub_model is None and len(self.job_params) > 1:
             raise ValueError("❌ Only one job parameter is allowed in AutoTrain mode.")
 
-        if len(self.job_params) == 1 and self.hub_model is None:
+        if self.param_choice == "autotrain":
             if "source_language" in self.job_params[0] and "target_language" not in self.job_params[0]:
                 self.language = self.job_params[0]["source_language"]
                 # remove source language from job params
@@ -79,9 +82,7 @@ class Project:
             "task": task_id,
             "config": {
                 "advanced": True,
-                "autotrain": True
-                if self.hub_model is None
-                else False,  # TODO: autotrain should work with hub_model too. beacause, why not!
+                "autotrain": True if self.param_choice == "autotrain" else False,
                 "language": language,
                 "max_models": self.max_models,
                 "hub_model": self.hub_model,

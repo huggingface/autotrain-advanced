@@ -185,10 +185,27 @@ class ImageSize:
     PRETTY_NAME = "Image Size"
 
 
+class DreamboothConceptType:
+    TYPE = "str"
+    DEFAULT = "person"
+    CHOICES = ["person", "object"]
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "Concept Type"
+
+
+class SourceLanguageUnk:
+    TYPE = "str"
+    DEFAULT = "unk"
+    CHOICES = ["unk"]
+    STREAMLIT_INPUT = "selectbox"
+    PRETTY_NAME = "Source Language"
+
+
 @dataclass
 class Params:
     task: str
-    training_type: str
+    param_choice: str
+    model_choice: str
 
     def __post_init__(self):
         # task should be one of the keys in TASKS
@@ -196,18 +213,32 @@ class Params:
             raise ValueError(f"task must be one of {TASKS.keys()}")
         self.task_id = TASKS[self.task]
 
-        if self.training_type not in ("autotrain", "hub_model"):
-            raise ValueError("training_type must be either autotrain or hub_model")
+        if self.param_choice not in ("autotrain", "manual"):
+            raise ValueError("param_choice must be either autotrain or manual")
+
+        if self.model_choice not in ("autotrain", "hub_model"):
+            raise ValueError("model_choice must be either autotrain or hub_model")
 
     def _dreambooth(self):
-        return {
-            "image_size": ImageSize,
-            "learning_rate": LearningRate,
-            "train_batch_size": TrainBatchSize,
-            "num_steps": DBNumSteps,
-            "text_encoder_steps_percentage": DBTextEncoderStepsPercentage,
-            "prior_preservation": DBPriorPreservation,
-        }
+        if self.param_choice == "manual":
+            return {
+                "image_size": ImageSize,
+                "learning_rate": LearningRate,
+                "train_batch_size": TrainBatchSize,
+                "num_steps": DBNumSteps,
+                "text_encoder_steps_percentage": DBTextEncoderStepsPercentage,
+                "prior_preservation": DBPriorPreservation,
+            }
+        if self.param_choice == "autotrain":
+            if self.model_choice == "hub_model":
+                return {
+                    "image_size": ImageSize,
+                    "num_models": NumModels,
+                }
+            else:
+                return {
+                    "num_models": NumModels,
+                }
 
     def _tabular_binary_classification(self):
         return {
@@ -240,7 +271,7 @@ class Params:
         return self._tabular_binary_classification()
 
     def _text_binary_classification(self):
-        if self.training_type == "hub_model":
+        if self.param_choice == "manual":
             return {
                 "learning_rate": LearningRate,
                 "optimizer": Optimizer,
@@ -251,10 +282,17 @@ class Params:
                 "gradient_accumulation_steps": GradientAccumulationSteps,
                 "weight_decay": WeightDecay,
             }
-        return {
-            "source_language": SourceLanguage,
-            "num_models": NumModels,
-        }
+        if self.param_choice == "autotrain":
+            if self.model_choice == "autotrain":
+                return {
+                    "source_language": SourceLanguage,
+                    "num_models": NumModels,
+                }
+            return {
+                "source_language": SourceLanguageUnk,
+                "num_models": NumModels,
+            }
+        raise ValueError("param_choice must be either autotrain or manual")
 
     def _text_multi_class_classification(self):
         return self._text_binary_classification()
@@ -269,7 +307,7 @@ class Params:
         return self._text_binary_classification()
 
     def _image_binary_classification(self):
-        if self.training_type == "hub_model":
+        if self.param_choice == "manual":
             return {
                 "learning_rate": LearningRate,
                 "optimizer": Optimizer,

@@ -12,9 +12,9 @@ We offer several ways to use AutoTrain:
 
 - No code users with small number of data samples can use AutoTrain using the UI located at: https://ui.autotrain.huggingface.co/projects
 
-- No code users with large number of data samples can use AutoTrain Advanced by duplicating this space: https://huggingface.co/spaces/autotrain-projects/autotrain-advanced
+- No code users with large number of data samples can use AutoTrain Advanced by creating a new space with AutoTrain Docker image: https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced. Please make sure you keep the space private.
 
-- Developers can access and build on top of AutoTrain using python api. The python api is available in the `autotrain-advanced` package. You can install it using pip:
+- Developers can access and build on top of AutoTrain using python api or run AutoTrain Advanced UI locally. The python api is available in the `autotrain-advanced` package. You can install it using pip:
 
 ```bash
 pip install autotrain-advanced
@@ -31,4 +31,4 @@ Using AutoTrain Advanced, advanced users can also control the hyperparameters us
 
 Everything else is the same as AutoTrain. You can use AutoTrain Advanced to train models for NLP, CV, Speech and Tabular tasks.
 
-We recommend using [AutoTrain Advanced](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced) since it is faster, more flexible and will have more supported tasks and features in the future.
+We recommend using [AutoTrain Advanced](https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced) since it is faster, more flexible and will have more supported tasks and features in the future.
