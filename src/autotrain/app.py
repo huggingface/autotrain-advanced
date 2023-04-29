@@ -8,7 +8,6 @@ import pandas as pd
 import streamlit as st
 from huggingface_hub import HfApi
 from huggingface_hub.utils import RepositoryNotFoundError
-from loguru import logger
 from st_aggrid import AgGrid, AgGridTheme, ColumnsAutoSizeMode, GridOptionsBuilder, GridUpdateMode
 
 from autotrain import help
@@ -106,8 +105,6 @@ def get_job_params(job_params, selected_rows, task, param_choice):
         for i in range(len(job_params)):
             job_params[i].update({"task": task})
         job_params = [job_params[i] for i in selected_rows]
-    logger.info("***")
-    logger.info(job_params)
     return job_params
 
 
@@ -431,7 +428,6 @@ def app():  # username, valid_orgs):
                     selected_rows = [
                         int(ag_resp_sel[i]["_selectedRowNodeInfo"]["nodeId"]) for i in range(len(ag_resp_sel))
                     ]
-                    logger.info(selected_rows)
                 st.markdown("<p>Only selected jobs will be used for training.</p>", unsafe_allow_html=True)
 
     # create project
@@ -451,13 +447,8 @@ def app():  # username, valid_orgs):
         if len(selected_rows) == 0:
             st.error("Please select at least one job")
             return
-    logger.info(st.session_state)
 
-    # estimated_cost_button = st.button("Estimate Cost")
-    # dset_available = False
-    # try:
     if task == "dreambooth":
-        logger.info("********** dreambooth **********")
         concept_images = [
             st.session_state.get(f"dreambooth_concept_images_{i + 1}") for i in range(number_of_concepts)
         ]
@@ -494,7 +485,6 @@ def app():  # username, valid_orgs):
             percent_valid=None,  # TODO: add to UI
         )
 
-    logger.info(f"Number of samples: {dset.num_samples}")
     estimated_cost = get_project_cost(
         username=autotrain_username,
         token=user_token,
@@ -508,19 +498,11 @@ def app():  # username, valid_orgs):
             "You do not have enough credits to train this project. Please choose a user/org with a valid payment method attached to their account."
         )
         return
-    # dset_available = True
-    # except Exception as e:
-    #     logger.error(e)
-    #     st.warning("Unable to estimate cost. Please check your inputs.")
-    #     return
 
-    # create project button
+    # create project
     create_project_button = st.button("Create Project")
 
     if create_project_button:
-        # if not dset_available:
-        #     st.error("Please estimate cost first.")
-
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
             dset.prepare()
 

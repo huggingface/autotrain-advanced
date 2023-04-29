@@ -89,7 +89,6 @@ class Project:
                 "params": self.job_params,
             },
         }
-        logger.info(payload)
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]
         proj_id = json_resp["id"]

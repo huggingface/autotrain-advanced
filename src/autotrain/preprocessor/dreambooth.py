@@ -64,7 +64,6 @@ class DreamboothPreprocessor:
 
     def prepare(self):
         api = HfApi()
-        logger.info(self.concept_images)
         for concept_num in range(self.num_concepts):
             for _file in self.concept_images[concept_num]:
                 self._upload_concept_images(_file, api, concept_num)

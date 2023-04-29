@@ -3,7 +3,6 @@ from typing import Optional
 
 import pandas as pd
 from datasets import Dataset
-from loguru import logger
 from sklearn.model_selection import train_test_split
 
 
@@ -24,7 +23,6 @@ class TextBinaryClassificationPreprocessor:
     seed: Optional[int] = 42
 
     def __post_init__(self):
-        logger.info(self.train_data.columns)
         # check if text_column and label_column are in train_data
         if self.text_column not in self.train_data.columns:
             raise ValueError(f"{self.text_column} not in train data")
@@ -134,7 +132,6 @@ class LLMPreprocessor:
             self.prompt_column = self.text_column
             self.response_column = self.text_column
 
-        logger.info(self.train_data.columns)
         # check if text_column and response_column are in train_data
         if self.prompt_column not in self.train_data.columns:
             raise ValueError(f"{self.prompt_column} not in train data")

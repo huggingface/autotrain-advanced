@@ -3,7 +3,6 @@ from typing import Optional
 
 import pandas as pd
 from datasets import Dataset
-from loguru import logger
 from sklearn.model_selection import train_test_split
 
 
@@ -22,7 +21,6 @@ class TabularBinaryClassificationPreprocessor:
     seed: Optional[int] = 42
 
     def __post_init__(self):
-        logger.info(self.train_data.columns)
         # check if id_column and label_column are in train_data
         if self.id_column is not None:
             if self.id_column not in self.train_data.columns:

@@ -212,7 +212,6 @@ class AutoTrainDataset:
         logger.info(self.__str__())
 
     def _preprocess_data(self):
-        logger.info(self.train_data)
         train_df = []
         for file in self.train_data:
             if isinstance(file, pd.DataFrame):
@@ -236,11 +235,6 @@ class AutoTrainDataset:
                 valid_df = pd.concat(valid_df)
             else:
                 valid_df = valid_df[0]
-
-        logger.info(train_df.head())
-        if valid_df is not None:
-            logger.info(valid_df.head())
-
         return train_df, valid_df
 
     @property
