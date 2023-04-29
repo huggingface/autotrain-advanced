@@ -231,7 +231,6 @@ def app():  # username, valid_orgs):
                 help=help.APP_LM_TRAINING_TYPE,
             )
 
-    # st.markdown("""---""")
     st.markdown("###### Model choice")
     if task.startswith("tabular"):
         model_choice = "AutoTrain"
@@ -272,7 +271,6 @@ def app():  # username, valid_orgs):
                     type=["png", "jpg", "jpeg"],
                     accept_multiple_files=True,
                 )
-        training_data = "dreambooth"
     else:
         tab1, tab2 = st.tabs(["Training", "Validation (Optional)"])
         with tab1:
@@ -280,7 +278,6 @@ def app():  # username, valid_orgs):
                 training_images = st.file_uploader(
                     "Training Images", type=["zip"], help=help.APP_IMAGE_CLASSIFICATION_DATA_HELP
                 )
-                training_data = task
             else:
                 training_data = st.file_uploader("Training Data", type=["csv", "jsonl"], accept_multiple_files=True)
 
@@ -289,7 +286,6 @@ def app():  # username, valid_orgs):
                 validation_images = st.file_uploader(
                     "Validation Images", type=["zip"], help=help.APP_IMAGE_CLASSIFICATION_DATA_HELP
                 )
-                validation_data = task
             else:
                 validation_data = st.file_uploader(
                     "Validation Data", type=["csv", "jsonl"], accept_multiple_files=True
@@ -344,13 +340,22 @@ def app():  # username, valid_orgs):
     st.sidebar.markdown("### Parameters")
     if model_choice != "AutoTrain":
         # on_change reset st.session_stat["jobs"]
-        param_choice = st.sidebar.selectbox(
-            "Parameter Choice",
-            ["AutoTrain", "Manual"],
-            key="param_choice",
-            on_change=on_change_reset_jobs(),
-        )
-
+        if task != "lm_training":
+            param_choice = st.sidebar.selectbox(
+                "Parameter Choice",
+                ["AutoTrain", "Manual"],
+                key="param_choice",
+                on_change=on_change_reset_jobs(),
+            )
+        else:
+            param_choice = st.sidebar.selectbox(
+                "Parameter Choice",
+                ["Manual", "AutoTrain"],
+                key="param_choice",
+                on_change=on_change_reset_jobs(),
+                index=0,
+                disabled=True,
+            )
     else:
         param_choice = st.sidebar.selectbox(
             "Parameter Choice", ["AutoTrain", "Manual"], key="param_choice", index=0, disabled=True
