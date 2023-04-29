@@ -246,20 +246,26 @@ class Params:
         }
 
     def _lm_training(self):
-        return {
-            "learning_rate": LMLearningRate,
-            "optimizer": Optimizer,
-            "scheduler": Scheduler,
-            "train_batch_size": LMTrainBatchSize,
-            "num_train_epochs": LMEpochs,
-            "percentage_warmup": PercentageWarmup,
-            "gradient_accumulation_steps": GradientAccumulationSteps,
-            "weight_decay": WeightDecay,
-            "lora_r": LoraR,
-            "lora_alpha": LoraAlpha,
-            "lora_dropout": LoraDropout,
-            "training_type": LMTrainingType,
-        }
+        if self.param_choice == "manual":
+            return {
+                "learning_rate": LMLearningRate,
+                "optimizer": Optimizer,
+                "scheduler": Scheduler,
+                "train_batch_size": LMTrainBatchSize,
+                "num_train_epochs": LMEpochs,
+                "percentage_warmup": PercentageWarmup,
+                "gradient_accumulation_steps": GradientAccumulationSteps,
+                "weight_decay": WeightDecay,
+                "lora_r": LoraR,
+                "lora_alpha": LoraAlpha,
+                "lora_dropout": LoraDropout,
+                "training_type": LMTrainingType,
+            }
+        if self.param_choice == "autotrain":
+            return {
+                "num_models": NumModels,
+            }
+        raise ValueError("param_choice must be either autotrain or manual")
 
     def _tabular_multi_class_classification(self):
         return self._tabular_binary_classification()

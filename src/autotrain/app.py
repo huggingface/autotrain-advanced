@@ -340,22 +340,12 @@ def app():  # username, valid_orgs):
     st.sidebar.markdown("### Parameters")
     if model_choice != "AutoTrain":
         # on_change reset st.session_stat["jobs"]
-        if task != "lm_training":
-            param_choice = st.sidebar.selectbox(
-                "Parameter Choice",
-                ["AutoTrain", "Manual"],
-                key="param_choice",
-                on_change=on_change_reset_jobs(),
-            )
-        else:
-            param_choice = st.sidebar.selectbox(
-                "Parameter Choice",
-                ["Manual", "AutoTrain"],
-                key="param_choice",
-                on_change=on_change_reset_jobs(),
-                index=0,
-                disabled=True,
-            )
+        param_choice = st.sidebar.selectbox(
+            "Parameter Choice",
+            ["AutoTrain", "Manual"],
+            key="param_choice",
+            on_change=on_change_reset_jobs(),
+        )
     else:
         param_choice = st.sidebar.selectbox(
             "Parameter Choice", ["AutoTrain", "Manual"], key="param_choice", index=0, disabled=True
