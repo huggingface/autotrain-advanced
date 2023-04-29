@@ -1,6 +1,8 @@
+import traceback
 from typing import Dict, Optional
 
 import requests
+import streamlit as st
 from huggingface_hub import HfFolder
 from loguru import logger
 
@@ -107,3 +109,22 @@ def get_project_cost(username, token, task, num_samples, num_models):
         token=token,
     )
     return pricing.json()["price"]
+
+
+def app_error_handler(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as err:
+            logger.error(f"{func.__name__} has failed due to an exception:")
+            logger.error(traceback.format_exc())
+            if "param_choice" in str(err):
+                st.warning("Unable to estimate costs. Job params not chosen yet.")
+            elif "Failed to reach AutoNLP API" in str(err):
+                st.warning("Unable to reach AutoTrain API. Please check your internet connection.")
+            elif "An error has occurred: 'NoneType' object has no attribute 'type'" in str(err):
+                st.warning("Unable to estimate costs. Data not uploaded yet.")
+            else:
+                st.error(f"An error has occurred: {err}")
+
+    return wrapper

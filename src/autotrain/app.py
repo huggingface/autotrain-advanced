@@ -1,6 +1,8 @@
 import argparse
 import os
+import random
 import re
+import string
 
 import pandas as pd
 import streamlit as st
@@ -14,7 +16,7 @@ from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, Auto
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.tasks import COLUMN_MAPPING
-from autotrain.utils import get_project_cost, get_user_token, user_authentication
+from autotrain.utils import app_error_handler, get_project_cost, get_user_token, user_authentication
 
 
 APP_TASKS = {
@@ -80,7 +82,7 @@ def verify_project_name(project_name, username, user_token):
     if user_token is None:
         st.error("You need to be logged in to create a project. Please login using `huggingface-cli login`")
         return False
-    data_repo_name = f"{username}/{project_name}"
+    data_repo_name = f"{username}/autotrain-data-{project_name}"
     if does_repo_exist(data_repo_name, "dataset"):
         st.error("A project with this name already exists")
         return False
@@ -159,6 +161,7 @@ def create_grid(jobs):
     return ag_resp
 
 
+@app_error_handler
 def app():  # username, valid_orgs):
     st.sidebar.markdown(
         "<p style='text-align: center; font-size: 20px; font-weight: bold;'>AutoTrain Advanced</p>",
@@ -182,26 +185,24 @@ def app():  # username, valid_orgs):
         return
     user_info = user_authentication(token=user_token)
     username = user_info["name"]
-    user_can_pay = user_info["canPay"]
 
+    user_can_pay = user_info["canPay"]
     orgs = user_info["orgs"]
+
     valid_orgs = [org for org in orgs if org["canPay"] is True]
     valid_orgs = [org for org in valid_orgs if org["roleInOrg"] in ("admin", "write")]
     valid_orgs = [org["name"] for org in valid_orgs]
 
-    if user_can_pay is False and len(valid_orgs) == 0:
-        st.error(
-            "Please attach a payment method to your account / join an organization with a [valid payment method](https://huggingface.co/settings/billing) attached to it to create a project"
-        )
-        return
+    valid_can_pay = [username] + valid_orgs if user_can_pay else valid_orgs
+    who_is_training = [username] + [org["name"] for org in orgs]
 
-    who_is_training = [username] + valid_orgs if user_can_pay else valid_orgs
     st.markdown("###### Project Info")
     col1, col2 = st.columns(2)
     with col1:
         autotrain_username = st.selectbox("Who is training?", who_is_training, help=help.APP_AUTOTRAIN_USERNAME)
+        can_pay = autotrain_username in valid_can_pay
     with col2:
-        project_name = st.text_input("Project name", "my-project", help=help.APP_PROJECT_NAME)
+        project_name = st.text_input("Project name", st.session_state.random_project_name, help=help.APP_PROJECT_NAME)
 
     if "task" in st.session_state:
         project_type = APP_TASK_TYPE_MAPPING[st.session_state.task]
@@ -297,123 +298,125 @@ def app():  # username, valid_orgs):
                     "Validation Data", type=["csv", "jsonl"], accept_multiple_files=True
                 )
 
-    if "training_data" in locals() and training_data:
-        if task not in ("dreambooth", "image_multi_class_classification"):
-            st.markdown("###### Column mapping")
-            # read column names
-            # uploaded_file.seek(0)
-            # temp_train_data = copy.deepcopy(training_data[0])
-            if training_data[0].name.endswith(".csv"):
-                df = pd.read_csv(training_data[0], nrows=0)
-            elif training_data[0].name.endswith(".jsonl"):
-                df = pd.read_json(training_data[0], lines=True, nrows=0)
-            else:
-                raise ValueError("Unknown file type")
-            training_data[0].seek(0)
-            # del temp_train_data
-            columns = list(df.columns)
-            if task == "lm_training":
-                if lm_training_type == "Chat":
-                    col_mapping_options = st.multiselect(
-                        "Which columns do you have in your data?",
-                        ["Prompt", "Response", "Context", "Prompt Start"],
-                        ["Prompt", "Context", "Response"],
-                    )
-                    st.selectbox("Map `prompt` to:", columns, key="map_prompt")
-                    st.selectbox("Map `context` to:", columns, key="map_context")
-                    st.selectbox("Map `response` to:", columns, key="map_response")
-
-                    if "Prompt Start" in col_mapping_options:
-                        st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
-                    else:
-                        st.session_state["map_prompt_start"] = None
-
-                    st.session_state["map_text"] = None
-                else:
-                    st.selectbox("Map `text` to:", columns, key="map_text")
-                    st.session_state["map_prompt"] = None
-                    st.session_state["map_context"] = None
-                    st.session_state["map_response"] = None
-                    st.session_state["map_prompt_start"] = None
-            else:
-                for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
-                    if map_name == "id" and task.startswith("tabular"):
-                        st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
-                    else:
-                        st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
-
-        st.sidebar.markdown("### Parameters")
-        if model_choice != "AutoTrain":
-            # on_change reset st.session_stat["jobs"]
-            param_choice = st.sidebar.selectbox(
-                "Parameter Choice",
-                ["AutoTrain", "Manual"],
-                key="param_choice",
-                on_change=on_change_reset_jobs(),
-            )
+    if task not in ("dreambooth", "image_multi_class_classification"):
+        if not ("training_data" in locals() and training_data):
+            raise ValueError("Training data not found")
+        st.markdown("###### Column mapping")
+        # read column names
+        # uploaded_file.seek(0)
+        # temp_train_data = copy.deepcopy(training_data[0])
+        if training_data[0].name.endswith(".csv"):
+            df = pd.read_csv(training_data[0], nrows=0)
+        elif training_data[0].name.endswith(".jsonl"):
+            df = pd.read_json(training_data[0], lines=True, nrows=0)
         else:
-            param_choice = st.sidebar.selectbox(
-                "Parameter Choice", ["AutoTrain", "Manual"], key="param_choice", index=0, disabled=True
-            )
-            st.sidebar.markdown("Hyperparameters are selected automagically for AutoTrain models")
-        params = Params(
-            task=task,
-            param_choice="autotrain" if param_choice == "AutoTrain" else "manual",
-            model_choice="autotrain" if model_choice == "AutoTrain" else "hub_model",
-        )
-        params = params.get()
+            raise ValueError("Unknown file type")
+        training_data[0].seek(0)
+        # del temp_train_data
+        columns = list(df.columns)
+        if task == "lm_training":
+            if lm_training_type == "Chat":
+                col_mapping_options = st.multiselect(
+                    "Which columns do you have in your data?",
+                    ["Prompt", "Response", "Context", "Prompt Start"],
+                    ["Prompt", "Context", "Response"],
+                )
+                st.selectbox("Map `prompt` to:", columns, key="map_prompt")
+                st.selectbox("Map `context` to:", columns, key="map_context")
+                st.selectbox("Map `response` to:", columns, key="map_response")
 
-        for key, value in params.items():
-            if value.STREAMLIT_INPUT == "selectbox":
-                if value.PRETTY_NAME == "LM Training Type":
-                    _choice = [lm_training_type.lower()]
-                    st.sidebar.selectbox(value.PRETTY_NAME, _choice, 0, key=f"params__{key}", disabled=True)
+                if "Prompt Start" in col_mapping_options:
+                    st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
                 else:
-                    st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
-            elif value.STREAMLIT_INPUT == "number_input":
-                try:
-                    step = value.STEP
-                except AttributeError:
-                    step = None
-                try:
-                    _format = value.FORMAT
-                except AttributeError:
-                    _format = None
-                st.sidebar.number_input(
-                    value.PRETTY_NAME,
-                    value.MIN_VALUE,
-                    value.MAX_VALUE,
-                    value.DEFAULT,
-                    step=step,
-                    format=_format,
-                    key=f"params__{key}",
-                )
-            elif value.STREAMLIT_INPUT == "slider":
-                st.sidebar.slider(
-                    value.PRETTY_NAME,
-                    value.MIN_VALUE,
-                    value.MAX_VALUE,
-                    value.DEFAULT,
-                    key=f"params__{key}",
-                )
-        if param_choice == "AutoTrain":
-            st.session_state.jobs = []
+                    st.session_state["map_prompt_start"] = None
+
+                st.session_state["map_text"] = None
+            else:
+                st.selectbox("Map `text` to:", columns, key="map_text")
+                st.session_state["map_prompt"] = None
+                st.session_state["map_context"] = None
+                st.session_state["map_response"] = None
+                st.session_state["map_prompt_start"] = None
+        else:
+            for map_idx, map_name in enumerate(COLUMN_MAPPING[task]):
+                if map_name == "id" and task.startswith("tabular"):
+                    st.selectbox(f"Map `{map_name}` to:", columns + [""], index=map_idx, key=f"map_{map_name}")
+                else:
+                    st.selectbox(f"Map `{map_name}` to:", columns, index=map_idx, key=f"map_{map_name}")
+
+    st.sidebar.markdown("### Parameters")
+    if model_choice != "AutoTrain":
+        # on_change reset st.session_stat["jobs"]
+        param_choice = st.sidebar.selectbox(
+            "Parameter Choice",
+            ["AutoTrain", "Manual"],
+            key="param_choice",
+            on_change=on_change_reset_jobs(),
+        )
+
+    else:
+        param_choice = st.sidebar.selectbox(
+            "Parameter Choice", ["AutoTrain", "Manual"], key="param_choice", index=0, disabled=True
+        )
+        st.sidebar.markdown("Hyperparameters are selected automagically for AutoTrain models")
+    params = Params(
+        task=task,
+        param_choice="autotrain" if param_choice == "AutoTrain" else "manual",
+        model_choice="autotrain" if model_choice == "AutoTrain" else "hub_model",
+    )
+    params = params.get()
+
+    for key, value in params.items():
+        if value.STREAMLIT_INPUT == "selectbox":
+            if value.PRETTY_NAME == "LM Training Type":
+                _choice = [lm_training_type.lower()]
+                st.sidebar.selectbox(value.PRETTY_NAME, _choice, 0, key=f"params__{key}", disabled=True)
+            else:
+                st.sidebar.selectbox(value.PRETTY_NAME, value.CHOICES, 0, key=f"params__{key}")
+        elif value.STREAMLIT_INPUT == "number_input":
+            try:
+                step = value.STEP
+            except AttributeError:
+                step = None
+            try:
+                _format = value.FORMAT
+            except AttributeError:
+                _format = None
+            st.sidebar.number_input(
+                value.PRETTY_NAME,
+                value.MIN_VALUE,
+                value.MAX_VALUE,
+                value.DEFAULT,
+                step=step,
+                format=_format,
+                key=f"params__{key}",
+            )
+        elif value.STREAMLIT_INPUT == "slider":
+            st.sidebar.slider(
+                value.PRETTY_NAME,
+                value.MIN_VALUE,
+                value.MAX_VALUE,
+                value.DEFAULT,
+                key=f"params__{key}",
+            )
+    if param_choice == "AutoTrain":
+        st.session_state.jobs = []
+        st.session_state.jobs.append(
+            {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
+        )
+    else:
+        add_job = st.sidebar.button("Add job")
+        delete_all_jobs = st.sidebar.button("Delete all jobs")
+
+        if add_job:
+            if "jobs" not in st.session_state:
+                st.session_state.jobs = []
             st.session_state.jobs.append(
                 {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
             )
-        else:
-            add_job = st.sidebar.button("Add job")
-            delete_all_jobs = st.sidebar.button("Delete all jobs")
 
-            if add_job:
-                if "jobs" not in st.session_state:
-                    st.session_state.jobs = []
-                st.session_state.jobs.append(
-                    {k[len("params__") :]: v for k, v in st.session_state.items() if k.startswith("params__")}
-                )
-
-            if delete_all_jobs:
-                st.session_state.jobs = []
+        if delete_all_jobs:
+            st.session_state.jobs = []
 
     # show the grid with parameters for hub_model training
     selected_rows = []
@@ -454,6 +457,12 @@ def app():  # username, valid_orgs):
     # dset_available = False
     # try:
     if task == "dreambooth":
+        logger.info("********** dreambooth **********")
+        concept_images = [
+            st.session_state.get(f"dreambooth_concept_images_{i + 1}") for i in range(number_of_concepts)
+        ]
+        if sum(len(x) for x in concept_images) == 0:
+            raise ValueError("Please upload concept images")
         dset = AutoTrainDreamboothDataset(
             num_concepts=number_of_concepts,
             concept_images=[st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)],
@@ -463,6 +472,8 @@ def app():  # username, valid_orgs):
             username=autotrain_username,
         )
     elif task.startswith("image"):
+        if not ("training_images" in locals() and training_images):
+            raise ValueError("Please upload training images")
         dset = AutoTrainImageClassificationDataset(
             train_data=training_images,
             token=user_token,
@@ -492,6 +503,11 @@ def app():  # username, valid_orgs):
         num_models=len(selected_rows) if param_choice != "AutoTrain" else st.session_state.jobs[0]["num_models"],
     )
     st.info(f"Estimated cost: {estimated_cost} USD")
+    if estimated_cost > 0 and can_pay is False:
+        st.error(
+            "You do not have enough credits to train this project. Please choose a user/org with a valid payment method attached to their account."
+        )
+        return
     # dset_available = True
     # except Exception as e:
     #     logger.error(e)
@@ -528,4 +544,9 @@ if __name__ == "__main__":
     args = parse_args()
     if args.task is not None:
         st.session_state.task = args.task
+    # generate a random project name separated by hyphens, e.g. 43vs-3sd3-2355
+    if "random_project_name" not in st.session_state:
+        st.session_state.random_project_name = "-".join(
+            ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
+        )
     app()
