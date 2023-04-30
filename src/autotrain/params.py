@@ -264,6 +264,7 @@ class Params:
         if self.param_choice == "autotrain":
             return {
                 "num_models": NumModels,
+                "training_type": LMTrainingType,
             }
         raise ValueError("param_choice must be either autotrain or manual")
 
