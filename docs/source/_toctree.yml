@@ -3,6 +3,7 @@
     title: 🤗 AutoTrain
   - local: getting_started
     title: Installation
+    
   - local: model_choice
     title: Model Choice
   - local: param_choice
