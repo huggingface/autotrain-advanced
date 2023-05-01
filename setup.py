@@ -14,7 +14,7 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = [
-    "loguru==0.6.0",
+    "loguru==0.7.0",
     "requests==2.28.2",
     "tqdm==4.65.0",
     "pandas==1.5.3",
