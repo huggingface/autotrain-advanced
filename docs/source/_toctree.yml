@@ -1,10 +1,8 @@
 - sections: 
   - local: index
     title: 🤗 AutoTrain
-  - local: model_choice
-    title: Model Choice
-  - local: param_choice
-    title: Parameter Choice
+  - local: getting_started
+    title: Installation
   title: Get started
 - sections: 
   - local: text_classification
