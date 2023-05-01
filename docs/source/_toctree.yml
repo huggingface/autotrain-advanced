@@ -3,12 +3,15 @@
     title: 🤗 AutoTrain
   - local: getting_started
     title: Installation
-    
-  - local: model_choice
-    title: Model Choice
-  - local: param_choice
-    title: Parameter Choice
+  - local: cost
+    title: How much does it cost?
   title: Get started
+- sections:
+  - local: model_choice
+    title: Model Selection
+  - local: param_choice
+    title: Parameter Selection
+  title: Selecting Models and Parameters
 - sections: 
   - local: text_classification
     title: Text Classification
