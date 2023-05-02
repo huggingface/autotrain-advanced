@@ -146,7 +146,7 @@ class NumModels:
     TYPE = "int"
     MIN_VALUE = 1
     MAX_VALUE = 25
-    DEFAULT = 5
+    DEFAULT = 1
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Number of Models"
 
