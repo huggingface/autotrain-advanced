@@ -234,8 +234,6 @@ def app():  # username, valid_orgs):
     st.markdown("###### Model choice")
     if task.startswith("tabular"):
         model_choice = "AutoTrain"
-    elif task == "dreambooth":
-        model_choice = "HuggingFace Hub"
     elif task == "lm_training":
         model_choice = "HuggingFace Hub"
     else:
