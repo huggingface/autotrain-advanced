@@ -310,16 +310,20 @@ def app():  # username, valid_orgs):
                 col_mapping_options = st.multiselect(
                     "Which columns do you have in your data?",
                     ["Prompt", "Response", "Context", "Prompt Start"],
-                    ["Prompt", "Context", "Response"],
+                    ["Prompt", "Response"],
                 )
                 st.selectbox("Map `prompt` to:", columns, key="map_prompt")
-                st.selectbox("Map `context` to:", columns, key="map_context")
                 st.selectbox("Map `response` to:", columns, key="map_response")
 
                 if "Prompt Start" in col_mapping_options:
                     st.selectbox("Map `prompt_start` to:", columns, key="map_prompt_start")
                 else:
                     st.session_state["map_prompt_start"] = None
+
+                if "Context" in col_mapping_options:
+                    st.selectbox("Map `context` to:", columns, key="map_context")
+                else:
+                    st.session_state["map_context"] = None
 
                 st.session_state["map_text"] = None
             else:
@@ -492,8 +496,13 @@ def app():  # username, valid_orgs):
         )
         return
 
+    if estimated_cost > 0 and can_pay is True:
+        st.warning("Please note: clicking the create project button will start training and incur a cost.")
+
     # create project
-    create_project_button = st.button("Create Project")
+    create_project_button = st.button(
+        "Create Project" if estimated_cost == 0 else f"Create Project for ({estimated_cost} USD)"
+    )
 
     if create_project_button:
         with st.spinner("Munging data and uploading to 🤗 Hub..."):
