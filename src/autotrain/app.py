@@ -497,7 +497,7 @@ def app():  # username, valid_orgs):
         return
 
     if estimated_cost > 0 and can_pay is True:
-        st.warning("Please note: clicking the create project button will start training and incur a cost!")
+        st.warning("**Please Note:** clicking the create project button will start training and incur a cost!")
 
     # create project
     create_project_button = st.button(
