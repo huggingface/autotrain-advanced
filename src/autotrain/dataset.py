@@ -2,7 +2,7 @@ import os
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from loguru import logger
@@ -184,13 +184,13 @@ class AutoTrainImageClassificationDataset:
 
 @dataclass
 class AutoTrainDataset:
-    train_data: str
+    train_data: Union[List[UploadedFile], List[pd.DataFrame]]
     task: str
     token: str
     project_name: str
     username: str
-    column_mapping: Optional[str] = None
-    valid_data: Optional[str] = None
+    column_mapping: Optional[Dict] = None
+    valid_data: Optional[Union[List[UploadedFile], List[pd.DataFrame]]] = None
     percent_valid: Optional[float] = None
 
     def __str__(self) -> str:

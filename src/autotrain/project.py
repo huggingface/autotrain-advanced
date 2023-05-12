@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Union
 
 from loguru import logger
 
-from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
+from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 from autotrain.utils import http_get, http_post
@@ -16,7 +16,7 @@ from autotrain.utils import http_get, http_post
 
 @dataclass
 class Project:
-    dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset]
+    dataset: Union[AutoTrainDataset, AutoTrainImageClassificationDataset, AutoTrainDreamboothDataset]
     param_choice: Optional[str] = "autotrain"
     hub_model: Optional[str] = None
     job_params: Optional[List[Dict]] = None
@@ -117,7 +117,10 @@ class Project:
             if project_status["status"] == 3:
                 is_data_processing_success = True
                 logger.info("✅ Data processing complete!")
+
             time.sleep(3)
+
+        logger.info(f"🚀 Approving project # {project_id}")
         # Approve training job
         _ = http_post(
             path=f"/projects/{project_id}/start_training",
