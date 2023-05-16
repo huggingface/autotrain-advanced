@@ -48,8 +48,9 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.task = task
 
     def run(self):
-        from ..app import demo
+        from ..app import main
 
+        demo = main()
         demo.queue(concurrency_count=50).launch()
         # dirname = os.path.dirname(__file__)
         # filename = os.path.join(dirname, "..", "app.py")
