@@ -178,18 +178,11 @@ def _estimate_costs(
     return estimated_cost
 
 
-def _update_params(data):
-    # task = APP_TASKS_MAPPING[task]
-    # params = Params(
-    #     task=task,
-    #     param_choice="autotrain" if param_choice == "AutoTrain" else "manual",
-    #     model_choice="autotrain" if model_choice == "AutoTrain" else "hub_model",
-    # )
-    # params = params.get()
-    logger.info(data)
-    logger.info(data[task_type])
-    logger.info(data["learning_rate"])
-    # logger.info(params)
+def get_variable_name(var, namespace):
+    for name in namespace:
+        if namespace[name] is var:
+            return name
+    return None
 
 
 def main():
@@ -292,12 +285,34 @@ def main():
                         validation_data = gr.File()
 
             with gr.Column():
+                lora_r = gr.Number(
+                    label="LoraR",
+                    value=16,
+                    visible=False,
+                    interactive=True,
+                    elem_id="lora_r",
+                )
+                lora_alpha = gr.Number(
+                    label="LoraAlpha",
+                    value=32,
+                    visible=False,
+                    interactive=True,
+                    elem_id="lora_alpha",
+                )
+                lora_dropout = gr.Number(
+                    label="Lora Dropout",
+                    value=0.1,
+                    visible=False,
+                    interactive=True,
+                    elem_id="lora_dropout",
+                )
                 source_language = gr.Dropdown(
                     label="Source Language",
                     choices=SUPPORTED_LANGUAGES[:-1],
                     value="en",
                     visible=True,
                     interactive=True,
+                    elem_id="source_language",
                 )
                 target_language = gr.Dropdown(
                     label="Target Language",
@@ -305,48 +320,35 @@ def main():
                     value="fr",
                     visible=False,
                     interactive=True,
+                    elem_id="target_language",
                 )
                 learning_rate = gr.Number(
                     label="Learning Rate",
                     value=5e-5,
                     visible=False,
                     interactive=True,
+                    elem_id="learning_rate",
                 )
                 batch_size = gr.Number(
-                    label="Batch Size",
+                    label="Train Batch Size",
                     value=32,
                     visible=False,
                     interactive=True,
+                    elem_id="train_batch_size",
                 )
                 num_epochs = gr.Number(
                     label="Number of Epochs",
                     value=3,
                     visible=False,
                     interactive=True,
+                    elem_id="num_train_epochs",
                 )
                 gradient_accumulation_steps = gr.Number(
                     label="Gradient Accumulation Steps",
                     value=1,
                     visible=False,
                     interactive=True,
-                )
-                lora_r = gr.Number(
-                    label="LoraR",
-                    value=16,
-                    visible=False,
-                    interactive=True,
-                )
-                lora_alpha = gr.Number(
-                    label="LoraAlpha",
-                    value=32,
-                    visible=False,
-                    interactive=True,
-                )
-                lora_dropout = gr.Number(
-                    label="Lora Dropout",
-                    value=0.1,
-                    visible=False,
-                    interactive=True,
+                    elem_id="gradient_accumulation_steps",
                 )
                 optimizer = gr.Dropdown(
                     label="Optimizer",
@@ -354,6 +356,7 @@ def main():
                     value="AdamW",
                     visible=False,
                     interactive=True,
+                    elem_id="optimizer",
                 )
                 scheduler = gr.Dropdown(
                     label="Scheduler",
@@ -361,18 +364,21 @@ def main():
                     value="Linear",
                     visible=False,
                     interactive=True,
+                    elem_id="scheduler",
                 )
                 percentage_warmup_steps = gr.Number(
                     label="Percentage of Warmup Steps",
                     value=0.1,
                     visible=False,
                     interactive=True,
+                    elem_id="percentage_warmup",
                 )
                 weight_decay = gr.Number(
                     label="Weight Decay",
                     value=0.01,
                     visible=False,
                     interactive=True,
+                    elem_id="weight_decay",
                 )
                 num_models = gr.Slider(
                     label="Number of Models",
@@ -382,19 +388,29 @@ def main():
                     step=1,
                     visible=True,
                     interactive=True,
+                    elem_id="num_models",
                 )
                 db_num_steps = gr.Number(
-                    label="DB Num Steps",
+                    label="Num Steps",
                     value=1000,
                     visible=False,
                     interactive=True,
+                    elem_id="num_steps",
                 )
                 db_prior_preservation = gr.Dropdown(
-                    label="DB Prior Preservation",
+                    label="Prior Preservation",
                     choices=["True", "False"],
                     value="True",
                     visible=False,
                     interactive=True,
+                    elem_id="prior_preservation",
+                )
+                db_text_encoder_steps_percentage = gr.Number(
+                    label="Text Encoder Steps Percentage",
+                    value=0.1,
+                    visible=False,
+                    interactive=True,
+                    elem_id="text_encoder_steps_percentage",
                 )
                 image_size = gr.Number(
                     label="Image Size",
@@ -421,10 +437,31 @@ def main():
                     db_num_steps,
                     db_prior_preservation,
                     image_size,
+                    db_text_encoder_steps_percentage,
                 ]
+
+                def _update_params(params_data):
+                    logger.info(f"Updating params: {params_data}")
+                    _task = params_data[task_type]
+                    _task = APP_TASKS_MAPPING[_task]
+                    params = Params(
+                        task=_task,
+                        param_choice="autotrain" if params_data[param_choice] == "AutoTrain" else "manual",
+                        model_choice="autotrain" if params_data[model_choice] == "AutoTrain" else "hub_model",
+                    )
+                    params = params.get()
+                    logger.info(f"Params: {params}")
+                    visible_params = []
+                    for param in hyperparameters:
+                        # logger.info(getattr(param, list(params.keys())[0]))
+                        logger.info(f"Param: {param.elem_id}")
+                        if param.elem_id in params.keys():
+                            visible_params.append(param.elem_id)
+                    return [h.update(visible=h.elem_id in visible_params) for h in hyperparameters]
+
                 param_choice.change(
                     _update_params,
-                    inputs={task_type, param_choice, model_choice, *hyperparameters},
+                    inputs=set([task_type, param_choice, model_choice] + hyperparameters),
                     outputs=hyperparameters,
                 )
 

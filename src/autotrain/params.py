@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import gradio as gr
+
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 
@@ -12,6 +14,7 @@ class LoraR:
     STEP = 1
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "LoRA R"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class LoraAlpha:
@@ -22,6 +25,7 @@ class LoraAlpha:
     STEP = 1
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "LoRA Alpha"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class LoraDropout:
@@ -32,6 +36,7 @@ class LoraDropout:
     STEP = 0.01
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "LoRA Dropout"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class LearningRate:
@@ -43,6 +48,7 @@ class LearningRate:
     FORMAT = "%.2E"
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Learning Rate"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class LMLearningRate(LearningRate):
@@ -55,6 +61,7 @@ class Optimizer:
     CHOICES = ["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Optimizer"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class LMTrainingType:
@@ -63,6 +70,7 @@ class LMTrainingType:
     CHOICES = ["generic", "chat"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "LM Training Type"
+    GRAIDO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class Scheduler:
@@ -71,6 +79,7 @@ class Scheduler:
     CHOICES = ["linear", "cosine"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Scheduler"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class TrainBatchSize:
@@ -78,8 +87,10 @@ class TrainBatchSize:
     MIN_VALUE = 1
     MAX_VALUE = 128
     DEFAULT = 2
+    STEP = 2
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Train Batch Size"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class LMTrainBatchSize(TrainBatchSize):
@@ -93,6 +104,7 @@ class Epochs:
     DEFAULT = 10
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Epochs"
+    GRADIO_INPUT = gr.Number(value=DEFAULT)
 
 
 class LMEpochs(Epochs):
@@ -104,8 +116,10 @@ class PercentageWarmup:
     MIN_VALUE = 0.0
     MAX_VALUE = 1.0
     DEFAULT = 0.1
+    STEP = 0.01
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Percentage Warmup"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=STEP)
 
 
 class GradientAccumulationSteps:
@@ -115,6 +129,7 @@ class GradientAccumulationSteps:
     DEFAULT = 1
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Gradient Accumulation Steps"
+    GRADIO_INPUT = gr.Number(value=DEFAULT)
 
 
 class WeightDecay:
@@ -124,6 +139,7 @@ class WeightDecay:
     DEFAULT = 0.0
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Weight Decay"
+    GRADIO_INPUT = gr.Number(value=DEFAULT)
 
 
 class SourceLanguage:
@@ -132,6 +148,7 @@ class SourceLanguage:
     CHOICES = SUPPORTED_LANGUAGES
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Source Language"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class TargetLanguage:
@@ -140,6 +157,7 @@ class TargetLanguage:
     CHOICES = SUPPORTED_LANGUAGES
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Target Language"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class NumModels:
@@ -149,6 +167,7 @@ class NumModels:
     DEFAULT = 1
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Number of Models"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=1)
 
 
 class DBNumSteps:
@@ -158,6 +177,7 @@ class DBNumSteps:
     DEFAULT = 1500
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Number of Steps"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=100)
 
 
 class DBTextEncoderStepsPercentage:
@@ -167,6 +187,7 @@ class DBTextEncoderStepsPercentage:
     DEFAULT = 30
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Text encoder steps percentage"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=1)
 
 
 class DBPriorPreservation:
@@ -174,6 +195,7 @@ class DBPriorPreservation:
     DEFAULT = False
     STREAMLIT_INPUT = "checkbox"
     PRETTY_NAME = "Prior preservation"
+    GRADIO_INPUT = gr.Dropdown(["True", "False"], value="False")
 
 
 class ImageSize:
@@ -183,6 +205,7 @@ class ImageSize:
     DEFAULT = 512
     STREAMLIT_INPUT = "number_input"
     PRETTY_NAME = "Image Size"
+    GRADIO_INPUT = gr.Slider(minimum=MIN_VALUE, maximum=MAX_VALUE, value=DEFAULT, step=64)
 
 
 class DreamboothConceptType:
@@ -191,6 +214,7 @@ class DreamboothConceptType:
     CHOICES = ["person", "object"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Concept Type"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 class SourceLanguageUnk:
@@ -199,6 +223,7 @@ class SourceLanguageUnk:
     CHOICES = ["unk"]
     STREAMLIT_INPUT = "selectbox"
     PRETTY_NAME = "Source Language"
+    GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
 @dataclass
