@@ -23,7 +23,7 @@ INSTALL_REQUIRES = [
     "scikit-learn==1.2.2",
     "streamlit==1.19.0",
     "streamlit-aggrid==0.3.3",
-    "gradio==3.30.0",
+    "gradio==3.32.0",
 ]
 
 QUALITY_REQUIRE = [

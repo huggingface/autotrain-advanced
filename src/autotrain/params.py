@@ -226,6 +226,13 @@ class SourceLanguageUnk:
     GRADIO_INPUT = gr.Dropdown(CHOICES, value=DEFAULT)
 
 
+class HubModel:
+    TYPE = "str"
+    DEFAULT = "bert-base-uncased"
+    PRETTY_NAME = "Hub Model"
+    GRADIO_INPUT = gr.Textbox(lines=1, max_lines=1, label="Hub Model")
+
+
 @dataclass
 class Params:
     task: str
@@ -247,6 +254,7 @@ class Params:
     def _dreambooth(self):
         if self.param_choice == "manual":
             return {
+                "hub_model": HubModel,
                 "image_size": ImageSize,
                 "learning_rate": LearningRate,
                 "train_batch_size": TrainBatchSize,
@@ -257,6 +265,7 @@ class Params:
         if self.param_choice == "autotrain":
             if self.model_choice == "hub_model":
                 return {
+                    "hub_model": HubModel,
                     "image_size": ImageSize,
                     "num_models": NumModels,
                 }
@@ -273,6 +282,7 @@ class Params:
     def _lm_training(self):
         if self.param_choice == "manual":
             return {
+                "hub_model": HubModel,
                 "learning_rate": LMLearningRate,
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
@@ -287,10 +297,17 @@ class Params:
                 "training_type": LMTrainingType,
             }
         if self.param_choice == "autotrain":
-            return {
-                "num_models": NumModels,
-                "training_type": LMTrainingType,
-            }
+            if self.model_choice == "autotrain":
+                return {
+                    "num_models": NumModels,
+                    "training_type": LMTrainingType,
+                }
+            else:
+                return {
+                    "hub_model": HubModel,
+                    "num_models": NumModels,
+                    "training_type": LMTrainingType,
+                }
         raise ValueError("param_choice must be either autotrain or manual")
 
     def _tabular_multi_class_classification(self):
@@ -305,6 +322,7 @@ class Params:
     def _text_binary_classification(self):
         if self.param_choice == "manual":
             return {
+                "hub_model": HubModel,
                 "learning_rate": LearningRate,
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
@@ -321,6 +339,7 @@ class Params:
                     "num_models": NumModels,
                 }
             return {
+                "hub_model": HubModel,
                 "source_language": SourceLanguageUnk,
                 "num_models": NumModels,
             }
