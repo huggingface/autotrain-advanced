@@ -1,8 +1,10 @@
+import json
 import os
 import random
 import string
 
 import gradio as gr
+import pandas as pd
 from loguru import logger
 
 from autotrain import help
@@ -186,7 +188,12 @@ def get_variable_name(var, namespace):
 
 
 def main():
-    with gr.Blocks(css=".tabitem {padding: 25px}") as demo:
+    CSS = """
+    .contain { display: flex; flex-direction: column; }
+    #training_data_box { height: 100px; }
+    """
+    with gr.Blocks(css=CSS) as demo:
+        training_params = gr.State([])
         gr.Markdown("## 🤗 AutoTrain Advanced")
         user_token = os.environ.get("HF_TOKEN", "")
 
@@ -227,16 +234,15 @@ def main():
                     ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
                 )
                 project_name = gr.Textbox(label="Project name", value=random_project_name, lines=1, max_lines=1)
-                with gr.Row():
-                    project_type = gr.Dropdown(
-                        label="Project Type", choices=list(APP_TASKS.keys()), value=list(APP_TASKS.keys())[0]
-                    )
-                    task_type = gr.Dropdown(
-                        label="Task",
-                        choices=APP_TASKS[list(APP_TASKS.keys())[0]],
-                        value=APP_TASKS[list(APP_TASKS.keys())[0]][0],
-                        interactive=True,
-                    )
+                project_type = gr.Dropdown(
+                    label="Project Type", choices=list(APP_TASKS.keys()), value=list(APP_TASKS.keys())[0]
+                )
+                task_type = gr.Dropdown(
+                    label="Task",
+                    choices=APP_TASKS[list(APP_TASKS.keys())[0]],
+                    value=APP_TASKS[list(APP_TASKS.keys())[0]][0],
+                    interactive=True,
+                )
                 with gr.Row():
                     model_choice = gr.Dropdown(
                         label="Model Choice",
@@ -252,228 +258,245 @@ def main():
                         visible=True,
                         interactive=True,
                     )
-                file_type = gr.Radio(
-                    label="File Type",
-                    choices=["CSV", "JSONL"],
-                    value="CSV",
-                    visible=True,
-                    interactive=True,
-                )
-
-                with gr.Tabs():
-                    with gr.TabItem("Training Data"):
-                        training_data = gr.File()
-                    with gr.TabItem("Validation Data (Optional)"):
-                        validation_data = gr.File()
-
+                process_data = gr.Button(value="Process Data")
             with gr.Column():
                 hub_model = gr.Textbox(
-                    label="Hub Model",
+                    label="Model",
                     value="",
                     visible=False,
                     interactive=True,
                     elem_id="hub_model",
                 )
-                source_language = gr.Dropdown(
-                    label="Source Language",
-                    choices=SUPPORTED_LANGUAGES[:-1],
-                    value="en",
-                    visible=True,
-                    interactive=True,
-                    elem_id="source_language",
-                )
-                target_language = gr.Dropdown(
-                    label="Target Language",
-                    choices=["fr"],
-                    value="fr",
-                    visible=False,
-                    interactive=True,
-                    elem_id="target_language",
-                )
-                image_size = gr.Number(
-                    label="Image Size",
-                    value=512,
-                    visible=False,
-                    interactive=True,
-                    elem_id="image_size",
-                )
-                with gr.Row():
-                    learning_rate = gr.Number(
-                        label="Learning Rate",
-                        value=5e-5,
-                        visible=False,
-                        interactive=True,
-                        elem_id="learning_rate",
-                    )
-                    batch_size = gr.Number(
-                        label="Train Batch Size",
-                        value=32,
-                        visible=False,
-                        interactive=True,
-                        elem_id="train_batch_size",
-                    )
-                    num_epochs = gr.Number(
-                        label="Number of Epochs",
-                        value=3,
-                        visible=False,
-                        interactive=True,
-                        elem_id="num_train_epochs",
-                    )
-                with gr.Row():
-                    gradient_accumulation_steps = gr.Number(
-                        label="Gradient Accumulation Steps",
-                        value=1,
-                        visible=False,
-                        interactive=True,
-                        elem_id="gradient_accumulation_steps",
-                    )
-                    percentage_warmup_steps = gr.Number(
-                        label="Percentage of Warmup Steps",
-                        value=0.1,
-                        visible=False,
-                        interactive=True,
-                        elem_id="percentage_warmup",
-                    )
-                    weight_decay = gr.Number(
-                        label="Weight Decay",
-                        value=0.01,
-                        visible=False,
-                        interactive=True,
-                        elem_id="weight_decay",
-                    )
-                num_models = gr.Slider(
-                    label="Number of Models",
-                    minimum=1,
-                    maximum=25,
-                    value=5,
-                    step=1,
-                    visible=True,
-                    interactive=True,
-                    elem_id="num_models",
-                )
-                with gr.Row():
-                    lora_r = gr.Number(
-                        label="LoraR",
-                        value=16,
-                        visible=False,
-                        interactive=True,
-                        elem_id="lora_r",
-                    )
-                    lora_alpha = gr.Number(
-                        label="LoraAlpha",
-                        value=32,
-                        visible=False,
-                        interactive=True,
-                        elem_id="lora_alpha",
-                    )
-                    lora_dropout = gr.Number(
-                        label="Lora Dropout",
-                        value=0.1,
-                        visible=False,
-                        interactive=True,
-                        elem_id="lora_dropout",
-                    )
-                with gr.Row():
-                    db_num_steps = gr.Number(
-                        label="Num Steps",
-                        value=1000,
-                        visible=False,
-                        interactive=True,
-                        elem_id="num_steps",
-                    )
-                    db_prior_preservation = gr.Dropdown(
-                        label="Prior Preservation",
-                        choices=["True", "False"],
-                        value="True",
-                        visible=False,
-                        interactive=True,
-                        elem_id="prior_preservation",
-                    )
-                    db_text_encoder_steps_percentage = gr.Number(
-                        label="Text Encoder Steps Percentage",
-                        value=0.1,
-                        visible=False,
-                        interactive=True,
-                        elem_id="text_encoder_steps_percentage",
-                    )
-                with gr.Row():
-                    optimizer = gr.Dropdown(
-                        label="Optimizer",
-                        choices=["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"],
-                        value="adamw_torch",
-                        visible=False,
-                        interactive=True,
-                        elem_id="optimizer",
-                    )
-                    scheduler = gr.Dropdown(
-                        label="Scheduler",
-                        choices=["linear", "cosine"],
-                        value="linear",
-                        visible=False,
-                        interactive=True,
-                        elem_id="scheduler",
-                    )
-                hyperparameters = [
-                    hub_model,
-                    num_models,
-                    source_language,
-                    target_language,
-                    learning_rate,
-                    batch_size,
-                    num_epochs,
-                    gradient_accumulation_steps,
-                    lora_r,
-                    lora_alpha,
-                    lora_dropout,
-                    optimizer,
-                    scheduler,
-                    percentage_warmup_steps,
-                    weight_decay,
-                    db_num_steps,
-                    db_prior_preservation,
-                    image_size,
-                    db_text_encoder_steps_percentage,
-                ]
-                add_job_button = gr.Button(
-                    value="Add Job",
-                    visible=False,
-                    interactive=True,
-                    elem_id="add_job",
-                )
+                with gr.Tabs():
+                    with gr.TabItem("Params"):
+                        with gr.Column():
+                            with gr.Row():
+                                source_language = gr.Dropdown(
+                                    label="Source Language",
+                                    choices=SUPPORTED_LANGUAGES[:-1],
+                                    value="en",
+                                    visible=True,
+                                    interactive=True,
+                                    elem_id="source_language",
+                                )
+                                target_language = gr.Dropdown(
+                                    label="Target Language",
+                                    choices=["fr"],
+                                    value="fr",
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="target_language",
+                                )
+                                image_size = gr.Number(
+                                    label="Image Size",
+                                    value=512,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="image_size",
+                                )
+                                num_models = gr.Slider(
+                                    label="Number of Models",
+                                    minimum=1,
+                                    maximum=25,
+                                    value=5,
+                                    step=1,
+                                    visible=True,
+                                    interactive=True,
+                                    elem_id="num_models",
+                                )
+                            with gr.Row():
+                                learning_rate = gr.Number(
+                                    label="Learning Rate",
+                                    value=5e-5,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="learning_rate",
+                                )
+                                batch_size = gr.Number(
+                                    label="Train Batch Size",
+                                    value=32,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="train_batch_size",
+                                )
+                                num_epochs = gr.Number(
+                                    label="Number of Epochs",
+                                    value=3,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="num_train_epochs",
+                                )
+                            with gr.Row():
+                                gradient_accumulation_steps = gr.Number(
+                                    label="Gradient Accumulation Steps",
+                                    value=1,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="gradient_accumulation_steps",
+                                )
+                                percentage_warmup_steps = gr.Number(
+                                    label="Percentage of Warmup Steps",
+                                    value=0.1,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="percentage_warmup",
+                                )
+                                weight_decay = gr.Number(
+                                    label="Weight Decay",
+                                    value=0.01,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="weight_decay",
+                                )
+                            with gr.Row():
+                                lora_r = gr.Number(
+                                    label="LoraR",
+                                    value=16,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="lora_r",
+                                )
+                                lora_alpha = gr.Number(
+                                    label="LoraAlpha",
+                                    value=32,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="lora_alpha",
+                                )
+                                lora_dropout = gr.Number(
+                                    label="Lora Dropout",
+                                    value=0.1,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="lora_dropout",
+                                )
+                            with gr.Row():
+                                db_num_steps = gr.Number(
+                                    label="Num Steps",
+                                    value=1000,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="num_steps",
+                                )
+                                db_prior_preservation = gr.Dropdown(
+                                    label="Prior Preservation",
+                                    choices=["True", "False"],
+                                    value="True",
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="prior_preservation",
+                                )
+                                db_text_encoder_steps_percentage = gr.Number(
+                                    label="Text Encoder Steps Percentage",
+                                    value=0.1,
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="text_encoder_steps_percentage",
+                                )
+                            with gr.Row():
+                                optimizer = gr.Dropdown(
+                                    label="Optimizer",
+                                    choices=["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"],
+                                    value="adamw_torch",
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="optimizer",
+                                )
+                                scheduler = gr.Dropdown(
+                                    label="Scheduler",
+                                    choices=["linear", "cosine"],
+                                    value="linear",
+                                    visible=False,
+                                    interactive=True,
+                                    elem_id="scheduler",
+                                )
 
-                def _update_params(params_data):
-                    logger.info(f"Updating params: {params_data}")
-                    _task = params_data[task_type]
-                    _task = APP_TASKS_MAPPING[_task]
-                    params = Params(
-                        task=_task,
-                        param_choice="autotrain" if params_data[param_choice] == "AutoTrain" else "manual",
-                        model_choice="autotrain" if params_data[model_choice] == "AutoTrain" else "hub_model",
-                    )
-                    params = params.get()
-                    logger.info(f"Params: {params}")
-                    visible_params = []
-                    for param in hyperparameters:
-                        # logger.info(getattr(param, list(params.keys())[0]))
-                        logger.info(f"Param: {param.elem_id}")
-                        if param.elem_id in params.keys():
-                            visible_params.append(param.elem_id)
-                    op = [h.update(visible=h.elem_id in visible_params) for h in hyperparameters]
-                    if params_data[param_choice] == "AutoTrain":
-                        op.append(add_job_button.update(visible=False))
-                    else:
-                        op.append(add_job_button.update(visible=True))
-                    return op
+                        add_job_button = gr.Button(
+                            value="Add Job",
+                            visible=False,
+                            interactive=True,
+                            elem_id="add_job",
+                        )
+
+                    with gr.TabItem("Data"):
+                        with gr.Column():
+                            file_type_training = gr.Radio(
+                                label="File Type",
+                                choices=["CSV", "JSONL"],
+                                value="CSV",
+                                visible=True,
+                                interactive=True,
+                            )
+                            training_data = gr.File(label="Training Data", elem_id="training_data_box")
+                            # validation_data = gr.File(label="Validation Data (Optional)")
+                            with gr.Row():
+                                col_map_text = gr.Dropdown(
+                                    label="Text Column", choices=[], visible=True, interactive=True
+                                )
+                                col_map_label = gr.Dropdown(
+                                    label="Target Column", choices=[], visible=True, interactive=True
+                                )
+
+        hyperparameters = [
+            hub_model,
+            num_models,
+            source_language,
+            target_language,
+            learning_rate,
+            batch_size,
+            num_epochs,
+            gradient_accumulation_steps,
+            lora_r,
+            lora_alpha,
+            lora_dropout,
+            optimizer,
+            scheduler,
+            percentage_warmup_steps,
+            weight_decay,
+            db_num_steps,
+            db_prior_preservation,
+            image_size,
+            db_text_encoder_steps_percentage,
+        ]
+
+        training_params_md = gr.DataFrame(visible=False, interactive=False)
+        training_params_txt = gr.Text(value="[]", visible=False, interactive=False)
+
+        def _update_params(params_data):
+            logger.info(f"Updating params: {params_data}")
+            _task = params_data[task_type]
+            _task = APP_TASKS_MAPPING[_task]
+            params = Params(
+                task=_task,
+                param_choice="autotrain" if params_data[param_choice] == "AutoTrain" else "manual",
+                model_choice="autotrain" if params_data[model_choice] == "AutoTrain" else "hub_model",
+            )
+            params = params.get()
+            logger.info(f"Params: {params}")
+            visible_params = []
+            for param in hyperparameters:
+                # logger.info(getattr(param, list(params.keys())[0]))
+                logger.info(f"Param: {param.elem_id}")
+                if param.elem_id in params.keys():
+                    visible_params.append(param.elem_id)
+            op = [h.update(visible=h.elem_id in visible_params) for h in hyperparameters]
+            if params_data[param_choice] == "AutoTrain":
+                op.append(add_job_button.update(visible=False))
+            else:
+                op.append(add_job_button.update(visible=True))
+            op.append(training_params_md.update(visible=False))
+            op.append(training_params_txt.update(value="[]"))
+            return op
 
         project_type.change(
             _project_type_update,
             inputs=[project_type, task_type],
-            outputs=[task_type, model_choice, file_type, param_choice],
+            outputs=[task_type, model_choice, file_type_training, param_choice],
         )
         task_type.change(
             _task_type_update,
             inputs=[task_type],
-            outputs=[model_choice, file_type, param_choice],
+            outputs=[model_choice, file_type_training, param_choice],
         )
         model_choice.change(
             _update_param_choice,
@@ -484,19 +507,57 @@ def main():
         param_choice.change(
             _update_params,
             inputs=set([task_type, param_choice, model_choice] + hyperparameters + [add_job_button]),
-            outputs=hyperparameters + [add_job_button],
+            outputs=hyperparameters + [add_job_button, training_params_md, training_params_txt],
         )
         task_type.change(
             _update_params,
             inputs=set([task_type, param_choice, model_choice] + hyperparameters + [add_job_button]),
-            outputs=hyperparameters + [add_job_button],
+            outputs=hyperparameters + [add_job_button, training_params_md, training_params_txt],
         )
         model_choice.change(
             _update_params,
             inputs=set([task_type, param_choice, model_choice] + hyperparameters + [add_job_button]),
-            outputs=hyperparameters + [add_job_button],
+            outputs=hyperparameters + [add_job_button, training_params_md, training_params_txt],
         )
 
-        process_data = gr.Button(value="Process Data")
+        def _add_job(params_data):
+            _task = params_data[task_type]
+            _task = APP_TASKS_MAPPING[_task]
+            _param_choice = "autotrain" if params_data[param_choice] == "AutoTrain" else "manual"
+            _model_choice = "autotrain" if params_data[model_choice] == "AutoTrain" else "hub_model"
+            if _model_choice == "hub_model" and params_data[hub_model] is None:
+                logger.error("Hub model is None")
+                return
+            _training_params = {}
+            params = Params(task=_task, param_choice=_param_choice, model_choice=_model_choice)
+            params = params.get()
+            for _param in hyperparameters:
+                print(f"Param: {_param.elem_id}, visible: {_param.visible}")
+                if _param.elem_id in params.keys():
+                    _training_params[_param.elem_id] = params_data[_param]
+            # training_params.append(_training_params)
+            logger.info(f"Training params: {_training_params}")
+            # params_data[training_params].append(_training_params)
+            logger.info(f"*** {repr(params_data[training_params_txt])}")
+            _training_params_md = json.loads(params_data[training_params_txt])
+            _training_params_md.append(_training_params)
+            return [
+                gr.DataFrame.update(value=pd.DataFrame(_training_params_md), visible=True),
+                gr.Textbox.update(value=json.dumps(_training_params_md), visible=False),
+            ]
+
+        add_job_button.click(
+            _add_job,
+            inputs=set(
+                [task_type, param_choice, model_choice] + hyperparameters + [training_params_md, training_params_txt]
+            ),
+            outputs=[training_params_md, training_params_txt],
+        )
+
+        # training_params.change(
+        #     lambda x: training_params_md.update(f"Training Params: {x}"),
+        #     inputs=training_params,
+        #     outputs=training_params_md,
+        # )
 
     return demo
