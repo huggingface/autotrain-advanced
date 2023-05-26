@@ -1,13 +1,18 @@
 import json
 import os
 import random
+import shutil
 import string
+import tempfile
+import zipfile
 
 import gradio as gr
 import pandas as pd
+import requests
 from loguru import logger
 
 from autotrain import help
+from autotrain.config import HF_API
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
@@ -35,6 +40,21 @@ APP_TASK_TYPE_MAPPING = {
     "image_classification": "Computer Vision",
     "dreambooth": "Computer Vision",
 }
+
+ALLOWED_FILE_TYPES = [
+    ".csv",
+    ".CSV",
+    ".jsonl",
+    ".JSONL",
+    ".zip",
+    ".ZIP",
+    ".png",
+    ".PNG",
+    ".jpg",
+    ".JPG",
+    ".jpeg",
+    ".JPEG",
+]
 
 
 def _login_user(user_token):
@@ -75,10 +95,6 @@ def _update_model_choice(task):
     )
 
 
-def _update_file_upload(task):
-    pass
-
-
 def _update_file_type(task):
     task = APP_TASKS_MAPPING[task]
     if task in ("text_multi_class_classification", "lm_training"):
@@ -89,13 +105,13 @@ def _update_file_type(task):
         )
     elif task == "image_multi_class_classification":
         return gr.Radio.update(
-            value="Images",
+            value="ZIP",
             choices=["Image Subfolders", "ZIP"],
             visible=True,
         )
     elif task == "dreambooth":
         return gr.Radio.update(
-            value="Images",
+            value="ZIP",
             choices=["Image Folder", "ZIP"],
             visible=True,
         )
@@ -120,7 +136,7 @@ def _project_type_update(project_type, task_type):
     return [
         task_choices_update,
         model_choices_update,
-        _update_file_type(task_choices_update["value"]),
+        # _update_file_type(task_choices_update["value"]),
         _update_param_choice(model_choices_update["value"]),
     ]
 
@@ -128,28 +144,281 @@ def _project_type_update(project_type, task_type):
 def _task_type_update(task_type):
     logger.info(f"task_type: {task_type}")
     model_choices_update = _update_model_choice(task_type)
-    return [model_choices_update, _update_file_type(task_type), _update_param_choice(model_choices_update["value"])]
+    return [
+        model_choices_update,
+        # _update_file_type(task_type),
+        _update_param_choice(model_choices_update["value"]),
+    ]
 
 
-def _estimate_costs(
-    task, user_token, autotrain_username, project_name, training_data, validation_data, column_mapping, num_models
+def _update_file_uploader(file_type):
+    if file_type == "CSV":
+        return [
+            gr.File.update(
+                file_types=[".csv", ".CSV"],
+                file_count="multiple",
+                visible=True,
+                interactive=True,
+            )
+        ] * 2
+    elif file_type == "JSONL":
+        return [
+            gr.File.update(
+                file_types=[".jsonl", ".JSONL"],
+                file_count="multiple",
+                visible=True,
+                interactive=True,
+            )
+        ] * 2
+    elif file_type == "ZIP":
+        return [
+            gr.File.update(
+                file_types=[".zip", ".ZIP"],
+                file_count="single",
+                visible=True,
+                interactive=True,
+            )
+        ] * 2
+    else:
+        raise NotImplementedError
+
+
+def _update_col_map(training_data, task):
+    task = APP_TASKS_MAPPING[task]
+    if task == "text_multi_class_classification":
+        data_cols = pd.read_csv(training_data[0].name, nrows=2).columns.tolist()
+        return [
+            gr.Dropdown.update(visible=True, choices=data_cols, label="Map `text` column", value=data_cols[0]),
+            gr.Dropdown.update(visible=True, choices=data_cols, label="Map `target` column", value=data_cols[1]),
+            gr.Text.update(visible=False),
+        ]
+    elif task == "lm_training":
+        data_cols = pd.read_csv(training_data[0].name, nrows=2).columns.tolist()
+        return [
+            gr.Dropdown.update(visible=True, choices=data_cols, label="Map `text` column", value=data_cols[0]),
+            gr.Dropdown.update(visible=False),
+            gr.Text.update(visible=False),
+        ]
+    elif task == "dreambooth":
+        return [
+            gr.Dropdown.update(visible=False),
+            gr.Dropdown.update(visible=False),
+            gr.Text.update(visible=True, label="Concept Token", interactive=True),
+        ]
+    else:
+        return [
+            gr.Dropdown.update(visible=False),
+            gr.Dropdown.update(visible=False),
+            gr.Text.update(visible=False),
+        ]
+
+
+def _estimate_costs(training_data, validation_data, task, user_token, autotrain_username, training_params_txt):
+    try:
+        logger.info("Estimating costs....")
+        if training_data is None:
+            return [
+                gr.Markdown.update(
+                    value="Could not estimate cost. Please add training data",
+                    visible=True,
+                ),
+                gr.Number.update(visible=False),
+            ]
+        if validation_data is None:
+            validation_data = []
+
+        # copy all training data to new list in order to avoid deletion
+        logger.info("Copying training data to temp files")
+        training_data_copy = []
+        for _f in training_data:
+            temp_file_copy = tempfile.NamedTemporaryFile(delete=False)
+            shutil.copy(_f.name, temp_file_copy.name)
+            training_data_copy.append(temp_file_copy)
+
+        validation_data_copy = []
+        for _f in validation_data:
+            temp_file_copy = tempfile.NamedTemporaryFile(delete=False)
+            shutil.copy(_f.name, temp_file_copy.name)
+            validation_data_copy.append(temp_file_copy)
+
+        training_params = json.loads(training_params_txt)
+        if len(training_params) == 0:
+            return [
+                gr.Markdown.update(
+                    value="Could not estimate cost. Please add atleast one job",
+                    visible=True,
+                ),
+                gr.Number.update(visible=False),
+            ]
+        elif len(training_params) == 1:
+            if "num_models" in training_params[0]:
+                num_models = training_params[0]["num_models"]
+            else:
+                num_models = 1
+        else:
+            num_models = len(training_params)
+        task = APP_TASKS_MAPPING[task]
+        num_samples = 0
+        logger.info("Estimating number of samples")
+        if task in ("text_multi_class_classification", "lm_training"):
+            for _f in training_data_copy:
+                num_samples += pd.read_csv(_f.name).shape[0]
+            for _f in validation_data_copy:
+                num_samples += pd.read_csv(_f.name).shape[0]
+        elif task == "image_multi_class_classification":
+            logger.info(f"training_data: {training_data_copy}")
+            if len(training_data_copy) > 1:
+                return [
+                    gr.Markdown.update(
+                        value="Only one training file is supported for image classification",
+                        visible=True,
+                    ),
+                    gr.Number.update(visible=False),
+                ]
+            if len(validation_data_copy) > 1:
+                return [
+                    gr.Markdown.update(
+                        value="Only one validation file is supported for image classification",
+                        visible=True,
+                    ),
+                    gr.Number.update(visible=False),
+                ]
+            for _f in training_data_copy:
+                zip_ref = zipfile.ZipFile(_f.name, "r")
+                for _ in zip_ref.namelist():
+                    num_samples += 1
+            for _f in validation_data_copy:
+                zip_ref = zipfile.ZipFile(_f.name, "r")
+                for _ in zip_ref.namelist():
+                    num_samples += 1
+        elif task == "dreambooth":
+            num_samples = len(training_data_copy)
+        else:
+            raise NotImplementedError
+
+        logger.info(f"Estimating costs for: num_models: {num_models}, task: {task}, num_samples: {num_samples}")
+        estimated_cost = get_project_cost(
+            username=autotrain_username,
+            token=user_token,
+            task=task,
+            num_samples=num_samples,
+            num_models=num_models,
+        )
+        logger.info(f"Estimated_cost: {estimated_cost}")
+        return [
+            gr.Markdown.update(
+                value=f"Estimated cost: ${estimated_cost:.2f}. Note: clicking on 'Create Project' will start training and incur charges!",
+                visible=True,
+            ),
+            gr.Number.update(visible=False),
+        ]
+    except Exception as e:
+        logger.error(e)
+        logger.error("Could not estimate cost, check inputs")
+        return [
+            gr.Markdown.update(
+                value="Could not estimate cost, check inputs",
+                visible=True,
+            ),
+            gr.Number.update(visible=False),
+        ]
+
+
+def get_job_params(param_choice, training_params, task):
+    if param_choice == "autotrain":
+        if len(training_params) > 1:
+            raise ValueError("❌ Only one job parameter is allowed for AutoTrain.")
+        training_params[0].update({"task": task})
+    elif param_choice.lower() == "manual":
+        for i in range(len(training_params)):
+            training_params[i].update({"task": task})
+            if "hub_model" in training_params[i]:
+                # remove hub_model from training_params
+                training_params[i].pop("hub_model")
+    return training_params
+
+
+def _update_project_name():
+    random_project_name = "-".join(
+        ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
+    )
+    return gr.Text.update(value=random_project_name, visible=True, interactive=True)
+
+
+def _update_hub_model_choices(task, model_choice):
+    task = APP_TASKS_MAPPING[task]
+    if model_choice.lower() == "autotrain":
+        return gr.Dropdown.update(
+            visible=False,
+            interactive=False,
+        )
+    hub_models = requests.get(f"{HF_API}/api/models").json()
+    logger.info(f"Updating hub model choices for task: {task}")
+    if task == "text_multi_class_classification":
+        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") in ("text-classification", "fill-mask")]
+    elif task == "lm_training":
+        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "text-generation"]
+    elif task == "image_multi_class_classification":
+        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "image-classification"]
+    elif task == "dreambooth":
+        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "text-to-image"]
+    else:
+        raise NotImplementedError
+    # sort by number of downloads in descending order
+    hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
+    return gr.Dropdown.update(
+        choices=[m["modelId"] for m in hub_models],
+        value=hub_models[0]["modelId"],
+        visible=True,
+        interactive=True,
+    )
+
+
+def _create_project(
+    autotrain_username,
+    valid_can_pay,
+    project_name,
+    user_token,
+    task,
+    training_data,
+    validation_data,
+    col_map_text,
+    col_map_label,
+    concept_token,
+    training_params_txt,
+    hub_model,
+    estimated_cost,
 ):
     task = APP_TASKS_MAPPING[task]
-    # if task == "dreambooth":
-    #     concept_images = [
-    #         st.session_state.get(f"dreambooth_concept_images_{i + 1}") for i in range(number_of_concepts)
-    #     ]
-    #     if sum(len(x) for x in concept_images) == 0:
-    #         raise ValueError("Please upload concept images")
-    #     dset = AutoTrainDreamboothDataset(
-    #         num_concepts=number_of_concepts,
-    #         concept_images=[st.session_state[f"dreambooth_concept_images_{i + 1}"] for i in range(number_of_concepts)],
-    #         concept_names=[st.session_state[f"dreambooth_concept_name_{i + 1}"] for i in range(number_of_concepts)],
-    #         token=user_token,
-    #         project_name=project_name,
-    #         username=autotrain_username,
-    #     )
-    if task.startswith("image"):
+    valid_can_pay = valid_can_pay.split(",")
+    can_pay = autotrain_username in valid_can_pay
+    logger.info(f"🚨🚨🚨Creating project: {project_name}")
+    logger.info(f"🚨Task: {task}")
+    logger.info(f"🚨Training data: {training_data}")
+    logger.info(f"🚨Validation data: {validation_data}")
+    logger.info(f"🚨Training params: {training_params_txt}")
+    logger.info(f"🚨Hub model: {hub_model}")
+    logger.info(f"🚨Estimated cost: {estimated_cost}")
+    logger.info(f"🚨:Can pay: {can_pay}")
+
+    if can_pay is False and estimated_cost > 0:
+        raise gr.Error("❌ You do not have enough credits to create this project. Please add a valid payment method.")
+
+    training_params = json.loads(training_params_txt)
+    if len(training_params) == 0:
+        raise gr.Error("Please add atleast one job")
+    elif len(training_params) == 1:
+        if "num_models" in training_params[0]:
+            param_choice = "autotrain"
+        else:
+            param_choice = "manual"
+    else:
+        param_choice = "manual"
+
+    if task == "image_multi_class_classification":
+        training_data = training_data[0].name
+        if validation_data is not None:
+            validation_data = validation_data[0].name
         dset = AutoTrainImageClassificationDataset(
             train_data=training_data,
             token=user_token,
@@ -158,26 +427,63 @@ def _estimate_costs(
             valid_data=validation_data,
             percent_valid=None,  # TODO: add to UI
         )
-    else:
+    elif task == "text_multi_class_classification":
+        training_data = [f.name for f in training_data]
+        if validation_data is None:
+            validation_data = []
+        else:
+            validation_data = [f.name for f in validation_data]
         dset = AutoTrainDataset(
             train_data=training_data,
             task=task,
             token=user_token,
             project_name=project_name,
             username=autotrain_username,
-            column_mapping=column_mapping,
+            column_mapping={"text": col_map_text, "label": col_map_label},
             valid_data=validation_data,
             percent_valid=None,  # TODO: add to UI
         )
+    elif task == "lm_training":
+        training_data = [f.name for f in training_data]
+        if validation_data is None:
+            validation_data = []
+        else:
+            validation_data = [f.name for f in validation_data]
+        dset = AutoTrainDataset(
+            train_data=training_data,
+            task=task,
+            token=user_token,
+            project_name=project_name,
+            username=autotrain_username,
+            column_mapping={"text": col_map_text},
+            valid_data=validation_data,
+            percent_valid=None,  # TODO: add to UI
+        )
+    elif task == "dreambooth":
+        dset = AutoTrainDreamboothDataset(
+            num_concepts=1,
+            concept_images=[[f.name for f in training_data]],
+            concept_names=[concept_token],
+            token=user_token,
+            project_name=project_name,
+            username=autotrain_username,
+        )
+    else:
+        raise NotImplementedError
 
-    estimated_cost = get_project_cost(
-        username=autotrain_username,
-        token=user_token,
-        task=task,
-        num_samples=dset.num_samples,
-        num_models=num_models,
+    dset.prepare()
+    project = Project(
+        dataset=dset,
+        param_choice=param_choice,
+        hub_model=hub_model,
+        job_params=get_job_params(param_choice, training_params, task),
     )
-    return estimated_cost
+    project_id = project.create()
+    project.approve(project_id)
+    return gr.Markdown.update(
+        value=f"Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/{project_id}/trainings).",
+        visible=True,
+    )
 
 
 def get_variable_name(var, namespace):
@@ -190,10 +496,10 @@ def get_variable_name(var, namespace):
 def main():
     CSS = """
     .contain { display: flex; flex-direction: column; }
-    #training_data_box { height: 100px; }
+    #training_data_box { height: 80px; }
+    #validation_data_box { height: 80px; }
     """
-    with gr.Blocks(css=CSS) as demo:
-        training_params = gr.State([])
+    with gr.Blocks(theme="freddyaboulton/dracula_revamped") as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
         user_token = os.environ.get("HF_TOKEN", "")
 
@@ -224,26 +530,26 @@ def main():
         if user_token is None or len(user_token) == 0:
             gr.Error("Please login with a write token.")
 
-        logger.info(who_is_training)
+        user_token = gr.Textbox(
+            value=user_token, type="password", lines=1, max_lines=1, visible=False, interactive=False
+        )
+        valid_can_pay = gr.Textbox(value=",".join(valid_can_pay), visible=False, interactive=False)
         with gr.Row():
             with gr.Column():
                 autotrain_username = gr.Dropdown(
                     label="AutoTrain Username", choices=who_is_training, value=who_is_training[0]
                 )
-                random_project_name = "-".join(
-                    ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
-                )
-                project_name = gr.Textbox(label="Project name", value=random_project_name, lines=1, max_lines=1)
-                project_type = gr.Dropdown(
-                    label="Project Type", choices=list(APP_TASKS.keys()), value=list(APP_TASKS.keys())[0]
-                )
-                task_type = gr.Dropdown(
-                    label="Task",
-                    choices=APP_TASKS[list(APP_TASKS.keys())[0]],
-                    value=APP_TASKS[list(APP_TASKS.keys())[0]][0],
-                    interactive=True,
-                )
                 with gr.Row():
+                    project_name = gr.Textbox(label="Project name", value="", lines=1, max_lines=1, interactive=True)
+                    project_type = gr.Dropdown(
+                        label="Project Type", choices=list(APP_TASKS.keys()), value=list(APP_TASKS.keys())[0]
+                    )
+                    task_type = gr.Dropdown(
+                        label="Task",
+                        choices=APP_TASKS[list(APP_TASKS.keys())[0]],
+                        value=APP_TASKS[list(APP_TASKS.keys())[0]][0],
+                        interactive=True,
+                    )
                     model_choice = gr.Dropdown(
                         label="Model Choice",
                         choices=["AutoTrain", "HuggingFace Hub"],
@@ -251,192 +557,223 @@ def main():
                         visible=True,
                         interactive=True,
                     )
-                    param_choice = gr.Dropdown(
-                        label="Param Choice",
-                        choices=["AutoTrain"],
-                        value="AutoTrain",
-                        visible=True,
-                        interactive=True,
-                    )
-                process_data = gr.Button(value="Process Data")
-            with gr.Column():
-                hub_model = gr.Textbox(
+                hub_model = gr.Dropdown(
                     label="Model",
                     value="",
                     visible=False,
                     interactive=True,
                     elem_id="hub_model",
                 )
-                with gr.Tabs():
-                    with gr.TabItem("Params"):
+        gr.Markdown("<hr>")
+        with gr.Row():
+            with gr.Column():
+                with gr.Tabs(elem_id="tabs"):
+                    with gr.TabItem("Data"):
                         with gr.Column():
-                            with gr.Row():
-                                source_language = gr.Dropdown(
-                                    label="Source Language",
-                                    choices=SUPPORTED_LANGUAGES[:-1],
-                                    value="en",
+                            # file_type_training = gr.Radio(
+                            #     label="File Type",
+                            #     choices=["CSV", "JSONL"],
+                            #     value="CSV",
+                            #     visible=True,
+                            #     interactive=True,
+                            # )
+                            training_data = gr.File(
+                                label="Training Data",
+                                file_types=ALLOWED_FILE_TYPES,
+                                file_count="multiple",
+                                visible=True,
+                                interactive=True,
+                                elem_id="training_data_box",
+                            )
+                            with gr.Accordion("Validation Data (Optional)", open=False):
+                                validation_data = gr.File(
+                                    label="Validation Data (Optional)",
+                                    file_types=ALLOWED_FILE_TYPES,
+                                    file_count="multiple",
                                     visible=True,
                                     interactive=True,
-                                    elem_id="source_language",
-                                )
-                                target_language = gr.Dropdown(
-                                    label="Target Language",
-                                    choices=["fr"],
-                                    value="fr",
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="target_language",
-                                )
-                                image_size = gr.Number(
-                                    label="Image Size",
-                                    value=512,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="image_size",
-                                )
-                                num_models = gr.Slider(
-                                    label="Number of Models",
-                                    minimum=1,
-                                    maximum=25,
-                                    value=5,
-                                    step=1,
-                                    visible=True,
-                                    interactive=True,
-                                    elem_id="num_models",
+                                    elem_id="validation_data_box",
                                 )
                             with gr.Row():
-                                learning_rate = gr.Number(
-                                    label="Learning Rate",
-                                    value=5e-5,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="learning_rate",
+                                col_map_text = gr.Dropdown(
+                                    label="Text Column", choices=[], visible=False, interactive=True
                                 )
-                                batch_size = gr.Number(
-                                    label="Train Batch Size",
-                                    value=32,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="train_batch_size",
+                                col_map_target = gr.Dropdown(
+                                    label="Target Column", choices=[], visible=False, interactive=True
                                 )
-                                num_epochs = gr.Number(
-                                    label="Number of Epochs",
-                                    value=3,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="num_train_epochs",
+                                concept_token = gr.Text(
+                                    value="", visible=False, interactive=True, lines=1, max_lines=1
                                 )
-                            with gr.Row():
-                                gradient_accumulation_steps = gr.Number(
-                                    label="Gradient Accumulation Steps",
-                                    value=1,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="gradient_accumulation_steps",
-                                )
-                                percentage_warmup_steps = gr.Number(
-                                    label="Percentage of Warmup Steps",
-                                    value=0.1,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="percentage_warmup",
-                                )
-                                weight_decay = gr.Number(
-                                    label="Weight Decay",
-                                    value=0.01,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="weight_decay",
-                                )
-                            with gr.Row():
-                                lora_r = gr.Number(
-                                    label="LoraR",
-                                    value=16,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="lora_r",
-                                )
-                                lora_alpha = gr.Number(
-                                    label="LoraAlpha",
-                                    value=32,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="lora_alpha",
-                                )
-                                lora_dropout = gr.Number(
-                                    label="Lora Dropout",
-                                    value=0.1,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="lora_dropout",
-                                )
-                            with gr.Row():
-                                db_num_steps = gr.Number(
-                                    label="Num Steps",
-                                    value=1000,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="num_steps",
-                                )
-                                db_prior_preservation = gr.Dropdown(
-                                    label="Prior Preservation",
-                                    choices=["True", "False"],
-                                    value="True",
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="prior_preservation",
-                                )
-                                db_text_encoder_steps_percentage = gr.Number(
-                                    label="Text Encoder Steps Percentage",
-                                    value=0.1,
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="text_encoder_steps_percentage",
-                                )
-                            with gr.Row():
-                                optimizer = gr.Dropdown(
-                                    label="Optimizer",
-                                    choices=["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"],
-                                    value="adamw_torch",
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="optimizer",
-                                )
-                                scheduler = gr.Dropdown(
-                                    label="Scheduler",
-                                    choices=["linear", "cosine"],
-                                    value="linear",
-                                    visible=False,
-                                    interactive=True,
-                                    elem_id="scheduler",
-                                )
+                    with gr.TabItem("Params"):
+                        with gr.Row():
+                            source_language = gr.Dropdown(
+                                label="Source Language",
+                                choices=SUPPORTED_LANGUAGES[:-1],
+                                value="en",
+                                visible=True,
+                                interactive=True,
+                                elem_id="source_language",
+                            )
+                            num_models = gr.Slider(
+                                label="Number of Models",
+                                minimum=1,
+                                maximum=25,
+                                value=5,
+                                step=1,
+                                visible=True,
+                                interactive=True,
+                                elem_id="num_models",
+                            )
+                            target_language = gr.Dropdown(
+                                label="Target Language",
+                                choices=["fr"],
+                                value="fr",
+                                visible=False,
+                                interactive=True,
+                                elem_id="target_language",
+                            )
+                            image_size = gr.Number(
+                                label="Image Size",
+                                value=512,
+                                visible=False,
+                                interactive=True,
+                                elem_id="image_size",
+                            )
+
+                        with gr.Row():
+                            learning_rate = gr.Number(
+                                label="Learning Rate",
+                                value=5e-5,
+                                visible=False,
+                                interactive=True,
+                                elem_id="learning_rate",
+                            )
+                            batch_size = gr.Number(
+                                label="Train Batch Size",
+                                value=32,
+                                visible=False,
+                                interactive=True,
+                                elem_id="train_batch_size",
+                            )
+                            num_epochs = gr.Number(
+                                label="Number of Epochs",
+                                value=3,
+                                visible=False,
+                                interactive=True,
+                                elem_id="num_train_epochs",
+                            )
+                        with gr.Row():
+                            gradient_accumulation_steps = gr.Number(
+                                label="Gradient Accumulation Steps",
+                                value=1,
+                                visible=False,
+                                interactive=True,
+                                elem_id="gradient_accumulation_steps",
+                            )
+                            percentage_warmup_steps = gr.Number(
+                                label="Percentage of Warmup Steps",
+                                value=0.1,
+                                visible=False,
+                                interactive=True,
+                                elem_id="percentage_warmup",
+                            )
+                            weight_decay = gr.Number(
+                                label="Weight Decay",
+                                value=0.01,
+                                visible=False,
+                                interactive=True,
+                                elem_id="weight_decay",
+                            )
+                        with gr.Row():
+                            lora_r = gr.Number(
+                                label="LoraR",
+                                value=16,
+                                visible=False,
+                                interactive=True,
+                                elem_id="lora_r",
+                            )
+                            lora_alpha = gr.Number(
+                                label="LoraAlpha",
+                                value=32,
+                                visible=False,
+                                interactive=True,
+                                elem_id="lora_alpha",
+                            )
+                            lora_dropout = gr.Number(
+                                label="Lora Dropout",
+                                value=0.1,
+                                visible=False,
+                                interactive=True,
+                                elem_id="lora_dropout",
+                            )
+                        with gr.Row():
+                            db_num_steps = gr.Number(
+                                label="Num Steps",
+                                value=1000,
+                                visible=False,
+                                interactive=True,
+                                elem_id="num_steps",
+                            )
+                            db_prior_preservation = gr.Dropdown(
+                                label="Prior Preservation",
+                                choices=["True", "False"],
+                                value="True",
+                                visible=False,
+                                interactive=True,
+                                elem_id="prior_preservation",
+                            )
+                            db_text_encoder_steps_percentage = gr.Number(
+                                label="Text Encoder Steps Percentage",
+                                value=0.1,
+                                visible=False,
+                                interactive=True,
+                                elem_id="text_encoder_steps_percentage",
+                            )
+                        with gr.Row():
+                            optimizer = gr.Dropdown(
+                                label="Optimizer",
+                                choices=["adamw_torch", "adamw_hf", "sgd", "adafactor", "adagrad"],
+                                value="adamw_torch",
+                                visible=False,
+                                interactive=True,
+                                elem_id="optimizer",
+                            )
+                            scheduler = gr.Dropdown(
+                                label="Scheduler",
+                                choices=["linear", "cosine"],
+                                value="linear",
+                                visible=False,
+                                interactive=True,
+                                elem_id="scheduler",
+                            )
 
                         add_job_button = gr.Button(
                             value="Add Job",
-                            visible=False,
+                            visible=True,
                             interactive=True,
                             elem_id="add_job",
                         )
+                gr.Markdown("<hr>")
+                estimated_costs_md = gr.Markdown(value="Estimated Costs: N/A", visible=True, interactive=False)
+                estimated_costs_num = gr.Number(value=0, visible=False, interactive=False)
+                create_project_button = gr.Button(
+                    value="Create Project",
+                    visible=True,
+                    interactive=True,
+                    elem_id="create_project",
+                )
+            with gr.Column():
+                param_choice = gr.Dropdown(
+                    label="Param Choice",
+                    choices=["AutoTrain"],
+                    value="AutoTrain",
+                    visible=True,
+                    interactive=True,
+                )
+                training_params_txt = gr.Text(value="[]", visible=False, interactive=False)
+                training_params_md = gr.DataFrame(visible=False, interactive=False)
 
-                    with gr.TabItem("Data"):
-                        with gr.Column():
-                            file_type_training = gr.Radio(
-                                label="File Type",
-                                choices=["CSV", "JSONL"],
-                                value="CSV",
-                                visible=True,
-                                interactive=True,
-                            )
-                            training_data = gr.File(label="Training Data", elem_id="training_data_box")
-                            # validation_data = gr.File(label="Validation Data (Optional)")
-                            with gr.Row():
-                                col_map_text = gr.Dropdown(
-                                    label="Text Column", choices=[], visible=True, interactive=True
-                                )
-                                col_map_label = gr.Dropdown(
-                                    label="Target Column", choices=[], visible=True, interactive=True
-                                )
-
+        final_output = gr.Markdown(value="", visible=True, interactive=False)
         hyperparameters = [
             hub_model,
             num_models,
@@ -459,11 +796,7 @@ def main():
             db_text_encoder_steps_percentage,
         ]
 
-        training_params_md = gr.DataFrame(visible=False, interactive=False)
-        training_params_txt = gr.Text(value="[]", visible=False, interactive=False)
-
         def _update_params(params_data):
-            logger.info(f"Updating params: {params_data}")
             _task = params_data[task_type]
             _task = APP_TASKS_MAPPING[_task]
             params = Params(
@@ -472,18 +805,12 @@ def main():
                 model_choice="autotrain" if params_data[model_choice] == "AutoTrain" else "hub_model",
             )
             params = params.get()
-            logger.info(f"Params: {params}")
             visible_params = []
             for param in hyperparameters:
-                # logger.info(getattr(param, list(params.keys())[0]))
-                logger.info(f"Param: {param.elem_id}")
                 if param.elem_id in params.keys():
                     visible_params.append(param.elem_id)
             op = [h.update(visible=h.elem_id in visible_params) for h in hyperparameters]
-            if params_data[param_choice] == "AutoTrain":
-                op.append(add_job_button.update(visible=False))
-            else:
-                op.append(add_job_button.update(visible=True))
+            op.append(add_job_button.update(visible=True))
             op.append(training_params_md.update(visible=False))
             op.append(training_params_txt.update(value="[]"))
             return op
@@ -491,17 +818,22 @@ def main():
         project_type.change(
             _project_type_update,
             inputs=[project_type, task_type],
-            outputs=[task_type, model_choice, file_type_training, param_choice],
+            outputs=[task_type, model_choice, param_choice],
         )
         task_type.change(
             _task_type_update,
             inputs=[task_type],
-            outputs=[model_choice, file_type_training, param_choice],
+            outputs=[model_choice, param_choice],
         )
         model_choice.change(
             _update_param_choice,
             inputs=model_choice,
             outputs=param_choice,
+        )
+        model_choice.change(
+            _update_hub_model_choices,
+            inputs=[task_type, model_choice],
+            outputs=hub_model,
         )
 
         param_choice.change(
@@ -535,14 +867,21 @@ def main():
                 print(f"Param: {_param.elem_id}, visible: {_param.visible}")
                 if _param.elem_id in params.keys():
                     _training_params[_param.elem_id] = params_data[_param]
-            # training_params.append(_training_params)
-            logger.info(f"Training params: {_training_params}")
-            # params_data[training_params].append(_training_params)
-            logger.info(f"*** {repr(params_data[training_params_txt])}")
             _training_params_md = json.loads(params_data[training_params_txt])
-            _training_params_md.append(_training_params)
+            if _param_choice == "autotrain":
+                if len(_training_params_md) > 0:
+                    _training_params_md[0] = _training_params
+                    _training_params_md = _training_params_md[:1]
+                else:
+                    _training_params_md.append(_training_params)
+            else:
+                _training_params_md.append(_training_params)
+            params_df = pd.DataFrame(_training_params_md)
+            # remove hub_model column
+            if "hub_model" in params_df.columns:
+                params_df = params_df.drop(columns=["hub_model"])
             return [
-                gr.DataFrame.update(value=pd.DataFrame(_training_params_md), visible=True),
+                gr.DataFrame.update(value=params_df, visible=True),
                 gr.Textbox.update(value=json.dumps(_training_params_md), visible=False),
             ]
 
@@ -554,10 +893,103 @@ def main():
             outputs=[training_params_md, training_params_txt],
         )
 
+        training_data.change(
+            _estimate_costs,
+            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
+            outputs=[estimated_costs_md, estimated_costs_num],
+        )
+        validation_data.change(
+            _estimate_costs,
+            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
+            outputs=[estimated_costs_md, estimated_costs_num],
+        )
+        training_params_txt.change(
+            _estimate_costs,
+            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
+            outputs=[estimated_costs_md, estimated_costs_num],
+        )
+        task_type.change(
+            _estimate_costs,
+            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
+            outputs=[estimated_costs_md, estimated_costs_num],
+        )
+        task_type.change(
+            _update_hub_model_choices,
+            inputs=[task_type, model_choice],
+            outputs=hub_model,
+        )
+        add_job_button.click(
+            _estimate_costs,
+            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
+            outputs=[estimated_costs_md, estimated_costs_num],
+        )
+
+        col_map_components = [
+            col_map_text,
+            col_map_target,
+            concept_token,
+        ]
+        training_data.change(
+            _update_col_map,
+            inputs=[training_data, task_type],
+            outputs=col_map_components,
+        )
+        task_type.change(
+            _update_col_map,
+            inputs=[training_data, task_type],
+            outputs=col_map_components,
+        )
+
+        # file_type_training.change(
+        #     _update_file_uploader,
+        #     inputs=file_type_training,
+        #     outputs=[training_data, validation_data],
+        # )
         # training_params.change(
         #     lambda x: training_params_md.update(f"Training Params: {x}"),
         #     inputs=training_params,
         #     outputs=training_params_md,
         # )
+
+        # autotrain_username,
+        # project_name,
+        # user_token,
+        # task,
+        # training_data,
+        # validation_data,
+        # col_map_text,
+        # col_map_label,
+        # training_params_txt,
+        # hub_model,
+
+        create_project_button.click(
+            _create_project,
+            inputs=[
+                autotrain_username,
+                valid_can_pay,
+                project_name,
+                user_token,
+                task_type,
+                training_data,
+                validation_data,
+                col_map_text,
+                col_map_target,
+                concept_token,
+                training_params_txt,
+                hub_model,
+                estimated_costs_num,
+            ],
+            outputs=final_output,
+        )
+
+        demo.load(
+            _update_project_name,
+            outputs=[project_name],
+        )
+        demo.load(
+            _update_hub_model_choices,
+            inputs=[task_type, model_choice],
+            outputs=hub_model,
+        )
 
     return demo

@@ -2,7 +2,7 @@ import os
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from loguru import logger
@@ -110,67 +110,43 @@ class AutoTrainImageClassificationDataset:
 
     def _count_files(self):
         num_files = 0
-        if isinstance(self.train_data, str):
-            raise NotImplementedError
-        else:
-            if self.train_data.type not in ("application/zip", "application/x-zip-compressed"):
-                raise ValueError("Train data must be a zip file")
-            zip_ref = zipfile.ZipFile(self.train_data, "r")
+        zip_ref = zipfile.ZipFile(self.train_data, "r")
+        for _ in zip_ref.namelist():
+            num_files += 1
+        if self.valid_data:
+            zip_ref = zipfile.ZipFile(self.valid_data, "r")
             for _ in zip_ref.namelist():
                 num_files += 1
-        if self.valid_data:
-            if isinstance(self.valid_data, str):
-                raise NotImplementedError
-            else:
-                if self.valid_data.type not in ("application/zip", "application/x-zip-compressed"):
-                    raise ValueError("Valid data must be a zip file")
-                zip_ref = zipfile.ZipFile(self.valid_data, "r")
-                for _ in zip_ref.namelist():
-                    num_files += 1
         return num_files
 
     def prepare(self):
-        if isinstance(self.train_data, str):
-            raise NotImplementedError
-        else:
-            # create a temp directory using tempfile
-            # extract the zip file to the temp directory
-            # pass the temp directory to the preprocessor
-            # delete the temp directory
-            if self.train_data.type not in ("application/zip", "application/x-zip-compressed"):
-                raise ValueError("Train data must be a zip file")
-            cache_dir = os.environ.get("HF_HOME")
-            if not cache_dir:
-                cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
+        cache_dir = os.environ.get("HF_HOME")
+        if not cache_dir:
+            cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
 
-            random_uuid = uuid.uuid4()
-            train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
-            os.makedirs(train_dir, exist_ok=True)
-            zip_ref = zipfile.ZipFile(self.train_data, "r")
-            zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
-            macosx_dir = os.path.join(train_dir, "__MACOSX")
-            if os.path.exists(macosx_dir):
-                os.system(f"rm -rf {macosx_dir}")
-            remove_non_image_files(train_dir)
+        random_uuid = uuid.uuid4()
+        train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
+        os.makedirs(train_dir, exist_ok=True)
+        zip_ref = zipfile.ZipFile(self.train_data, "r")
+        zip_ref.extractall(train_dir)
+        # remove the __MACOSX directory
+        macosx_dir = os.path.join(train_dir, "__MACOSX")
+        if os.path.exists(macosx_dir):
+            os.system(f"rm -rf {macosx_dir}")
+        remove_non_image_files(train_dir)
 
         valid_dir = None
         if self.valid_data:
-            if isinstance(self.valid_data, str):
-                raise NotImplementedError
-            else:
-                if self.valid_data.type not in ("application/zip", "application/x-zip-compressed"):
-                    raise ValueError("Valid data must be a zip file")
-                random_uuid = uuid.uuid4()
-                valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
-                os.makedirs(valid_dir, exist_ok=True)
-                zip_ref = zipfile.ZipFile(self.valid_data, "r")
-                zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
-                macosx_dir = os.path.join(valid_dir, "__MACOSX")
-                if os.path.exists(macosx_dir):
-                    os.system(f"rm -rf {macosx_dir}")
-                remove_non_image_files(valid_dir)
+            random_uuid = uuid.uuid4()
+            valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
+            os.makedirs(valid_dir, exist_ok=True)
+            zip_ref = zipfile.ZipFile(self.valid_data, "r")
+            zip_ref.extractall(valid_dir)
+            # remove the __MACOSX directory
+            macosx_dir = os.path.join(valid_dir, "__MACOSX")
+            if os.path.exists(macosx_dir):
+                os.system(f"rm -rf {macosx_dir}")
+            remove_non_image_files(valid_dir)
 
         preprocessor = ImageClassificationPreprocessor(
             train_data=train_dir,
@@ -184,13 +160,13 @@ class AutoTrainImageClassificationDataset:
 
 @dataclass
 class AutoTrainDataset:
-    train_data: str
+    train_data: List[str]
     task: str
     token: str
     project_name: str
     username: str
-    column_mapping: Optional[str] = None
-    valid_data: Optional[str] = None
+    column_mapping: Optional[Dict[str, str]] = None
+    valid_data: Optional[List[str]] = None
     percent_valid: Optional[float] = None
 
     def __str__(self) -> str:
