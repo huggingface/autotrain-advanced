@@ -10,6 +10,7 @@ RUN mkdir -p /app/.cache
 ENV HF_HOME="/app/.cache"
 RUN chown -R 1000:1000 /app
 USER 1000
+ENV HOME=/app
 
 ENV PYTHONPATH=$HOME/app \
     PYTHONUNBUFFERED=1 \
