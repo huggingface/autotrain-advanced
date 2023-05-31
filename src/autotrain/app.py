@@ -472,23 +472,24 @@ def main():
         if user_token is None:
             gr.Markdown(
                 """Please login with a write [token](https://huggingface.co/settings/tokens).
-                You can also pass your HF token in an environment variable called `HF_TOKEN` to avoid having to enter it every time.
+                Pass your HF token in an environment variable called `HF_TOKEN` and then restart this app.
                 """
             )
-            user_token_input = gr.Textbox(label="HuggingFace Token", value="", type="password", lines=1, max_lines=1)
-            user_token = gr.Textbox(visible=False)
-            valid_can_pay = gr.Textbox(visible=False)
-            who_is_training = gr.Textbox(visible=False)
-            user_token_input.submit(
-                _login_user,
-                inputs=[user_token_input],
-                outputs=[user_token, valid_can_pay, who_is_training],
-            )
-            user_token = user_token.value
-            valid_can_pay = valid_can_pay.value
-            who_is_training = who_is_training.value
-        else:
-            user_token, valid_can_pay, who_is_training = _login_user(user_token)
+            # user_token_input = gr.Textbox(label="HuggingFace Token", value="", type="password", lines=1, max_lines=1)
+            # user_token = gr.Textbox(visible=False)
+            # valid_can_pay = gr.Textbox(visible=False)
+            # who_is_training = gr.Textbox(visible=False)
+            # user_token_input.submit(
+            #     _login_user,
+            #     inputs=[user_token_input],
+            #     outputs=[user_token, valid_can_pay, who_is_training],
+            # )
+            # user_token = user_token.value
+            # valid_can_pay = valid_can_pay.value
+            # who_is_training = who_is_training.value
+            return demo
+
+        user_token, valid_can_pay, who_is_training = _login_user(user_token)
 
         if user_token is None or len(user_token) == 0:
             gr.Error("Please login with a write token.")
@@ -500,7 +501,9 @@ def main():
         with gr.Row():
             with gr.Column():
                 autotrain_username = gr.Dropdown(
-                    label="AutoTrain Username", choices=who_is_training, value=who_is_training[0]
+                    label="AutoTrain Username",
+                    choices=who_is_training,
+                    value=who_is_training[0] if who_is_training else "",
                 )
                 with gr.Row():
                     project_name = gr.Textbox(label="Project name", value="", lines=1, max_lines=1, interactive=True)
