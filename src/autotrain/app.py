@@ -133,21 +133,23 @@ def _project_type_update(project_type, task_type):
     logger.info(f"project_type: {project_type}, task_type: {task_type}")
     task_choices_update = _update_task_type(project_type)
     model_choices_update = _update_model_choice(task_choices_update["value"])
+    param_choices_update = _update_param_choice(model_choices_update["value"])
     return [
         task_choices_update,
         model_choices_update,
-        # _update_file_type(task_choices_update["value"]),
-        _update_param_choice(model_choices_update["value"]),
+        param_choices_update,
+        _update_hub_model_choices(task_choices_update["value"], param_choices_update["value"]),
     ]
 
 
 def _task_type_update(task_type):
     logger.info(f"task_type: {task_type}")
     model_choices_update = _update_model_choice(task_type)
+    param_choices_update = _update_param_choice(model_choices_update["value"])
     return [
         model_choices_update,
-        # _update_file_type(task_type),
-        _update_param_choice(model_choices_update["value"]),
+        param_choices_update,
+        _update_hub_model_choices(task_type, model_choices_update["value"]),
     ]
 
 
@@ -347,27 +349,27 @@ def _update_project_name():
 
 def _update_hub_model_choices(task, model_choice):
     task = APP_TASKS_MAPPING[task]
+    logger.info(f"Updating hub model choices for task: {task}, model_choice: {model_choice}")
     if model_choice.lower() == "autotrain":
         return gr.Dropdown.update(
             visible=False,
             interactive=False,
         )
-    hub_models = requests.get(f"{HF_API}/api/models").json()
-    logger.info(f"Updating hub model choices for task: {task}")
     if task == "text_multi_class_classification":
+        hub_models = requests.get(f"{HF_API}/api/models").json()
         hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") in ("text-classification", "fill-mask")]
     elif task == "lm_training":
-        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "text-generation"]
+        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=text-generation").json()
     elif task == "image_multi_class_classification":
-        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "image-classification"]
+        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=image-classification").json()
     elif task == "dreambooth":
-        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") == "text-to-image"]
+        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=text-to-image").json()
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
     return gr.Dropdown.update(
-        choices=[m["modelId"] for m in hub_models],
+        choices=[m["modelId"] for m in hub_models if m["private"] is False],
         value=hub_models[0]["modelId"],
         visible=True,
         interactive=True,
@@ -494,11 +496,6 @@ def get_variable_name(var, namespace):
 
 
 def main():
-    CSS = """
-    .contain { display: flex; flex-direction: column; }
-    #training_data_box { height: 80px; }
-    #validation_data_box { height: 80px; }
-    """
     with gr.Blocks(theme="freddyaboulton/dracula_revamped") as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
         user_token = os.environ.get("HF_TOKEN", "")
@@ -558,7 +555,7 @@ def main():
                         interactive=True,
                     )
                 hub_model = gr.Dropdown(
-                    label="Model",
+                    label="Hub Model",
                     value="",
                     visible=False,
                     interactive=True,
@@ -818,12 +815,12 @@ def main():
         project_type.change(
             _project_type_update,
             inputs=[project_type, task_type],
-            outputs=[task_type, model_choice, param_choice],
+            outputs=[task_type, model_choice, param_choice, hub_model],
         )
         task_type.change(
             _task_type_update,
             inputs=[task_type],
-            outputs=[model_choice, param_choice],
+            outputs=[model_choice, param_choice, hub_model],
         )
         model_choice.change(
             _update_param_choice,
@@ -913,11 +910,6 @@ def main():
             inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
             outputs=[estimated_costs_md, estimated_costs_num],
         )
-        task_type.change(
-            _update_hub_model_choices,
-            inputs=[task_type, model_choice],
-            outputs=hub_model,
-        )
         add_job_button.click(
             _estimate_costs,
             inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
@@ -985,11 +977,6 @@ def main():
         demo.load(
             _update_project_name,
             outputs=[project_name],
-        )
-        demo.load(
-            _update_hub_model_choices,
-            inputs=[task_type, model_choice],
-            outputs=hub_model,
         )
 
     return demo
