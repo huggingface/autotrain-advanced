@@ -16,10 +16,10 @@ from autotrain.utils import http_get, http_post
 
 @dataclass
 class Project:
-    dataset: Union[AutoTrainDataset, AutoTrainImageClassificationDataset, AutoTrainDreamboothDataset]
+    dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset]
     param_choice: Optional[str] = "autotrain"
     hub_model: Optional[str] = None
-    job_params: Optional[List[Dict]] = None
+    job_params: Optional[List[Dict[str, str]]] = None
 
     def __post_init__(self):
         self.token = self.dataset.token
@@ -28,6 +28,19 @@ class Project:
         self.task = self.dataset.task
 
         self.param_choice = self.param_choice.lower()
+
+        if self.hub_model is not None:
+            if len(self.hub_model) == 0:
+                self.hub_model = None
+
+        if self.job_params is None:
+            self.job_params = []
+
+        logger.info(f"🚀🚀🚀 Creating project {self.name}, task: {self.task}")
+        logger.info(f"🚀 Using username: {self.username}")
+        logger.info(f"🚀 Using param_choice: {self.param_choice}")
+        logger.info(f"🚀 Using hub_model: {self.hub_model}")
+        logger.info(f"🚀 Using job_params: {self.job_params}")
 
         if self.token is None:
             raise ValueError("❌ Please login using `huggingface-cli login`")

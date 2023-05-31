@@ -1,5 +1,3 @@
-import os
-import subprocess
 from argparse import ArgumentParser
 
 from . import BaseAutoTrainCommand
@@ -23,7 +21,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         run_app_parser.add_argument(
             "--port",
             type=int,
-            default=9000,
+            default=7860,
             help="Port to run the app on",
             required=False,
         )
@@ -48,46 +46,50 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.task = task
 
     def run(self):
-        dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, "..", "app.py")
-        cmd = [
-            "streamlit",
-            "run",
-            filename,
-            "--browser.gatherUsageStats",
-            "false",
-            "--browser.serverAddress",
-            self.host,
-            "--server.port",
-            str(self.port),
-            "--theme.base",
-            "light",
-            "--server.maxUploadSize",
-            "10000",
-        ]
-        if "SPACE_ID" in os.environ:
-            cmd.extend(["--server.enableXsrfProtection", "false"])
-            cmd.extend(["--server.headless", "true"])
-            cmd.extend(["--server.enableCORS", "false"])
-            cmd.extend(["--server.fileWatcherType", "none"])
+        from ..app import main
 
-        if self.task:
-            cmd.extend(["--", "--task", self.task])
+        demo = main()
+        demo.queue(concurrency_count=50).launch()
+        # dirname = os.path.dirname(__file__)
+        # filename = os.path.join(dirname, "..", "app.py")
+        # cmd = [
+        #     "streamlit",
+        #     "run",
+        #     filename,
+        #     "--browser.gatherUsageStats",
+        #     "false",
+        #     "--browser.serverAddress",
+        #     self.host,
+        #     "--server.port",
+        #     str(self.port),
+        #     "--theme.base",
+        #     "light",
+        #     "--server.maxUploadSize",
+        #     "10000",
+        # ]
+        # if "SPACE_ID" in os.environ:
+        #     cmd.extend(["--server.enableXsrfProtection", "false"])
+        #     cmd.extend(["--server.headless", "true"])
+        #     cmd.extend(["--server.enableCORS", "false"])
+        #     cmd.extend(["--server.fileWatcherType", "none"])
 
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=False,
-            universal_newlines=True,
-            bufsize=1,
-        )
-        with proc as p:
-            try:
-                for line in p.stdout:
-                    print(line, end="")
-            except KeyboardInterrupt:
-                print("Killing app")
-                p.kill()
-                p.wait()
-                raise
+        # if self.task:
+        #     cmd.extend(["--", "--task", self.task])
+
+        # proc = subprocess.Popen(
+        #     cmd,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.STDOUT,
+        #     shell=False,
+        #     universal_newlines=True,
+        #     bufsize=1,
+        # )
+        # with proc as p:
+        #     try:
+        #         for line in p.stdout:
+        #             print(line, end="")
+        #     except KeyboardInterrupt:
+        #         print("Killing app")
+        #         p.kill()
+        #         p.wait()
+        #         raise
