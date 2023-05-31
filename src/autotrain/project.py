@@ -130,7 +130,10 @@ class Project:
             if project_status["status"] == 3:
                 is_data_processing_success = True
                 logger.info("✅ Data processing complete!")
+
             time.sleep(3)
+
+        logger.info(f"🚀 Approving project # {project_id}")
         # Approve training job
         _ = http_post(
             path=f"/projects/{project_id}/start_training",

@@ -21,7 +21,7 @@ INSTALL_REQUIRES = [
     "huggingface_hub==0.13.4",
     "datasets~=2.10.0",
     "scikit-learn==1.2.2",
-    "streamlit==1.19.0",
+    "streamlit==1.22.0",
     "streamlit-aggrid==0.3.3",
     "gradio==3.32.0",
 ]

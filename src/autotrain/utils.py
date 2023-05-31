@@ -41,6 +41,7 @@ def http_get(
     **kwargs,
 ) -> requests.Response:
     """HTTP GET request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
+    logger.info(f"Sending GET request to {domain + path}")
     try:
         response = requests.get(
             url=domain + path, headers=get_auth_headers(token=token, prefix=token_prefix), **kwargs
@@ -60,6 +61,7 @@ def http_post(
     **kwargs,
 ) -> requests.Response:
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
+    logger.info(f"Sending POST request to {domain + path}")
     try:
         response = requests.post(
             url=domain + path, json=payload, headers=get_auth_headers(token=token), allow_redirects=True, **kwargs
@@ -82,6 +84,7 @@ def get_user_token():
 
 
 def user_authentication(token):
+    logger.info("Authenticating user...")
     headers = {}
     cookies = {}
     if token.startswith("hf_"):
@@ -102,6 +105,7 @@ def user_authentication(token):
 
 
 def get_project_cost(username, token, task, num_samples, num_models):
+    logger.info("Getting project cost...")
     task_id = TASKS[task]
     pricing = http_get(
         path=f"/pricing/compute?username={username}&task_id={task_id}&num_samples={num_samples}&num_models={num_models}",
