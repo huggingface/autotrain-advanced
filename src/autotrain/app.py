@@ -1,9 +1,7 @@
 import json
 import os
 import random
-import shutil
 import string
-import tempfile
 import zipfile
 
 import gradio as gr
@@ -195,20 +193,6 @@ def _estimate_costs(training_data, validation_data, task, user_token, autotrain_
         if validation_data is None:
             validation_data = []
 
-        # copy all training data to new list in order to avoid deletion
-        logger.info("Copying training data to temp files")
-        training_data_copy = []
-        for _f in training_data:
-            temp_file_copy = tempfile.NamedTemporaryFile(delete=False)
-            shutil.copy(_f.name, temp_file_copy.name)
-            training_data_copy.append(temp_file_copy)
-
-        validation_data_copy = []
-        for _f in validation_data:
-            temp_file_copy = tempfile.NamedTemporaryFile(delete=False)
-            shutil.copy(_f.name, temp_file_copy.name)
-            validation_data_copy.append(temp_file_copy)
-
         training_params = json.loads(training_params_txt)
         if len(training_params) == 0:
             return [
@@ -229,13 +213,13 @@ def _estimate_costs(training_data, validation_data, task, user_token, autotrain_
         num_samples = 0
         logger.info("Estimating number of samples")
         if task in ("text_multi_class_classification", "lm_training"):
-            for _f in training_data_copy:
+            for _f in training_data:
                 num_samples += pd.read_csv(_f.name).shape[0]
-            for _f in validation_data_copy:
+            for _f in validation_data:
                 num_samples += pd.read_csv(_f.name).shape[0]
         elif task == "image_multi_class_classification":
-            logger.info(f"training_data: {training_data_copy}")
-            if len(training_data_copy) > 1:
+            logger.info(f"training_data: {training_data}")
+            if len(training_data) > 1:
                 return [
                     gr.Markdown.update(
                         value="Only one training file is supported for image classification",
@@ -243,7 +227,7 @@ def _estimate_costs(training_data, validation_data, task, user_token, autotrain_
                     ),
                     gr.Number.update(visible=False),
                 ]
-            if len(validation_data_copy) > 1:
+            if len(validation_data) > 1:
                 return [
                     gr.Markdown.update(
                         value="Only one validation file is supported for image classification",
@@ -251,16 +235,16 @@ def _estimate_costs(training_data, validation_data, task, user_token, autotrain_
                     ),
                     gr.Number.update(visible=False),
                 ]
-            for _f in training_data_copy:
+            for _f in training_data:
                 zip_ref = zipfile.ZipFile(_f.name, "r")
                 for _ in zip_ref.namelist():
                     num_samples += 1
-            for _f in validation_data_copy:
+            for _f in validation_data:
                 zip_ref = zipfile.ZipFile(_f.name, "r")
                 for _ in zip_ref.namelist():
                     num_samples += 1
         elif task == "dreambooth":
-            num_samples = len(training_data_copy)
+            num_samples = len(training_data)
         else:
             raise NotImplementedError
 
@@ -830,7 +814,6 @@ def main():
             params = Params(task=_task, param_choice=_param_choice, model_choice=_model_choice)
             params = params.get()
             for _param in hyperparameters:
-                print(f"Param: {_param.elem_id}, visible: {_param.visible}")
                 if _param.elem_id in params.keys():
                     _training_params[_param.elem_id] = params_data[_param]
             _training_params_md = json.loads(params_data[training_params_txt])
