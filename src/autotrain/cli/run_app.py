@@ -1,5 +1,3 @@
-import os
-import subprocess
 from argparse import ArgumentParser
 
 from . import BaseAutoTrainCommand
@@ -23,7 +21,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         run_app_parser.add_argument(
             "--port",
             type=int,
-            default=9000,
+            default=7860,
             help="Port to run the app on",
             required=False,
         )

@@ -11,14 +11,12 @@ import pandas as pd
 import requests
 from loguru import logger
 
-from autotrain import help
 from autotrain.config import HF_API
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
 from autotrain.project import Project
-from autotrain.tasks import COLUMN_MAPPING
-from autotrain.utils import app_error_handler, get_project_cost, get_user_token, user_authentication
+from autotrain.utils import get_project_cost, get_user_token, user_authentication
 
 
 APP_TASKS = {
@@ -151,38 +149,6 @@ def _task_type_update(task_type):
         param_choices_update,
         _update_hub_model_choices(task_type, model_choices_update["value"]),
     ]
-
-
-def _update_file_uploader(file_type):
-    if file_type == "CSV":
-        return [
-            gr.File.update(
-                file_types=[".csv", ".CSV"],
-                file_count="multiple",
-                visible=True,
-                interactive=True,
-            )
-        ] * 2
-    elif file_type == "JSONL":
-        return [
-            gr.File.update(
-                file_types=[".jsonl", ".JSONL"],
-                file_count="multiple",
-                visible=True,
-                interactive=True,
-            )
-        ] * 2
-    elif file_type == "ZIP":
-        return [
-            gr.File.update(
-                file_types=[".zip", ".ZIP"],
-                file_count="single",
-                visible=True,
-                interactive=True,
-            )
-        ] * 2
-    else:
-        raise NotImplementedError
 
 
 def _update_col_map(training_data, task):
