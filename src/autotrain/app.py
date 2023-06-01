@@ -446,7 +446,14 @@ def get_variable_name(var, namespace):
 
 
 def main():
-    with gr.Blocks(theme="freddyaboulton/dracula_revamped") as demo:
+    theme = gr.themes.Monochrome(
+        primary_hue="indigo",
+        secondary_hue="blue",
+        neutral_hue="slate",
+        radius_size=gr.themes.sizes.radius_sm,
+        font=[gr.themes.GoogleFont("Open Sans"), "ui-sans-serif", "system-ui", "sans-serif"],
+    )
+    with gr.Blocks(theme=theme) as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
         user_token = os.environ.get("HF_TOKEN", "")
 
