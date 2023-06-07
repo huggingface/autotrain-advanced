@@ -6,10 +6,9 @@ import zipfile
 
 import gradio as gr
 import pandas as pd
-import requests
+from huggingface_hub import list_models
 from loguru import logger
 
-from autotrain.config import HF_API
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
@@ -306,21 +305,23 @@ def _update_hub_model_choices(task, model_choice):
             interactive=False,
         )
     if task == "text_multi_class_classification":
-        hub_models = requests.get(f"{HF_API}/api/models").json()
-        hub_models = [m for m in hub_models if m.get("pipeline_tag", "x") in ("text-classification", "fill-mask")]
+        hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100)
+        hub_models2 = list_models(filter="text-classification", sort="downloads", direction=-1, limit=100)
+        hub_models = hub_models1 + hub_models2
     elif task == "lm_training":
-        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=text-generation").json()
+        hub_models = list_models(filter="text-generation", sort="downloads", direction=-1, limit=100)
     elif task == "image_multi_class_classification":
-        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=image-classification").json()
+        hub_models = list_models(filter="image-classification", sort="downloads", direction=-1, limit=100)
     elif task == "dreambooth":
-        hub_models = requests.get(f"{HF_API}/api/models?pipeline_tag=text-to-image").json()
+        hub_models = list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100)
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
+    hub_models = [{"id": m.modelId, "downloads": m.downloads} for m in hub_models if m.private is False]
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
     return gr.Dropdown.update(
-        choices=[m["modelId"] for m in hub_models if m["private"] is False],
-        value=hub_models[0]["modelId"],
+        choices=[m["id"] for m in hub_models],
+        value=hub_models[0]["id"],
         visible=True,
         interactive=True,
     )
