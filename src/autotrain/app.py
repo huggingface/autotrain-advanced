@@ -841,7 +841,21 @@ def main():
             ),
             outputs=[training_params_md, training_params_txt],
         )
-
+        col_map_components = [
+            col_map_text,
+            col_map_target,
+            concept_token,
+        ]
+        training_data.change(
+            _update_col_map,
+            inputs=[training_data, task_type],
+            outputs=col_map_components,
+        )
+        task_type.change(
+            _update_col_map,
+            inputs=[training_data, task_type],
+            outputs=col_map_components,
+        )
         training_data.change(
             _estimate_costs,
             inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
@@ -866,22 +880,6 @@ def main():
             _estimate_costs,
             inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
             outputs=[estimated_costs_md, estimated_costs_num],
-        )
-
-        col_map_components = [
-            col_map_text,
-            col_map_target,
-            concept_token,
-        ]
-        training_data.change(
-            _update_col_map,
-            inputs=[training_data, task_type],
-            outputs=col_map_components,
-        )
-        task_type.change(
-            _update_col_map,
-            inputs=[training_data, task_type],
-            outputs=col_map_components,
         )
 
         # file_type_training.change(
