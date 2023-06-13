@@ -76,8 +76,16 @@ def _update_task_type(project_type):
     )
 
 
-def _update_model_choice(task):
+def _update_model_choice(task, autotrain_backend):
     # TODO: add tabular and remember, for tabular, we only support AutoTrain
+    if autotrain_backend.lower() != "huggingface internal":
+        model_choice = ["HuggingFace Hub"]
+        return gr.Dropdown.update(
+            value=model_choice[0],
+            choices=model_choice,
+            visible=True,
+        )
+
     if task == "LLM Finetuning":
         model_choice = ["HuggingFace Hub"]
     else:
@@ -114,9 +122,10 @@ def _update_file_type(task):
         raise NotImplementedError
 
 
-def _update_param_choice(model_choice):
+def _update_param_choice(model_choice, autotrain_backend):
     logger.info(f"model_choice: {model_choice}")
     choices = ["AutoTrain", "Manual"] if model_choice == "HuggingFace Hub" else ["AutoTrain"]
+    choices = ["Manual"] if autotrain_backend != "HuggingFace Internal" else choices
     return gr.Dropdown.update(
         value=choices[0],
         choices=choices,
@@ -124,11 +133,11 @@ def _update_param_choice(model_choice):
     )
 
 
-def _project_type_update(project_type, task_type):
+def _project_type_update(project_type, task_type, autotrain_backend):
     logger.info(f"project_type: {project_type}, task_type: {task_type}")
     task_choices_update = _update_task_type(project_type)
-    model_choices_update = _update_model_choice(task_choices_update["value"])
-    param_choices_update = _update_param_choice(model_choices_update["value"])
+    model_choices_update = _update_model_choice(task_choices_update["value"], autotrain_backend)
+    param_choices_update = _update_param_choice(model_choices_update["value"], autotrain_backend)
     return [
         task_choices_update,
         model_choices_update,
@@ -137,10 +146,10 @@ def _project_type_update(project_type, task_type):
     ]
 
 
-def _task_type_update(task_type):
+def _task_type_update(task_type, autotrain_backend):
     logger.info(f"task_type: {task_type}")
-    model_choices_update = _update_model_choice(task_type)
-    param_choices_update = _update_param_choice(model_choices_update["value"])
+    model_choices_update = _update_model_choice(task_type, autotrain_backend)
+    param_choices_update = _update_param_choice(model_choices_update["value"], autotrain_backend)
     return [
         model_choices_update,
         param_choices_update,
@@ -178,7 +187,17 @@ def _update_col_map(training_data, task):
         ]
 
 
-def _estimate_costs(training_data, validation_data, task, user_token, autotrain_username, training_params_txt):
+def _estimate_costs(
+    training_data, validation_data, task, user_token, autotrain_username, training_params_txt, autotrain_backend
+):
+    if autotrain_backend.lower() != "huggingface internal":
+        return [
+            gr.Markdown.update(
+                value="Cost estimation is not available for this backend",
+                visible=True,
+            ),
+            gr.Number.update(visible=False),
+        ]
     try:
         logger.info("Estimating costs....")
         if training_data is None:
@@ -307,13 +326,13 @@ def _update_hub_model_choices(task, model_choice):
     if task == "text_multi_class_classification":
         hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100)
         hub_models2 = list_models(filter="text-classification", sort="downloads", direction=-1, limit=100)
-        hub_models = hub_models1 + hub_models2
+        hub_models = list(hub_models1) + list(hub_models2)
     elif task == "lm_training":
-        hub_models = list_models(filter="text-generation", sort="downloads", direction=-1, limit=100)
+        hub_models = list(list_models(filter="text-generation", sort="downloads", direction=-1, limit=100))
     elif task == "image_multi_class_classification":
-        hub_models = list_models(filter="image-classification", sort="downloads", direction=-1, limit=100)
+        hub_models = list(list_models(filter="image-classification", sort="downloads", direction=-1, limit=100))
     elif task == "dreambooth":
-        hub_models = list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100)
+        hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100))
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
@@ -325,6 +344,34 @@ def _update_hub_model_choices(task, model_choice):
         visible=True,
         interactive=True,
     )
+
+
+def _update_backend(backend):
+    if backend != "Hugging Face Internal":
+        return [
+            gr.Dropdown.update(
+                visible=True,
+                interactive=True,
+                choices=["HuggingFace Hub"],
+                value="HuggingFace Hub",
+            ),
+            gr.Dropdown.update(
+                visible=True,
+                interactive=True,
+                choices=["Manual"],
+                value="Manual",
+            ),
+        ]
+    return [
+        gr.Dropdown.update(
+            visible=True,
+            interactive=True,
+        ),
+        gr.Dropdown.update(
+            visible=True,
+            interactive=True,
+        ),
+    ]
 
 
 def _create_project(
@@ -485,11 +532,18 @@ def main():
         valid_can_pay = gr.Textbox(value=",".join(valid_can_pay), visible=False, interactive=False)
         with gr.Row():
             with gr.Column():
-                autotrain_username = gr.Dropdown(
-                    label="AutoTrain Username",
-                    choices=who_is_training,
-                    value=who_is_training[0] if who_is_training else "",
-                )
+                with gr.Row():
+                    autotrain_username = gr.Dropdown(
+                        label="AutoTrain Username",
+                        choices=who_is_training,
+                        value=who_is_training[0] if who_is_training else "",
+                    )
+                    autotrain_backend = gr.Dropdown(
+                        label="AutoTrain Backend",
+                        choices=["HuggingFace Internal", "HuggingFace Spaces/Local"],
+                        value="HuggingFace Internal",
+                        interactive=True,
+                    )
                 with gr.Row():
                     project_name = gr.Textbox(label="Project name", value="", lines=1, max_lines=1, interactive=True)
                     project_type = gr.Dropdown(
@@ -766,19 +820,25 @@ def main():
             op.append(training_params_txt.update(value="[]"))
             return op
 
+        autotrain_backend.change(
+            _project_type_update,
+            inputs=[project_type, task_type, autotrain_backend],
+            outputs=[task_type, model_choice, param_choice, hub_model],
+        )
+
         project_type.change(
             _project_type_update,
-            inputs=[project_type, task_type],
+            inputs=[project_type, task_type, autotrain_backend],
             outputs=[task_type, model_choice, param_choice, hub_model],
         )
         task_type.change(
             _task_type_update,
-            inputs=[task_type],
+            inputs=[task_type, autotrain_backend],
             outputs=[model_choice, param_choice, hub_model],
         )
         model_choice.change(
             _update_param_choice,
-            inputs=model_choice,
+            inputs=[model_choice, autotrain_backend],
             outputs=param_choice,
         )
         model_choice.change(
@@ -857,31 +917,21 @@ def main():
             inputs=[training_data, task_type],
             outputs=col_map_components,
         )
-        training_data.change(
-            _estimate_costs,
-            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
-            outputs=[estimated_costs_md, estimated_costs_num],
-        )
-        validation_data.change(
-            _estimate_costs,
-            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
-            outputs=[estimated_costs_md, estimated_costs_num],
-        )
-        training_params_txt.change(
-            _estimate_costs,
-            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
-            outputs=[estimated_costs_md, estimated_costs_num],
-        )
-        task_type.change(
-            _estimate_costs,
-            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
-            outputs=[estimated_costs_md, estimated_costs_num],
-        )
-        add_job_button.click(
-            _estimate_costs,
-            inputs=[training_data, validation_data, task_type, user_token, autotrain_username, training_params_txt],
-            outputs=[estimated_costs_md, estimated_costs_num],
-        )
+        estimate_costs_inputs = [
+            training_data,
+            validation_data,
+            task_type,
+            user_token,
+            autotrain_username,
+            training_params_txt,
+            autotrain_backend,
+        ]
+        estimate_costs_outputs = [estimated_costs_md, estimated_costs_num]
+        training_data.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
+        validation_data.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
+        training_params_txt.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
+        task_type.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
+        add_job_button.click(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
 
         # file_type_training.change(
         #     _update_file_uploader,

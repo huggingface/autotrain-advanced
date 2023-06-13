@@ -18,12 +18,12 @@ INSTALL_REQUIRES = [
     "requests==2.28.2",
     "tqdm==4.65.0",
     "pandas>=1.5.3",
-    "huggingface_hub==0.13.4",
+    "huggingface_hub>=0.13.4",
     "datasets~=2.10.0",
     "scikit-learn==1.2.2",
     "streamlit==1.22.0",
     "streamlit-aggrid==0.3.3",
-    "gradio==3.32.0",
+    "gradio==3.34.0",
 ]
 
 QUALITY_REQUIRE = [
