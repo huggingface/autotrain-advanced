@@ -73,7 +73,18 @@ class Project:
             self.language = "unk"
             self.max_models = len(self.job_params)
 
-    def create(self):
+    def create_local(self, payload):
+        from autotrain.trainers.text_classification import train as train_text_classification
+
+        if len(payload["config"]["params"]) > 1:
+            raise ValueError("❌ Only one job parameter is allowed in spaces/local mode.")
+
+        if payload["task"] in [1, 2]:
+            return train_text_classification(payload=payload)
+        else:
+            raise NotImplementedError
+
+    def create(self, local=False):
         """Create a project and return it"""
         logger.info(f"🚀 Creating project {self.name}, task: {self.task}")
         task_id = TASKS.get(self.task)
@@ -102,6 +113,10 @@ class Project:
                 "params": self.job_params,
             },
         }
+
+        if local is True:
+            return self.create_local(payload=payload)
+
         logger.info(f"🚀 Creating project with payload: {payload}")
         json_resp = http_post(path="/projects/create", payload=payload, token=self.token).json()
         proj_name = json_resp["proj_name"]

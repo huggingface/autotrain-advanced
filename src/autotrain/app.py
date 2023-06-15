@@ -388,6 +388,7 @@ def _create_project(
     training_params_txt,
     hub_model,
     estimated_cost,
+    autotrain_backend,
 ):
     task = APP_TASKS_MAPPING[task]
     valid_can_pay = valid_can_pay.split(",")
@@ -478,12 +479,15 @@ def _create_project(
         hub_model=hub_model,
         job_params=get_job_params(param_choice, training_params, task),
     )
-    project_id = project.create()
-    project.approve(project_id)
-    return gr.Markdown.update(
-        value=f"Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/{project_id}/trainings).",
-        visible=True,
-    )
+    if autotrain_backend.lower() == "huggingface internal":
+        project_id = project.create()
+        project.approve(project_id)
+        return gr.Markdown.update(
+            value=f"Project created successfully. Monitor progess on the [dashboard](https://ui.autotrain.huggingface.co/{project_id}/trainings).",
+            visible=True,
+        )
+    else:
+        project.create(local=True)
 
 
 def get_variable_name(var, namespace):
@@ -971,6 +975,7 @@ def main():
                 training_params_txt,
                 hub_model,
                 estimated_costs_num,
+                autotrain_backend,
             ],
             outputs=final_output,
         )
