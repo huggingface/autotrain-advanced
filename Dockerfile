@@ -1,9 +1,31 @@
-FROM python:3.8.9
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC
 
-RUN pip install pip==22.3.1
+ENV PATH="${HOME}/miniconda3/bin:${PATH}"
+ARG PATH="${HOME}/miniconda3/bin:${PATH}"
+
+RUN apt-get update &&  \
+    apt-get upgrade -y &&  \
+    apt-get install -y \
+    build-essential \
+    cmake \
+    curl \
+    ca-certificates \
+    gcc \
+    git \
+    locales \
+    net-tools \
+    wget \
+    libpq-dev \
+    libsndfile1-dev \
+    git \
+    git-lfs \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
+    git lfs install
 
 WORKDIR /app
 RUN mkdir -p /app/.cache
@@ -26,11 +48,12 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && rm -f Miniconda3-latest-Linux-x86_64.sh
 ENV PATH /app/miniconda/bin:$PATH
 
-RUN conda create -p /app/env -y python=3.8
-
+RUN conda create -p /app/env -y python=3.9
 
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
+RUN conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+RUN pip install git+https://github.com/huggingface/peft.git
 COPY --chown=1000:1000 . /app/
 
 RUN pip install -e .

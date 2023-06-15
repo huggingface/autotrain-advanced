@@ -1,9 +1,16 @@
+import glob
+import json
+import os
+import re
+import shutil
+import subprocess
 import traceback
 from typing import Dict, Optional
 
 import requests
 import streamlit as st
-from huggingface_hub import HfFolder
+from huggingface_hub import HfApi, HfFolder
+from huggingface_hub.repository import Repository
 from loguru import logger
 
 from autotrain import config
@@ -18,6 +25,22 @@ GREEN_TAG = FORMAT_TAG.format(code=92)
 YELLOW_TAG = FORMAT_TAG.format(code=93)
 PURPLE_TAG = FORMAT_TAG.format(code=95)
 CYAN_TAG = FORMAT_TAG.format(code=96)
+
+LFS_PATTERNS = [
+    "*.bin.*",
+    "*.lfs.*",
+    "*.bin",
+    "*.h5",
+    "*.tflite",
+    "*.tar.gz",
+    "*.ot",
+    "*.onnx",
+    "*.pt",
+    "*.pkl",
+    "*.parquet",
+    "*.joblib",
+    "tokenizer.json",
+]
 
 
 class UnauthenticatedError(Exception):
@@ -131,3 +154,97 @@ def app_error_handler(func):
                 st.error(f"An error has occurred: {err}")
 
     return wrapper
+
+
+def clone_hf_repo(repo_url: str, local_dir: str, token: str) -> Repository:
+    os.makedirs(local_dir, exist_ok=True)
+    repo_url = re.sub(r"(https?://)", rf"\1user:{token}@", repo_url)
+    subprocess.run(
+        "git lfs install".split(),
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        check=True,
+        encoding="utf-8",
+        cwd=local_dir,
+    )
+
+    subprocess.run(
+        f"git lfs clone {repo_url} .".split(),
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        check=True,
+        encoding="utf-8",
+        cwd=local_dir,
+    )
+
+    data_repo = Repository(local_dir=local_dir, use_auth_token=token)
+    return data_repo
+
+
+def create_repo(project_name, autotrain_user, huggingface_token, model_path):
+    repo_name = f"autotrain-{project_name}"
+    repo_url = HfApi().create_repo(
+        repo_id=f"{autotrain_user}/{repo_name}",
+        token=huggingface_token,
+        exist_ok=False,
+        private=True,
+    )
+    if len(repo_url.strip()) == 0:
+        repo_url = f"https://huggingface.co/{autotrain_user}/{repo_name}"
+
+    logger.info(f"Created repo: {repo_url}")
+
+    model_repo = clone_hf_repo(
+        local_dir=model_path,
+        repo_url=repo_url,
+        token=huggingface_token,
+    )
+    model_repo.lfs_track(patterns=LFS_PATTERNS)
+    return model_repo
+
+
+def save_model(torch_model, model_path):
+    torch_model.save_pretrained(model_path)
+    try:
+        torch_model.save_pretrained(model_path, safe_serialization=True)
+    except Exception as e:
+        logger.error(f"Safe serialization failed with error: {e}")
+
+
+def save_tokenizer(tok, model_path):
+    tok.save_pretrained(model_path)
+
+
+def update_model_config(model, job_config):
+    model.config._name_or_path = "AutoTrain"
+    if job_config.task in ("speech_recognition", "summarization"):
+        return model
+    if "max_seq_length" in job_config:
+        model.config.max_length = job_config.max_seq_length
+        model.config.padding = "max_length"
+    return model
+
+
+def save_model_card(model_card, model_path):
+    with open(os.path.join(model_path, "README.md"), "w") as fp:
+        fp.write(f"{model_card}")
+
+
+def create_file(filename, file_content, model_path):
+    with open(os.path.join(model_path, filename), "w") as fp:
+        fp.write(f"{file_content}")
+
+
+def save_config(conf, model_path):
+    with open(os.path.join(model_path, "config.json"), "w") as fp:
+        json.dump(conf, fp)
+
+
+def remove_checkpoints(model_path):
+    subfolders = glob.glob(os.path.join(model_path, "*/"))
+    for subfolder in subfolders:
+        shutil.rmtree(subfolder)
+    try:
+        os.remove(os.path.join(model_path, "emissions.csv"))
+    except OSError:
+        pass

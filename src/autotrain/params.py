@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import Literal
 
 import gradio as gr
+from pydantic import BaseModel, Field
 
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
@@ -231,6 +233,36 @@ class HubModel:
     DEFAULT = "bert-base-uncased"
     PRETTY_NAME = "Hub Model"
     GRADIO_INPUT = gr.Textbox(lines=1, max_lines=1, label="Hub Model")
+
+
+class TextBinaryClassificationParams(BaseModel):
+    task: Literal["text_binary_classification"]
+    learning_rate: float = Field(5e-5, title="Learning rate")
+    num_train_epochs: int = Field(3, title="Number of training epochs")
+    max_seq_length: int = Field(128, title="Max sequence length")
+    train_batch_size: int = Field(32, title="Training batch size")
+    warmup_ratio: float = Field(0.1, title="Warmup proportion")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
+    optimizer: str = Field("adamw_torch", title="Optimizer")
+    scheduler: str = Field("linear", title="Scheduler")
+    weight_decay: float = Field(0.0, title="Weight decay")
+    max_grad_norm: float = Field(1.0, title="Max gradient norm")
+    seed: int = Field(42, title="Seed")
+
+
+class TextMultiClassClassificationParams(BaseModel):
+    task: Literal["text_multi_class_classification"]
+    learning_rate: float = Field(5e-5, title="Learning rate")
+    num_train_epochs: int = Field(3, title="Number of training epochs")
+    max_seq_length: int = Field(128, title="Max sequence length")
+    train_batch_size: int = Field(32, title="Training batch size")
+    warmup_ratio: float = Field(0.1, title="Warmup proportion")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
+    optimizer: str = Field("adamw_torch", title="Optimizer")
+    scheduler: str = Field("linear", title="Scheduler")
+    weight_decay: float = Field(0.0, title="Weight decay")
+    max_grad_norm: float = Field(1.0, title="Max gradient norm")
+    seed: int = Field(42, title="Seed")
 
 
 @dataclass

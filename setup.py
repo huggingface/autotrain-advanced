@@ -13,18 +13,9 @@ this_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = [
-    "loguru==0.7.0",
-    "requests==2.28.2",
-    "tqdm==4.65.0",
-    "pandas>=1.5.3",
-    "huggingface_hub==0.13.4",
-    "datasets~=2.10.0",
-    "scikit-learn==1.2.2",
-    "streamlit==1.22.0",
-    "streamlit-aggrid==0.3.3",
-    "gradio==3.32.0",
-]
+# get INSTALL_REQUIRES from requirements.txt
+with open(os.path.join(this_directory, "requirements.txt"), encoding="utf-8") as f:
+    INSTALL_REQUIRES = f.read().splitlines()
 
 QUALITY_REQUIRE = [
     "black",
