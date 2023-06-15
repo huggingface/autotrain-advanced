@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, Union
+from typing import Literal
 
 import gradio as gr
 from pydantic import BaseModel, Field

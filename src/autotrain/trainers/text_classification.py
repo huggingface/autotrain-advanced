@@ -1,4 +1,3 @@
-import json
 import os
 
 import numpy as np
@@ -15,7 +14,6 @@ from transformers import (
     TrainingArguments,
 )
 
-from autotrain import utils
 from autotrain.params import TextBinaryClassificationParams, TextMultiClassClassificationParams
 
 
