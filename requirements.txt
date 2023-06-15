@@ -23,7 +23,6 @@ sacremoses==0.0.53
 scikit-learn==1.2.2
 sentencepiece==0.1.95
 seqeval==1.2.2
-sndfile==0.2.0
 tqdm==4.62.1
 transformers==4.29.2
 unidic-lite==1.0.8
