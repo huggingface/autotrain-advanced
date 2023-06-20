@@ -774,6 +774,12 @@ def main():
                             interactive=True,
                             elem_id="add_job",
                         )
+                        clear_jobs_button = gr.Button(
+                            value="Clear Jobs",
+                            visible=True,
+                            interactive=True,
+                            elem_id="clear_jobs",
+                        )
                 gr.Markdown("<hr>")
                 estimated_costs_md = gr.Markdown(value="Estimated Costs: N/A", visible=True, interactive=False)
                 estimated_costs_num = gr.Number(value=0, visible=False, interactive=False)

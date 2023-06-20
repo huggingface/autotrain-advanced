@@ -377,11 +377,9 @@ def collate_fn(examples, tokenizer, with_prior_preservation=False):
 
 def run_training(args):
     logger.info(args)
-    logging_dir = Path(args.output_dir, args.logging_dir)
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         mixed_precision=args.mixed_precision,
-        logging_dir=logging_dir,
     )
 
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
@@ -756,11 +754,11 @@ def run_training(args):
 
 @utils.job_watcher
 def train(co2_tracker, payload, huggingface_token, model_path):
-    data_repo = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
+    data_repo_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
     data_path = "/tmp/data"
     data_repo = utils.clone_hf_repo(
         local_dir=data_path,
-        repo_url="https://huggingface.co/datasets/" + data_repo,
+        repo_url="https://huggingface.co/datasets/" + data_repo_path,
         token=huggingface_token,
     )
     data_repo.git_pull()
