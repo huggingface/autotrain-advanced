@@ -2,10 +2,12 @@
 Copyright 2023 The HuggingFace Team
 """
 
+import os
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
+from codecarbon import EmissionsTracker
 from loguru import logger
 
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
@@ -76,13 +78,34 @@ class Project:
     def create_local(self, payload):
         from autotrain.trainers.text_classification import train as train_text_classification
 
+        # check if training tracker file exists in /tmp/
+        if os.path.exists(os.path.join("/tmp", "training")):
+            raise ValueError("❌ Another training job is already running in this workspace.")
+
         if len(payload["config"]["params"]) > 1:
             raise ValueError("❌ Only one job parameter is allowed in spaces/local mode.")
 
+        model_path = os.path.join("/tmp/model", payload["proj_name"])
+        os.makedirs(model_path, exist_ok=True)
+
+        co2_tracker = EmissionsTracker(save_to_file=False)
+        co2_tracker.start()
+        # create a training tracker file in /tmp/, using touch
+        with open(os.path.join("/tmp", "training"), "w") as f:
+            f.write("training")
+
         if payload["task"] in [1, 2]:
-            return train_text_classification(payload=payload)
+            _ = train_text_classification(
+                co2_tracker=co2_tracker,
+                payload=payload,
+                huggingface_token=self.token,
+                model_path=model_path,
+            )
         else:
             raise NotImplementedError
+
+        # remove the training tracker file in /tmp/, using rm
+        os.remove(os.path.join("/tmp", "training"))
 
     def create(self, local=False):
         """Create a project and return it"""

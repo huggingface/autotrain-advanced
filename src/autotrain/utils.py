@@ -248,3 +248,17 @@ def remove_checkpoints(model_path):
         os.remove(os.path.join(model_path, "emissions.csv"))
     except OSError:
         pass
+
+
+def job_watcher(func):
+    def wrapper(co2_tracker, *args, **kwargs):
+        try:
+            return func(co2_tracker, *args, **kwargs)
+        except Exception:
+            logger.error(f"{func.__name__} has failed due to an exception:")
+            logger.error(traceback.format_exc())
+            co2_tracker.stop()
+            # delete training tracker file
+            os.remove(os.path.join("/tmp", "training"))
+
+    return wrapper

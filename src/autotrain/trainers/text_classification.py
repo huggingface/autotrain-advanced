@@ -14,6 +14,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from autotrain import utils
 from autotrain.params import TextBinaryClassificationParams, TextMultiClassClassificationParams
 
 
@@ -142,26 +143,17 @@ def _multi_class_classification_metrics(pred):
     return results
 
 
-# @utils.job_watcher
-def train(payload):
-    # payload = {
-    #     "username": self.username,
-    #     "proj_name": self.name,
-    #     "task": task_id,
-    #     "config": {
-    #         "advanced": True,
-    #         "autotrain": True if self.param_choice == "autotrain" else False,
-    #         "language": language,
-    #         "max_models": self.max_models,
-    #         "hub_model": self.hub_model,
-    #         "params": self.job_params,
-    #     },
-    # }
+@utils.job_watcher
+def train(co2_tracker, payload, huggingface_token, model_path):
+    model_repo = utils.create_repo(
+        project_name=payload["proj_name"],
+        autotrain_user=payload["username"],
+        huggingface_token=huggingface_token,
+        model_path=model_path,
+    )
 
-    # TODO: create model repo
-    # model_repo = utils.create_repo(huggingface_token=huggingface_token, model_path=model_path)
     data_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data = load_dataset(data_path)
+    data = load_dataset(data_path, use_auth_token=huggingface_token)
     logger.info(f"Loaded data from {data_path}")
     job_config = payload["config"]["params"][0]
     job_config["model_name"] = payload["config"]["hub_model"]
@@ -258,30 +250,29 @@ def train(payload):
     logger.info(trainer.state.best_metric)
     eval_scores = trainer.evaluate()
 
-    # TODO: create and save model card
-    # co2_consumed = co2_tracker.stop()
-    # co2_consumed = co2_consumed * 1000 if co2_consumed is not None else 0
+    co2_consumed = co2_tracker.stop()
+    co2_consumed = co2_consumed * 1000 if co2_consumed is not None else 0
 
     eval_scores = [f"{k}: {v}" for k, v in eval_scores.items()]
     eval_scores = "\n\n".join(eval_scores)
     model_card = MODEL_CARD.format(
         language=payload["config"]["language"],
         dataset=data_path,
-        co2=0,
+        co2=co2_consumed,
         validation_metrics=eval_scores,
     )
-    logger.info(model_card)
-    # utils.save_model_card(model_card, model_path)
 
-    # # save model, tokenizer and config
-    # model = utils.update_model_config(trainer.model, job_config)
-    # utils.save_tokenizer(tokenizer, model_path)
-    # utils.save_model(model, model_path)
-    # utils.remove_checkpoints(model_path=model_path)
+    utils.save_model_card(model_card, model_path)
 
-    # # push model to hub
-    # logger.info("Pushing model to Hub")
-    # model_repo.git_pull()
-    # model_repo.git_add()
-    # model_repo.git_commit(commit_message="Commit From AutoTrain")
-    # model_repo.git_push()
+    # save model, tokenizer and config
+    model = utils.update_model_config(trainer.model, job_config)
+    utils.save_tokenizer(tokenizer, model_path)
+    utils.save_model(model, model_path)
+    utils.remove_checkpoints(model_path=model_path)
+
+    # push model to hub
+    logger.info("Pushing model to Hub")
+    model_repo.git_pull()
+    model_repo.git_add()
+    model_repo.git_commit(commit_message="Commit From AutoTrain")
+    model_repo.git_push()

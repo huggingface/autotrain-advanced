@@ -6,6 +6,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 ENV PATH="${HOME}/miniconda3/bin:${PATH}"
 ARG PATH="${HOME}/miniconda3/bin:${PATH}"
 
+RUN mkdir -p /tmp/model
+RUN chown -R 1000:1000 /tmp/model
+
 RUN apt-get update &&  \
     apt-get upgrade -y &&  \
     apt-get install -y \

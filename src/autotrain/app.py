@@ -312,7 +312,16 @@ def _update_project_name():
     random_project_name = "-".join(
         ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
     )
-    return gr.Text.update(value=random_project_name, visible=True, interactive=True)
+    # check if training tracker exists
+    if os.path.exists(os.path.join("/tmp", "training")):
+        return [
+            gr.Text.update(value=random_project_name, visible=True, interactive=True),
+            gr.Button.update(interactive=False),
+        ]
+    return [
+        gr.Text.update(value=random_project_name, visible=True, interactive=True),
+        gr.Button.update(interactive=True),
+    ]
 
 
 def _update_hub_model_choices(task, model_choice):
@@ -495,6 +504,10 @@ def get_variable_name(var, namespace):
         if namespace[name] is var:
             return name
     return None
+
+
+def disable_create_project_button():
+    return gr.Button.update(interactive=False)
 
 
 def main():
@@ -959,7 +972,7 @@ def main():
         # training_params_txt,
         # hub_model,
 
-        create_project_button.click(
+        create_project_button.click(disable_create_project_button, None, create_project_button).then(
             _create_project,
             inputs=[
                 autotrain_username,
@@ -982,7 +995,7 @@ def main():
 
         demo.load(
             _update_project_name,
-            outputs=[project_name],
+            outputs=[project_name, create_project_button],
         )
 
     return demo
