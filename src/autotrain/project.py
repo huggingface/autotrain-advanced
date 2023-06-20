@@ -76,6 +76,9 @@ class Project:
             self.max_models = len(self.job_params)
 
     def create_local(self, payload):
+        from autotrain.trainers.dreambooth import train as train_dreambooth
+        from autotrain.trainers.image_classification import train as train_image_classification
+        from autotrain.trainers.lm_trainer import train as train_lm
         from autotrain.trainers.text_classification import train as train_text_classification
 
         # check if training tracker file exists in /tmp/
@@ -96,6 +99,27 @@ class Project:
 
         if payload["task"] in [1, 2]:
             _ = train_text_classification(
+                co2_tracker=co2_tracker,
+                payload=payload,
+                huggingface_token=self.token,
+                model_path=model_path,
+            )
+        elif payload["task"] in [17, 18]:
+            _ = train_image_classification(
+                co2_tracker=co2_tracker,
+                payload=payload,
+                huggingface_token=self.token,
+                model_path=model_path,
+            )
+        elif payload["task"] == 25:
+            _ = train_dreambooth(
+                co2_tracker=co2_tracker,
+                payload=payload,
+                huggingface_token=self.token,
+                model_path=model_path,
+            )
+        elif payload["task"] == 9:
+            _ = train_lm(
                 co2_tracker=co2_tracker,
                 payload=payload,
                 huggingface_token=self.token,

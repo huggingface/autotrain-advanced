@@ -2,7 +2,7 @@ import os
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from loguru import logger
@@ -46,9 +46,8 @@ def remove_non_image_files(folder):
 
 @dataclass
 class AutoTrainDreamboothDataset:
-    num_concepts: int
-    concept_images: List[List[str]]
-    concept_names: List[str]
+    concept_images: List[Any]
+    concept_name: str
     token: str
     project_name: str
     username: str
@@ -63,13 +62,12 @@ class AutoTrainDreamboothDataset:
 
     @property
     def num_samples(self):
-        return sum([len(concept) for concept in self.concept_images])
+        return len(self.concept_images)
 
     def prepare(self):
         preprocessor = DreamboothPreprocessor(
-            num_concepts=self.num_concepts,
             concept_images=self.concept_images,
-            concept_names=self.concept_names,
+            concept_name=self.concept_name,
             token=self.token,
             project_name=self.project_name,
             username=self.username,

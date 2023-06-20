@@ -265,6 +265,65 @@ class TextMultiClassClassificationParams(BaseModel):
     seed: int = Field(42, title="Seed")
 
 
+class DreamboothParams(BaseModel):
+    task: Literal["dreambooth"]
+    num_steps: int = Field(1500, title="Number of steps")
+    image_size: int = Field(512, title="Image size")
+    text_encoder_steps_percentage: int = Field(30, title="Text encoder steps percentage")
+    prior_preservation: bool = Field(False, title="Prior preservation")
+    learning_rate: float = Field(2e-6, title="Learning rate")
+    train_batch_size: int = Field(1, title="Training batch size")
+
+
+class ImageBinaryClassificationParams(BaseModel):
+    task: Literal["image_binary_classification"]
+    learning_rate: float = Field(3e-5, title="Learning rate")
+    num_train_epochs: int = Field(3, title="Number of training epochs")
+    train_batch_size: int = Field(8, title="Training batch size")
+    warmup_ratio: float = Field(0.1, title="Warmup proportion")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
+    optimizer: str = Field("adamw_torch", title="Optimizer")
+    scheduler: str = Field("linear", title="Scheduler")
+    weight_decay: float = Field(0.0, title="Weight decay")
+    max_grad_norm: float = Field(1.0, title="Max gradient norm")
+    seed: int = Field(42, title="Seed")
+
+
+class ImageMultiClassClassificationParams(BaseModel):
+    task: Literal["image_multi_class_classification"]
+    learning_rate: float = Field(3e-5, title="Learning rate")
+    num_train_epochs: int = Field(3, title="Number of training epochs")
+    train_batch_size: int = Field(8, title="Training batch size")
+    warmup_ratio: float = Field(0.1, title="Warmup proportion")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
+    optimizer: str = Field("adamw_torch", title="Optimizer")
+    scheduler: str = Field("linear", title="Scheduler")
+    weight_decay: float = Field(0.0, title="Weight decay")
+    max_grad_norm: float = Field(1.0, title="Max gradient norm")
+    seed: int = Field(42, title="Seed")
+
+
+class LMTrainingParams(BaseModel):
+    task: Literal["lm_training"]
+    learning_rate: float = Field(3e-5, title="Learning rate")
+    num_train_epochs: int = Field(3, title="Number of training epochs")
+    train_batch_size: int = Field(8, title="Training batch size")
+    warmup_ratio: float = Field(0.1, title="Warmup proportion")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
+    optimizer: str = Field("adamw_torch", title="Optimizer")
+    scheduler: str = Field("linear", title="Scheduler")
+    weight_decay: float = Field(0.0, title="Weight decay")
+    max_grad_norm: float = Field(1.0, title="Max gradient norm")
+    seed: int = Field(42, title="Seed")
+    add_eos_token: bool = Field(True, title="Add EOS token")
+    block_size: int = Field(-1, title="Block size")
+    lora_r: int = Field(16, title="Lora r")
+    lora_alpha: int = Field(32, title="Lora alpha")
+    lora_dropout: float = Field(0.05, title="Lora dropout")
+    training_type: str = Field("generic", title="Training type")
+    train_on_inputs: bool = Field(False, title="Train on inputs")
+
+
 @dataclass
 class Params:
     task: str

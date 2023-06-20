@@ -471,9 +471,8 @@ def _create_project(
         )
     elif task == "dreambooth":
         dset = AutoTrainDreamboothDataset(
-            num_concepts=1,
-            concept_images=[[f.name for f in training_data]],
-            concept_names=[concept_token],
+            concept_images=training_data,
+            concept_name=concept_token,
             token=user_token,
             project_name=project_name,
             username=autotrain_username,

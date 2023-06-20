@@ -8,6 +8,8 @@ ARG PATH="${HOME}/miniconda3/bin:${PATH}"
 
 RUN mkdir -p /tmp/model
 RUN chown -R 1000:1000 /tmp/model
+RUN mkdir -p /tmp/data
+RUN chown -R 1000:1000 /tmp/data
 
 RUN apt-get update &&  \
     apt-get upgrade -y &&  \
