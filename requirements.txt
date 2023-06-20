@@ -3,7 +3,6 @@ boto3==1.16.49
 codecarbon==2.2.3
 datasets[vision]~=2.10.0
 evaluate==0.3.0
-fugashi==1.0.5
 ipadic==1.0.0
 jiwer==2.2.0
 joblib==1.2.0
@@ -39,5 +38,5 @@ python-slugify==8.0.1
 requests==2.28.2
 tensorboard
 pycocotools==2.0.6
-gradio==3.34.0
+gradio==3.35.2
 streamlit

@@ -142,7 +142,7 @@ def _project_type_update(project_type, task_type, autotrain_backend):
         task_choices_update,
         model_choices_update,
         param_choices_update,
-        _update_hub_model_choices(task_choices_update["value"], param_choices_update["value"]),
+        _update_hub_model_choices(task_choices_update["value"], model_choices_update["value"]),
     ]
 
 

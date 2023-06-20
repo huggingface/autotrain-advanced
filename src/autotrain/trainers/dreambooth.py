@@ -860,7 +860,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     os.system(f"rm -rf {model_path}/logs")
 
     model_card = create_model_card(
-        dataset_id=data_repo,
+        dataset_id=data_repo_path,
         model_id=f"{repo_user}/{repo_name}",
         co2=co2_consumed,
     )
