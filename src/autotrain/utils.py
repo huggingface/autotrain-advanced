@@ -12,6 +12,7 @@ import streamlit as st
 from huggingface_hub import HfApi, HfFolder
 from huggingface_hub.repository import Repository
 from loguru import logger
+from transformers import AutoConfig
 
 from autotrain import config
 from autotrain.tasks import TASKS
@@ -262,3 +263,13 @@ def job_watcher(func):
             os.remove(os.path.join("/tmp", "training"))
 
     return wrapper
+
+
+def get_model_architecture(model_path_or_name: str, revision: str = "main") -> str:
+    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision)
+    architectures = config.architectures
+    if architectures is None or len(architectures) > 1:
+        raise ValueError(
+            f"The model architecture is either not defined or not unique. Found architectures: {architectures}"
+        )
+    return architectures[0]

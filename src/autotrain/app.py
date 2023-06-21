@@ -523,18 +523,6 @@ def main():
                 Pass your HF token in an environment variable called `HF_TOKEN` and then restart this app.
                 """
             )
-            # user_token_input = gr.Textbox(label="HuggingFace Token", value="", type="password", lines=1, max_lines=1)
-            # user_token = gr.Textbox(visible=False)
-            # valid_can_pay = gr.Textbox(visible=False)
-            # who_is_training = gr.Textbox(visible=False)
-            # user_token_input.submit(
-            #     _login_user,
-            #     inputs=[user_token_input],
-            #     outputs=[user_token, valid_can_pay, who_is_training],
-            # )
-            # user_token = user_token.value
-            # valid_can_pay = valid_can_pay.value
-            # who_is_training = who_is_training.value
             return demo
 
         user_token, valid_can_pay, who_is_training = _login_user(user_token)
@@ -774,12 +762,12 @@ def main():
                             interactive=True,
                             elem_id="add_job",
                         )
-                        clear_jobs_button = gr.Button(
-                            value="Clear Jobs",
-                            visible=True,
-                            interactive=True,
-                            elem_id="clear_jobs",
-                        )
+                        # clear_jobs_button = gr.Button(
+                        #     value="Clear Jobs",
+                        #     visible=True,
+                        #     interactive=True,
+                        #     elem_id="clear_jobs",
+                        # )
                 gr.Markdown("<hr>")
                 estimated_costs_md = gr.Markdown(value="Estimated Costs: N/A", visible=True, interactive=False)
                 estimated_costs_num = gr.Number(value=0, visible=False, interactive=False)
@@ -862,8 +850,7 @@ def main():
             _update_param_choice,
             inputs=[model_choice, autotrain_backend],
             outputs=param_choice,
-        )
-        model_choice.change(
+        ).then(
             _update_hub_model_choices,
             inputs=[task_type, model_choice],
             outputs=hub_model,
@@ -954,28 +941,6 @@ def main():
         training_params_txt.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
         task_type.change(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
         add_job_button.click(_estimate_costs, inputs=estimate_costs_inputs, outputs=estimate_costs_outputs)
-
-        # file_type_training.change(
-        #     _update_file_uploader,
-        #     inputs=file_type_training,
-        #     outputs=[training_data, validation_data],
-        # )
-        # training_params.change(
-        #     lambda x: training_params_md.update(f"Training Params: {x}"),
-        #     inputs=training_params,
-        #     outputs=training_params_md,
-        # )
-
-        # autotrain_username,
-        # project_name,
-        # user_token,
-        # task,
-        # training_data,
-        # validation_data,
-        # col_map_text,
-        # col_map_label,
-        # training_params_txt,
-        # hub_model,
 
         create_project_button.click(disable_create_project_button, None, create_project_button).then(
             _create_project,

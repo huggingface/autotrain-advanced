@@ -247,6 +247,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     model_config = AutoConfig.from_pretrained(
         model_name,
         use_auth_token=huggingface_token,
+        trust_remote_code=True,
     )
     logger.info(model_config)
     if use_peft:

@@ -451,6 +451,7 @@ class Params:
     def _image_binary_classification(self):
         if self.param_choice == "manual":
             return {
+                "hub_model": HubModel,
                 "learning_rate": LearningRate,
                 "optimizer": Optimizer,
                 "scheduler": Scheduler,
@@ -460,9 +461,16 @@ class Params:
                 "gradient_accumulation_steps": GradientAccumulationSteps,
                 "weight_decay": WeightDecay,
             }
-        return {
-            "num_models": NumModels,
-        }
+        if self.param_choice == "autotrain":
+            if self.model_choice == "autotrain":
+                return {
+                    "num_models": NumModels,
+                }
+            return {
+                "hub_model": HubModel,
+                "num_models": NumModels,
+            }
+        raise ValueError("param_choice must be either autotrain or manual")
 
     def _image_multi_class_classification(self):
         return self._image_binary_classification()
