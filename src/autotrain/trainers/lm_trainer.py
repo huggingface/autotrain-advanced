@@ -232,7 +232,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     use_peft = False
     use_int8 = False
 
-    if "llama" in m_arch:
+    if "llama" in m_arch or "rwforcausallm" in m_arch:
         use_peft = True
         use_int8 = True
 
@@ -301,7 +301,14 @@ def train(co2_tracker, payload, huggingface_token, model_path):
             lora_dropout=job_config.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
-            target_modules=None,
+            target_modules=[
+                "query_key_value",
+                "dense",
+                "dense_h_to_4h",
+                "dense_4h_to_h",
+            ]
+            if "rwforcausallm" in m_arch
+            else None,
         )
         model = get_peft_model(model, peft_config)
 

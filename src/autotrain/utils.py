@@ -266,7 +266,7 @@ def job_watcher(func):
 
 
 def get_model_architecture(model_path_or_name: str, revision: str = "main") -> str:
-    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision)
+    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision, trust_remote_code=True)
     architectures = config.architectures
     if architectures is None or len(architectures) > 1:
         raise ValueError(

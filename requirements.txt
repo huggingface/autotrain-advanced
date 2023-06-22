@@ -40,3 +40,4 @@ tensorboard
 pycocotools==2.0.6
 gradio==3.35.2
 streamlit
+einops==0.6.1
