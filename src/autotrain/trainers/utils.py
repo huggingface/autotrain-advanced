@@ -43,7 +43,7 @@ class LLMTrainingParams(BaseModel):
     training_type: str = Field("generic", title="Training type")
     train_on_inputs: bool = Field(False, title="Train on inputs")
     logging_steps: int = Field(-1, title="Logging steps")
-    output_dir: str = Field("output", title="Output directory")
+    project_name: str = Field("Project Name", title="Output directory")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     save_total_limit: int = Field(1, title="Save total limit")
     save_strategy: str = Field("epoch", title="Save strategy")

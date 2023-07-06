@@ -19,7 +19,8 @@ from autotrain.trainers.callbacks import LoadBestPeftModelCallback, SavePeftMode
 
 
 def train(config):
-    config = utils.TrainingParams(**config)
+    if isinstance(config, dict):
+        config = utils.LLMTrainingParams(**config)
 
     train_data = load_dataset(
         config.data_path,
@@ -167,7 +168,7 @@ def train(config):
         logging_steps = config.logging_steps
 
     training_args = dict(
-        output_dir=config.output_dir,
+        output_dir=config.project_name,
         per_device_train_batch_size=config.train_batch_size,
         per_device_eval_batch_size=config.eval_batch_size,
         learning_rate=config.learning_rate,
@@ -218,13 +219,13 @@ def train(config):
     trainer.train()
 
     logger.info("Finished training, saving model...")
-    trainer.save_model(config.output_dir)
+    trainer.save_model(config.project_name)
 
     logger.info("Merging adapter weights...")
     utils.merge_adapter(
         base_model_path=config.model_name,
-        target_model_path=config.output_dir,
-        adapter_path=config.output_dir,
+        target_model_path=config.project_name,
+        adapter_path=config.project_name,
     )
 
 
@@ -234,7 +235,7 @@ if __name__ == "__main__":
         "model_name": "Salesforce/xgen-7b-8k-base",
         "data_path": "tatsu-lab/alpaca",
         "push_to_hub": False,
-        "output_dir": "output/",
+        "project_name": "output/",
         "use_peft": True,
     }
 

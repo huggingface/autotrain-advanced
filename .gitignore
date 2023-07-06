@@ -3,6 +3,7 @@
 .vscode/
 test/
 test.py
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

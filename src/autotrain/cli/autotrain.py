@@ -2,6 +2,7 @@ import argparse
 
 from .. import __version__
 from .run_app import RunAutoTrainAppCommand
+from .run_llm import RunAutoTrainLLMCommand
 
 
 def main():
@@ -15,6 +16,7 @@ def main():
 
     # Register commands
     RunAutoTrainAppCommand.register_subcommand(commands_parser)
+    RunAutoTrainLLMCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
