@@ -46,6 +46,7 @@ def run_llm_command_factory(args):
         args.push_to_hub,
         args.use_int8,
         args.model_max_length,
+        args.repo_id,
     )
 
 
@@ -302,6 +303,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             type=int,
             default=1024,
         )
+        run_llm_parser.add_argument(
+            "--repo_id",
+            help="Repo id for hugging face hub",
+            required=False,
+            type=str,
+        )
 
         run_llm_parser.set_defaults(func=run_llm_command_factory)
 
@@ -344,6 +351,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         push_to_hub,
         use_int8,
         model_max_length,
+        repo_id,
     ):
         self.train = train
         self.deploy = deploy
@@ -382,6 +390,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         self.push_to_hub = push_to_hub
         self.use_int8 = use_int8
         self.model_max_length = model_max_length
+        self.repo_id = repo_id
 
         if self.train:
             if self.project_name is None:
@@ -390,6 +399,9 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 raise ValueError("Data path must be specified")
             if self.model is None:
                 raise ValueError("Model must be specified")
+            if self.push_to_hub:
+                if self.repo_id is None:
+                    raise ValueError("Repo id must be specified for push to hub")
 
     def run(self):
         logger.info("Running LLM")
@@ -430,5 +442,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 push_to_hub=self.push_to_hub,
                 use_int8=self.use_int8,
                 model_max_length=self.model_max_length,
+                repo_id=self.repo_id,
             )
             train_llm(params)

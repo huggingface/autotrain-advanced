@@ -52,6 +52,7 @@ class LLMTrainingParams(BaseModel):
     push_to_hub: bool = Field(False, title="Push to hub")
     use_int8: bool = Field(False, title="Use int8")
     model_max_length: int = Field(1024, title="Model max length")
+    repo_id: str = Field(None, title="Repo id")
 
 
 def process_data(data, tokenizer, config):

@@ -3,6 +3,7 @@ from functools import partial
 
 import torch
 from datasets import load_dataset
+from huggingface_hub import HfApi
 from loguru import logger
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from transformers import (
@@ -186,7 +187,7 @@ def train(config):
         weight_decay=config.weight_decay,
         max_grad_norm=config.max_grad_norm,
         fp16=config.fp16,
-        push_to_hub=config.push_to_hub,
+        push_to_hub=False,
         load_best_model_at_end=True if config.valid_split is not None else False,
     )
 
@@ -221,12 +222,19 @@ def train(config):
     logger.info("Finished training, saving model...")
     trainer.save_model(config.project_name)
 
-    logger.info("Merging adapter weights...")
-    utils.merge_adapter(
-        base_model_path=config.model_name,
-        target_model_path=config.project_name,
-        adapter_path=config.project_name,
-    )
+    if config.use_peft:
+        logger.info("Merging adapter weights...")
+        utils.merge_adapter(
+            base_model_path=config.model_name,
+            target_model_path=config.project_name,
+            adapter_path=config.project_name,
+        )
+
+    if config.push_to_hub:
+        logger.info("Pushing model to hub...")
+        api = HfApi()
+        api.create_repo(repo_id=config.repo_id, repo_type="model")
+        api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
 
 
 if __name__ == "__main__":
@@ -235,7 +243,7 @@ if __name__ == "__main__":
         "model_name": "Salesforce/xgen-7b-8k-base",
         "data_path": "tatsu-lab/alpaca",
         "push_to_hub": False,
-        "project_name": "output/",
+        "project_name": "output",
         "use_peft": True,
     }
 
