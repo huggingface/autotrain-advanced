@@ -55,7 +55,7 @@ class LLMTrainingParams(BaseModel):
 
 
 def process_data(data, tokenizer, config):
-    data = data.to_pandas().head(1000)
+    data = data.to_pandas()
     data = data.fillna("")
 
     data = data[[config.text_column]]

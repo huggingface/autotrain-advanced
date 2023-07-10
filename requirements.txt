@@ -33,7 +33,7 @@ cryptography==38.0.1
 diffusers==0.16.1
 accelerate==0.20.3
 triton==2.0.0.dev20221202
-bitsandbytes==0.38.0
+bitsandbytes==0.39.1
 python-slugify==8.0.1
 requests==2.28.2
 tensorboard
