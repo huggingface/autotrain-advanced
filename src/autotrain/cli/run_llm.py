@@ -47,6 +47,8 @@ def run_llm_command_factory(args):
         args.use_int8,
         args.model_max_length,
         args.repo_id,
+        args.use_int4,
+        args.trainer,
     )
 
 
@@ -309,6 +311,19 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             required=False,
             type=str,
         )
+        run_llm_parser.add_argument(
+            "--use_int4",
+            help="Use int4 True/False",
+            required=False,
+            action="store_true",
+        )
+        run_llm_parser.add_argument(
+            "--trainer",
+            help="Trainer type to use",
+            required=False,
+            type=str,
+            default="default",
+        )
 
         run_llm_parser.set_defaults(func=run_llm_command_factory)
 
@@ -352,6 +367,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         use_int8,
         model_max_length,
         repo_id,
+        use_int4,
+        trainer,
     ):
         self.train = train
         self.deploy = deploy
@@ -391,6 +408,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         self.use_int8 = use_int8
         self.model_max_length = model_max_length
         self.repo_id = repo_id
+        self.use_int4 = use_int4
+        self.trainer = trainer
 
         if self.train:
             if self.project_name is None:
@@ -443,5 +462,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 use_int8=self.use_int8,
                 model_max_length=self.model_max_length,
                 repo_id=self.repo_id,
+                use_int4=self.use_int4,
+                trainer=self.trainer,
             )
             train_llm(params)

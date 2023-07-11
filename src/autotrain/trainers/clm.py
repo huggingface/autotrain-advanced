@@ -10,10 +10,12 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     Trainer,
     TrainingArguments,
     default_data_collator,
 )
+from trl import SFTTrainer
 
 from autotrain.trainers import utils
 from autotrain.trainers.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
@@ -44,17 +46,21 @@ def train(config):
     if tokenizer.model_max_length > 2048:
         tokenizer.model_max_length = config.model_max_length
 
-    train_data = utils.process_data(
-        data=train_data,
-        tokenizer=tokenizer,
-        config=config,
-    )
-    if config.valid_split is not None:
-        valid_data = utils.process_data(
-            data=valid_data,
+    if getattr(tokenizer, "pad_token", None) is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if config.trainer == "default":
+        train_data = utils.process_data(
+            data=train_data,
             tokenizer=tokenizer,
             config=config,
         )
+        if config.valid_split is not None:
+            valid_data = utils.process_data(
+                data=valid_data,
+                tokenizer=tokenizer,
+                config=config,
+            )
 
     model_config = AutoConfig.from_pretrained(
         config.model_name,
@@ -64,12 +70,24 @@ def train(config):
     logger.info(model_config)
 
     if config.use_peft:
+        if config.use_int4:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=config.use_int4,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=False,
+            )
+        elif config.use_int8:
+            bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
+        else:
+            bnb_config = BitsAndBytesConfig()
+
         model = AutoModelForCausalLM.from_pretrained(
             config.model_name,
             config=model_config,
             use_auth_token=config.huggingface_token,
+            quantization_config=bnb_config,
             torch_dtype=torch.float16,
-            load_in_8bit=config.use_int8,
             device_map="auto",
             trust_remote_code=True,
         )
@@ -84,7 +102,7 @@ def train(config):
     model.resize_token_embeddings(len(tokenizer))
 
     if config.use_peft:
-        if config.use_int8:
+        if config.use_int8 or config.use_int4:
             model = prepare_model_for_int8_training(model)
         peft_config = LoraConfig(
             r=config.lora_r,
@@ -120,40 +138,41 @@ def train(config):
 
     logger.info(model)
 
-    tokenize_fn = partial(utils.tokenize, tokenizer=tokenizer, config=config)
-    group_texts_fn = partial(utils.group_texts, config=config)
+    if config.trainer == "default":
+        tokenize_fn = partial(utils.tokenize, tokenizer=tokenizer, config=config)
+        group_texts_fn = partial(utils.group_texts, config=config)
 
-    train_data = train_data.map(
-        tokenize_fn,
-        batched=True,
-        num_proc=1,
-        remove_columns=list(train_data.features),
-        desc="Running tokenizer on train dataset",
-    )
-
-    if config.valid_split is not None:
-        valid_data = valid_data.map(
+        train_data = train_data.map(
             tokenize_fn,
             batched=True,
             num_proc=1,
-            remove_columns=list(valid_data.features),
-            desc="Running tokenizer on validation dataset",
+            remove_columns=list(train_data.features),
+            desc="Running tokenizer on train dataset",
         )
 
-    train_data = train_data.map(
-        group_texts_fn,
-        batched=True,
-        num_proc=4,
-        desc=f"Grouping texts in chunks of {block_size}",
-    )
+        if config.valid_split is not None:
+            valid_data = valid_data.map(
+                tokenize_fn,
+                batched=True,
+                num_proc=1,
+                remove_columns=list(valid_data.features),
+                desc="Running tokenizer on validation dataset",
+            )
 
-    if config.valid_split is not None:
-        valid_data = valid_data.map(
+        train_data = train_data.map(
             group_texts_fn,
             batched=True,
             num_proc=4,
             desc=f"Grouping texts in chunks of {block_size}",
         )
+
+        if config.valid_split is not None:
+            valid_data = valid_data.map(
+                group_texts_fn,
+                batched=True,
+                num_proc=4,
+                desc=f"Grouping texts in chunks of {block_size}",
+            )
 
     logger.info("creating trainer")
     # trainer specific
@@ -204,18 +223,41 @@ def train(config):
         model=model,
     )
 
-    trainer = Trainer(
-        **trainer_args,
-        train_dataset=train_data,
-        eval_dataset=valid_data if config.valid_split is not None else None,
-        tokenizer=tokenizer,
-        data_collator=default_data_collator,
-        callbacks=callbacks,
-    )
+    if config.trainer == "default":
+        trainer = Trainer(
+            **trainer_args,
+            train_dataset=train_data,
+            eval_dataset=valid_data if config.valid_split is not None else None,
+            tokenizer=tokenizer,
+            data_collator=default_data_collator,
+            callbacks=callbacks,
+        )
+    elif config.trainer == "sft":
+        trainer = SFTTrainer(
+            **trainer_args,
+            train_dataset=train_data,
+            eval_dataset=valid_data if config.valid_split is not None else None,
+            peft_config=peft_config if config.use_peft else None,
+            dataset_text_field="text",
+            max_seq_length=config.block_size,
+            tokenizer=tokenizer,
+            packing=True,
+        )
     model.config.use_cache = False
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
+
+    for name, module in trainer.model.named_modules():
+        # if isinstance(module, LoraLayer):
+        #     if script_args.bf16:
+        #         module = module.to(torch.bfloat16)
+        if "norm" in name:
+            module = module.to(torch.float32)
+        # if "lm_head" in name or "embed_tokens" in name:
+        #     if hasattr(module, "weight"):
+        #         if script_args.bf16 and module.weight.dtype == torch.float32:
+        #             module = module.to(torch.bfloat16)
 
     trainer.train()
 

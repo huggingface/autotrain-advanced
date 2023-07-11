@@ -13,7 +13,9 @@ DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
 DEFAULT_BOS_TOKEN = "</s>"
 DEFAULT_UNK_TOKEN = "</s>"
-TARGET_MODULES = {}
+TARGET_MODULES = {
+    "Salesforce/codegen25-7b-multi": "q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
+}
 
 
 class LLMTrainingParams(BaseModel):
@@ -53,6 +55,8 @@ class LLMTrainingParams(BaseModel):
     use_int8: bool = Field(False, title="Use int8")
     model_max_length: int = Field(1024, title="Model max length")
     repo_id: str = Field(None, title="Repo id")
+    use_int4: bool = Field(False, title="Use int4")
+    trainer: str = Field("default", title="Trainer type")
 
 
 def process_data(data, tokenizer, config):
