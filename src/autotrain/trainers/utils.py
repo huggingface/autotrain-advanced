@@ -17,6 +17,18 @@ TARGET_MODULES = {
     "Salesforce/codegen25-7b-multi": "q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
 }
 
+MODEL_CARD = """
+---
+tags:
+- autotrain
+- text-generation
+widget:
+- text: "I love AutoTrain because "
+---
+
+# Model Trained Using AutoTrain
+"""
+
 
 class LLMTrainingParams(BaseModel):
     model_name: str = Field("gpt2", title="Model name")
@@ -134,3 +146,7 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
     logger.info("Saving target model...")
     model.save_pretrained(target_model_path)
     tokenizer.save_pretrained(target_model_path)
+
+
+def create_model_card():
+    return MODEL_CARD.strip()

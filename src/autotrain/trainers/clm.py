@@ -264,6 +264,12 @@ def train(config):
     logger.info("Finished training, saving model...")
     trainer.save_model(config.project_name)
 
+    model_card = utils.create_model_card()
+
+    # save model card to output directory as README.md
+    with open(f"{config.project_name}/README.md", "w") as f:
+        f.write(model_card)
+
     if config.use_peft:
         logger.info("Merging adapter weights...")
         utils.merge_adapter(
