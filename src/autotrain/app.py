@@ -544,7 +544,7 @@ def main():
                     )
                     autotrain_backend = gr.Dropdown(
                         label="AutoTrain Backend",
-                        choices=["HuggingFace Internal", "HuggingFace Spaces/Local"],
+                        choices=["HuggingFace Internal", "HuggingFace Spaces"],
                         value="HuggingFace Internal",
                         interactive=True,
                     )

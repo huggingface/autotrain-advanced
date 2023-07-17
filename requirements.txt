@@ -1,26 +1,22 @@
 albumentations==1.3.0
-boto3==1.16.49
 codecarbon==2.2.3
 datasets[vision]~=2.13.0
 evaluate==0.3.0
 ipadic==1.0.0
 jiwer==2.2.0
 joblib==1.2.0
-librosa==0.8.0
 loguru==0.7.0
 nltk==3.5
-optuna==2.10.0
 pandas>=1.5.3
 Pillow==8.2.0
-protobuf==3.14.0
-psycopg2==2.8.6
+protobuf~=3.20.0
 pydantic==1.10.9
 pyyaml==5.4.1
 rouge-score==0.0.4
 sacrebleu==2.0.0
 sacremoses==0.0.53
 scikit-learn==1.2.2
-sentencepiece==0.1.95
+sentencepiece==0.1.99
 seqeval==1.2.2
 tqdm==4.62.1
 transformers==4.30.2
@@ -29,7 +25,6 @@ werkzeug==2.0.3
 huggingface_hub>=0.14.1
 PyJWT==2.6.0
 cryptography==38.0.1
-# dreambooth specific
 diffusers==0.16.1
 accelerate==0.20.3
 triton==2.0.0.dev20221202
@@ -43,3 +38,4 @@ streamlit
 einops==0.6.1
 peft
 trl
+tiktoken
