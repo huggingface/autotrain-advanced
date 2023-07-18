@@ -110,7 +110,7 @@ def train(config):
             lora_dropout=config.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
-            target_modules=utils.TARGET_MODULES.get(config.model_name),
+            target_modules=utils.get_target_modules(config),
         )
         model = get_peft_model(model, peft_config)
 
