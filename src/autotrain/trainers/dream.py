@@ -41,26 +41,6 @@ from transformers import AutoTokenizer
 from autotrain.trainers import dreambooth_utils as utils
 
 
-def save_model_card(repo_id: str, base_model=str, prompt=str, repo_folder=None):
-    yaml = f"""
----
-base_model: {base_model}
-instance_prompt: {prompt}
-tags:
-- text-to-image
-- diffusers
-- autotrain
-inference: true
----
-    """
-    model_card = """
-# DreamBooth trained by AutoTrain
-
-"""
-    with open(os.path.join(repo_folder, "README.md"), "w") as f:
-        f.write(yaml + model_card)
-
-
 def train(config):
     if isinstance(config, dict):
         config = utils.DreamBoothTrainingParams(**config)
