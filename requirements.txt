@@ -30,5 +30,4 @@ tiktoken
 transformers
 accelerate
 diffusers
-
 bitsandbytes

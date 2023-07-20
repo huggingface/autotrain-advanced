@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
+from autotrain.infer.text_generation import TextGenerationInference
+
 from ..trainers.clm import train as train_llm
 from ..trainers.utils import LLMTrainingParams
 from . import BaseAutoTrainCommand
@@ -431,6 +433,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.push_to_hub:
                 if self.repo_id is None:
                     raise ValueError("Repo id must be specified for push to hub")
+
+        if self.inference:
+            tgi = TextGenerationInference(self.project_name, use_int4=self.use_int4, use_int8=self.use_int8)
+            while True:
+                prompt = input("User: ")
+                if prompt == "exit()":
+                    break
+                print(f"Bot: {tgi.chat(prompt)}")
 
     def run(self):
         logger.info("Running LLM")

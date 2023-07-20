@@ -1,8 +1,10 @@
+import os
 import sys
 from functools import partial
 
+import pandas as pd
 import torch
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
 from loguru import logger
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
@@ -25,17 +27,32 @@ def train(config):
     if isinstance(config, dict):
         config = utils.LLMTrainingParams(**config)
 
-    train_data = load_dataset(
-        config.data_path,
-        split=config.train_split,
-        use_auth_token=config.huggingface_token,
-    )
+    # check if config.train_split.csv exists in config.data_path
+    if config.train_split is not None:
+        train_path = f"{config.data_path}/{config.train_split}.csv"
+        if os.path.exists(train_path):
+            logger.info("loading dataset from csv")
+            train_data = pd.read_csv(train_path)
+            train_data = Dataset.from_pandas(train_data)
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                use_auth_token=config.huggingface_token,
+            )
+
     if config.valid_split is not None:
-        valid_data = load_dataset(
-            config.data_path,
-            split=config.valid_split,
-            use_auth_token=config.huggingface_token,
-        )
+        valid_path = f"{config.data_path}/{config.valid_split}.csv"
+        if os.path.exists(valid_path):
+            logger.info("loading dataset from csv")
+            valid_data = pd.read_csv(valid_path)
+            valid_data = Dataset.from_pandas(valid_data)
+        else:
+            valid_data = load_dataset(
+                config.data_path,
+                split=config.valid_split,
+                use_auth_token=config.huggingface_token,
+            )
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model_name,
