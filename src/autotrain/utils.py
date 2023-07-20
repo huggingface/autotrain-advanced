@@ -8,7 +8,6 @@ import traceback
 from typing import Dict, Optional
 
 import requests
-import streamlit as st
 from huggingface_hub import HfApi, HfFolder
 from huggingface_hub.repository import Repository
 from loguru import logger
@@ -146,13 +145,13 @@ def app_error_handler(func):
             logger.error(f"{func.__name__} has failed due to an exception:")
             logger.error(traceback.format_exc())
             if "param_choice" in str(err):
-                st.warning("Unable to estimate costs. Job params not chosen yet.")
+                ValueError("Unable to estimate costs. Job params not chosen yet.")
             elif "Failed to reach AutoNLP API" in str(err):
-                st.warning("Unable to reach AutoTrain API. Please check your internet connection.")
+                ValueError("Unable to reach AutoTrain API. Please check your internet connection.")
             elif "An error has occurred: 'NoneType' object has no attribute 'type'" in str(err):
-                st.warning("Unable to estimate costs. Data not uploaded yet.")
+                ValueError("Unable to estimate costs. Data not uploaded yet.")
             else:
-                st.error(f"An error has occurred: {err}")
+                ValueError(f"An error has occurred: {err}")
 
     return wrapper
 

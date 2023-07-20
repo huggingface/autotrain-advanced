@@ -67,7 +67,6 @@ def train(config):
         use_auth_token=config.huggingface_token,
         trust_remote_code=True,
     )
-    logger.info(model_config)
 
     if config.use_peft:
         if config.use_int4:
@@ -135,8 +134,6 @@ def train(config):
         block_size = min(config.block_size, tokenizer.model_max_length)
 
     config.block_size = block_size
-
-    logger.info(model)
 
     if config.trainer == "default":
         tokenize_fn = partial(utils.tokenize, tokenizer=tokenizer, config=config)
