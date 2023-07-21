@@ -520,6 +520,11 @@ def disable_create_project_button():
     return gr.Button.update(interactive=False)
 
 
+def enable_create_project_button():
+    print("got to enable_create_project_button")
+    return gr.Button.update(interactive=True)
+
+
 def main():
     with gr.Blocks(theme="freddyaboulton/dracula_revamped") as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
@@ -955,8 +960,7 @@ def main():
                 autotrain_backend,
             ],
             outputs=final_output,
-        )
-
+        ).then(enable_create_project_button, None, create_project_button)
         demo.load(
             _update_project_name,
             outputs=[project_name, create_project_button],
