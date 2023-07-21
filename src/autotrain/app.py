@@ -521,7 +521,6 @@ def disable_create_project_button():
 
 
 def enable_create_project_button():
-    print("got to enable_create_project_button")
     return gr.Button.update(interactive=True)
 
 
