@@ -27,6 +27,10 @@ def train(config):
     if isinstance(config, dict):
         config = utils.LLMTrainingParams(**config)
 
+    # TODO: remove when SFT is fixed
+    if config.trainer == "sft":
+        config.trainer = "default"
+
     # check if config.train_split.csv exists in config.data_path
     if config.train_split is not None:
         train_path = f"{config.data_path}/{config.train_split}.csv"

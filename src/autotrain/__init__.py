@@ -21,4 +21,4 @@ import os
 # ignore bnb warnings
 os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-__version__ = "0.6.2.dev0"
+__version__ = "0.6.3.dev0g"
