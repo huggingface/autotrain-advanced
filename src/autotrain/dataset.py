@@ -2,11 +2,10 @@ import os
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from loguru import logger
-from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
@@ -77,11 +76,11 @@ class AutoTrainDreamboothDataset:
 
 @dataclass
 class AutoTrainImageClassificationDataset:
-    train_data: Union[str, UploadedFile]
+    train_data: str
     token: str
     project_name: str
     username: str
-    valid_data: Optional[Union[str, UploadedFile]] = None
+    valid_data: Optional[str] = None
     percent_valid: Optional[float] = None
 
     def __str__(self) -> str:

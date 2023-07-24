@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 
 from loguru import logger
 
+from autotrain.infer.text_generation import TextGenerationInference
+
 from ..trainers.clm import train as train_llm
 from ..trainers.utils import LLMTrainingParams
 from . import BaseAutoTrainCommand
@@ -49,6 +51,7 @@ def run_llm_command_factory(args):
         args.repo_id,
         args.use_int4,
         args.trainer,
+        args.target_modules,
     )
 
 
@@ -324,6 +327,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             type=str,
             default="default",
         )
+        run_llm_parser.add_argument(
+            "--target_modules",
+            help="Target modules to use",
+            required=False,
+            type=str,
+            default=None,
+        )
 
         run_llm_parser.set_defaults(func=run_llm_command_factory)
 
@@ -369,6 +379,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         repo_id,
         use_int4,
         trainer,
+        target_modules,
     ):
         self.train = train
         self.deploy = deploy
@@ -410,6 +421,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         self.repo_id = repo_id
         self.use_int4 = use_int4
         self.trainer = trainer
+        self.target_modules = target_modules
 
         if self.train:
             if self.project_name is None:
@@ -421,6 +433,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.push_to_hub:
                 if self.repo_id is None:
                     raise ValueError("Repo id must be specified for push to hub")
+
+        if self.inference:
+            tgi = TextGenerationInference(self.project_name, use_int4=self.use_int4, use_int8=self.use_int8)
+            while True:
+                prompt = input("User: ")
+                if prompt == "exit()":
+                    break
+                print(f"Bot: {tgi.chat(prompt)}")
 
     def run(self):
         logger.info("Running LLM")
@@ -464,5 +484,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 repo_id=self.repo_id,
                 use_int4=self.use_int4,
                 trainer=self.trainer,
+                target_modules=self.target_modules,
             )
             train_llm(params)

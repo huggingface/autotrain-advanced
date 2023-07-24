@@ -15,5 +15,10 @@
 
 # Lint as: python3
 # pylint: enable=line-too-long
+import os
 
-__version__ = "0.5.7.dev0"
+
+# ignore bnb warnings
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+__version__ = "0.6.3.dev0"

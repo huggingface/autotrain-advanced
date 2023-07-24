@@ -69,6 +69,13 @@ class LLMTrainingParams(BaseModel):
     repo_id: str = Field(None, title="Repo id")
     use_int4: bool = Field(False, title="Use int4")
     trainer: str = Field("default", title="Trainer type")
+    target_modules: str = Field(None, title="Target modules")
+
+
+def get_target_modules(config):
+    if config.target_modules is None:
+        return TARGET_MODULES.get(config.model_name)
+    return config.target_modules.split(",")
 
 
 def process_data(data, tokenizer, config):
