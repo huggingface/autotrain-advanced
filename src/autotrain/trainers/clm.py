@@ -299,7 +299,7 @@ def train(config):
     if config.push_to_hub:
         logger.info("Pushing model to hub...")
         api = HfApi()
-        api.create_repo(repo_id=config.repo_id, repo_type="model")
+        api.create_repo(repo_id=config.repo_id, repo_type="model", exist_ok=True)
         api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
 
 
