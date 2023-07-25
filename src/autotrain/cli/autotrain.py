@@ -2,6 +2,7 @@ import argparse
 
 from .. import __version__
 from .run_app import RunAutoTrainAppCommand
+from .run_dreambooth import RunAutoTrainDreamboothCommand
 from .run_llm import RunAutoTrainLLMCommand
 from .run_setup import RunSetupCommand
 
@@ -19,6 +20,7 @@ def main():
     RunAutoTrainAppCommand.register_subcommand(commands_parser)
     RunAutoTrainLLMCommand.register_subcommand(commands_parser)
     RunSetupCommand.register_subcommand(commands_parser)
+    RunAutoTrainDreamboothCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

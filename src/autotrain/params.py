@@ -23,8 +23,8 @@ class DreamBoothTrainingParams(BaseModel):
     prior_loss_weight: float = Field(1.0, title="Prior loss weight")
     num_class_images: int = Field(100, title="Number of class images")
     output_dir: str = Field("lora-dreambooth-model", title="Output directory")
-    seed: str = Field(42, title="Seed")
-    resolution: str = Field(512, title="Resolution")
+    seed: int = Field(42, title="Seed")
+    resolution: int = Field(512, title="Resolution")
     center_crop: bool = Field(False, title="Center crop")
     train_text_encoder: bool = Field(False, title="Train text encoder")
     train_batch_size: int = Field(4, title="Train batch size")
@@ -39,7 +39,7 @@ class DreamBoothTrainingParams(BaseModel):
     learning_rate: float = Field(5e-4, title="Learning rate")
     scale_lr: bool = Field(False, title="Scale learning rate")
     lr_scheduler: str = Field("constant", title="Learning rate scheduler")
-    lr_warmup_steps: int = Field(500, title="Learning rate warmup steps")
+    lr_warmup_steps: int = Field(0, title="Learning rate warmup steps")
     lr_num_cycles: int = Field(1, title="Learning rate num cycles")
     lr_power: float = Field(1.0, title="Learning rate power")
     dataloader_num_workers: int = Field(0, title="Dataloader num workers")
@@ -65,6 +65,7 @@ class DreamBoothTrainingParams(BaseModel):
     validation_images: str = Field(None, title="Validation images")
     class_labels_conditioning: str = Field(None, title="Class labels conditioning")
     rank: int = Field(4, title="Rank")
+    xl: bool = Field(False, title="XL")
 
 
 class LoraR:
