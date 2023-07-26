@@ -294,7 +294,7 @@ def process_images(data_path, job_config):
 @at_utils.job_watcher
 def train_ui(co2_tracker, payload, huggingface_token, model_path):
     data_repo_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data_path = "output/data"
+    data_path = "/tmp/data"
     data_repo = at_utils.clone_hf_repo(
         local_dir=data_path,
         repo_url="https://huggingface.co/datasets/" + data_repo_path,
@@ -310,7 +310,9 @@ def train_ui(co2_tracker, payload, huggingface_token, model_path):
     del job_config["model_name"]
     if "device" in job_config:
         del job_config["device"]
+    logger.info(f"job_config: {job_config}")
     job_config = DreamboothParams(**job_config)
+    logger.info(f"job_config: {job_config}")
 
     logger.info("Create model repo")
     project_name = payload["proj_name"]
@@ -339,7 +341,7 @@ def train_ui(co2_tracker, payload, huggingface_token, model_path):
         resolution=job_config.image_size,
         fp16=True,
         batch_size=job_config.train_batch_size,
-        gradient_accumulation_steps=1,
+        gradient_accumulation=job_config.gradient_accumulation_steps,
         use_8bit_adam=True,
         lr=job_config.learning_rate,
         scheduler="constant",

@@ -160,6 +160,7 @@ class Project:
                 "params": self.job_params,
             },
         }
+        logger.info(f"🚀 Creating project with payload: {payload}")
 
         if local is True:
             return self.create_local(payload=payload)

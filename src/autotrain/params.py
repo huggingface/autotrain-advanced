@@ -273,6 +273,7 @@ class DreamboothParams(BaseModel):
     prior_preservation: bool = Field(False, title="Prior preservation")
     learning_rate: float = Field(2e-6, title="Learning rate")
     train_batch_size: int = Field(1, title="Training batch size")
+    gradient_accumulation_steps: int = Field(1, title="Gradient accumulation steps")
 
 
 class ImageBinaryClassificationParams(BaseModel):
@@ -350,6 +351,7 @@ class Params:
                 "learning_rate": LearningRate,
                 "train_batch_size": TrainBatchSize,
                 "num_steps": DBNumSteps,
+                "gradient_accumulation_steps": GradientAccumulationSteps,
             }
         if self.param_choice == "autotrain":
             if self.model_choice == "hub_model":
