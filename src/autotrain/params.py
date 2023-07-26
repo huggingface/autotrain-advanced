@@ -350,8 +350,6 @@ class Params:
                 "learning_rate": LearningRate,
                 "train_batch_size": TrainBatchSize,
                 "num_steps": DBNumSteps,
-                "text_encoder_steps_percentage": DBTextEncoderStepsPercentage,
-                "prior_preservation": DBPriorPreservation,
             }
         if self.param_choice == "autotrain":
             if self.model_choice == "hub_model":

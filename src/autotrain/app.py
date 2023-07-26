@@ -718,25 +718,10 @@ def main():
                         with gr.Row():
                             db_num_steps = gr.Number(
                                 label="Num Steps",
-                                value=1000,
+                                value=500,
                                 visible=False,
                                 interactive=True,
                                 elem_id="num_steps",
-                            )
-                            db_prior_preservation = gr.Dropdown(
-                                label="Prior Preservation",
-                                choices=["True", "False"],
-                                value="True",
-                                visible=False,
-                                interactive=True,
-                                elem_id="prior_preservation",
-                            )
-                            db_text_encoder_steps_percentage = gr.Number(
-                                label="Text Encoder Steps Percentage",
-                                value=0.1,
-                                visible=False,
-                                interactive=True,
-                                elem_id="text_encoder_steps_percentage",
                             )
                         with gr.Row():
                             optimizer = gr.Dropdown(
@@ -806,9 +791,7 @@ def main():
             percentage_warmup_steps,
             weight_decay,
             db_num_steps,
-            db_prior_preservation,
             image_size,
-            db_text_encoder_steps_percentage,
         ]
 
         def _update_params(params_data):

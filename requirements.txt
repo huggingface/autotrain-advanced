@@ -22,6 +22,7 @@ triton==2.0.0.post1
 requests==2.31.0
 gradio==3.37.0
 einops==0.6.1
+invisible-watermark==0.2.0
 # latest versions
 tensorboard
 peft
