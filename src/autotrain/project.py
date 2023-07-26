@@ -76,7 +76,7 @@ class Project:
             self.max_models = len(self.job_params)
 
     def create_local(self, payload):
-        from autotrain.trainers.dreambooth import train as train_dreambooth
+        from autotrain.trainers.dreambooth import train_dreambooth_deprecated as train_dreambooth
         from autotrain.trainers.image_classification import train as train_image_classification
         from autotrain.trainers.lm_trainer import train as train_lm
         from autotrain.trainers.text_classification import train as train_text_classification
