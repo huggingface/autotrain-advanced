@@ -5,9 +5,16 @@ from argparse import ArgumentParser
 from loguru import logger
 
 from autotrain.cli import BaseAutoTrainCommand
-from autotrain.trainers.dreambooth import train as train_dreambooth
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
-from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
+
+
+try:
+    from autotrain.trainers.dreambooth import train as train_dreambooth
+    from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+    from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
+except ImportError:
+    logger.warning(
+        "❌ Some DreamBooth components are missing! Please run `autotrain setup` to install it. Ignore this warning if you are not using DreamBooth or running `autotrain setup` already."
+    )
 
 
 def count_images(directory):
