@@ -342,6 +342,7 @@ def _update_hub_model_choices(task, model_choice):
         hub_models = list(list_models(filter="image-classification", sort="downloads", direction=-1, limit=100))
     elif task == "dreambooth":
         hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100))
+        hub_models = ["stabilityai/stable-diffusion-xl-base-1.0"] + hub_models
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
