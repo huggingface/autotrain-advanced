@@ -27,7 +27,9 @@ RUN apt-get update &&  \
     libsndfile1-dev \
     git \
     git-lfs \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
+
 
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
     git lfs install
