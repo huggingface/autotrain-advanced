@@ -352,6 +352,7 @@ def train_ui(co2_tracker, payload, huggingface_token, model_path):
         hub_model_id=f"{repo_user}/{repo_name}",
         xl=xl,
         prompt=concept_prompts,
+        hub_token=huggingface_token,
     )
     train(args)
 

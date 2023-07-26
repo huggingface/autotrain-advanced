@@ -5,3 +5,5 @@ output/
 output2/
 test/
 test.py
+.DS_Store
+.vscode/

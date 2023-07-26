@@ -441,6 +441,7 @@ class Trainer:
             repo_id=self.config.hub_model_id,
             exist_ok=True,
             private=True,
+            token=self.config.hub_token,
         ).repo_id
 
         utils.create_model_card(
@@ -455,4 +456,5 @@ class Trainer:
             folder_path=self.config.output,
             commit_message="End of training",
             ignore_patterns=["step_*", "epoch_*"],
+            token=self.config.hub_token,
         )
