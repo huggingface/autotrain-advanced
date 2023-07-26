@@ -16,7 +16,11 @@ from autotrain.trainers.dreambooth.datasets import PromptDataset
 
 
 VALID_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
-XL_MODELS = ["stabilityai/stable-diffusion-xl-base-0.9"]
+XL_MODELS = [
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    "stabilityai/stable-diffusion-xl-base-0.9",
+    "diffusers/stable-diffusion-xl-base-1.0",
+]
 
 
 def create_model_card(repo_id: str, base_model: str, train_text_encoder: bool, prompt: str, repo_folder: str):

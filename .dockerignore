@@ -1,0 +1,7 @@
+build/
+dist/
+logs/
+output/
+output2/
+test/
+test.py

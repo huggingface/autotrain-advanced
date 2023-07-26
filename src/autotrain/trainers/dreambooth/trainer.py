@@ -282,19 +282,20 @@ class Trainer:
 
     def _get_model_pred(self, batch, channels, noisy_model_input, timesteps, bsz):
         if self.config.xl:
+            elems_to_repeat = bsz // 2 if self.config.prior_preservation else bsz
             if not self.config.train_text_encoder:
                 unet_added_conditions = {
-                    "time_ids": self.add_time_ids.repeat(bsz, 1),
-                    "text_embeds": self.unet_add_text_embeds.repeat(bsz, 1),
+                    "time_ids": self.add_time_ids.repeat(elems_to_repeat, 1),
+                    "text_embeds": self.unet_add_text_embeds.repeat(elems_to_repeat, 1),
                 }
                 model_pred = self.unet(
                     noisy_model_input,
                     timesteps,
-                    self.prompt_embeds.repeat(bsz, 1, 1),
+                    self.prompt_embeds.repeat(elems_to_repeat, 1, 1),
                     added_cond_kwargs=unet_added_conditions,
                 ).sample
             else:
-                unet_added_conditions = {"time_ids": self.add_time_ids.repeat(bsz, 1)}
+                unet_added_conditions = {"time_ids": self.add_time_ids.repeat(elems_to_repeat, 1)}
                 prompt_embeds, pooled_prompt_embeds = utils.encode_prompt_xl(
                     text_encoders=self.text_encoders,
                     tokenizers=None,
@@ -302,7 +303,7 @@ class Trainer:
                     text_input_ids_list=[self.tokens_one, self.tokens_two],
                 )
                 unet_added_conditions.update({"text_embeds": pooled_prompt_embeds.repeat(bsz, 1)})
-                prompt_embeds = prompt_embeds.repeat(bsz, 1, 1)
+                prompt_embeds = prompt_embeds.repeat(elems_to_repeat, 1, 1)
                 model_pred = self.unet(
                     noisy_model_input, timesteps, prompt_embeds, added_cond_kwargs=unet_added_conditions
                 ).sample
