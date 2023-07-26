@@ -5,6 +5,7 @@ test/
 test.py
 output/
 output2/
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
