@@ -342,12 +342,22 @@ def _update_hub_model_choices(task, model_choice):
         hub_models = list(list_models(filter="image-classification", sort="downloads", direction=-1, limit=100))
     elif task == "dreambooth":
         hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100))
-        hub_models = ["stabilityai/stable-diffusion-xl-base-1.0"] + hub_models
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
     hub_models = [{"id": m.modelId, "downloads": m.downloads} for m in hub_models if m.private is False]
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
+
+    if task == "dreambooth":
+        choices = ["stabilityai/stable-diffusion-xl-base-1.0"] + [m["id"] for m in hub_models]
+        value = choices[0]
+        return gr.Dropdown.update(
+            choices=choices,
+            value=value,
+            visible=True,
+            interactive=True,
+        )
+
     return gr.Dropdown.update(
         choices=[m["id"] for m in hub_models],
         value=hub_models[0]["id"],
