@@ -131,6 +131,10 @@ def _run_training(
     if os.path.exists(os.path.join("/tmp", "training")):
         return gr.Markdown.update(value="❌ Another training job is already running in this space.")
 
+    # create a training tracker file in /tmp/
+    with open(os.path.join("/tmp", "training"), "w") as f:
+        f.write("training")
+
     hub_model_id = whoami(token=hub_token)["name"] + "/" + str(project_name).strip()
 
     image_path = "/tmp/data"
