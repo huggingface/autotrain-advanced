@@ -43,15 +43,14 @@ Welcome to the AutoTrain DreamBooth! This app allows you to train a DreamBooth m
 The app runs on HuggingFace Spaces. Your data is not stored anywhere.
 The trained model (LoRA) will be pushed to your HuggingFace Hub account.
 
-You need to use your HuggingFace Hub write token to push the model to your account.
-Your write token can be found/generated here: https://huggingface.co/settings/tokens
+You need to use your HuggingFace Hub write [token](https://huggingface.co/settings/tokens) to push the model to your account.
 
 NOTE: This space requires GPU to train. Please make sure you have GPU enabled in space settings.
 Space will pause itself if training finishes successfully.
 """
 
 STEPS = """
-1. Duplicate this space
+1. [Duplicate](https://huggingface.co/spaces/autotrain-projects/dreambooth?duplicate=true) this space
 2. Upgrade the space to GPU
 3. Enter your HuggingFace Hub write token
 4. Upload images and adjust prompt (remember the prompt!)
@@ -122,6 +121,11 @@ def _run_training(
     resolution,
     fp16,
 ):
+    if REPO_ID == "autotrain-projects/dreambooth":
+        return gr.Markdown.update(
+            value="❌ Please [duplicate](https://huggingface.co/spaces/autotrain-projects/dreambooth?duplicate=true) this space before training."
+        )
+
     api = HfApi(token=hub_token)
 
     if os.path.exists(os.path.join("/tmp", "training")):
