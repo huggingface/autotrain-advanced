@@ -46,7 +46,10 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.task = task
 
     def run(self):
-        from ..app import main
+        if self.task == "dreambooth":
+            from ..dreambooth_app import main
+        else:
+            from ..app import main
 
         demo = main()
         demo.launch()

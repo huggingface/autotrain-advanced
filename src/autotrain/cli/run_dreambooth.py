@@ -36,47 +36,56 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--model",
                 "help": "Model to use for training",
                 "required": True,
+                "type": str,
             },
             {
                 "arg": "--revision",
                 "help": "Model revision to use for training",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--tokenizer",
                 "help": "Tokenizer to use for training",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--image-path",
                 "help": "Path to the images",
                 "required": True,
+                "type": str,
             },
             {
                 "arg": "--class-image-path",
                 "help": "Path to the class images",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--prompt",
                 "help": "Instance prompt",
                 "required": True,
+                "type": str,
             },
             {
                 "arg": "--class-prompt",
                 "help": "Class prompt",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--num-class-images",
                 "help": "Number of class images",
                 "required": False,
                 "default": 100,
+                "type": int,
             },
             {
                 "arg": "--class-labels-conditioning",
                 "help": "Class labels conditioning",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--prior-preservation",
@@ -89,22 +98,26 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Prior loss weight",
                 "required": False,
                 "default": 1.0,
+                "type": float,
             },
             {
                 "arg": "--output",
                 "help": "Output directory",
                 "required": True,
+                "type": str,
             },
             {
                 "arg": "--seed",
                 "help": "Seed",
                 "required": False,
                 "default": 42,
+                "type": int,
             },
             {
                 "arg": "--resolution",
                 "help": "Resolution",
                 "required": True,
+                "type": int,
             },
             {
                 "arg": "--center-crop",
@@ -123,40 +136,47 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Train batch size",
                 "required": False,
                 "default": 4,
+                "type": int,
             },
             {
                 "arg": "--sample-batch-size",
                 "help": "Sample batch size",
                 "required": False,
                 "default": 4,
+                "type": int,
             },
             {
                 "arg": "--epochs",
                 "help": "Number of training epochs",
                 "required": False,
                 "default": 1,
+                "type": int,
             },
             {
                 "arg": "--num-steps",
                 "help": "Max train steps",
                 "required": False,
+                "type": int,
             },
             {
                 "arg": "--checkpointing-steps",
                 "help": "Checkpointing steps",
                 "required": False,
                 "default": 500,
+                "type": int,
             },
             {
                 "arg": "--resume-from-checkpoint",
                 "help": "Resume from checkpoint",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--gradient-accumulation",
                 "help": "Gradient accumulation steps",
                 "required": False,
                 "default": 1,
+                "type": int,
             },
             {
                 "arg": "--gradient-checkpointing",
@@ -169,6 +189,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Learning rate",
                 "required": False,
                 "default": 5e-4,
+                "type": float,
             },
             {
                 "arg": "--scale-lr",
@@ -187,24 +208,28 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Learning rate warmup steps",
                 "required": False,
                 "default": 0,
+                "type": int,
             },
             {
                 "arg": "--num-cycles",
                 "help": "Learning rate num cycles",
                 "required": False,
                 "default": 1,
+                "type": int,
             },
             {
                 "arg": "--lr-power",
                 "help": "Learning rate power",
                 "required": False,
                 "default": 1.0,
+                "type": float,
             },
             {
                 "arg": "--dataloader-num-workers",
                 "help": "Dataloader num workers",
                 "required": False,
                 "default": 0,
+                "type": int,
             },
             {
                 "arg": "--use-8bit-adam",
@@ -217,30 +242,35 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Adam beta 1",
                 "required": False,
                 "default": 0.9,
+                "type": float,
             },
             {
                 "arg": "--adam-beta2",
                 "help": "Adam beta 2",
                 "required": False,
                 "default": 0.999,
+                "type": float,
             },
             {
                 "arg": "--adam-weight-decay",
                 "help": "Adam weight decay",
                 "required": False,
                 "default": 1e-2,
+                "type": float,
             },
             {
                 "arg": "--adam-epsilon",
                 "help": "Adam epsilon",
                 "required": False,
                 "default": 1e-8,
+                "type": float,
             },
             {
                 "arg": "--max-grad-norm",
                 "help": "Max grad norm",
                 "required": False,
                 "default": 1.0,
+                "type": float,
             },
             {
                 "arg": "--allow-tf32",
@@ -252,12 +282,14 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--prior-generation-precision",
                 "help": "Prior generation precision",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--local-rank",
                 "help": "Local rank",
                 "required": False,
                 "default": -1,
+                "type": int,
             },
             {
                 "arg": "--xformers",
@@ -275,6 +307,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--tokenizer-max-length",
                 "help": "Tokenizer max length",
                 "required": False,
+                "type": int,
             },
             {
                 "arg": "--text-encoder-use-attention-mask",
@@ -287,6 +320,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Rank",
                 "required": False,
                 "default": 4,
+                "type": int,
             },
             {
                 "arg": "--xl",
@@ -310,11 +344,13 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--hub-token",
                 "help": "Hub token",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--hub-model-id",
                 "help": "Hub model id",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--push-to-hub",
@@ -326,28 +362,33 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--validation-prompt",
                 "help": "Validation prompt",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--num-validation-images",
                 "help": "Number of validation images",
                 "required": False,
                 "default": 4,
+                "type": int,
             },
             {
                 "arg": "--validation-epochs",
                 "help": "Validation epochs",
                 "required": False,
                 "default": 50,
+                "type": int,
             },
             {
                 "arg": "--checkpoints-total-limit",
                 "help": "Checkpoints total limit",
                 "required": False,
+                "type": int,
             },
             {
                 "arg": "--validation-images",
                 "help": "Validation images",
                 "required": False,
+                "type": str,
             },
             {
                 "arg": "--logging",
@@ -359,17 +400,27 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
 
         run_dreambooth_parser = parser.add_parser("dreambooth", description="✨ Run AutoTrain DreamBooth Training")
         for arg in arg_list:
-            run_dreambooth_parser.add_argument(
-                arg["arg"],
-                help=arg["help"],
-                required=arg.get("required", False),
-                action=arg.get("action"),
-                default=arg.get("default"),
-            )
+            if "action" in arg:
+                run_dreambooth_parser.add_argument(
+                    arg["arg"],
+                    help=arg["help"],
+                    required=arg.get("required", False),
+                    action=arg.get("action"),
+                    default=arg.get("default"),
+                )
+            else:
+                run_dreambooth_parser.add_argument(
+                    arg["arg"],
+                    help=arg["help"],
+                    required=arg.get("required", False),
+                    type=arg.get("type"),
+                    default=arg.get("default"),
+                )
         run_dreambooth_parser.set_defaults(func=run_dreambooth_command_factory)
 
     def __init__(self, args):
         self.args = args
+        logger.info(self.args)
 
         store_true_arg_names = [
             "center_crop",
