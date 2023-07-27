@@ -46,7 +46,7 @@ The trained model (LoRA) will be pushed to your HuggingFace Hub account.
 You need to use your HuggingFace Hub write [token](https://huggingface.co/settings/tokens) to push the model to your account.
 
 NOTE: This space requires GPU to train. Please make sure you have GPU enabled in space settings.
-Space will pause itself if training finishes successfully.
+Please make sure to shutdown / pause the space to avoid any additional charges.
 """
 
 STEPS = """
@@ -56,6 +56,8 @@ STEPS = """
 4. Upload images and adjust prompt (remember the prompt!)
 5. Click on Train and wait for the training to finish
 6. Go to your HuggingFace Hub account to find the trained model
+
+NOTE: For any issues or feature requests, please open an issue [here](https://github.com/huggingface/autotrain-advanced/issues)
 """
 
 
