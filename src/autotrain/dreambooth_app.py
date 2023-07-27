@@ -131,7 +131,6 @@ def _run_training(
     if os.path.exists(os.path.join("/tmp", "training")):
         return gr.Markdown.update(value="❌ Another training job is already running in this space.")
 
-    # create a training tracker file in /tmp/
     with open(os.path.join("/tmp", "training"), "w") as f:
         f.write("training")
 
