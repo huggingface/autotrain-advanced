@@ -52,4 +52,4 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             from ..app import main
 
         demo = main()
-        demo.launch(concurrency_count=10)
+        demo.queue(concurrency_count=10).launch()
