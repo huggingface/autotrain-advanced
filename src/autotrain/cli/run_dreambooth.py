@@ -162,7 +162,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "arg": "--checkpointing-steps",
                 "help": "Checkpointing steps",
                 "required": False,
-                "default": 500,
+                "default": 100000,
                 "type": int,
             },
             {
