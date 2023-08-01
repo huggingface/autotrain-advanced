@@ -175,7 +175,7 @@ class Trainer:
                 self.prompt_embeds = torch.cat([self.prompt_embeds, class_prompt_hidden_states], dim=0)
                 self.unet_add_text_embeds = torch.cat([self.unet_add_text_embeds, class_pooled_prompt_embeds], dim=0)
         else:
-            self.tokens_one = utils.tokenize_prompt(self.tokenizers[0], self.config.promt).input_ids
+            self.tokens_one = utils.tokenize_prompt(self.tokenizers[0], self.config.prompt).input_ids
             self.tokens_two = utils.tokenize_prompt(self.tokenizers[1], self.config.prompt).input_ids
             if self.config.prior_preservation:
                 class_tokens_one = utils.tokenize_prompt(self.tokenizers[0], self.config.class_prompt).input_ids
