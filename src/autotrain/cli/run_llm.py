@@ -205,7 +205,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         )
         run_llm_parser.add_argument(
             "--use_peft",
-            help="Use PEFT to use",
+            help="Use PEFT",
             required=False,
             action="store_true",
         )
