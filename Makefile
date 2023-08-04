@@ -20,3 +20,9 @@ docker:
 	docker build -t autotrain-advanced:latest .
 	docker tag autotrain-advanced:latest huggingface/autotrain-advanced:latest
 	docker push huggingface/autotrain-advanced:latest
+
+pip:
+	rm -rf build/
+	rm -rf dist/
+	python setup.py sdist bdist_wheel
+	twine upload dist/* --verbose

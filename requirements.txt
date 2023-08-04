@@ -11,14 +11,12 @@ pandas>=1.5.3
 Pillow==8.2.0
 protobuf==4.23.4
 pydantic==1.10.11
-pyyaml==6.0.1
 sacremoses==0.0.53
 scikit-learn==1.2.2
 sentencepiece==0.1.99
 tqdm==4.62.1
 werkzeug==2.3.6
 huggingface_hub>=0.14.1
-triton==2.0.0.post1
 requests==2.31.0
 gradio==3.37.0
 einops==0.6.1
