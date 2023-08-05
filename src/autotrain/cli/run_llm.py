@@ -425,5 +425,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                     ]
                 )
 
-                process = subprocess.Popen(cmd)
+                env = os.environ.copy()
+                process = subprocess.Popen(cmd, env=env)
                 process.wait()
