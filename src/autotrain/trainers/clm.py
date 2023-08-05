@@ -4,6 +4,7 @@ from functools import partial
 
 import pandas as pd
 import torch
+from accelerate import Accelerator
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
 from loguru import logger
@@ -17,7 +18,6 @@ from transformers import (
     TrainingArguments,
     default_data_collator,
 )
-from accelerate import Accelerator
 from trl import SFTTrainer
 
 from autotrain.trainers import utils
@@ -308,13 +308,14 @@ def train(config):
 if __name__ == "__main__":
     config = {
         # "model_name": "gpt2",
-        "model_name": "Salesforce/xgen-7b-8k-base",
+        # "model_name": "Salesforce/xgen-7b-8k-base",
+        "model_name": "meta-llama/Llama-2-13b-hf",
         "data_path": "timdettmers/openassistant-guanaco",
         "push_to_hub": False,
         "project_name": "output",
         "use_peft": True,
         "use_int4": True,
-        "train_batch_size": 4,
+        "train_batch_size": 24,
     }
 
     train(config)
