@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import sys
 from functools import partial
@@ -22,6 +24,13 @@ from trl import SFTTrainer
 
 from autotrain.trainers import utils
 from autotrain.trainers.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
+
+
+def parse_args():
+    # get training_config.json from the end user
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--training_config", type=str, required=True)
+    return parser.parse_args()
 
 
 def train(config):
@@ -306,16 +315,7 @@ def train(config):
 
 
 if __name__ == "__main__":
-    config = {
-        # "model_name": "gpt2",
-        # "model_name": "Salesforce/xgen-7b-8k-base",
-        "model_name": "meta-llama/Llama-2-13b-hf",
-        "data_path": "timdettmers/openassistant-guanaco",
-        "push_to_hub": False,
-        "project_name": "output",
-        "use_peft": True,
-        "use_int4": True,
-        "train_batch_size": 24,
-    }
-
+    args = parse_args()
+    training_config = json.load(open(args.training_config))
+    config = utils.LLMTrainingParams(**training_config)
     train(config)
