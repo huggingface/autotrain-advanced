@@ -1,3 +1,4 @@
+import os
 from itertools import chain
 
 import torch
@@ -70,6 +71,13 @@ class LLMTrainingParams(BaseModel):
     use_int4: bool = Field(False, title="Use int4")
     trainer: str = Field("default", title="Trainer type")
     target_modules: str = Field(None, title="Target modules")
+
+    def save(self, output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        path = os.path.join(output_dir, "training_params.json")
+        # save formatted json
+        with open(path, "w") as f:
+            f.write(self.json(indent=4))
 
 
 def get_target_modules(config):

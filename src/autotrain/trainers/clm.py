@@ -1,9 +1,12 @@
+import argparse
+import json
 import os
 import sys
 from functools import partial
 
 import pandas as pd
 import torch
+from accelerate import Accelerator
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
 from loguru import logger
@@ -21,6 +24,13 @@ from trl import SFTTrainer
 
 from autotrain.trainers import utils
 from autotrain.trainers.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
+
+
+def parse_args():
+    # get training_config.json from the end user
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--training_config", type=str, required=True)
+    return parser.parse_args()
 
 
 def train(config):
@@ -108,7 +118,7 @@ def train(config):
             use_auth_token=config.huggingface_token,
             quantization_config=bnb_config,
             torch_dtype=torch.float16,
-            device_map="auto",
+            device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
             trust_remote_code=True,
         )
     else:
@@ -226,6 +236,7 @@ def train(config):
         fp16=config.fp16,
         push_to_hub=False,
         load_best_model_at_end=True if config.valid_split is not None else False,
+        ddp_find_unused_parameters=False,
     )
 
     args = TrainingArguments(**training_args)
@@ -304,13 +315,7 @@ def train(config):
 
 
 if __name__ == "__main__":
-    config = {
-        # "model_name": "gpt2",
-        "model_name": "Salesforce/xgen-7b-8k-base",
-        "data_path": "tatsu-lab/alpaca",
-        "push_to_hub": False,
-        "project_name": "output",
-        "use_peft": True,
-    }
-
+    args = parse_args()
+    training_config = json.load(open(args.training_config))
+    config = utils.LLMTrainingParams(**training_config)
     train(config)
