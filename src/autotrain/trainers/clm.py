@@ -215,6 +215,7 @@ def train(config):
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
+        save_steps=config.save_steps,
         gradient_accumulation_steps=config.gradient_accumulation_steps,
         report_to="tensorboard",
         auto_find_batch_size=config.auto_find_batch_size,

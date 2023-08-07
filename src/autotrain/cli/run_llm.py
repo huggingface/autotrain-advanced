@@ -43,6 +43,7 @@ def run_llm_command_factory(args):
         args.evaluation_strategy,
         args.save_total_limit,
         args.save_strategy,
+        args.save_steps,
         args.auto_find_batch_size,
         args.fp16,
         args.push_to_hub,
@@ -278,6 +279,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             default="epoch",
         )
         run_llm_parser.add_argument(
+            "--save_steps",
+            help="Save steps to use",
+            required=False,
+            type=int,
+            default=500,
+        )
+        run_llm_parser.add_argument(
             "--auto_find_batch_size",
             help="Auto find batch size True/False",
             required=False,
@@ -371,6 +379,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         evaluation_strategy,
         save_total_limit,
         save_strategy,
+        save_steps,
         auto_find_batch_size,
         fp16,
         push_to_hub,
@@ -413,6 +422,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         self.evaluation_strategy = evaluation_strategy
         self.save_total_limit = save_total_limit
         self.save_strategy = save_strategy
+        self.save_steps = save_steps
         self.auto_find_batch_size = auto_find_batch_size
         self.fp16 = fp16
         self.push_to_hub = push_to_hub
@@ -476,6 +486,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 evaluation_strategy=self.evaluation_strategy,
                 save_total_limit=self.save_total_limit,
                 save_strategy=self.save_strategy,
+                save_steps=self.save_steps,
                 auto_find_batch_size=self.auto_find_batch_size,
                 fp16=self.fp16,
                 push_to_hub=self.push_to_hub,
