@@ -48,6 +48,6 @@ class RunAutoTrainAPICommand(BaseAutoTrainCommand):
     def run(self):
         import uvicorn
 
-        from autotrain.api import app
+        from autotrain.api import api
 
-        uvicorn.run(app, host=self.host, port=self.port)
+        uvicorn.run(api, host=self.host, port=self.port)
