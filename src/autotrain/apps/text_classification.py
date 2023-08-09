@@ -9,12 +9,13 @@ import pandas as pd
 from huggingface_hub import list_models
 from loguru import logger
 
+from autotrain import allowed_file_types
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.utils import get_project_cost, get_user_token, user_authentication
-from autotrain import allowed_file_types
+
 
 BACKEND_CHOICES = {
     "A10G Large": 3.15,
@@ -260,7 +261,7 @@ def main():
             clear_jobs_button = gr.Button(value="Clear Jobs", elem_id="clear_jobs_button")
             start_training_button = gr.Button(value="Start Training", elem_id="start_training_button")
 
-        jobs_df = gr.DataFrame(visible=False, interactive=False)
+        jobs_df = gr.DataFrame(visible=False, interactive=False, value=pd.DataFrame())
 
         hyperparameters = [
             hyp_scheduler,
@@ -329,16 +330,48 @@ def main():
         )
 
         def _add_job(components):
-            if len(str(components[col_map_text].strip())) == 0:
-                raise gr.Error("Text column cannot be empty.")
-            if len(str(components[col_map_target].strip())) == 0:
-                raise gr.Error("Target column cannot be empty.")
-            if components[col_map_text] == components[col_map_target]:
-                raise gr.Error("Text and Target column cannot be the same.")
+            # if len(str(components[col_map_text].strip())) == 0:
+            #     raise gr.Error("Text column cannot be empty.")
+            # if len(str(components[col_map_target].strip())) == 0:
+            #     raise gr.Error("Target column cannot be empty.")
+            # if components[col_map_text] == components[col_map_target]:
+            #     raise gr.Error("Text and Target column cannot be the same.")
+            print(components[jobs_df])
+            _training_params = {}
+            if components[param_choice] == "AutoTrain":
+                for _hyperparameter in hyperparameters:
+                    if _hyperparameter.elem_id in ["hyp_num_jobs", "hyp_language"]:
+                        _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
+            else:
+                for _hyperparameter in hyperparameters:
+                    if _hyperparameter.elem_id not in ["hyp_num_jobs", "hyp_language"]:
+                        _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
+
+            print(_training_params)
+            if components[param_choice] == "AutoTrain":
+                # create a new dataframe from dict
+                _training_params_df = pd.DataFrame([_training_params])
+            else:
+                # add row to the dataframe
+                if len(components[jobs_df]) == 0:
+                    _training_params_df = pd.DataFrame([_training_params])
+                else:
+                    _training_params_df = components[jobs_df]
+                    _training_params_df.columns = [f"hyp_{c}" for c in _training_params_df.columns]
+                    # convert dataframe to list of dicts
+                    _training_params_df = _training_params_df.to_dict(orient="records")
+                    # append new dict to the list
+                    _training_params_df.append(_training_params)
+                    _training_params_df = pd.DataFrame(_training_params_df)
+
+            # remove hyp_ from column names
+            _training_params_df.columns = [c[len("hyp_") :] for c in _training_params_df.columns]
+            _training_params_df = _training_params_df.reset_index(drop=True)
+            return gr.DataFrame.update(value=_training_params_df, visible=True, interactive=False)
 
         add_job_button.click(
             _add_job,
-            inputs=set([param_choice, col_map_text, col_map_target] + hyperparameters),
+            inputs=set([param_choice, col_map_text, col_map_target, jobs_df] + hyperparameters),
             outputs=jobs_df,
         )
 

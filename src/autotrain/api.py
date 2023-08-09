@@ -5,6 +5,7 @@ import psutil
 from fastapi import FastAPI
 from loguru import logger
 
+
 HF_TOKEN = os.environ.get("HF_TOKEN")
 REPO_ID = os.environ.get("REPO_ID")
 # TASK_ID = int(os.environ.get("TASK_ID"))

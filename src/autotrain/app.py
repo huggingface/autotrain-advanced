@@ -9,12 +9,13 @@ import pandas as pd
 from huggingface_hub import list_models
 from loguru import logger
 
+from autotrain import allowed_file_types
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.utils import get_project_cost, get_user_token, user_authentication
-from autotrain import allowed_file_types
+
 
 APP_TASKS = {
     "Natural Language Processing": ["Text Classification", "LLM Finetuning"],
