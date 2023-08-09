@@ -347,7 +347,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
 
         if self.args.inference:
             tgi = TextGenerationInference(
-                self.args.project_name, use_int4=self.args.use_int4, use_int8=self.args.use_int8
+                self.args.project_name or self.args.model, use_int4=self.args.use_int4, use_int8=self.args.use_int8
             )
             while True:
                 prompt = input("User: ")
