@@ -53,6 +53,12 @@ class RunSetupCommand(BaseAutoTrainCommand):
         _, _ = pipe.communicate()
         logger.info("Successfully installed latest trl")
 
+        cmd = "pip install -U xformers"
+        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info("Installing latest xformers")
+        _, _ = pipe.communicate()
+        logger.info("Successfully installed latest xformers")
+
         if self.update_torch:
             cmd = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
             pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
