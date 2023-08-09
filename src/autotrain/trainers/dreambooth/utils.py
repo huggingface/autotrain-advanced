@@ -292,9 +292,19 @@ def load_model_components(config, device, weight_dtype):
     return tokenizers, text_encoders, vae, unet, noise_scheduler
 
 
+def enable_gradient_checkpointing(unet, text_encoders, config):
+    if config.gradient_checkpointing:
+        logger.info("Enabling gradient checkpointing.")
+        unet.enable_gradient_checkpointing()
+        if config.train_text_encoder:
+            for i in range(len(text_encoders)):
+                text_encoders[i].gradient_checkpointing_enable()
+
+
 def enable_xformers(unet, config):
     if config.xformers:
         if is_xformers_available():
+            logger.info("Enabling xformers")
             import xformers
 
             xformers_version = version.parse(xformers.__version__)

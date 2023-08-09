@@ -84,6 +84,7 @@ def train(config):
     )
 
     utils.enable_xformers(unet, config)
+    utils.enable_gradient_checkpointing(unet, text_encoders, config)
 
     unet_lora_attn_procs = {}
     unet_lora_parameters = []
