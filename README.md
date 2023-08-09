@@ -15,8 +15,7 @@ Please make sure that you have git lfs installed. Check out the instructions her
 
 | Task | Colab Link |
 | --- | --- |
-| DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb)
- |
+| DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
 
 
 ## Coming Soon!
