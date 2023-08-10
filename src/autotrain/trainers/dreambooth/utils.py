@@ -42,7 +42,7 @@ inference: true
     model_card = f"""
 # DreamBooth trained by AutoTrain
 
-Test enoder was {text_encoder_text}.
+Test encoder was {text_encoder_text}.
 
 """
     with open(os.path.join(repo_folder, "README.md"), "w") as f:
