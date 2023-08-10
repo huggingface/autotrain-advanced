@@ -15,7 +15,7 @@ from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params
 from autotrain.project import Project
 from autotrain.utils import get_project_cost, get_user_token, user_authentication
-
+import numpy as np
 
 BACKEND_CHOICES = {
     "A10G Large": 3.15,
@@ -320,7 +320,7 @@ def main():
                 )
                 for h in hyperparameters
             ]
-            op.append(jobs_df.update(value=pd.DataFrame(), visible=False, interactive=False))
+            op.append(jobs_df.update(value=pd.DataFrame(columns=[0]), visible=False, interactive=False))
             return op
 
         param_choice.change(
@@ -336,6 +336,8 @@ def main():
             #     raise gr.Error("Target column cannot be empty.")
             # if components[col_map_text] == components[col_map_target]:
             #     raise gr.Error("Text and Target column cannot be the same.")
+            if components[param_choice] == "AutoTrain" and components[autotrain_backend] != "AutoTrain":
+                raise gr.Error("AutoTrain param choice is only available with AutoTrain backend.")
             print(components[jobs_df])
             _training_params = {}
             if components[param_choice] == "AutoTrain":
@@ -363,6 +365,12 @@ def main():
                     # append new dict to the list
                     _training_params_df.append(_training_params)
                     _training_params_df = pd.DataFrame(_training_params_df)
+                    # drop rows with all nan values
+                    _training_params_df.replace("", np.nan, inplace=True)
+                    # Drop rows with all missing values
+                    _training_params_df = _training_params_df.dropna(how="all")
+                    # Drop columns with all missing values
+                    _training_params_df = _training_params_df.dropna(axis=1, how="all")
 
             # remove hyp_ from column names
             _training_params_df.columns = [c[len("hyp_") :] for c in _training_params_df.columns]
@@ -371,7 +379,7 @@ def main():
 
         add_job_button.click(
             _add_job,
-            inputs=set([param_choice, col_map_text, col_map_target, jobs_df] + hyperparameters),
+            inputs=set([param_choice, autotrain_backend, col_map_text, col_map_target, jobs_df] + hyperparameters),
             outputs=jobs_df,
         )
 
