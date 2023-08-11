@@ -1,10 +1,13 @@
 import argparse
 
 from .. import __version__
+from .run_api import RunAutoTrainAPICommand
 from .run_app import RunAutoTrainAppCommand
 from .run_dreambooth import RunAutoTrainDreamboothCommand
+from .run_image_classification import RunAutoTrainImageClassificationCommand
 from .run_llm import RunAutoTrainLLMCommand
 from .run_setup import RunSetupCommand
+from .run_text_classification import RunAutoTrainTextClassificationCommand
 
 
 def main():
@@ -21,6 +24,9 @@ def main():
     RunAutoTrainLLMCommand.register_subcommand(commands_parser)
     RunSetupCommand.register_subcommand(commands_parser)
     RunAutoTrainDreamboothCommand.register_subcommand(commands_parser)
+    RunAutoTrainAPICommand.register_subcommand(commands_parser)
+    RunAutoTrainTextClassificationCommand.register_subcommand(commands_parser)
+    RunAutoTrainImageClassificationCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 
