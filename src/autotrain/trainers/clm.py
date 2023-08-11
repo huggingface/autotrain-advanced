@@ -301,11 +301,15 @@ def train(config):
 
     if config.use_peft:
         logger.info("Merging adapter weights...")
-        utils.merge_adapter(
-            base_model_path=config.model_name,
-            target_model_path=config.project_name,
-            adapter_path=config.project_name,
-        )
+        try:
+            utils.merge_adapter(
+                base_model_path=config.model_name,
+                target_model_path=config.project_name,
+                adapter_path=config.project_name,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to merge adapter weights: {e}")
+            logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
 
     if config.push_to_hub:
         logger.info("Pushing model to hub...")
