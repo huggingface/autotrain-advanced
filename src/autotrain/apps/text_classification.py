@@ -1,21 +1,16 @@
-import json
 import os
 import random
 import string
-import zipfile
 
 import gradio as gr
+import numpy as np
 import pandas as pd
-from huggingface_hub import list_models
-from loguru import logger
 
 from autotrain import allowed_file_types
-from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
+from autotrain.apps import utils as app_utils
 from autotrain.languages import SUPPORTED_LANGUAGES
-from autotrain.params import Params
-from autotrain.project import Project
-from autotrain.utils import get_project_cost, get_user_token, user_authentication
-import numpy as np
+from autotrain.utils import get_user_token, user_authentication
+
 
 BACKEND_CHOICES = {
     "A10G Large": 3.15,
@@ -258,7 +253,7 @@ def main():
 
         with gr.Row():
             add_job_button = gr.Button(value="Add Job", elem_id="add_job_button")
-            clear_jobs_button = gr.Button(value="Clear Jobs", elem_id="clear_jobs_button")
+            # clear_jobs_button = gr.Button(value="Clear Jobs", elem_id="clear_jobs_button")
             start_training_button = gr.Button(value="Start Training", elem_id="start_training_button")
 
         jobs_df = gr.DataFrame(visible=False, interactive=False, value=pd.DataFrame())
@@ -381,6 +376,21 @@ def main():
             _add_job,
             inputs=set([param_choice, autotrain_backend, col_map_text, col_map_target, jobs_df] + hyperparameters),
             outputs=jobs_df,
+        )
+
+        start_training_button.click(
+            app_utils.start_training,
+            inputs=[
+                jobs_df,
+                model_choice,
+                training_data,
+                validation_data,
+                project_name,
+                autotrain_username,
+                autotrain_backend,
+                user_token,
+            ],
+            outputs=[],
         )
 
         demo.load(_update_project_name, outputs=project_name)
