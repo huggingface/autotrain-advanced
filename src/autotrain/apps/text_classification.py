@@ -1,139 +1,21 @@
-import os
-import random
-import string
+from functools import partial
 
 import gradio as gr
-import numpy as np
 import pandas as pd
 
-from autotrain import allowed_file_types
+from autotrain.apps import common
 from autotrain.apps import utils as app_utils
 from autotrain.languages import SUPPORTED_LANGUAGES
-from autotrain.utils import get_user_token, user_authentication
-
-
-BACKEND_CHOICES = {
-    "A10G Large": 3.15,
-    "A10G Small": 1.05,
-    "A100 Large": 4.13,
-    "T4 Medium": 0.9,
-    "T4 Small": 0.6,
-    "CPU Upgrade": 0.03,
-    "CPU": 0.0,
-    "Local": 0.0,
-    "AutoTrain": -1,
-}
-
-MODEL_CHOICES = [
-    "bert-base-uncased",
-    "AutoTrain",
-]
-
-
-def _update_project_name():
-    random_project_name = "-".join(
-        ["".join(random.choices(string.ascii_lowercase + string.digits, k=4)) for _ in range(3)]
-    )
-    return gr.Text.update(value=random_project_name, visible=True, interactive=True)
-
-
-def _login_user(user_token):
-    user_info = user_authentication(token=user_token)
-    username = user_info["name"]
-
-    user_can_pay = user_info["canPay"]
-    orgs = user_info["orgs"]
-
-    valid_orgs = [org for org in orgs if org["canPay"] is True]
-    valid_orgs = [org for org in valid_orgs if org["roleInOrg"] in ("admin", "write")]
-    valid_orgs = [org["name"] for org in valid_orgs]
-
-    valid_can_pay = [username] + valid_orgs if user_can_pay else valid_orgs
-    who_is_training = [username] + [org["name"] for org in orgs]
-    return user_token, valid_can_pay, who_is_training
 
 
 def main():
     with gr.Blocks(theme="freddyaboulton/dracula_revamped") as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
         gr.Markdown("### 🚀 Text Classification")
-        user_token = os.environ.get("HF_TOKEN", "")
-
-        if len(user_token) == 0:
-            user_token = get_user_token()
-
-        if user_token is None:
-            gr.Markdown(
-                """Please login with a write [token](https://huggingface.co/settings/tokens).
-                Pass your HF token in an environment variable called `HF_TOKEN` and then restart this app.
-                """
-            )
-            return demo
-
-        user_token, valid_can_pay, who_is_training = _login_user(user_token)
-
-        if user_token is None or len(user_token) == 0:
-            gr.Error("Please login with a write token.")
-
-        user_token = gr.Textbox(
-            value=user_token, type="password", lines=1, max_lines=1, visible=False, interactive=False
-        )
-        valid_can_pay = gr.Textbox(value=",".join(valid_can_pay), visible=False, interactive=False)
-
+        user_token, valid_can_pay, who_is_training = common.user_validation()
+        autotrain_username, project_name, model_choice, autotrain_backend = common.base_components(who_is_training)
         with gr.Row():
-            with gr.Group():
-                with gr.Column():
-                    with gr.Row():
-                        autotrain_username = gr.Dropdown(
-                            label="AutoTrain Username",
-                            choices=who_is_training,
-                            value=who_is_training[0] if who_is_training else "",
-                            interactive=True,
-                        )
-                    with gr.Row():
-                        project_name = gr.Textbox(
-                            label="Project name",
-                            value="",
-                            lines=1,
-                            max_lines=1,
-                            interactive=True,
-                        )
-                        model_choice = gr.Dropdown(
-                            label="Model Choice",
-                            choices=MODEL_CHOICES,
-                            value=MODEL_CHOICES[0],
-                            visible=True,
-                            interactive=True,
-                            allow_custom_value=True,
-                        )
-                        autotrain_backend = gr.Dropdown(
-                            label="Backend",
-                            choices=list(BACKEND_CHOICES.keys()),
-                            value=list(BACKEND_CHOICES.keys())[0],
-                            interactive=True,
-                        )
-        gr.Markdown("<hr>")
-        with gr.Row():
-            with gr.Column():
-                with gr.Tabs(elem_id="tabs"):
-                    with gr.TabItem("Training Data"):
-                        training_data = gr.File(
-                            label="Training Data",
-                            file_types=allowed_file_types.TEXT_CLASSIFICATION,
-                            file_count="multiple",
-                            visible=True,
-                            interactive=True,
-                            elem_id="training_data",
-                        )
-                    with gr.TabItem("Validation Data (Optional)"):
-                        validation_data = gr.File(
-                            label="Validation Data",
-                            file_types=allowed_file_types.TEXT_CLASSIFICATION,
-                            file_count="multiple",
-                            visible=True,
-                            interactive=True,
-                            elem_id="validation_data",
-                        )
+            training_data, validation_data = common.train_valid_components()
             with gr.Column():
                 with gr.Group():
                     with gr.Row():
@@ -258,6 +140,47 @@ def main():
 
         jobs_df = gr.DataFrame(visible=False, interactive=False, value=pd.DataFrame())
 
+        def _update_col_map(training_data):
+            try:
+                data_cols = pd.read_csv(training_data[0].name, nrows=2).columns.tolist()
+            except TypeError:
+                return [
+                    gr.Dropdown.update(
+                        visible=True,
+                        interactive=False,
+                        choices=[],
+                        label="`text` column",
+                    ),
+                    gr.Dropdown.update(
+                        visible=True,
+                        interactive=False,
+                        choices=[],
+                        label="`target` column",
+                    ),
+                ]
+            return [
+                gr.Dropdown.update(
+                    visible=True,
+                    interactive=True,
+                    choices=data_cols,
+                    label="`text` column",
+                    value=data_cols[0],
+                ),
+                gr.Dropdown.update(
+                    visible=True,
+                    interactive=True,
+                    choices=data_cols,
+                    label="`target` column",
+                    value=data_cols[1],
+                ),
+            ]
+
+        training_data.change(
+            _update_col_map,
+            inputs=training_data,
+            outputs=[col_map_text, col_map_target],
+        )
+
         hyperparameters = [
             hyp_scheduler,
             hyp_optimizer,
@@ -285,7 +208,7 @@ def main():
                 op.append(autotrain_backend.update(value="AutoTrain", interactive=False))
             else:
                 op.append(param_choice.update(value="Manual", interactive=True))
-                op.append(autotrain_backend.update(value=list(BACKEND_CHOICES.keys())[0], interactive=True))
+                op.append(autotrain_backend.update(value=list(app_utils.BACKEND_CHOICES.keys())[0], interactive=True))
             return op
 
         model_choice.change(
@@ -325,15 +248,19 @@ def main():
         )
 
         def _add_job(components):
-            # if len(str(components[col_map_text].strip())) == 0:
-            #     raise gr.Error("Text column cannot be empty.")
-            # if len(str(components[col_map_target].strip())) == 0:
-            #     raise gr.Error("Target column cannot be empty.")
-            # if components[col_map_text] == components[col_map_target]:
-            #     raise gr.Error("Text and Target column cannot be the same.")
+            try:
+                _ = pd.read_csv(components[training_data][0].name, nrows=2).columns.tolist()
+            except TypeError:
+                raise gr.Error("Please upload training data first.")
+            if len(str(components[col_map_text].strip())) == 0:
+                raise gr.Error("Text column cannot be empty.")
+            if len(str(components[col_map_target].strip())) == 0:
+                raise gr.Error("Target column cannot be empty.")
+            if components[col_map_text] == components[col_map_target]:
+                raise gr.Error("Text and Target column cannot be the same.")
             if components[param_choice] == "AutoTrain" and components[autotrain_backend] != "AutoTrain":
                 raise gr.Error("AutoTrain param choice is only available with AutoTrain backend.")
-            print(components[jobs_df])
+
             _training_params = {}
             if components[param_choice] == "AutoTrain":
                 for _hyperparameter in hyperparameters:
@@ -344,37 +271,17 @@ def main():
                     if _hyperparameter.elem_id not in ["hyp_num_jobs", "hyp_language"]:
                         _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
 
-            print(_training_params)
-            if components[param_choice] == "AutoTrain":
-                # create a new dataframe from dict
-                _training_params_df = pd.DataFrame([_training_params])
-            else:
-                # add row to the dataframe
-                if len(components[jobs_df]) == 0:
-                    _training_params_df = pd.DataFrame([_training_params])
-                else:
-                    _training_params_df = components[jobs_df]
-                    _training_params_df.columns = [f"hyp_{c}" for c in _training_params_df.columns]
-                    # convert dataframe to list of dicts
-                    _training_params_df = _training_params_df.to_dict(orient="records")
-                    # append new dict to the list
-                    _training_params_df.append(_training_params)
-                    _training_params_df = pd.DataFrame(_training_params_df)
-                    # drop rows with all nan values
-                    _training_params_df.replace("", np.nan, inplace=True)
-                    # Drop rows with all missing values
-                    _training_params_df = _training_params_df.dropna(how="all")
-                    # Drop columns with all missing values
-                    _training_params_df = _training_params_df.dropna(axis=1, how="all")
-
-            # remove hyp_ from column names
-            _training_params_df.columns = [c[len("hyp_") :] for c in _training_params_df.columns]
-            _training_params_df = _training_params_df.reset_index(drop=True)
+            _training_params_df = app_utils.fetch_training_params_df(
+                components[param_choice], components[jobs_df], _training_params
+            )
             return gr.DataFrame.update(value=_training_params_df, visible=True, interactive=False)
 
         add_job_button.click(
             _add_job,
-            inputs=set([param_choice, autotrain_backend, col_map_text, col_map_target, jobs_df] + hyperparameters),
+            inputs=set(
+                [training_data, param_choice, autotrain_backend, col_map_text, col_map_target, jobs_df]
+                + hyperparameters
+            ),
             outputs=jobs_df,
         )
 
@@ -393,7 +300,13 @@ def main():
             outputs=[],
         )
 
-        demo.load(_update_project_name, outputs=project_name)
+        demo.load(
+            app_utils._update_project_name,
+            outputs=project_name,
+        ).then(
+            partial(app_utils._update_hub_model_choices, task="text_multi_class_classification"),
+            outputs=model_choice,
+        )
 
     return demo
 

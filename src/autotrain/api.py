@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 
@@ -8,12 +9,72 @@ from loguru import logger
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
 REPO_ID = os.environ.get("REPO_ID")
-# TASK_ID = int(os.environ.get("TASK_ID"))
+TASK_ID = int(os.environ.get("TASK_ID"))
+PARAMS = os.environ.get("PARAMS")
+DATA_PATH = os.environ.get("DATA_PATH")
+MODEL = os.environ.get("MODEL")
+DO_VALIDATION = int(os.environ.get("DO_VALIDATION", 0))
+AUTOTRAIN_USERNAME = os.environ.get("AUTOTRAIN_USERNAME")
+PROJECT_NAME = os.environ.get("PROJECT_NAME")
 PID = None
 
 
 def run_training():
-    command = ["sleep", "100"]
+    params = json.loads(PARAMS)
+    output_repo = None
+    if TASK_ID in [1, 2]:
+        cmd = [
+            "autotrain",
+            "text-classification",
+            "--data-path",
+            DATA_PATH,
+            "--model",
+            MODEL,
+            "--train-split",
+            "train",
+            "--valid-split",
+            "valid",
+            "--text-column",
+            params["col_mapping_text"],
+            "--target-column",
+            params["col_mapping_target"],
+            "--epochs",
+            params["epochs"],
+            "--batch-size",
+            params["batch_size"],
+            "--warmup-ratio",
+            params["warmup_ratio"],
+            "--gradient-accumulation",
+            params["gradient_accumulation"],
+            "--optimizer",
+            params["optimizer"],
+            "--scheduler",
+            params["scheduler"],
+            "--weight-decay",
+            params["weight_decay"],
+            "--max-grad-norm",
+            params["max_grad_norm"],
+            "--seed",
+            params["seed"],
+            "--logging-steps",
+            params["logging_steps"],
+            "--project-name",
+            PROJECT_NAME,
+            "--evaluation-strategy",
+            params["evaluation_strategy"],
+            "--save-total-limit",
+            params["save_total_limit"],
+            "--save-strategy",
+            params["save_strategy"],
+            "--auto-find-batch-size",
+            params["auto_find_batch_size"],
+            "--fp16",
+            params["fp16"],
+            "--push-to-hub",
+            params["push_to_hub"],
+            "--repo-id",
+            f"{AUTOTRAIN_USERNAME}/{PROJECT_NAME}",
+        ]
     process = subprocess.Popen(command, start_new_session=True)
     return process.pid
 
