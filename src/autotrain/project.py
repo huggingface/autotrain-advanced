@@ -2,18 +2,112 @@
 Copyright 2023 The HuggingFace Team
 """
 
+import io
+import json
 import os
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
+import pandas as pd
 from codecarbon import EmissionsTracker
+from huggingface_hub import HfApi
 from loguru import logger
 
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 from autotrain.utils import http_get, http_post
+
+
+@dataclass
+class AutoTrainProject:
+    dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset]
+    job_params: pd.DataFrame
+
+    def __post_init__(self):
+        self.token = self.dataset.token
+        self.project_name = self.dataset.project_name
+        self.username = self.dataset.username
+        self.task = self.dataset.task
+        self.data_path = f"{self.username}/autotrain-data-{self.project_name}"
+
+        self.backend = self.job_params.loc[0, "backend"]
+        self.model_choice = self.job_params.loc[0, "model_choice"]
+        self.param_choice = self.job_params.loc[0, "param_choice"]
+
+        self.task_id = TASKS.get(self.task)
+        self.num_jobs = len(self.job_params)
+
+        if self.task in ("text_multi_class_classification", "text_binary_classification"):
+            self.col_map_text = "autotrain_text"
+            self.col_map_target = "autotrain_label"
+
+        self.spaces_backends = {
+            "A10G Large": "a10g-large",
+            "A10G Small": "a10g-small",
+            "A100 Large": "a100-large",
+            "T4 Medium": "t4-medium",
+            "T4 Small": "t4-small",
+            # "Local": "local",
+            # "AutoTrain": "autotrain",
+        }
+        self.job_params_json = self.job_params.to_json(orient="records")
+        logger.info(self.job_params_json)
+
+    def create_spaces(self):
+        api = HfApi(token=self.token)
+        for job_idx in range(self.num_jobs):
+            _params = self.job_params_json[job_idx]
+            logger.info(f"Creating Space for job: {job_idx}")
+            repo_id = f"{self.username}/autotrain-{self.project_name}-{job_idx}"
+            api.create_repo(
+                repo_id=repo_id,
+                repo_type="space",
+                space_sdk="docker",
+                space_hardware=self.spaces_backends[self.backend],
+                private=True,
+            )
+            api.add_space_secret(repo_id=repo_id, key="HF_TOKEN", value=self.token)
+            api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
+            api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.project_name)
+            api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(_params))
+            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.data_path)
+            api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
+
+            _readme = "---\n"
+            _readme += f"title: {self.project_name}-{job_idx}\n"
+            _readme += "emoji: 🚀\n"
+            _readme += "colorFrom: green\n"
+            _readme += "colorTo: indigo\n"
+            _readme += "sdk: docker\n"
+            _readme += "pinned: false\n"
+            _readme += "duplicated_from: autotrain-projects/autotrain-advanced\n"
+            _readme += "---\n"
+            _readme = io.BytesIO(_readme.encode())
+            api.upload_file(
+                path_or_fileobj=_readme,
+                path_in_repo="README.md",
+                repo_id=repo_id,
+                repo_type="space",
+            )
+
+            _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain api --port 7860"
+            _dockerfile = io.BytesIO(_dockerfile.encode())
+            api.upload_file(
+                path_or_fileobj=_dockerfile,
+                path_in_repo="Dockerfile",
+                repo_id=repo_id,
+                repo_type="space",
+            )
+
+    def create(self):
+        if self.backend == "AutoTrain":
+            raise NotImplementedError
+        if self.backend == "Local":
+            raise NotImplementedError
+        if self.backend in self.spaces_backends:
+            return self.create_spaces()
 
 
 @dataclass

@@ -92,6 +92,13 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": 1,
             },
             {
+                "arg": "--max-seq-length",
+                "help": "Maximum number of tokens in a sequence to use",
+                "required": False,
+                "type": int,
+                "default": 128,
+            },
+            {
                 "arg": "--batch-size",
                 "help": "Training batch size to use",
                 "required": False,
@@ -273,6 +280,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 model_name=self.args.model,
                 lr=self.args.lr,
                 epochs=self.args.epochs,
+                max_seq_length=self.args.max_seq_length,
                 batch_size=self.args.batch_size,
                 warmup_ratio=self.args.warmup_ratio,
                 gradient_accumulation=self.args.gradient_accumulation,
