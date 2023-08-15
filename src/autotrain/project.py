@@ -61,6 +61,7 @@ class AutoTrainProject:
             _params = json.loads(self.job_params_json)[job_idx]
             logger.info(f"Creating Space for job: {job_idx}")
             logger.info(f"Using params: {_params}")
+            logger.info(json.dumps(_params))
             repo_id = f"{self.username}/autotrain-{self.project_name}-{job_idx}"
             api.create_repo(
                 repo_id=repo_id,
@@ -75,6 +76,8 @@ class AutoTrainProject:
             api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(_params))
             api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.data_path)
             api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
+            api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.model_choice)
+            api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=repo_id)
 
             _readme = "---\n"
             _readme += f"title: {self.project_name}-{job_idx}\n"

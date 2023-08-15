@@ -201,6 +201,13 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
+                "arg": "--token",
+                "help": "Hugging face token",
+                "required": False,
+                "type": str,
+                "default": "",
+            },
+            {
                 "arg": "--push-to-hub",
                 "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
                 "required": False,
@@ -268,6 +275,9 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
 
         self.num_gpus = torch.cuda.device_count()
 
+        if len(str(self.token)) < 6:
+            self.token = os.environ.get("HF_TOKEN", None)
+
     def run(self):
         logger.info("Running Text Classification")
         if self.args.train:
@@ -298,6 +308,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 fp16=self.args.fp16,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
+                token=self.token,
             )
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:

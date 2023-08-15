@@ -15,6 +15,7 @@ PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 REPO_ID = os.environ.get("REPO_ID")
+OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 PID = None
 
 
@@ -23,11 +24,13 @@ api = FastAPI()
 
 def run_training():
     params = json.loads(PARAMS)
-    output_repo = None
     if TASK_ID in [1, 2]:
         cmd = [
             "autotrain",
             "text-classification",
+            "--train",
+            "--project-name",
+            "output",
             "--data-path",
             DATA_PATH,
             "--model",
@@ -35,7 +38,7 @@ def run_training():
             "--train-split",
             "train",
             "--valid-split",
-            "valid",
+            "validation",
             "--text-column",
             "autotrain_text",
             "--target-column",
@@ -75,11 +78,14 @@ def run_training():
             cmd.extend(["--auto-find-batch-size", params["auto_find_batch_size"]])
         if "fp16" in params:
             cmd.extend(["--fp16"])
-        if "push_to_hub" in params:
-            cmd.extend(["--push-to-hub"])
-            cmd.extend(["--repo-id", output_repo])
+
+        cmd.extend(["--push-to-hub"])
+        cmd.extend(["--repo-id", OUTPUT_MODEL_REPO])
     else:
         raise NotImplementedError
+
+    cmd = [str(c) for c in cmd]
+    logger.info(cmd)
     process = subprocess.Popen(cmd, start_new_session=True)
     return process.pid
 

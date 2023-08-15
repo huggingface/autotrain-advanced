@@ -38,6 +38,7 @@ def start_training(
         column_mapping={"text": col_map_text, "label": col_map_label},
         valid_data=validation_data,
         percent_valid=None,  # TODO: add to UI
+        convert_to_class_label=True,
     )
     dset.prepare()
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)

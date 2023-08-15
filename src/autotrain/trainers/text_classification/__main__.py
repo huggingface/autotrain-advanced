@@ -94,9 +94,9 @@ def train(config):
         )
 
     tokenizer = AutoTokenizer.from_pretrained(config.model_name, token=config.token, trust_remote_code=True)
-    train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, label2id=label2id, config=config)
+    train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
-        valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, label2id=label2id, config=config)
+        valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config)
 
     if config.logging_steps == -1:
         if config.valid_split is not None:
@@ -172,6 +172,11 @@ def train(config):
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model")
             api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+
+    if "REPO_ID" in os.environ:
+        # shut down the space
+        api = HfApi(token=config.token)
+        api.pause_space(repo_id=os.environ["REPO_ID"])
 
 
 if __name__ == "__main__":

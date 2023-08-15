@@ -2,11 +2,10 @@ import torch
 
 
 class TextClassificationDataset:
-    def __init__(self, data, tokenizer, label2id, config):
+    def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer
         self.config = config
-        self.label2id = label2id
         self.text_column = self.config.text_column
         self.target_column = self.config.target_column
 
@@ -16,7 +15,7 @@ class TextClassificationDataset:
     def __getitem__(self, item):
         text = str(self.data[item][self.text_column])
         target = self.data[item][self.target_column]
-        target = int(self.label2id[target])
+        target = int(target)
         inputs = self.tokenizer(
             text,
             max_length=self.config.max_seq_length,

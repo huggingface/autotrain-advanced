@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
-from datasets import Dataset
+from datasets import ClassLabel, Dataset
 from sklearn.model_selection import train_test_split
 
 
@@ -21,6 +21,7 @@ class TextBinaryClassificationPreprocessor:
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
+    convert_to_class_label: Optional[bool] = False
 
     def __post_init__(self):
         # check if text_column and label_column are in train_data
@@ -71,8 +72,16 @@ class TextBinaryClassificationPreprocessor:
     def prepare(self):
         train_df, valid_df = self.split()
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
+
+        label_names = sorted(set(train_df["autotrain_label"].unique().tolist()))
+
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
+
+        if self.convert_to_class_label:
+            train_df = train_df.cast_column("autotrain_label", ClassLabel(names=label_names))
+            valid_df = valid_df.cast_column("autotrain_label", ClassLabel(names=label_names))
+
         train_df.push_to_hub(
             f"{self.username}/autotrain-data-{self.project_name}",
             split="train",

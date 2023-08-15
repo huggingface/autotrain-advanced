@@ -165,6 +165,7 @@ class AutoTrainDataset:
     column_mapping: Optional[Dict[str, str]] = None
     valid_data: Optional[List[str]] = None
     percent_valid: Optional[float] = None
+    convert_to_class_label: Optional[bool] = False
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -228,6 +229,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                convert_to_class_label=self.convert_to_class_label,
             )
             preprocessor.prepare()
 
@@ -244,6 +246,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                convert_to_class_label=self.convert_to_class_label,
             )
             preprocessor.prepare()
 
