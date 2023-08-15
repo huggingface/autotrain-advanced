@@ -60,7 +60,7 @@ class AutoTrainProject:
         for job_idx in range(self.num_jobs):
             _params = self.job_params_json[job_idx]
             logger.info(f"Creating Space for job: {job_idx}")
-            repo_id = f"{self.username}/{self.project_name}-{job_idx}"
+            repo_id = f"{self.username}/autotrain-{self.project_name}-{job_idx}"
             api.create_repo(
                 repo_id=repo_id,
                 repo_type="space",
@@ -75,8 +75,24 @@ class AutoTrainProject:
             api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.data_path)
             api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
 
+            _readme = "---\n"
+            _readme += f"title: {self.project_name}-{job_idx}\n"
+            _readme += "emoji: 🚀\n"
+            _readme += "colorFrom: green\n"
+            _readme += "colorTo: indigo\n"
+            _readme += "sdk: docker\n"
+            _readme += "pinned: false\n"
+            _readme += "duplicated_from: autotrain-projects/autotrain-advanced\n"
+            _readme += "---\n"
+            _readme = io.BytesIO(_readme.encode())
+            api.upload_file(
+                path_or_fileobj=_readme,
+                path_in_repo="README.md",
+                repo_id=repo_id,
+                repo_type="space",
+            )
+
             _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain api --port 7860"
-            # convert _dockerfile to file object
             _dockerfile = io.BytesIO(_dockerfile.encode())
             api.upload_file(
                 path_or_fileobj=_dockerfile,
