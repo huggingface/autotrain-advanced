@@ -161,12 +161,12 @@ def main():
                             elem_id="hyp_weight_decay",
                         )
                     with gr.Row():
-                        hyp_gradient_accumulation_steps = gr.Number(
+                        hyp_gradient_accumulation = gr.Number(
                             label="Grad Acc Steps",
                             value=1,
                             visible=True,
                             interactive=True,
-                            elem_id="hyp_gradient_accumulation_steps",
+                            elem_id="hyp_gradient_accumulation",
                         )
 
         with gr.Row():
@@ -226,7 +226,7 @@ def main():
             hyp_batch_size,
             hyp_warmup_ratio,
             hyp_weight_decay,
-            hyp_gradient_accumulation_steps,
+            hyp_gradient_accumulation,
             hyp_language,
             hyp_num_jobs,
         ]
