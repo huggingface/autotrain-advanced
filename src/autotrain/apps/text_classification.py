@@ -5,7 +5,43 @@ import pandas as pd
 
 from autotrain.apps import common
 from autotrain.apps import utils as app_utils
+from autotrain.dataset import AutoTrainDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
+from autotrain.project import AutoTrainProject
+
+
+def start_training(
+    jobs_df,
+    model_choice,
+    training_data,
+    validation_data,
+    project_name,
+    autotrain_username,
+    user_token,
+    col_map_text,
+    col_map_label,
+):
+    if len(jobs_df) == 0:
+        raise gr.Error("Please add at least one job.")
+    task = "text_multi_class_classification"
+    training_data = [f.name for f in training_data]
+    if validation_data is None:
+        validation_data = []
+    else:
+        validation_data = [f.name for f in validation_data]
+    dset = AutoTrainDataset(
+        train_data=training_data,
+        task=task,
+        token=user_token,
+        project_name=project_name,
+        username=autotrain_username,
+        column_mapping={"text": col_map_text, "label": col_map_label},
+        valid_data=validation_data,
+        percent_valid=None,  # TODO: add to UI
+    )
+    dset.prepare()
+    project = AutoTrainProject(dataset=dset, job_params=jobs_df)
+    project.create()
 
 
 def main():
@@ -87,12 +123,12 @@ def main():
                             interactive=True,
                             elem_id="hyp_learning_rate",
                         )
-                        hyp_num_train_epochs = gr.Number(
+                        hyp_epochs = gr.Number(
                             label="Epochs",
                             value=3,
                             visible=True,
                             interactive=True,
-                            elem_id="hyp_num_train_epochs",
+                            elem_id="hyp_epochs",
                         )
                     with gr.Row():
                         hyp_max_seq_length = gr.Number(
@@ -110,12 +146,12 @@ def main():
                             elem_id="hyp_batch_size",
                         )
                     with gr.Row():
-                        hyp_percentage_warmup = gr.Number(
+                        hyp_warmup_ratio = gr.Number(
                             label="Warmup Steps %",
                             value=0.1,
                             visible=True,
                             interactive=True,
-                            elem_id="hyp_percentage_warmup",
+                            elem_id="hyp_warmup_ratio",
                         )
                         hyp_weight_decay = gr.Number(
                             label="Weight Decay",
@@ -185,10 +221,10 @@ def main():
             hyp_scheduler,
             hyp_optimizer,
             hyp_learning_rate,
-            hyp_num_train_epochs,
+            hyp_epochs,
             hyp_max_seq_length,
             hyp_batch_size,
-            hyp_percentage_warmup,
+            hyp_warmup_ratio,
             hyp_weight_decay,
             hyp_gradient_accumulation_steps,
             hyp_language,
@@ -272,21 +308,43 @@ def main():
                         _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
 
             _training_params_df = app_utils.fetch_training_params_df(
-                components[param_choice], components[jobs_df], _training_params
+                components[param_choice],
+                components[jobs_df],
+                _training_params,
+                components[model_choice],
+                components[autotrain_backend],
             )
             return gr.DataFrame.update(value=_training_params_df, visible=True, interactive=False)
 
         add_job_button.click(
             _add_job,
             inputs=set(
-                [training_data, param_choice, autotrain_backend, col_map_text, col_map_target, jobs_df]
+                [
+                    training_data,
+                    param_choice,
+                    autotrain_backend,
+                    col_map_text,
+                    col_map_target,
+                    jobs_df,
+                    model_choice,
+                    autotrain_backend,
+                ]
                 + hyperparameters
             ),
             outputs=jobs_df,
         )
+        # jobs_df,
+        # model_choice,
+        # training_data,
+        # validation_data,
+        # project_name,
+        # autotrain_username,
+        # user_token,
+        # col_map_text,
+        # col_map_label,
 
         start_training_button.click(
-            app_utils.start_training,
+            start_training,
             inputs=[
                 jobs_df,
                 model_choice,
@@ -294,8 +352,9 @@ def main():
                 validation_data,
                 project_name,
                 autotrain_username,
-                autotrain_backend,
                 user_token,
+                col_map_text,
+                col_map_target,
             ],
             outputs=[],
         )

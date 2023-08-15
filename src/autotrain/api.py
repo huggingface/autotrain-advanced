@@ -8,15 +8,17 @@ from loguru import logger
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
-REPO_ID = os.environ.get("REPO_ID")
+AUTOTRAIN_USERNAME = os.environ.get("AUTOTRAIN_USERNAME")
+PROJECT_NAME = os.environ.get("PROJECT_NAME")
 TASK_ID = int(os.environ.get("TASK_ID"))
 PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
-DO_VALIDATION = int(os.environ.get("DO_VALIDATION", 0))
-AUTOTRAIN_USERNAME = os.environ.get("AUTOTRAIN_USERNAME")
-PROJECT_NAME = os.environ.get("PROJECT_NAME")
+REPO_ID = os.environ.get("REPO_ID")
 PID = None
+
+
+api = FastAPI()
 
 
 def run_training():
@@ -35,9 +37,9 @@ def run_training():
             "--valid-split",
             "valid",
             "--text-column",
-            params["col_mapping_text"],
+            "autotrain_text",
             "--target-column",
-            params["col_mapping_target"],
+            "autotrain_label",
             "--epochs",
             params["epochs"],
             "--batch-size",
@@ -52,30 +54,33 @@ def run_training():
             params["scheduler"],
             "--weight-decay",
             params["weight_decay"],
-            "--max-grad-norm",
-            params["max_grad_norm"],
-            "--seed",
-            params["seed"],
-            "--logging-steps",
-            params["logging_steps"],
-            "--project-name",
-            PROJECT_NAME,
-            "--evaluation-strategy",
-            params["evaluation_strategy"],
-            "--save-total-limit",
-            params["save_total_limit"],
-            "--save-strategy",
-            params["save_strategy"],
-            "--auto-find-batch-size",
-            params["auto_find_batch_size"],
-            "--fp16",
-            params["fp16"],
-            "--push-to-hub",
-            params["push_to_hub"],
-            "--repo-id",
-            f"{AUTOTRAIN_USERNAME}/{PROJECT_NAME}",
+            "--max-seq-length",
+            params["max_seq_length"],
+            "--lr",
+            params["learning_rate"],
         ]
-    process = subprocess.Popen(command, start_new_session=True)
+        if "max_grad_norm" in params:
+            cmd.extend(["--max-grad-norm", params["max_grad_norm"]])
+        if "seed" in params:
+            cmd.extend(["--seed", params["seed"]])
+        if "logging_steps" in params:
+            cmd.extend(["--logging-steps", params["logging_steps"]])
+        if "evaluation_strategy" in params:
+            cmd.extend(["--evaluation-strategy", params["evaluation_strategy"]])
+        if "save_total_limit" in params:
+            cmd.extend(["--save-total-limit", params["save_total_limit"]])
+        if "save_strategy" in params:
+            cmd.extend(["--save-strategy", params["save_strategy"]])
+        if "auto_find_batch_size" in params:
+            cmd.extend(["--auto-find-batch-size", params["auto_find_batch_size"]])
+        if "fp16" in params:
+            cmd.extend(["--fp16"])
+        if "push_to_hub" in params:
+            cmd.extend(["--push-to-hub"])
+            cmd.extend(["--repo-id", output_repo])
+    else:
+        raise NotImplementedError
+    process = subprocess.Popen(cmd, start_new_session=True)
     return process.pid
 
 
@@ -100,9 +105,6 @@ def kill_process(pid):
     except psutil.TimeoutExpired:
         logger.info(f"Process {pid} has not terminated in time")
         return f"Process {pid} has not terminated in time"
-
-
-api = FastAPI()
 
 
 @api.on_event("startup")

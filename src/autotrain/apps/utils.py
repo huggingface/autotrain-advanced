@@ -1,5 +1,4 @@
 import copy
-import os
 import random
 import string
 
@@ -9,7 +8,7 @@ import pandas as pd
 from huggingface_hub import list_models
 from loguru import logger
 
-from autotrain.utils import get_user_token, user_authentication
+from autotrain.utils import user_authentication
 
 
 BACKEND_CHOICES = {
@@ -26,10 +25,6 @@ BACKEND_CHOICES = {
 
 
 def estimate_cost():
-    pass
-
-
-def start_training(df):
     pass
 
 
@@ -94,7 +89,7 @@ def _login_user(user_token):
     return user_token, valid_can_pay, who_is_training
 
 
-def fetch_training_params_df(param_choice, jobs_df, training_params):
+def fetch_training_params_df(param_choice, jobs_df, training_params, model_choice, autotrain_backend):
     if param_choice == "AutoTrain":
         # create a new dataframe from dict
         _training_params_df = pd.DataFrame([training_params])
@@ -120,4 +115,7 @@ def fetch_training_params_df(param_choice, jobs_df, training_params):
     # remove hyp_ from column names
     _training_params_df.columns = [c[len("hyp_") :] for c in _training_params_df.columns]
     _training_params_df = _training_params_df.reset_index(drop=True)
+    _training_params_df.loc[:, "model_choice"] = model_choice
+    _training_params_df.loc[:, "param_choice"] = param_choice
+    _training_params_df.loc[:, "backend"] = autotrain_backend
     return _training_params_df
