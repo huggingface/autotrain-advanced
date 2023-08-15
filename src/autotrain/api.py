@@ -14,7 +14,6 @@ TASK_ID = int(os.environ.get("TASK_ID"))
 PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
-REPO_ID = os.environ.get("REPO_ID")
 OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 PID = None
 
@@ -86,7 +85,7 @@ def run_training():
 
     cmd = [str(c) for c in cmd]
     logger.info(cmd)
-    process = subprocess.Popen(cmd, start_new_session=True)
+    process = subprocess.Popen(" ".join(cmd), shell=True)
     return process.pid
 
 
@@ -100,17 +99,32 @@ def get_process_status(pid):
 
 def kill_process(pid):
     try:
-        process = psutil.Process(pid)
-        process.terminate()  # or process.kill()
-        process.wait(timeout=5)
-        logger.info(f"Process with pid {pid} has been killed")
-        return "Process with pid {} has been killed".format(pid)
+        parent_process = psutil.Process(pid)
+        children = parent_process.children(recursive=True)  # This will get all the child processes recursively
+
+        # First, terminate the child processes
+        for child in children:
+            child.terminate()
+
+        # Wait for the child processes to terminate, and kill them if they don't
+        gone, still_alive = psutil.wait_procs(children, timeout=3)
+        for child in still_alive:
+            child.kill()
+
+        # Now, terminate the parent process
+        parent_process.terminate()
+        parent_process.wait(timeout=5)
+
+        logger.info(f"Process with pid {pid} and its children have been killed")
+        return f"Process with pid {pid} and its children have been killed"
+
     except psutil.NoSuchProcess:
         logger.info(f"No process found with pid {pid}")
         return f"No process found with pid {pid}"
+
     except psutil.TimeoutExpired:
-        logger.info(f"Process {pid} has not terminated in time")
-        return f"Process {pid} has not terminated in time"
+        logger.info(f"Process {pid} or one of its children has not terminated in time")
+        return f"Process {pid} or one of its children has not terminated in time"
 
 
 @api.on_event("startup")
@@ -123,7 +137,7 @@ async def startup_event():
 
 @api.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return "Your model is being trained..."
 
 
 @api.get("/status")

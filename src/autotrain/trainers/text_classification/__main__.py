@@ -162,6 +162,13 @@ def train(config):
 
     model_card = utils.create_model_card(config, trainer, num_classes)
 
+    # remove token key from training_params.json located in output directory
+    # first check if file exists
+    if os.path.exists(f"{config.project_name}/training_params.json"):
+        training_params = json.load(open(f"{config.project_name}/training_params.json"))
+        training_params.pop("token")
+        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
+
     # save model card to output directory as README.md
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
@@ -170,13 +177,15 @@ def train(config):
         if PartialState().process_index == 0:
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model")
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
             api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
 
-    if "REPO_ID" in os.environ:
-        # shut down the space
-        api = HfApi(token=config.token)
-        api.pause_space(repo_id=os.environ["REPO_ID"])
+    if PartialState().process_index == 0:
+        if "SPACE_ID" in os.environ:
+            # shut down the space
+            logger.info("Pausing space...")
+            api = HfApi(token=config.token)
+            api.pause_space(repo_id=os.environ["SPACE_ID"])
 
 
 if __name__ == "__main__":

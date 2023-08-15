@@ -30,7 +30,7 @@ from huggingface_hub import HfApi, whoami
 #                                                [--checkpoints-total-limit CHECKPOINTS_TOTAL_LIMIT] [--validation-images VALIDATION_IMAGES]
 #                                                [--logging]
 
-REPO_ID = os.environ.get("REPO_ID")
+REPO_ID = os.environ.get("SPACE_ID")
 ALLOWED_FILE_TYPES = ["png", "jpg", "jpeg"]
 MODELS = [
     "stabilityai/stable-diffusion-xl-base-1.0",
