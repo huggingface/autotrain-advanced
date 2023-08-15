@@ -275,8 +275,8 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
 
         self.num_gpus = torch.cuda.device_count()
 
-        if len(str(self.token)) < 6:
-            self.token = os.environ.get("HF_TOKEN", None)
+        if len(str(self.args.token)) < 6:
+            self.args.token = os.environ.get("HF_TOKEN", None)
 
     def run(self):
         logger.info("Running Text Classification")
@@ -308,7 +308,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 fp16=self.args.fp16,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
-                token=self.token,
+                token=self.args.token,
             )
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
