@@ -72,7 +72,7 @@ def train(config):
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model,
-        token=config.token,
+        use_auth_token=config.token,
         trust_remote_code=True,
     )
 
@@ -97,7 +97,7 @@ def train(config):
 
     model_config = AutoConfig.from_pretrained(
         config.model,
-        token=config.token,
+        use_auth_token=config.token,
         trust_remote_code=True,
     )
 
@@ -117,7 +117,7 @@ def train(config):
         model = AutoModelForCausalLM.from_pretrained(
             config.model,
             config=model_config,
-            token=config.token,
+            use_auth_token=config.token,
             quantization_config=bnb_config,
             torch_dtype=torch.float16,
             device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
@@ -127,7 +127,7 @@ def train(config):
         model = AutoModelForCausalLM.from_pretrained(
             config.model,
             config=model_config,
-            token=config.token,
+            use_auth_token=config.token,
             trust_remote_code=True,
         )
 
