@@ -80,14 +80,14 @@ def main():
                     with gr.Row():
                         hyp_use_peft = gr.Checkbox(
                             label="PEFT",
-                            value=False,
+                            value=True,
                             visible=True,
                             interactive=True,
                             elem_id="hyp_use_peft",
                         )
                         hyp_use_fp16 = gr.Checkbox(
                             label="FP16",
-                            value=False,
+                            value=True,
                             visible=True,
                             interactive=True,
                             elem_id="hyp_use_fp16",
@@ -96,7 +96,7 @@ def main():
                         hyp_int4_8 = gr.Dropdown(
                             label="Int4/8",
                             choices=["none", "int4", "int8"],
-                            value="none",
+                            value="int4",
                             visible=True,
                             interactive=True,
                             elem_id="hyp_int4_8",
@@ -161,7 +161,7 @@ def main():
                         )
                         hyp_batch_size = gr.Number(
                             label="Batch Size",
-                            value=8,
+                            value=2,
                             visible=True,
                             interactive=True,
                             elem_id="hyp_batch_size",
