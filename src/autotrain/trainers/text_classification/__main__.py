@@ -6,7 +6,6 @@ import pandas as pd
 from accelerate.state import PartialState
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
-from loguru import logger
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -16,6 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from autotrain import logger
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams

@@ -1,7 +1,7 @@
 import os
 import sys
 
-from loguru import logger
+from autotrain import logger
 
 
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API", "https://api.autotrain.huggingface.co")

@@ -7,11 +7,11 @@ from typing import Dict
 import torch
 from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, StableDiffusionXLPipeline, UNet2DConditionModel
 from diffusers.utils.import_utils import is_xformers_available
-from loguru import logger
 from packaging import version
 from tqdm import tqdm
 from transformers import AutoTokenizer, PretrainedConfig
 
+from autotrain import logger
 from autotrain.trainers.dreambooth.datasets import PromptDataset
 
 

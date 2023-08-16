@@ -9,9 +9,9 @@ from diffusers import StableDiffusionXLPipeline
 from diffusers.loaders import LoraLoaderMixin, text_encoder_lora_state_dict
 from diffusers.optimization import get_scheduler
 from huggingface_hub import create_repo, upload_folder
-from loguru import logger
 from tqdm import tqdm
 
+from autotrain import logger
 from autotrain.trainers.dreambooth import utils
 
 

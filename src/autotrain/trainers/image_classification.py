@@ -4,7 +4,6 @@ import albumentations as A
 import numpy as np
 import torch
 from datasets import load_dataset
-from loguru import logger
 from sklearn import metrics
 from transformers import (
     AutoConfig,
@@ -15,7 +14,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from autotrain import utils
+from autotrain import logger, utils
 from autotrain.params import ImageBinaryClassificationParams, ImageMultiClassClassificationParams
 
 

@@ -1,7 +1,7 @@
 import subprocess
 from argparse import ArgumentParser
 
-from loguru import logger
+from autotrain import logger
 
 from . import BaseAutoTrainCommand
 

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020-2021 The HuggingFace AutoTrain Authors
+# Copyright 2020-2023 The HuggingFace AutoTrain Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,16 @@
 import os
 
 
-# ignore bnb warnings
 os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-# os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+
+
+import warnings
+
+from autotrain.logging import custom_logger as logger
+
+
+warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
+
+
 __version__ = "0.6.21.dev0"

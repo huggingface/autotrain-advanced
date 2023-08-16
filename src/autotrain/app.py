@@ -7,8 +7,8 @@ import zipfile
 import gradio as gr
 import pandas as pd
 from huggingface_hub import list_models
-from loguru import logger
 
+from autotrain import logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.params import Params

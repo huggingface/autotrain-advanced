@@ -3,12 +3,12 @@ import subprocess
 from argparse import ArgumentParser
 
 import torch
-from loguru import logger
 
+from autotrain import logger
 from autotrain.infer.text_generation import TextGenerationInference
+from autotrain.trainers.clm.__main__ import train as train_llm
+from autotrain.trainers.clm.params import LLMTrainingParams
 
-from ..trainers.clm import train as train_llm
-from ..trainers.utils import LLMTrainingParams
 from . import BaseAutoTrainCommand
 
 
@@ -43,6 +43,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Train dataset to use",
                 "required": False,
                 "type": str,
+                "alias": ["--data-path"],
             },
             {
                 "arg": "--train_split",
@@ -50,6 +51,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "train",
+                "alias": ["--train-split"],
             },
             {
                 "arg": "--valid_split",
@@ -57,6 +59,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": None,
+                "alias": ["--valid-split"],
             },
             {
                 "arg": "--text_column",
@@ -64,6 +67,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "text",
+                "alias": ["--text-column"],
             },
             {
                 "arg": "--model",
@@ -77,6 +81,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": float,
                 "default": 3e-5,
+                "alias": ["--lr", "--learning-rate"],
             },
             {
                 "arg": "--num_train_epochs",
@@ -84,6 +89,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 1,
+                "alias": ["--epochs"],
             },
             {
                 "arg": "--train_batch_size",
@@ -91,13 +97,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 2,
-            },
-            {
-                "arg": "--eval_batch_size",
-                "help": "Evaluation batch size to use",
-                "required": False,
-                "type": int,
-                "default": 4,
+                "alias": ["--train-batch-size", "--batch-size"],
             },
             {
                 "arg": "--warmup_ratio",
@@ -105,6 +105,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": float,
                 "default": 0.1,
+                "alias": ["--warmup-ratio"],
             },
             {
                 "arg": "--gradient_accumulation_steps",
@@ -112,6 +113,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 1,
+                "alias": ["--gradient-accumulation-steps", "--gradient-accumulation"],
             },
             {
                 "arg": "--optimizer",
@@ -133,6 +135,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": float,
                 "default": 0.0,
+                "alias": ["--weight-decay"],
             },
             {
                 "arg": "--max_grad_norm",
@@ -140,6 +143,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": float,
                 "default": 1.0,
+                "alias": ["--max-grad-norm"],
             },
             {
                 "arg": "--seed",
@@ -153,6 +157,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Add EOS token to use",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--add-eos-token"],
             },
             {
                 "arg": "--block_size",
@@ -160,12 +165,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": -1,
+                "alias": ["--block-size"],
             },
             {
                 "arg": "--use_peft",
                 "help": "Use PEFT to use",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--use-peft"],
             },
             {
                 "arg": "--lora_r",
@@ -173,6 +180,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 16,
+                "alias": ["--lora-r"],
             },
             {
                 "arg": "--lora_alpha",
@@ -180,6 +188,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 32,
+                "alias": ["--lora-alpha"],
             },
             {
                 "arg": "--lora_dropout",
@@ -187,19 +196,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": float,
                 "default": 0.05,
-            },
-            {
-                "arg": "--training_type",
-                "help": "Training type to use",
-                "required": False,
-                "type": str,
-                "default": "generic",
-            },
-            {
-                "arg": "--train_on_inputs",
-                "help": "Train on inputs to use",
-                "required": False,
-                "action": "store_true",
+                "alias": ["--lora-dropout"],
             },
             {
                 "arg": "--logging_steps",
@@ -207,12 +204,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": -1,
+                "alias": ["--logging-steps"],
             },
             {
                 "arg": "--project_name",
                 "help": "Output directory",
                 "required": False,
                 "type": str,
+                "alias": ["--project-name"],
             },
             {
                 "arg": "--evaluation_strategy",
@@ -220,6 +219,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "epoch",
+                "alias": ["--evaluation-strategy"],
             },
             {
                 "arg": "--save_total_limit",
@@ -227,6 +227,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": int,
                 "default": 1,
+                "alias": ["--save-total-limit"],
             },
             {
                 "arg": "--save_strategy",
@@ -234,12 +235,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "epoch",
+                "alias": ["--save-strategy"],
             },
             {
                 "arg": "--auto_find_batch_size",
                 "help": "Auto find batch size True/False",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--auto-find-batch-size"],
             },
             {
                 "arg": "--fp16",
@@ -252,12 +255,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--push-to-hub"],
             },
             {
                 "arg": "--use_int8",
                 "help": "Use int8 True/False",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--use-int8"],
             },
             {
                 "arg": "--model_max_length",
@@ -272,12 +277,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Repo id for hugging face hub",
                 "required": False,
                 "type": str,
+                "alias": ["--repo-id"],
             },
             {
                 "arg": "--use_int4",
                 "help": "Use int4 True/False",
                 "required": False,
                 "action": "store_true",
+                "alias": ["--use-int4"],
             },
             {
                 "arg": "--trainer",
@@ -292,13 +299,29 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": None,
+                "alias": ["--target-modules"],
+            },
+            {
+                "arg": "--merge_adapter",
+                "help": "Use this flag to merge PEFT adapter with the model",
+                "required": False,
+                "action": "store_true",
+                "alias": ["--merge-adapter"],
+            },
+            {
+                "arg": "--token",
+                "help": "Hugingface token to use",
+                "required": False,
+                "type": str,
             },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
+            names = [arg["arg"]] + arg.get("alias", [])
             if "action" in arg:
                 run_llm_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     action=arg.get("action"),
@@ -306,7 +329,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 )
             else:
                 run_llm_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),
@@ -323,12 +347,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "inference",
             "add_eos_token",
             "use_peft",
-            "train_on_inputs",
             "auto_find_batch_size",
             "fp16",
             "push_to_hub",
             "use_int8",
             "use_int4",
+            "merge_adapter",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -365,17 +389,16 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         logger.info(f"Params: {self.args}")
         if self.args.train:
             params = LLMTrainingParams(
-                model_name=self.args.model,
+                model=self.args.model,
                 data_path=self.args.data_path,
                 train_split=self.args.train_split,
                 valid_split=self.args.valid_split,
                 text_column=self.args.text_column,
-                learning_rate=self.args.learning_rate,
-                num_train_epochs=self.args.num_train_epochs,
-                train_batch_size=self.args.train_batch_size,
-                eval_batch_size=self.args.eval_batch_size,
+                lr=self.args.learning_rate,
+                epochs=self.args.num_train_epochs,
+                batch_size=self.args.train_batch_size,
                 warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation_steps=self.args.gradient_accumulation_steps,
+                gradient_accumulation=self.args.gradient_accumulation_steps,
                 optimizer=self.args.optimizer,
                 scheduler=self.args.scheduler,
                 weight_decay=self.args.weight_decay,
@@ -387,8 +410,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 lora_r=self.args.lora_r,
                 lora_alpha=self.args.lora_alpha,
                 lora_dropout=self.args.lora_dropout,
-                training_type=self.args.training_type,
-                train_on_inputs=self.args.train_on_inputs,
                 logging_steps=self.args.logging_steps,
                 project_name=self.args.project_name,
                 evaluation_strategy=self.args.evaluation_strategy,
@@ -403,6 +424,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 use_int4=self.args.use_int4,
                 trainer=self.args.trainer,
                 target_modules=self.args.target_modules,
+                token=self.args.token,
+                merge_adapter=self.args.merge_adapter,
             )
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:

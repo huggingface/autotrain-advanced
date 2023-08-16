@@ -4,7 +4,8 @@ import subprocess
 
 import psutil
 from fastapi import FastAPI
-from loguru import logger
+
+from autotrain import logger
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")

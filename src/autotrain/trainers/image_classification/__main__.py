@@ -4,7 +4,6 @@ import json
 from accelerate.state import PartialState
 from datasets import load_dataset
 from huggingface_hub import HfApi
-from loguru import logger
 from transformers import (
     AutoConfig,
     AutoImageProcessor,
@@ -14,6 +13,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from autotrain import logger
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 

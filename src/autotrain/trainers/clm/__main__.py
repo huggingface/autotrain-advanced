@@ -7,10 +7,10 @@ from functools import partial
 import pandas as pd
 import torch
 from accelerate import Accelerator
+from accelerate.state import PartialState
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
-from loguru import logger
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -22,8 +22,10 @@ from transformers import (
 )
 from trl import SFTTrainer
 
-from autotrain.trainers import utils
-from autotrain.trainers.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
+from autotrain import logger
+from autotrain.trainers.clm import utils
+from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
+from autotrain.trainers.clm.params import LLMTrainingParams
 
 
 def parse_args():
@@ -35,11 +37,11 @@ def parse_args():
 
 def train(config):
     if isinstance(config, dict):
-        config = utils.LLMTrainingParams(**config)
+        config = LLMTrainingParams(**config)
 
     # TODO: remove when SFT is fixed
-    if config.trainer == "sft":
-        config.trainer = "default"
+    # if config.trainer == "sft":
+    #     config.trainer = "default"
 
     # check if config.train_split.csv exists in config.data_path
     if config.train_split is not None:
@@ -52,7 +54,7 @@ def train(config):
             train_data = load_dataset(
                 config.data_path,
                 split=config.train_split,
-                use_auth_token=config.huggingface_token,
+                token=config.token,
             )
 
     if config.valid_split is not None:
@@ -65,12 +67,12 @@ def train(config):
             valid_data = load_dataset(
                 config.data_path,
                 split=config.valid_split,
-                use_auth_token=config.huggingface_token,
+                token=config.token,
             )
 
     tokenizer = AutoTokenizer.from_pretrained(
-        config.model_name,
-        use_auth_token=config.huggingface_token,
+        config.model,
+        token=config.token,
         trust_remote_code=True,
     )
 
@@ -94,8 +96,8 @@ def train(config):
             )
 
     model_config = AutoConfig.from_pretrained(
-        config.model_name,
-        use_auth_token=config.huggingface_token,
+        config.model,
+        token=config.token,
         trust_remote_code=True,
     )
 
@@ -113,9 +115,9 @@ def train(config):
             bnb_config = BitsAndBytesConfig()
 
         model = AutoModelForCausalLM.from_pretrained(
-            config.model_name,
+            config.model,
             config=model_config,
-            use_auth_token=config.huggingface_token,
+            token=config.token,
             quantization_config=bnb_config,
             torch_dtype=torch.float16,
             device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
@@ -123,9 +125,9 @@ def train(config):
         )
     else:
         model = AutoModelForCausalLM.from_pretrained(
-            config.model_name,
+            config.model,
             config=model_config,
-            use_auth_token=config.huggingface_token,
+            token=config.token,
             trust_remote_code=True,
         )
 
@@ -133,7 +135,7 @@ def train(config):
 
     if config.use_peft:
         if config.use_int8 or config.use_int4:
-            model = prepare_model_for_int8_training(model)
+            model = prepare_model_for_kbit_training(model)
         peft_config = LoraConfig(
             r=config.lora_r,
             lora_alpha=config.lora_alpha,
@@ -206,9 +208,9 @@ def train(config):
     # trainer specific
     if config.logging_steps == -1:
         if config.valid_split is not None:
-            logging_steps = int(0.2 * len(valid_data) / config.train_batch_size)
+            logging_steps = int(0.2 * len(valid_data) / config.batch_size)
         else:
-            logging_steps = int(0.2 * len(train_data) / config.train_batch_size)
+            logging_steps = int(0.2 * len(train_data) / config.batch_size)
         if logging_steps == 0:
             logging_steps = 1
 
@@ -217,15 +219,15 @@ def train(config):
 
     training_args = dict(
         output_dir=config.project_name,
-        per_device_train_batch_size=config.train_batch_size,
-        per_device_eval_batch_size=config.eval_batch_size,
-        learning_rate=config.learning_rate,
-        num_train_epochs=config.num_train_epochs,
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        learning_rate=config.lr,
+        num_train_epochs=config.epochs,
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
-        gradient_accumulation_steps=config.gradient_accumulation_steps,
+        gradient_accumulation_steps=config.gradient_accumulation,
         report_to="tensorboard",
         auto_find_batch_size=config.auto_find_batch_size,
         lr_scheduler_type=config.scheduler,
@@ -267,7 +269,7 @@ def train(config):
             train_dataset=train_data,
             eval_dataset=valid_data if config.valid_split is not None else None,
             peft_config=peft_config if config.use_peft else None,
-            dataset_text_field="text",
+            dataset_text_field=config.text_column,
             max_seq_length=config.block_size,
             tokenizer=tokenizer,
             packing=True,
@@ -299,11 +301,11 @@ def train(config):
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
 
-    if config.use_peft:
+    if config.use_peft and config.merge_adapter:
         logger.info("Merging adapter weights...")
         try:
             utils.merge_adapter(
-                base_model_path=config.model_name,
+                base_model_path=config.model,
                 target_model_path=config.project_name,
                 adapter_path=config.project_name,
             )
@@ -312,14 +314,22 @@ def train(config):
             logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
 
     if config.push_to_hub:
-        logger.info("Pushing model to hub...")
-        api = HfApi()
-        api.create_repo(repo_id=config.repo_id, repo_type="model")
-        api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+        if PartialState().process_index == 0:
+            logger.info("Pushing model to hub...")
+            api = HfApi(token=config.token)
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+            api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+
+    if PartialState().process_index == 0:
+        if "SPACE_ID" in os.environ:
+            # shut down the space
+            logger.info("Pausing space...")
+            api = HfApi(token=config.token)
+            api.pause_space(repo_id=os.environ["SPACE_ID"])
 
 
 if __name__ == "__main__":
     args = parse_args()
     training_config = json.load(open(args.training_config))
-    config = utils.LLMTrainingParams(**training_config)
+    config = LLMTrainingParams(**training_config)
     train(config)

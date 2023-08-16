@@ -17,9 +17,9 @@ from diffusers.models.attention_processor import (
     LoRAAttnProcessor2_0,
     SlicedAttnAddedKVProcessor,
 )
-from loguru import logger
 from PIL import Image
 
+from autotrain import logger
 from autotrain import utils as at_utils
 from autotrain.params import DreamboothParams
 from autotrain.trainers.dreambooth import utils

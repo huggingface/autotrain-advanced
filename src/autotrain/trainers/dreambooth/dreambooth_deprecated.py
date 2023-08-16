@@ -19,14 +19,13 @@ from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DCon
 from diffusers.optimization import get_scheduler
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfApi
-from loguru import logger
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer, PretrainedConfig
 
-from autotrain import utils
+from autotrain import logger, utils
 from autotrain.params import DreamboothParams
 from autotrain.utils import LFS_PATTERNS
 

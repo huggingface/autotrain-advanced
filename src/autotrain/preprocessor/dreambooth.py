@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Any, List
 
 from huggingface_hub import HfApi, create_repo
-from loguru import logger
+
+from autotrain import logger
 
 
 @dataclass

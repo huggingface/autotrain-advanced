@@ -6,10 +6,12 @@ import gradio as gr
 import numpy as np
 import pandas as pd
 from huggingface_hub import list_models
-from loguru import logger
 
+from autotrain import logger
 from autotrain.utils import user_authentication
 
+
+THEME = "freddyaboulton/dracula_revamped"
 
 BACKEND_CHOICES = {
     "A10G Large": 3.15,
@@ -17,10 +19,10 @@ BACKEND_CHOICES = {
     "A100 Large": 4.13,
     "T4 Medium": 0.9,
     "T4 Small": 0.6,
-    "CPU Upgrade": 0.03,
-    "CPU": 0.0,
-    "Local": 0.0,
-    "AutoTrain": -1,
+    # "CPU Upgrade": 0.03,
+    # "CPU": 0.0,
+    # "Local": 0.0,
+    # "AutoTrain": -1,
 }
 
 
@@ -56,7 +58,10 @@ def _update_hub_model_choices(task):
             interactive=True,
         )
 
-    choices = ["AutoTrain"] + [m["id"] for m in hub_models]
+    if task in ("text_multi_class_classification", "image_multi_class_classification"):
+        choices = ["AutoTrain"] + [m["id"] for m in hub_models]
+    else:
+        choices = [m["id"] for m in hub_models]
 
     return gr.Dropdown.update(
         choices=choices,
@@ -119,3 +124,19 @@ def fetch_training_params_df(param_choice, jobs_df, training_params, model_choic
     _training_params_df.loc[:, "param_choice"] = param_choice
     _training_params_df.loc[:, "backend"] = autotrain_backend
     return _training_params_df
+
+
+def clear_jobs(jobs_df):
+    return gr.DataFrame.update(visible=False, interactive=False, value=pd.DataFrame())
+
+
+def handle_model_choice_change(model_choice):
+    op = []
+    op.append(gr.DataFrame.update(value=pd.DataFrame(), visible=False, interactive=False))
+    if model_choice == "AutoTrain":
+        op.append(gr.Dropdown.update(value="AutoTrain", interactive=False))
+        op.append(gr.Dropdown.update(value="AutoTrain", interactive=False))
+    else:
+        op.append(gr.Dropdown.update(value="Manual", interactive=True))
+        op.append(gr.Dropdown.update(value=list(BACKEND_CHOICES.keys())[0], interactive=True))
+    return op

@@ -12,8 +12,8 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 from codecarbon import EmissionsTracker
 from huggingface_hub import HfApi
-from loguru import logger
 
+from autotrain import logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS

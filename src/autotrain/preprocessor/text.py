@@ -164,15 +164,17 @@ class LLMPreprocessor:
     def split(self):
         if self.valid_data is not None:
             return self.train_data, self.valid_data
-        else:
-            train_df, valid_df = train_test_split(
-                self.train_data,
-                test_size=self.test_size,
-                random_state=self.seed,
-            )
-            train_df = train_df.reset_index(drop=True)
-            valid_df = valid_df.reset_index(drop=True)
-            return train_df, valid_df
+        # no validation is done in llm training if validation data is not provided
+        return self.train_data, self.train_data
+        # else:
+        #     train_df, valid_df = train_test_split(
+        #         self.train_data,
+        #         test_size=self.test_size,
+        #         random_state=self.seed,
+        #     )
+        #     train_df = train_df.reset_index(drop=True)
+        #     valid_df = valid_df.reset_index(drop=True)
+        #     return train_df, valid_df
 
     def prepare_columns(self, train_df, valid_df):
         if self.text_column is not None:

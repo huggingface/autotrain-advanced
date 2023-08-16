@@ -6,7 +6,6 @@ import pandas as pd
 from autotrain.apps import common
 from autotrain.apps import utils as app_utils
 from autotrain.dataset import AutoTrainDataset
-from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.project import AutoTrainProject
 
 
@@ -19,11 +18,10 @@ def start_training(
     autotrain_username,
     user_token,
     col_map_text,
-    col_map_label,
 ):
     if len(jobs_df) == 0:
         raise gr.Error("Please add at least one job.")
-    task = "text_multi_class_classification"
+    task = "lm_training"
     training_data = [f.name for f in training_data]
     if validation_data is None:
         validation_data = []
@@ -35,10 +33,9 @@ def start_training(
         token=user_token,
         project_name=project_name,
         username=autotrain_username,
-        column_mapping={"text": col_map_text, "label": col_map_label},
+        column_mapping={"text": col_map_text},
         valid_data=validation_data,
         percent_valid=None,  # TODO: add to UI
-        convert_to_class_label=True,
     )
     dset.prepare()
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
@@ -48,7 +45,7 @@ def start_training(
 def main():
     with gr.Blocks(theme=app_utils.THEME) as demo:
         gr.Markdown("## 🤗 AutoTrain Advanced")
-        gr.Markdown("### 🚀 Text Classification")
+        gr.Markdown("### 🚀 LLM Finetuning")
         user_token, valid_can_pay, who_is_training = common.user_validation()
         autotrain_username, project_name, model_choice, autotrain_backend = common.base_components(who_is_training)
         with gr.Row():
@@ -62,13 +59,6 @@ def main():
                             visible=True,
                             interactive=True,
                             elem_id="col_map_text",
-                        )
-                        col_map_target = gr.Dropdown(
-                            label="Target Column",
-                            choices=[],
-                            visible=True,
-                            interactive=True,
-                            elem_id="col_map_target",
                         )
                     with gr.Row():
                         hyp_scheduler = gr.Dropdown(
@@ -87,39 +77,69 @@ def main():
                             interactive=True,
                             elem_id="hyp_optimizer",
                         )
+                    with gr.Row():
+                        hyp_use_peft = gr.Checkbox(
+                            label="PEFT",
+                            value=False,
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_use_peft",
+                        )
+                        hyp_use_fp16 = gr.Checkbox(
+                            label="FP16",
+                            value=False,
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_use_fp16",
+                        )
+                    with gr.Row():
+                        hyp_int4_8 = gr.Dropdown(
+                            label="Int4/8",
+                            choices=["none", "int4", "int8"],
+                            value="none",
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_int4_8",
+                        )
+                        hyp_lora_r = gr.Number(
+                            label="LoRA R",
+                            value=16,
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_lora_r",
+                            precision=0,
+                        )
+                    with gr.Row():
+                        hyp_lora_alpha = gr.Number(
+                            label="LoRA Alpha",
+                            value=32,
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_lora_alpha",
+                            precision=0,
+                        )
+                        hyp_lora_dropout = gr.Number(
+                            label="LoRA Dropout",
+                            value=0.1,
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_lora_dropout",
+                        )
 
             with gr.Column():
                 with gr.Group():
                     param_choice = gr.Dropdown(
                         label="Parameter Choice",
-                        choices=["Manual", "AutoTrain"],
+                        choices=["Manual"],
                         value="Manual",
                         visible=True,
                         interactive=True,
                         elem_id="param_choice",
                     )
                     with gr.Row():
-                        hyp_language = gr.Dropdown(
-                            label="Language",
-                            choices=SUPPORTED_LANGUAGES,
-                            value="en",
-                            visible=False,
-                            interactive=False,
-                            elem_id="hyp_language",
-                        )
-                    with gr.Row():
-                        hyp_num_jobs = gr.Number(
-                            label="Num Jobs",
-                            value=5,
-                            visible=False,
-                            interactive=False,
-                            elem_id="hyp_num_jobs",
-                            precision=0,
-                        )
-                    with gr.Row():
                         hyp_learning_rate = gr.Number(
                             label="Learning Rate",
-                            value=5e-5,
+                            value=2e-4,
                             visible=True,
                             interactive=True,
                             elem_id="hyp_learning_rate",
@@ -132,12 +152,12 @@ def main():
                             elem_id="hyp_epochs",
                         )
                     with gr.Row():
-                        hyp_max_seq_length = gr.Number(
-                            label="Max Seq Length",
-                            value=512,
+                        hyp_block_size = gr.Number(
+                            label="Block Size",
+                            value=1024,
                             visible=True,
                             interactive=True,
-                            elem_id="hyp_max_seq_length",
+                            elem_id="hyp_block_size",
                         )
                         hyp_batch_size = gr.Number(
                             label="Batch Size",
@@ -148,7 +168,7 @@ def main():
                         )
                     with gr.Row():
                         hyp_warmup_ratio = gr.Number(
-                            label="Warmup Steps %",
+                            label="Warmup Ratio",
                             value=0.1,
                             visible=True,
                             interactive=True,
@@ -169,6 +189,14 @@ def main():
                             interactive=True,
                             elem_id="hyp_gradient_accumulation",
                         )
+                        hyp_trainer = gr.Dropdown(
+                            label="Trainer Type",
+                            choices=["Default", "SFT"],
+                            value="SFT",
+                            visible=True,
+                            interactive=True,
+                            elem_id="hyp_trainer",
+                        )
 
         with gr.Row():
             add_job_button = gr.Button(value="Add Job", elem_id="add_job_button")
@@ -181,86 +209,44 @@ def main():
             try:
                 data_cols = pd.read_csv(training_data[0].name, nrows=2).columns.tolist()
             except TypeError:
-                return [
-                    gr.Dropdown.update(visible=True, interactive=False, choices=[], label="`text` column"),
-                    gr.Dropdown.update(
-                        visible=True,
-                        interactive=False,
-                        choices=[],
-                        label="`target` column",
-                    ),
-                ]
-            return [
-                gr.Dropdown.update(
-                    visible=True,
-                    interactive=True,
-                    choices=data_cols,
-                    label="`text` column",
-                    value=data_cols[0],
-                ),
-                gr.Dropdown.update(
-                    visible=True,
-                    interactive=True,
-                    choices=data_cols,
-                    label="`target` column",
-                    value=data_cols[1],
-                ),
-            ]
+                return (gr.Dropdown.update(visible=True, interactive=False, choices=[], label="`text` column"),)
+            return gr.Dropdown.update(
+                visible=True,
+                interactive=True,
+                choices=data_cols,
+                label="`text` column",
+                value=data_cols[0],
+            )
 
         training_data.change(
             _update_col_map,
             inputs=training_data,
-            outputs=[col_map_text, col_map_target],
+            outputs=col_map_text,
         )
 
         hyperparameters = [
             hyp_scheduler,
             hyp_optimizer,
+            hyp_use_peft,
+            hyp_use_fp16,
+            hyp_int4_8,
+            hyp_lora_r,
+            hyp_lora_alpha,
+            hyp_lora_dropout,
             hyp_learning_rate,
             hyp_epochs,
-            hyp_max_seq_length,
+            hyp_block_size,
             hyp_batch_size,
             hyp_warmup_ratio,
             hyp_weight_decay,
             hyp_gradient_accumulation,
-            hyp_language,
-            hyp_num_jobs,
+            hyp_trainer,
         ]
 
         model_choice.change(
             app_utils.handle_model_choice_change,
             inputs=model_choice,
             outputs=[jobs_df, param_choice, autotrain_backend],
-        )
-
-        def _handle_param_choice_change(components):
-            hyperparam_visibility = {}
-            if components[param_choice] == "AutoTrain":
-                for _hyperparameter in hyperparameters:
-                    if _hyperparameter.elem_id in ["hyp_num_jobs", "hyp_language"]:
-                        hyperparam_visibility[_hyperparameter.elem_id] = True
-                    else:
-                        hyperparam_visibility[_hyperparameter.elem_id] = False
-            else:
-                for _hyperparameter in hyperparameters:
-                    if _hyperparameter.elem_id in ["hyp_num_jobs", "hyp_language"]:
-                        hyperparam_visibility[_hyperparameter.elem_id] = False
-                    else:
-                        hyperparam_visibility[_hyperparameter.elem_id] = True
-            op = [
-                h.update(
-                    interactive=hyperparam_visibility.get(h.elem_id, False),
-                    visible=hyperparam_visibility.get(h.elem_id, False),
-                )
-                for h in hyperparameters
-            ]
-            op.append(jobs_df.update(value=pd.DataFrame(columns=[0]), visible=False, interactive=False))
-            return op
-
-        param_choice.change(
-            _handle_param_choice_change,
-            inputs=set([param_choice]),
-            outputs=hyperparameters + [jobs_df],
         )
 
         def _add_job(components):
@@ -270,22 +256,12 @@ def main():
                 raise gr.Error("Please upload training data first.")
             if len(str(components[col_map_text].strip())) == 0:
                 raise gr.Error("Text column cannot be empty.")
-            if len(str(components[col_map_target].strip())) == 0:
-                raise gr.Error("Target column cannot be empty.")
-            if components[col_map_text] == components[col_map_target]:
-                raise gr.Error("Text and Target column cannot be the same.")
             if components[param_choice] == "AutoTrain" and components[autotrain_backend] != "AutoTrain":
                 raise gr.Error("AutoTrain param choice is only available with AutoTrain backend.")
 
             _training_params = {}
-            if components[param_choice] == "AutoTrain":
-                for _hyperparameter in hyperparameters:
-                    if _hyperparameter.elem_id in ["hyp_num_jobs", "hyp_language"]:
-                        _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
-            else:
-                for _hyperparameter in hyperparameters:
-                    if _hyperparameter.elem_id not in ["hyp_num_jobs", "hyp_language"]:
-                        _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
+            for _hyperparameter in hyperparameters:
+                _training_params[_hyperparameter.elem_id] = components[_hyperparameter]
 
             _training_params_df = app_utils.fetch_training_params_df(
                 components[param_choice],
@@ -304,7 +280,6 @@ def main():
                     param_choice,
                     autotrain_backend,
                     col_map_text,
-                    col_map_target,
                     jobs_df,
                     model_choice,
                     autotrain_backend,
@@ -331,7 +306,6 @@ def main():
                 autotrain_username,
                 user_token,
                 col_map_text,
-                col_map_target,
             ],
             outputs=[],
         )
@@ -340,7 +314,7 @@ def main():
             app_utils._update_project_name,
             outputs=project_name,
         ).then(
-            partial(app_utils._update_hub_model_choices, task="text_multi_class_classification"),
+            partial(app_utils._update_hub_model_choices, task="lm_training"),
             outputs=model_choice,
         )
 

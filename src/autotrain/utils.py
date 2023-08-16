@@ -10,10 +10,9 @@ from typing import Dict, Optional
 import requests
 from huggingface_hub import HfApi, HfFolder
 from huggingface_hub.repository import Repository
-from loguru import logger
 from transformers import AutoConfig
 
-from autotrain import config
+from autotrain import config, logger
 from autotrain.tasks import TASKS
 
 

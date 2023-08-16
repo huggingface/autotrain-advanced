@@ -3,7 +3,6 @@ from itertools import chain
 
 import torch
 from datasets import Dataset, load_dataset
-from loguru import logger
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from transformers import (
     AutoConfig,
@@ -14,7 +13,7 @@ from transformers import (
     default_data_collator,
 )
 
-from autotrain import utils
+from autotrain import logger, utils
 from autotrain.params import LMTrainingParams
 
 

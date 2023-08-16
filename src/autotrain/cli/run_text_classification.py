@@ -3,8 +3,8 @@ import subprocess
 from argparse import ArgumentParser
 
 import torch
-from loguru import logger
 
+from autotrain import logger
 from autotrain.trainers.text_classification.__main__ import train as train_text_classification
 from autotrain.trainers.text_classification.params import TextClassificationParams
 

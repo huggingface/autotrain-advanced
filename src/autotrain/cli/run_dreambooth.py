@@ -2,8 +2,7 @@ import glob
 import os
 from argparse import ArgumentParser
 
-from loguru import logger
-
+from autotrain import logger
 from autotrain.cli import BaseAutoTrainCommand
 
 
