@@ -6,6 +6,7 @@ import psutil
 from fastapi import FastAPI
 
 from autotrain import logger
+from autotrain.trainers.clm.params import LLMTrainingParams
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -20,73 +21,43 @@ PID = None
 
 
 api = FastAPI()
+logger.info(f"AUTOTRAIN_USERNAME: {AUTOTRAIN_USERNAME}")
+logger.info(f"PROJECT_NAME: {PROJECT_NAME}")
+logger.info(f"TASK_ID: {TASK_ID}")
+logger.info(f"DATA_PATH: {DATA_PATH}")
+logger.info(f"MODEL: {MODEL}")
+logger.info(f"OUTPUT_MODEL_REPO: {OUTPUT_MODEL_REPO}")
 
 
 def run_training():
     params = json.loads(PARAMS)
-    if TASK_ID in [1, 2]:
-        cmd = [
-            "autotrain",
-            "text-classification",
-            "--train",
-            "--project-name",
-            "output",
-            "--data-path",
-            DATA_PATH,
-            "--model",
-            MODEL,
-            "--train-split",
-            "train",
-            "--valid-split",
-            "validation",
-            "--text-column",
-            "autotrain_text",
-            "--target-column",
-            "autotrain_label",
-            "--epochs",
-            params["epochs"],
-            "--batch-size",
-            params["batch_size"],
-            "--warmup-ratio",
-            params["warmup_ratio"],
-            "--gradient-accumulation",
-            params["gradient_accumulation"],
-            "--optimizer",
-            params["optimizer"],
-            "--scheduler",
-            params["scheduler"],
-            "--weight-decay",
-            params["weight_decay"],
-            "--max-seq-length",
-            params["max_seq_length"],
-            "--lr",
-            params["learning_rate"],
-        ]
-        if "max_grad_norm" in params:
-            cmd.extend(["--max-grad-norm", params["max_grad_norm"]])
-        if "seed" in params:
-            cmd.extend(["--seed", params["seed"]])
-        if "logging_steps" in params:
-            cmd.extend(["--logging-steps", params["logging_steps"]])
-        if "evaluation_strategy" in params:
-            cmd.extend(["--evaluation-strategy", params["evaluation_strategy"]])
-        if "save_total_limit" in params:
-            cmd.extend(["--save-total-limit", params["save_total_limit"]])
-        if "save_strategy" in params:
-            cmd.extend(["--save-strategy", params["save_strategy"]])
-        if "auto_find_batch_size" in params:
-            cmd.extend(["--auto-find-batch-size", params["auto_find_batch_size"]])
-        if "fp16" in params:
-            cmd.extend(["--fp16"])
+    logger.info(params)
+    if TASK_ID == 9:
+        params = LLMTrainingParams.parse_raw(params)
+        params.project_name = "/tmp/model"
+        params.save(output_dir=params.project_name)
+        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
+        cmd.append("--mixed_precision")
+        if params.fp16:
+            cmd.append("fp16")
+        else:
+            cmd.append("no")
 
-        cmd.extend(["--push-to-hub"])
-        cmd.extend(["--repo-id", OUTPUT_MODEL_REPO])
+        cmd.extend(
+            [
+                "-m",
+                "autotrain.trainers.clm",
+                "--training_config",
+                os.path.join(params.project_name, "training_params.json"),
+            ]
+        )
     else:
         raise NotImplementedError
 
     cmd = [str(c) for c in cmd]
     logger.info(cmd)
-    process = subprocess.Popen(" ".join(cmd), shell=True)
+    env = os.environ.copy()
+    process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
     return process.pid
 
 

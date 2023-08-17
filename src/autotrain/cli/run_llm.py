@@ -1,11 +1,13 @@
 import os
 import subprocess
+import sys
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
 from autotrain.infer.text_generation import TextGenerationInference
+from autotrain.spacerunner import SpaceRunner
 from autotrain.trainers.clm.__main__ import train as train_llm
 from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -274,7 +276,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             },
             {
                 "arg": "--repo_id",
-                "help": "Repo id for hugging face hub",
+                "help": "Repo id for hugging face hub. Format is username/repo_name",
                 "required": False,
                 "type": str,
                 "alias": ["--repo-id"],
@@ -313,6 +315,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Hugingface token to use",
                 "required": False,
                 "type": str,
+            },
+            {
+                "arg": "--backend",
+                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+                "required": False,
+                "type": str,
+                "default": "default",
             },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
@@ -368,6 +377,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.args.push_to_hub:
                 if self.args.repo_id is None:
                     raise ValueError("Repo id must be specified for push to hub")
+            if self.args.backend == "spaces":
+                if not self.args.push_to_hub:
+                    raise ValueError("Push to hub must be specified for spaces backend")
+                if self.args.repo_id is None:
+                    raise ValueError("Repo id must be specified for spaces backend")
+                if self.args.token is None:
+                    raise ValueError("Token must be specified for spaces backend")
 
         if self.args.inference:
             tgi = TextGenerationInference(
@@ -427,6 +443,19 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 token=self.args.token,
                 merge_adapter=self.args.merge_adapter,
             )
+
+            # space training
+            if self.args.backend.startswith("spaces"):
+                logger.info("Creating space...")
+                sr = SpaceRunner(
+                    params=params,
+                    backend=self.args.backend,
+                )
+                space_id = sr.prepare()
+                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
+                sys.exit(0)
+
+            # local training
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
                 train_llm(params)
