@@ -377,7 +377,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.args.push_to_hub:
                 if self.args.repo_id is None:
                     raise ValueError("Repo id must be specified for push to hub")
-            if self.args.backend == "spaces":
+            if self.args.backend.startswith("spaces"):
                 if not self.args.push_to_hub:
                     raise ValueError("Push to hub must be specified for spaces backend")
                 if self.args.repo_id is None:
