@@ -17,7 +17,7 @@ from autotrain.utils import get_project_cost, get_user_token, user_authenticatio
 
 
 APP_TASKS = {
-    "Natural Language Processing": ["Text Classification", "LLM Finetuning"],
+    "Natural Language Processing": ["Text Classification"],
     # "Tabular": TABULAR_TASKS,
     "Computer Vision": ["Image Classification", "Dreambooth"],
 }
