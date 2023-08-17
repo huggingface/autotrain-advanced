@@ -31,4 +31,3 @@ warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 
 __version__ = "0.6.24.dev0"
-g
