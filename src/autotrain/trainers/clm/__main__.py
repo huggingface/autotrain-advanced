@@ -26,6 +26,7 @@ from autotrain import logger
 from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.utils import monitor
 
 
 def parse_args():
@@ -35,6 +36,7 @@ def parse_args():
     return parser.parse_args()
 
 
+@monitor
 def train(config):
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
