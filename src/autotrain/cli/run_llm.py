@@ -7,7 +7,7 @@ import torch
 
 from autotrain import logger
 from autotrain.infer.text_generation import TextGenerationInference
-from autotrain.spacerunner import SpaceRunner
+from autotrain.spacerunner import EndpointsRunner, SpaceRunner
 from autotrain.trainers.clm.__main__ import train as train_llm
 from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -377,7 +377,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.args.push_to_hub:
                 if self.args.repo_id is None:
                     raise ValueError("Repo id must be specified for push to hub")
-            if self.args.backend.startswith("spaces"):
+            if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
                 if not self.args.push_to_hub:
                     raise ValueError("Push to hub must be specified for spaces backend")
                 if self.args.repo_id is None:
@@ -453,6 +453,16 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 )
                 space_id = sr.prepare()
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
+                sys.exit(0)
+
+            if self.args.backend.startswith("ep-"):
+                logger.info("Creating training endpoint...")
+                sr = EndpointsRunner(
+                    params=params,
+                    backend=self.args.backend,
+                )
+                sr.prepare()
+                logger.info("Training endpoint created.")
                 sys.exit(0)
 
             # local training

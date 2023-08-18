@@ -120,3 +120,8 @@ async def status():
 @api.get("/kill")
 async def kill():
     return kill_process(pid=PID)
+
+
+@api.get("/health")
+async def health():
+    return "OK"

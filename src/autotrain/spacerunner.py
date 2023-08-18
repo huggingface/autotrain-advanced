@@ -4,12 +4,115 @@ import os
 from dataclasses import dataclass
 from typing import Union
 
+import requests
 from huggingface_hub import HfApi
 
+from autotrain import logger
 from autotrain.dataset import AutoTrainDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+
+
+def _llm_munge_data(params, username):
+    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+    else:
+        valid_data_path = []
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            task="lm_training",
+            token=params.token,
+            project_name=params.project_name,
+            username=username,
+            column_mapping={"text": params.text_column},
+            valid_data=valid_data_path,
+            percent_valid=None,  # TODO: add to UI
+        )
+        dset.prepare()
+        return f"{username}/autotrain-data-{params.project_name}"
+
+    return params.data_path
+
+
+@dataclass
+class EndpointsRunner:
+    params: Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams]
+    backend: str
+
+    def __post_init__(self):
+        self.endpoints_backends = {
+            "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
+            "ep-aws-useast1-m": "aws_us-east-1_gpu_medium_g5.2xlarge",
+            "ep-aws-useast1-l": "aws_us-east-1_gpu_large_g4dn.12xlarge",
+            "ep-aws-useast1-xl": "aws_us-east-1_gpu_xlarge_p4de",
+            "ep-aws-useast1-2xl": "aws_us-east-1_gpu_2xlarge_p4de",
+            "ep-aws-useast1-4xl": "aws_us-east-1_gpu_4xlarge_p4de",
+            "ep-aws-useast1-8xl": "aws_us-east-1_gpu_8xlarge_p4de",
+        }
+        self.username = self.params.repo_id.split("/")[0]
+        self.api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{self.username}"
+        if isinstance(self.params, LLMTrainingParams):
+            self.task_id = 9
+
+    def _create_endpoint(self):
+        hardware = self.endpoints_backends[self.backend]
+        accelerator = hardware.split("_")[2]
+        instance_size = hardware.split("_")[3]
+        region = hardware.split("_")[1]
+        vendor = hardware.split("_")[0]
+        instance_type = hardware.split("_")[4]
+        payload = {
+            "accountId": self.username,
+            "compute": {
+                "accelerator": accelerator,
+                "instanceSize": instance_size,
+                "instanceType": instance_type,
+                "scaling": {"maxReplica": 1, "minReplica": 1},
+            },
+            "model": {
+                "framework": "custom",
+                "image": {
+                    "custom": {
+                        "env": {
+                            "HF_TOKEN": self.params.token,
+                            "AUTOTRAIN_USERNAME": self.username,
+                            "PROJECT_NAME": self.params.project_name,
+                            "PARAMS": json.dumps(self.params.json()),
+                            "DATA_PATH": self.params.data_path,
+                            "TASK_ID": str(self.task_id),
+                            "MODEL": self.params.model,
+                            "OUTPUT_MODEL_REPO": self.params.repo_id,
+                        },
+                        "health_route": "/",
+                        "port": 7860,
+                        "url": "huggingface/autotrain-advanced-api:latest",
+                    }
+                },
+                "repository": "autotrain-projects/autotrain-advanced",
+                "revision": "main",
+                "task": "custom",
+            },
+            "name": self.params.project_name,
+            "provider": {"region": region, "vendor": vendor},
+            "type": "protected",
+        }
+        headers = {"Authorization": f"Bearer {self.params.token}"}
+        r = requests.post(self.api_url, json=payload, headers=headers)
+        logger.info(r.json())
+        if r.status_code != 200:
+            raise Exception(r.json())
+        return r.json()
+
+    def prepare(self):
+        if isinstance(self.params, LLMTrainingParams):
+            data_path = _llm_munge_data(self.params, self.username)
+            self.params.data_path = data_path
+            endpoint_id = self._create_endpoint()
+            return endpoint_id
+        raise NotImplementedError
 
 
 @dataclass
@@ -26,11 +129,13 @@ class SpaceRunner:
             "t4s": "t4-small",
         }
         self.username = self.params.repo_id.split("/")[0]
+        if isinstance(self.params, LLMTrainingParams):
+            self.task_id = 9
 
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
-            data_path = self._llm_munge_data()
+            data_path = _llm_munge_data(self.params, self.username)
             self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
@@ -87,25 +192,3 @@ class SpaceRunner:
             repo_type="space",
         )
         return repo_id
-
-    def _llm_munge_data(self):
-        train_data_path = f"{self.params.data_path}/{self.params.train_split}.csv"
-        if self.params.valid_split is not None:
-            valid_data_path = f"{self.params.data_path}/{self.params.valid_split}.csv"
-        else:
-            valid_data_path = []
-        if os.path.exists(train_data_path):
-            dset = AutoTrainDataset(
-                train_data=[train_data_path],
-                task="lm_training",
-                token=self.params.token,
-                project_name=self.params.project_name,
-                username=self.username,
-                column_mapping={"text": self.params.text_column},
-                valid_data=valid_data_path,
-                percent_valid=None,  # TODO: add to UI
-            )
-            dset.prepare()
-            return f"{self.username}/autotrain-data-{self.params.project_name}"
-
-        return self.params.data_path
