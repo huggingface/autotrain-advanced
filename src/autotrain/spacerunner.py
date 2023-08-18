@@ -102,8 +102,6 @@ class EndpointsRunner:
         headers = {"Authorization": f"Bearer {self.params.token}"}
         r = requests.post(self.api_url, json=payload, headers=headers)
         logger.info(r.json())
-        if r.status_code != 200:
-            raise Exception(r.json())
         return r.json()
 
     def prepare(self):
