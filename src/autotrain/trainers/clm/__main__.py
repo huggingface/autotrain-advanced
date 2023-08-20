@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 from accelerate import Accelerator
 from accelerate.state import PartialState
+from accelerate.utils import is_xpu_available
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
@@ -122,7 +123,7 @@ def train(config):
             use_auth_token=config.token,
             quantization_config=bnb_config,
             torch_dtype=torch.float16,
-            device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
+            device_map={"": Accelerator().process_index} if (torch.cuda.is_available() or is_xpu_available())  else None,
             trust_remote_code=True,
         )
     else:

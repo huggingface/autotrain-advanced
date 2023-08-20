@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict
 
 import torch
+from accelerate.utils import is_xpu_available, is_ipex_available
 from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, StableDiffusionXLPipeline, UNet2DConditionModel
 from diffusers.utils.import_utils import is_xformers_available
 from packaging import version
@@ -166,7 +167,12 @@ def setup_prior_preservation(accelerator, config):
     cur_class_images = len(list(class_images_dir.iterdir()))
 
     if cur_class_images < config.num_class_images:
-        torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
+        if is_xpu_available() and accelerator.device.type == "xpu":
+            torch_dtype = torch.bfloat16
+        elif accelerator.device.type == "cuda":
+            torch_dtype = torch.flaot16
+        else:
+            torch_dtype = torch.float32
         if config.prior_generation_precision == "fp32":
             torch_dtype = torch.float32
         elif config.prior_generation_precision == "fp16":
@@ -211,6 +217,9 @@ def setup_prior_preservation(accelerator, config):
         del pipeline
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+        elif is_xpu_available() and is_ipex_available():
+            torch.xpu.empty_cache()
+            
 
 
 def load_model_components(config, device, weight_dtype):

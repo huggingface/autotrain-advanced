@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from accelerate import Accelerator
-from accelerate.utils import set_seed
+from accelerate.utils import set_seed, is_xpu_available, is_ipex_available
 from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler
 from diffusers.utils.import_utils import is_xformers_available
@@ -400,7 +400,10 @@ def run_training(args):
         cur_class_images = len(list(class_images_dir.iterdir()))
 
         if cur_class_images < args.num_class_images:
-            torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
+            if is_xpu_available() and accelerator.device.type == "xpu":
+                torch_dtype = torch.bfloat16
+            else:
+                torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
             pipeline = DiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
                 torch_dtype=torch_dtype,
@@ -429,6 +432,8 @@ def run_training(args):
             del pipeline
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+            elif torch.xpu.is_available():
+                torch.xpu.empty_cache()
 
     # Handle the repository creation
     if accelerator.is_main_process:
@@ -593,6 +598,8 @@ def run_training(args):
         del vae
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+        elif torch.xpu.is_available():
+            torch.xpu.empty_cache()
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
@@ -747,7 +754,10 @@ def run_training(args):
 
     accelerator.end_training()
     del pipeline
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available()
+        torch.cuda.empty_cache()
+    elif torch.xpu.is_available():
+        torch.xpu.empty_cache()
     gc.collect()
 
 

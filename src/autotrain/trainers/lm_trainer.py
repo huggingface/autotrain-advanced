@@ -3,6 +3,7 @@ from itertools import chain
 
 import torch
 from datasets import Dataset, load_dataset
+from accelerate.utils import is_xpu_available
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from transformers import (
     AutoConfig,

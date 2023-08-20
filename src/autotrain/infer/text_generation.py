@@ -3,6 +3,7 @@ from typing import Optional
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+from accelerate.utils import is_xpu_available
 
 
 @dataclass
@@ -24,13 +25,18 @@ class TextGenerationInference:
             self.model_path,
             load_in_4bit=self.use_int4,
             load_in_8bit=self.use_int8,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16 if is_xpu_available() else torch.float16,
             trust_remote_code=True,
             device_map="auto",
         )
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, trust_remote_code=True)
         self.model.eval()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if is_xpu_available():
+            self.device = "xpu"
+        elif torch.cuda.is_available():
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
         self.generation_config = GenerationConfig(
             temperature=self.temperature,
             top_k=self.top_k,

@@ -164,7 +164,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     num_classes = len(classes)
 
     model_name = job_config["model_name"]
-    device = job_config.get("device", "cuda")
+    device = job_config.get("device", "xpu") if is_xpu_available() else job_config.get("device","cuda")
     # remove model_name from job config
     del job_config["model_name"]
     if num_classes == 2:

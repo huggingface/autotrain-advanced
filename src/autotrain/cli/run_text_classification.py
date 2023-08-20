@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 import torch
 
+from accelerate.utils import is_xpu_available, is_ipex_available
 from autotrain import logger
 from autotrain.trainers.text_classification.__main__ import train as train_text_classification
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -270,11 +271,14 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
-        if not torch.cuda.is_available():
+        if not (torch.cuda.is_available() and is_xpu_available()):
             self.device = "cpu"
 
-        self.num_gpus = torch.cuda.device_count()
-
+        if torch.cuda.is_available():
+            self.num_gpus = torch.cuda.device_count()
+        if is_xpu_available() and is_ipex_available():
+            self.num_gpus = torch.xpu.device_count()
+        
         if len(str(self.args.token)) < 6:
             self.args.token = os.environ.get("HF_TOKEN", None)
 
