@@ -276,6 +276,8 @@ def train(config):
             tokenizer=tokenizer,
             packing=True,
         )
+    else:
+        raise ValueError(f"trainer `{config.trainer}` not supported")
     model.config.use_cache = False
 
     if torch.__version__ >= "2" and sys.platform != "win32":
@@ -332,6 +334,11 @@ def train(config):
             logger.info("Pausing space...")
             api = HfApi(token=config.token)
             api.pause_space(repo_id=os.environ["SPACE_ID"])
+
+        if "ENDPOINT_ID" in os.environ:
+            # shut down the endpoint
+            logger.info("Pausing endpoint...")
+            utils.pause_endpoint(config)
 
 
 if __name__ == "__main__":

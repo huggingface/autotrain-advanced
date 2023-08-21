@@ -1,5 +1,7 @@
+import os
 from itertools import chain
 
+import requests
 import torch
 from datasets import Dataset
 from peft import PeftModel
@@ -115,3 +117,13 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
 
 def create_model_card():
     return MODEL_CARD.strip()
+
+
+def pause_endpoint(params):
+    endpoint_id = os.environ["ENDPOINT_ID"]
+    username = endpoint_id.split("/")[0]
+    project_name = endpoint_id.split("/")[1]
+    api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{username}/{project_name}/pause"
+    headers = {"Authorization": f"Bearer {params.token}"}
+    r = requests.post(api_url, headers=headers)
+    return r.json()
