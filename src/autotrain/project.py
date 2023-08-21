@@ -69,9 +69,9 @@ class AutoTrainProject:
             # target_modules, save_total_limit, use_int4, logging_steps,
             # model_max_length, valid_split
             _params["token"] = self.token
-            _params["project_name"] = self.project_name
+            _params["project_name"] = f"{self.project_name}-{job_idx}"
             _params["push_to_hub"] = True
-            _params["repo_id"] = f"{self.username}/{self.project_name}"
+            _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
             _params["text_column"] = self.col_map_text
             _params["data_path"] = self.data_path
             _params["model"] = self.model_choice

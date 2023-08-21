@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 from . import BaseAutoTrainCommand
@@ -48,6 +49,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
     def run(self):
         if self.task == "dreambooth":
             from ..dreambooth_app import main
+        elif os.environ.get("TASK") == "LLM":
+            from ..apps.llm import main
         else:
             from ..app import main
 

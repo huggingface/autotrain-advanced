@@ -208,7 +208,7 @@ def main():
             start_training_button = gr.Button(value="Start Training", elem_id="start_training_button")
 
         output_md = gr.Markdown(
-            value="WARNING: Clicking `Start Training` will incur costs!", visible=False, interactive=False
+            value="WARNING: Clicking `Start Training` will incur costs!", visible=True, interactive=False
         )
         jobs_df = gr.DataFrame(visible=False, interactive=False, value=pd.DataFrame())
 
