@@ -2,7 +2,6 @@
 Copyright 2023 The HuggingFace Team
 """
 
-import io
 import json
 import os
 import time
@@ -11,12 +10,13 @@ from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from codecarbon import EmissionsTracker
-from huggingface_hub import HfApi
 
 from autotrain import logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
+from autotrain.spacerunner import SpaceRunner
 from autotrain.tasks import TASKS
+from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.utils import http_get, http_post
 
 
@@ -42,68 +42,67 @@ class AutoTrainProject:
         if self.task in ("text_multi_class_classification", "text_binary_classification"):
             self.col_map_text = "autotrain_text"
             self.col_map_target = "autotrain_label"
+        if self.task == "lm_training":
+            self.col_map_text = "autotrain_text"
 
         self.spaces_backends = {
-            "A10G Large": "a10g-large",
-            "A10G Small": "a10g-small",
-            "A100 Large": "a100-large",
-            "T4 Medium": "t4-medium",
-            "T4 Small": "t4-small",
+            "A10G Large": "spaces-a10gl",
+            "A10G Small": "spaces-a10gs",
+            "A100 Large": "spaces-a100",
+            "T4 Medium": "spaces-t4m",
+            "T4 Small": "spaces-t4s",
             # "Local": "local",
             # "AutoTrain": "autotrain",
         }
+
         self.job_params_json = self.job_params.to_json(orient="records")
         logger.info(self.job_params_json)
 
     def create_spaces(self):
-        api = HfApi(token=self.token)
+        _created_spaces = []
         for job_idx in range(self.num_jobs):
             _params = json.loads(self.job_params_json)[job_idx]
+            # WARNING Parameters not supplied by user and set to default: add_eos_token,
+            # merge_adapter,
+            # train_split, auto_find_batch_size, max_grad_norm, text_column,
+            # evaluation_strategy, lr, use_int8, fp16, model, data_path,
+            # target_modules, save_total_limit, use_int4, logging_steps,
+            # model_max_length, valid_split
+            _params["token"] = self.token
+            _params["project_name"] = f"{self.project_name}-{job_idx}"
+            _params["push_to_hub"] = True
+            _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
+            _params["text_column"] = self.col_map_text
+            _params["data_path"] = self.data_path
+            _params["model"] = self.model_choice
+
+            if "trainer" in _params:
+                _params["trainer"] = _params["trainer"].lower()
+
+            if "use_fp16" in _params:
+                _params["fp16"] = _params["use_fp16"]
+                _params.pop("use_fp16")
+
+            if "int4_8" in _params:
+                if _params["int4_8"] == "int4":
+                    _params["use_int4"] = True
+                    _params["use_int8"] = False
+                elif _params["int4_8"] == "int8":
+                    _params["use_int4"] = False
+                    _params["use_int8"] = True
+                else:
+                    _params["use_int4"] = False
+                    _params["use_int8"] = False
+                _params.pop("int4_8")
+
+            _params = LLMTrainingParams.parse_obj(_params)
             logger.info(f"Creating Space for job: {job_idx}")
             logger.info(f"Using params: {_params}")
-            logger.info(json.dumps(_params))
-            repo_id = f"{self.username}/autotrain-{self.project_name}-{job_idx}"
-            api.create_repo(
-                repo_id=repo_id,
-                repo_type="space",
-                space_sdk="docker",
-                space_hardware=self.spaces_backends[self.backend],
-                private=True,
-            )
-            api.add_space_secret(repo_id=repo_id, key="HF_TOKEN", value=self.token)
-            api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
-            api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.project_name)
-            api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(_params))
-            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.data_path)
-            api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
-            api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.model_choice)
-            api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=repo_id)
-
-            _readme = "---\n"
-            _readme += f"title: {self.project_name}-{job_idx}\n"
-            _readme += "emoji: 🚀\n"
-            _readme += "colorFrom: green\n"
-            _readme += "colorTo: indigo\n"
-            _readme += "sdk: docker\n"
-            _readme += "pinned: false\n"
-            _readme += "duplicated_from: autotrain-projects/autotrain-advanced\n"
-            _readme += "---\n"
-            _readme = io.BytesIO(_readme.encode())
-            api.upload_file(
-                path_or_fileobj=_readme,
-                path_in_repo="README.md",
-                repo_id=repo_id,
-                repo_type="space",
-            )
-
-            _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain api --port 7860 --host 0.0.0.0"
-            _dockerfile = io.BytesIO(_dockerfile.encode())
-            api.upload_file(
-                path_or_fileobj=_dockerfile,
-                path_in_repo="Dockerfile",
-                repo_id=repo_id,
-                repo_type="space",
-            )
+            sr = SpaceRunner(params=_params, backend=self.spaces_backends[self.backend])
+            space_id = sr.prepare()
+            logger.info(f"Space created with id: {space_id}")
+            _created_spaces.append(space_id)
+        return _created_spaces
 
     def create(self):
         if self.backend == "AutoTrain":

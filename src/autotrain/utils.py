@@ -285,7 +285,7 @@ def monitor(func):
                 if "SPACE_ID" in os.environ:
                     # shut down the space
                     logger.info("Pausing space...")
-                    api = HfApi(token=config.token)
+                    api = HfApi(token=os.environ["HF_TOKEN"])
                     api.pause_space(repo_id=os.environ["SPACE_ID"])
 
     return wrapper

@@ -39,7 +39,11 @@ def start_training(
     )
     dset.prepare()
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
-    project.create()
+    ids = project.create()
+    return gr.Markdown.update(
+        value=f"Training started for {len(ids)} jobs. You can view the status of your jobs at ids: {', '.join(ids)}",
+        visible=True,
+    )
 
 
 def main():
@@ -137,12 +141,12 @@ def main():
                         elem_id="param_choice",
                     )
                     with gr.Row():
-                        hyp_learning_rate = gr.Number(
+                        hyp_lr = gr.Number(
                             label="Learning Rate",
                             value=2e-4,
                             visible=True,
                             interactive=True,
-                            elem_id="hyp_learning_rate",
+                            elem_id="hyp_lr",
                         )
                         hyp_epochs = gr.Number(
                             label="Epochs",
@@ -203,6 +207,9 @@ def main():
             clear_jobs_button = gr.Button(value="Clear Jobs", elem_id="clear_jobs_button")
             start_training_button = gr.Button(value="Start Training", elem_id="start_training_button")
 
+        output_md = gr.Markdown(
+            value="WARNING: Clicking `Start Training` will incur costs!", visible=True, interactive=False
+        )
         jobs_df = gr.DataFrame(visible=False, interactive=False, value=pd.DataFrame())
 
         def _update_col_map(training_data):
@@ -233,7 +240,7 @@ def main():
             hyp_lora_r,
             hyp_lora_alpha,
             hyp_lora_dropout,
-            hyp_learning_rate,
+            hyp_lr,
             hyp_epochs,
             hyp_block_size,
             hyp_batch_size,
@@ -307,7 +314,7 @@ def main():
                 user_token,
                 col_map_text,
             ],
-            outputs=[],
+            outputs=output_md,
         )
 
         demo.load(

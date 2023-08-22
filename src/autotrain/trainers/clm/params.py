@@ -37,7 +37,7 @@ class LLMTrainingParams(BaseModel):
     fp16: bool = Field(False, title="FP16")
     push_to_hub: bool = Field(False, title="Push to hub")
     use_int8: bool = Field(False, title="Use int8")
-    model_max_length: int = Field(1024, title="Model max length")
+    model_max_length: int = Field(2048, title="Model max length")
     repo_id: str = Field(None, title="Repo id")
     use_int4: bool = Field(False, title="Use int4")
     trainer: str = Field("default", title="Trainer type")

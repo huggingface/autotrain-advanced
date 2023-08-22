@@ -85,6 +85,7 @@ class EndpointsRunner:
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
                             "OUTPUT_MODEL_REPO": self.params.repo_id,
+                            "ENDPOINT_ID": f"{self.username}/{self.params.project_name}",
                         },
                         "health_route": "/",
                         "port": 7860,
