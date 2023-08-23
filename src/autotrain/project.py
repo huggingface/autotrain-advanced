@@ -73,7 +73,6 @@ class AutoTrainProject:
     def _munge_params_llm(self, job_idx):
         _params = self._munge_common_params(job_idx)
         _params["text_column"] = self.col_map_text
-        _params["valid_split"] = "validation"
 
         if "trainer" in _params:
             _params["trainer"] = _params["trainer"].lower()
@@ -100,6 +99,8 @@ class AutoTrainProject:
         _params = self._munge_common_params(job_idx)
         _params["text_column"] = self.col_map_text
         _params["target_column"] = self.col_map_target
+        _params["valid_split"] = "validation"
+
         if "use_fp16" in _params:
             _params["fp16"] = _params["use_fp16"]
             _params.pop("use_fp16")
