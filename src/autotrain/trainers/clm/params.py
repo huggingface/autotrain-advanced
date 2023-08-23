@@ -43,6 +43,7 @@ class LLMTrainingParams(BaseModel):
     trainer: str = Field("default", title="Trainer type")
     target_modules: str = Field(None, title="Target modules")
     merge_adapter: bool = Field(False, title="Merge adapter")
+    username: str = Field(None, title="Hugging Face Username")
 
     def save(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)

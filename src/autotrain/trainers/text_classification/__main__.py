@@ -32,6 +32,9 @@ def train(config):
     if isinstance(config, dict):
         config = TextClassificationParams(**config)
 
+    if config.repo_id is None and config.username is not None:
+        config.repo_id = f"{config.username}/{config.project_name}"
+
     if PartialState().process_index == 0:
         logger.info("Starting training...")
         logger.info(f"Training config: {config}")
@@ -79,21 +82,21 @@ def train(config):
                 f"Number of classes in train and valid are not the same. Training has {num_classes} and valid has {num_classes_valid}"
             )
 
-    model_config = AutoConfig.from_pretrained(config.model_name, num_labels=num_classes)
+    model_config = AutoConfig.from_pretrained(config.model, num_labels=num_classes)
     model_config._num_labels = len(label2id)
     model_config.label2id = label2id
     model_config.id2label = {v: k for k, v in label2id.items()}
 
     try:
         model = AutoModelForSequenceClassification.from_pretrained(
-            config.model_name, config=model_config, trust_remote_code=True, token=config.token
+            config.model, config=model_config, trust_remote_code=True, token=config.token
         )
     except OSError:
         model = AutoModelForSequenceClassification.from_pretrained(
-            config.model_name, config=model_config, from_tf=True, trust_remote_code=True, token=config.token
+            config.model, config=model_config, from_tf=True, trust_remote_code=True, token=config.token
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model_name, token=config.token, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
     train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
         valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config)
@@ -186,6 +189,11 @@ def train(config):
             logger.info("Pausing space...")
             api = HfApi(token=config.token)
             api.pause_space(repo_id=os.environ["SPACE_ID"])
+
+        if "ENDPOINT_ID" in os.environ:
+            # shut down the endpoint
+            logger.info("Pausing endpoint...")
+            utils.pause_endpoint(config)
 
 
 if __name__ == "__main__":

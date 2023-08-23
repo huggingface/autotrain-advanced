@@ -58,10 +58,10 @@ def _update_hub_model_choices(task):
             interactive=True,
         )
 
-    if task in ("text_multi_class_classification", "image_multi_class_classification"):
-        choices = ["AutoTrain"] + [m["id"] for m in hub_models]
-    else:
-        choices = [m["id"] for m in hub_models]
+    # if task in ("text_multi_class_classification", "image_multi_class_classification"):
+    #     choices = ["AutoTrain"] + [m["id"] for m in hub_models]
+    # else:
+    choices = [m["id"] for m in hub_models]
 
     return gr.Dropdown.update(
         choices=choices,

@@ -2,10 +2,12 @@ import os
 
 from pydantic import BaseModel, Field
 
+from autotrain import logger
+
 
 class TextClassificationParams(BaseModel):
     data_path: str = Field(None, title="Data path")
-    model_name: str = Field("bert-base-uncased", title="Model name")
+    model: str = Field("bert-base-uncased", title="Model name")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
     max_seq_length: int = Field(128, title="Max sequence length")
@@ -31,6 +33,7 @@ class TextClassificationParams(BaseModel):
     push_to_hub: bool = Field(False, title="Push to hub")
     repo_id: str = Field(None, title="Repo id")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
+    username: str = Field(None, title="Hugging Face Username")
 
     def __str__(self):
         data = self.dict()
@@ -43,3 +46,19 @@ class TextClassificationParams(BaseModel):
         # save formatted json
         with open(path, "w") as f:
             f.write(self.json(indent=4))
+
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        # Parameters not supplied by the user
+        defaults = {f.name for f in self.__fields__.values() if f.default == self.__dict__[f.name]}
+        supplied = set(data.keys())
+        not_supplied = defaults - supplied
+        if not_supplied:
+            logger.warning(f"Parameters not supplied by user and set to default: {', '.join(not_supplied)}")
+
+        # Parameters that were supplied but not used
+        # This is a naive implementation. It might catch some internal Pydantic params.
+        unused = supplied - set(self.__fields__)
+        if unused:
+            logger.warning(f"Parameters supplied but not used: {', '.join(unused)}")

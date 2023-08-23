@@ -41,6 +41,9 @@ def train(config):
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
 
+    if config.repo_id is None and config.username is not None:
+        config.repo_id = f"{config.username}/{config.project_name}"
+
     # TODO: remove when SFT is fixed
     # if config.trainer == "sft":
     #     config.trainer = "default"

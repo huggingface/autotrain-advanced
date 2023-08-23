@@ -17,6 +17,7 @@ from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.spacerunner import SpaceRunner
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.utils import http_get, http_post
 
 
@@ -58,44 +59,62 @@ class AutoTrainProject:
         self.job_params_json = self.job_params.to_json(orient="records")
         logger.info(self.job_params_json)
 
+    def _munge_common_params(self, job_idx):
+        _params = json.loads(self.job_params_json)[job_idx]
+        _params["token"] = self.token
+        _params["project_name"] = f"{self.project_name}-{job_idx}"
+        _params["push_to_hub"] = True
+        _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
+        _params["data_path"] = self.data_path
+        _params["model"] = self.model_choice
+        _params["username"] = self.username
+        return _params
+
+    def _munge_params_llm(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["text_column"] = self.col_map_text
+
+        if "trainer" in _params:
+            _params["trainer"] = _params["trainer"].lower()
+
+        if "use_fp16" in _params:
+            _params["fp16"] = _params["use_fp16"]
+            _params.pop("use_fp16")
+
+        if "int4_8" in _params:
+            if _params["int4_8"] == "int4":
+                _params["use_int4"] = True
+                _params["use_int8"] = False
+            elif _params["int4_8"] == "int8":
+                _params["use_int4"] = False
+                _params["use_int8"] = True
+            else:
+                _params["use_int4"] = False
+                _params["use_int8"] = False
+            _params.pop("int4_8")
+
+        return _params
+
+    def _munge_params_text_clf(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["text_column"] = self.col_map_text
+        _params["target_column"] = self.col_map_target
+        if "use_fp16" in _params:
+            _params["fp16"] = _params["use_fp16"]
+            _params.pop("use_fp16")
+
+        return _params
+
     def create_spaces(self):
         _created_spaces = []
         for job_idx in range(self.num_jobs):
-            _params = json.loads(self.job_params_json)[job_idx]
-            # WARNING Parameters not supplied by user and set to default: add_eos_token,
-            # merge_adapter,
-            # train_split, auto_find_batch_size, max_grad_norm, text_column,
-            # evaluation_strategy, lr, use_int8, fp16, model, data_path,
-            # target_modules, save_total_limit, use_int4, logging_steps,
-            # model_max_length, valid_split
-            _params["token"] = self.token
-            _params["project_name"] = f"{self.project_name}-{job_idx}"
-            _params["push_to_hub"] = True
-            _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
-            _params["text_column"] = self.col_map_text
-            _params["data_path"] = self.data_path
-            _params["model"] = self.model_choice
+            if self.task_id == 9:
+                _params = self._munge_params_llm(job_idx)
+                _params = LLMTrainingParams.parse_obj(_params)
+            elif self.task_id in (1, 2):
+                _params = self._munge_params_text_clf(job_idx)
+                _params = TextClassificationParams.parse_obj(_params)
 
-            if "trainer" in _params:
-                _params["trainer"] = _params["trainer"].lower()
-
-            if "use_fp16" in _params:
-                _params["fp16"] = _params["use_fp16"]
-                _params.pop("use_fp16")
-
-            if "int4_8" in _params:
-                if _params["int4_8"] == "int4":
-                    _params["use_int4"] = True
-                    _params["use_int8"] = False
-                elif _params["int4_8"] == "int8":
-                    _params["use_int4"] = False
-                    _params["use_int8"] = True
-                else:
-                    _params["use_int4"] = False
-                    _params["use_int8"] = False
-                _params.pop("int4_8")
-
-            _params = LLMTrainingParams.parse_obj(_params)
             logger.info(f"Creating Space for job: {job_idx}")
             logger.info(f"Using params: {_params}")
             sr = SpaceRunner(params=_params, backend=self.spaces_backends[self.backend])
