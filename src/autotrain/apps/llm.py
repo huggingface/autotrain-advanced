@@ -48,7 +48,6 @@ def start_training(
 
 def main():
     with gr.Blocks(theme=app_utils.THEME) as demo:
-        gr.Markdown("## 🤗 AutoTrain Advanced")
         gr.Markdown("### 🚀 LLM Finetuning")
         user_token, valid_can_pay, who_is_training = common.user_validation()
         autotrain_username, project_name, model_choice, autotrain_backend = common.base_components(who_is_training)

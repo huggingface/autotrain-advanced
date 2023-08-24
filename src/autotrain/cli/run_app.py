@@ -54,7 +54,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         elif os.environ.get("TASK") == "TEXT_CLASSIFICATION":
             from ..apps.text_classification import main
         else:
-            from ..app import main
+            from ..apps.main import main
 
         demo = main()
         demo.queue(concurrency_count=10).launch()
