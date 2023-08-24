@@ -10,7 +10,7 @@ def main():
         gr.Markdown("## 🤗 AutoTrain Advanced")
         with gr.Tabs():
             with gr.Tab(label="LLM"):
-                llm()
+                llm().render()
             with gr.Tab(label="Text Classification"):
-                text_classification()
+                text_classification().render()
     return demo
