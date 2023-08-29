@@ -323,6 +323,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "type": str,
                 "default": "default",
             },
+            {
+                "arg": "--username",
+                "help": "Huggingface username to use",
+                "required": False,
+                "type": str,
+            },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
@@ -442,6 +448,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 target_modules=self.args.target_modules,
                 token=self.args.token,
                 merge_adapter=self.args.merge_adapter,
+                username=self.args.username,
             )
 
             # space training

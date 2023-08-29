@@ -37,6 +37,29 @@ def _llm_munge_data(params, username):
     return params.data_path
 
 
+def _text_clf_munge_data(params, username):
+    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            task="text_multi_class_classification",
+            token=params.token,
+            project_name=params.project_name,
+            username=username,
+            column_mapping={"text": params.text_column, "label": params.target_column},
+            percent_valid=None,  # TODO: add to UI
+        )
+        dset.prepare()
+        return f"{username}/autotrain-data-{params.project_name}"
+
+    return params.data_path
+
+
 @dataclass
 class EndpointsRunner:
     params: Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams]
@@ -52,7 +75,12 @@ class EndpointsRunner:
             "ep-aws-useast1-4xl": "aws_us-east-1_gpu_4xlarge_p4de",
             "ep-aws-useast1-8xl": "aws_us-east-1_gpu_8xlarge_p4de",
         }
-        self.username = self.params.repo_id.split("/")[0]
+        if self.params.repo_id is not None:
+            self.username = self.params.repo_id.split("/")[0]
+        elif self.params.username is not None:
+            self.username = self.params.username
+        else:
+            raise ValueError("Must provide either repo_id or username")
         self.api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{self.username}"
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
@@ -111,6 +139,11 @@ class EndpointsRunner:
             self.params.data_path = data_path
             endpoint_id = self._create_endpoint()
             return endpoint_id
+        if isinstance(self.params, TextClassificationParams):
+            data_path = _text_clf_munge_data(self.params, self.username)
+            self.params.data_path = data_path
+            endpoint_id = self._create_endpoint()
+            return endpoint_id
         raise NotImplementedError
 
 
@@ -127,7 +160,12 @@ class SpaceRunner:
             "t4m": "t4-medium",
             "t4s": "t4-small",
         }
-        self.username = self.params.repo_id.split("/")[0]
+        if self.params.repo_id is not None:
+            self.username = self.params.repo_id.split("/")[0]
+        elif self.params.username is not None:
+            self.username = self.params.username
+        else:
+            raise ValueError("Must provide either repo_id or username")
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
 
@@ -135,6 +173,12 @@ class SpaceRunner:
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
             data_path = _llm_munge_data(self.params, self.username)
+            self.params.data_path = data_path
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, TextClassificationParams):
+            self.task_id = 2
+            data_path = _text_clf_munge_data(self.params, self.username)
             self.params.data_path = data_path
             space_id = self._create_space()
             return space_id

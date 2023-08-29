@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from autotrain import logger
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.text_classification.params import TextClassificationParams
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -47,6 +48,25 @@ def run_training():
             [
                 "-m",
                 "autotrain.trainers.clm",
+                "--training_config",
+                os.path.join(params.project_name, "training_params.json"),
+            ]
+        )
+    elif TASK_ID in (1, 2):
+        params = TextClassificationParams.parse_raw(params)
+        params.project_name = "/tmp/model"
+        params.save(output_dir=params.project_name)
+        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
+        cmd.append("--mixed_precision")
+        if params.fp16:
+            cmd.append("fp16")
+        else:
+            cmd.append("no")
+
+        cmd.extend(
+            [
+                "-m",
+                "autotrain.trainers.text_classification",
                 "--training_config",
                 os.path.join(params.project_name, "training_params.json"),
             ]

@@ -1,11 +1,13 @@
 import os
 import subprocess
+import sys
 from argparse import ArgumentParser
 
 import torch
 
 from accelerate.utils import is_xpu_available, is_ipex_available
 from autotrain import logger
+from autotrain.spacerunner import EndpointsRunner, SpaceRunner
 from autotrain.trainers.text_classification.__main__ import train as train_text_classification
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
@@ -220,6 +222,19 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--backend",
+                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+                "required": False,
+                "type": str,
+                "default": "default",
+            },
+            {
+                "arg": "--username",
+                "help": "Huggingface username to use",
+                "required": False,
+                "type": str,
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "text-classification", description="✨ Run AutoTrain Text Classification"
@@ -313,7 +328,29 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
                 token=self.args.token,
+                username=self.args.username,
             )
+
+            if self.args.backend.startswith("spaces"):
+                logger.info("Creating space...")
+                sr = SpaceRunner(
+                    params=params,
+                    backend=self.args.backend,
+                )
+                space_id = sr.prepare()
+                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
+                sys.exit(0)
+
+            if self.args.backend.startswith("ep-"):
+                logger.info("Creating training endpoint...")
+                sr = EndpointsRunner(
+                    params=params,
+                    backend=self.args.backend,
+                )
+                sr.prepare()
+                logger.info("Training endpoint created.")
+                sys.exit(0)
+
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
                 train_text_classification(params)
