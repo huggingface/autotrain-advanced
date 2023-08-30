@@ -172,6 +172,14 @@ def train(config):
     if config.numerical_columns is None:
         config.numerical_columns = utils.get_numerical_columns(train_data)
 
+    _id_target_cols = (
+        [config.id_column] + config.target_columns if config.id_column is not None else config.target_columns
+    )
+    config.numerical_columns = [c for c in config.numerical_columns if c not in _id_target_cols]
+    config.categorical_columns = [c for c in config.categorical_columns if c not in _id_target_cols]
+
+    useful_columns = config.categorical_columns + config.numerical_columns
+
     logger.info(f"Categorical columns: {config.categorical_columns}")
     logger.info(f"Numerical columns: {config.numerical_columns}")
 
@@ -180,10 +188,7 @@ def train(config):
         train_data[col] = train_data[col].astype("category")
         valid_data[col] = valid_data[col].astype("category")
 
-    useful_columns = config.categorical_columns + config.numerical_columns
-    useful_columns = [c for c in useful_columns if c not in config.target_columns]
-    if config.id_column is not None:
-        useful_columns = [c for c in useful_columns if c != config.id_column]
+    logger.info(f"Useful columns: {useful_columns}")
 
     target_encoders = {}
     if config.task == "classification":
