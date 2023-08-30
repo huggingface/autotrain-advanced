@@ -77,7 +77,7 @@ def start_training(
 
 def main():
     with gr.Blocks(theme=app_utils.THEME) as demo:
-        gr.Markdown("### 🚀 Tabular Classification")
+        gr.Markdown("### 🚀 Tabular Classification / Regression")
         user_token, valid_can_pay, who_is_training = common.user_validation()
         autotrain_username, project_name, model_choice, autotrain_backend = common.base_components(who_is_training)
         model_choice.update(label="", visible=False, interactive=False)
@@ -90,6 +90,7 @@ def main():
                         choices=[],
                         visible=True,
                         interactive=True,
+                        
                         elem_id="col_map_id",
                     )
                     col_map_target = gr.Dropdown(
