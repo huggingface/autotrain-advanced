@@ -60,8 +60,6 @@ def start_training(
         convert_to_class_label=True,
     )
     dset.prepare()
-    jobs_df[:, "model_choice"] = "custom"
-    jobs_df[:, "param_choice"] = "custom"
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
     ids = project.create()
     return gr.Markdown.update(
@@ -126,16 +124,16 @@ def main():
                     )
                     hyp_categorial_imputer = gr.Dropdown(
                         label="Categorical Imputer",
-                        choices=["most_frequent", "constant", "none"],
-                        value="most_frequent",
+                        choices=["most_frequent", "none"],
+                        value="none",
                         visible=True,
                         interactive=True,
-                        elem_id="hyp_categorial_imputer",
+                        elem_id="hyp_categorical_imputer",
                     )
                     with gr.Row():
                         hyp_numerical_imputer = gr.Dropdown(
                             label="Numerical Imputer",
-                            choices=["mean", "median", "constant", "none"],
+                            choices=["mean", "median", "most_frequent", "none"],
                             value="mean",
                             visible=True,
                             interactive=True,
@@ -143,7 +141,7 @@ def main():
                         )
                         hyp_numeric_scaler = gr.Dropdown(
                             label="Numeric Scaler",
-                            choices=["standard", "minmax", "maxabs", "robust", "none"],
+                            choices=["standard", "minmax", "normal", "robust", "none"],
                             value="standard",
                             visible=True,
                             interactive=True,

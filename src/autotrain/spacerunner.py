@@ -11,7 +11,45 @@ from autotrain import logger
 from autotrain.dataset import AutoTrainDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+
+
+def _tabular_munge_data(params, username):
+    if isinstance(params.target_columns, str):
+        col_map_label = [params.target_columns]
+    task = params.task
+    if task == "classification" and len(col_map_label) > 1:
+        task = "tabular_multi_label_classification"
+    elif task == "classification" and len(col_map_label) == 1:
+        task = "tabular_multi_class_classification"
+    elif task == "regression" and len(col_map_label) > 1:
+        task = "tabular_multi_column_regression"
+    elif task == "regression" and len(col_map_label) == 1:
+        task = "tabular_single_column_regression"
+    else:
+        raise Exception("Please select a valid task.")
+
+    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+    else:
+        valid_data_path = []
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            task=task,
+            token=params.token,
+            project_name=params.project_name,
+            username=username,
+            column_mapping={"id": params.col_map_id, "label": col_map_label},
+            valid_data=valid_data_path,
+            percent_valid=None,  # TODO: add to UI
+        )
+        dset.prepare()
+        return f"{username}/autotrain-data-{params.project_name}"
+
+    return params.data_path
 
 
 def _llm_munge_data(params, username):
@@ -168,6 +206,10 @@ class SpaceRunner:
             raise ValueError("Must provide either repo_id or username")
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
+        elif isinstance(self.params, TextClassificationParams):
+            self.task_id = 2
+        elif isinstance(self.params, TabularParams):
+            self.task_id = 26
 
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
@@ -179,6 +221,12 @@ class SpaceRunner:
         if isinstance(self.params, TextClassificationParams):
             self.task_id = 2
             data_path = _text_clf_munge_data(self.params, self.username)
+            self.params.data_path = data_path
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, TabularParams):
+            self.task_id = 26
+            data_path = _tabular_munge_data(self.params, self.username)
             self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
