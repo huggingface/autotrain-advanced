@@ -15,6 +15,7 @@ from sklearn.compose import ColumnTransformer
 from autotrain import logger
 from autotrain.trainers.tabular import utils
 from autotrain.trainers.tabular.params import TabularParams
+from autotrain.utils import monitor
 
 
 def parse_args():
@@ -124,6 +125,7 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
     return metric_dict["loss"]
 
 
+@monitor
 def train(config):
     if isinstance(config, dict):
         config = TabularParams(**config)
