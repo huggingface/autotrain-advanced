@@ -11,6 +11,8 @@ from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
     TabularMultiClassClassificationPreprocessor,
+    TabularMultiColumnRegressionPreprocessor,
+    TabularMultiLabelClassificationPreprocessor,
     TabularSingleColumnRegressionPreprocessor,
 )
 from autotrain.preprocessor.text import (
@@ -294,7 +296,7 @@ class AutoTrainDataset:
 
         elif self.task == "tabular_binary_classification":
             id_column = self.column_mapping["id"]
-            label_column = self.column_mapping["label"]
+            label_column = self.column_mapping["label"][0]
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularBinaryClassificationPreprocessor(
@@ -311,7 +313,7 @@ class AutoTrainDataset:
             preprocessor.prepare()
         elif self.task == "tabular_multi_class_classification":
             id_column = self.column_mapping["id"]
-            label_column = self.column_mapping["label"]
+            label_column = self.column_mapping["label"][0]
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularMultiClassClassificationPreprocessor(
@@ -328,10 +330,44 @@ class AutoTrainDataset:
             preprocessor.prepare()
         elif self.task == "tabular_single_column_regression":
             id_column = self.column_mapping["id"]
-            label_column = self.column_mapping["label"]
+            label_column = self.column_mapping["label"][0]
             if len(id_column.strip()) == 0:
                 id_column = None
             preprocessor = TabularSingleColumnRegressionPreprocessor(
+                train_data=self.train_df,
+                id_column=id_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+            )
+            preprocessor.prepare()
+        elif self.task == "tabular_multi_column_regression":
+            id_column = self.column_mapping["id"]
+            label_column = self.column_mapping["label"]
+            if len(id_column.strip()) == 0:
+                id_column = None
+            preprocessor = TabularMultiColumnRegressionPreprocessor(
+                train_data=self.train_df,
+                id_column=id_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+            )
+            preprocessor.prepare()
+        elif self.task == "tabular_multi_label_classification":
+            id_column = self.column_mapping["id"]
+            label_column = self.column_mapping["label"]
+            if len(id_column.strip()) == 0:
+                id_column = None
+            preprocessor = TabularMultiLabelClassificationPreprocessor(
                 train_data=self.train_df,
                 id_column=id_column,
                 label_column=label_column,

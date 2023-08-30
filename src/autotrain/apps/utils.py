@@ -42,6 +42,12 @@ def _update_hub_model_choices(task):
         hub_models = list(list_models(filter="image-classification", sort="downloads", direction=-1, limit=100))
     elif task == "dreambooth":
         hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100))
+    elif task == "tabular":
+        return gr.Dropdown.update(
+            choices=[],
+            visible=False,
+            interactive=False,
+        )
     else:
         raise NotImplementedError
     # sort by number of downloads in descending order
@@ -94,7 +100,9 @@ def _login_user(user_token):
     return user_token, valid_can_pay, who_is_training
 
 
-def fetch_training_params_df(param_choice, jobs_df, training_params, model_choice, autotrain_backend):
+def fetch_training_params_df(
+    param_choice, jobs_df, training_params, model_choice, autotrain_backend, hide_model_param=False
+):
     if param_choice == "AutoTrain":
         # create a new dataframe from dict
         _training_params_df = pd.DataFrame([training_params])
@@ -120,8 +128,9 @@ def fetch_training_params_df(param_choice, jobs_df, training_params, model_choic
     # remove hyp_ from column names
     _training_params_df.columns = [c[len("hyp_") :] for c in _training_params_df.columns]
     _training_params_df = _training_params_df.reset_index(drop=True)
-    _training_params_df.loc[:, "model_choice"] = model_choice
-    _training_params_df.loc[:, "param_choice"] = param_choice
+    if not hide_model_param:
+        _training_params_df.loc[:, "model_choice"] = model_choice
+        _training_params_df.loc[:, "param_choice"] = param_choice
     _training_params_df.loc[:, "backend"] = autotrain_backend
     return _training_params_df
 

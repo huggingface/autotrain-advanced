@@ -11,6 +11,51 @@ from sklearn import naive_bayes, neighbors, pipeline, preprocessing, svm, tree
 from xgboost import XGBClassifier, XGBRegressor
 
 
+MARKDOWN = """
+---
+tags:
+- autotrain
+- tabular
+- {task}
+- tabular-{task}
+datasets:
+- {dataset}
+---
+
+# Model Trained Using AutoTrain
+
+- Problem type: Tabular {task}
+
+## Validation Metrics
+
+{metrics}
+
+## Best Params
+
+{params}
+
+## Usage
+
+```python
+import json
+import joblib
+import pandas as pd
+
+model = joblib.load('model.joblib')
+config = json.load(open('config.json'))
+
+features = config['features']
+
+# data = pd.read_csv("data.csv")
+data = data[features]
+
+predictions = model.predict(data)  # or model.predict_proba(data)
+
+# predictions can be converted to original labels using label_encoders.pkl
+
+```
+"""
+
 _MODELS: dict = defaultdict(dict)
 _MODELS["xgboost"]["classification"] = XGBClassifier
 _MODELS["xgboost"]["regression"] = XGBRegressor
@@ -161,12 +206,9 @@ def get_params(trial, model, task):
             "max_depth": trial.suggest_int("max_depth", 1, 9),
             "early_stopping_rounds": trial.suggest_int("early_stopping_rounds", 100, 500),
             "n_estimators": trial.suggest_categorical("n_estimators", [7000, 15000, 20000]),
+            "tree_method": "hist",
             "random_state": 42,
-            "use_label_encoder": False,
         }
-        params["tree_method"] = "gpu_hist"
-        params["gpu_id"] = 0
-        params["predictor"] = "gpu_predictor"
 
         return params
 
@@ -344,3 +386,22 @@ def get_metric_direction(sub_task):
     if sub_task == "multi_column_regression":
         return "rmse", "minimize"
     raise ValueError("Invalid sub_task")
+
+
+def get_categorical_columns(df):
+    return list(df.select_dtypes(include=["category", "object"]).columns)
+
+
+def get_numerical_columns(df):
+    return list(df.select_dtypes(include=["number"]).columns)
+
+
+def create_model_card(config, sub_task, best_params, best_metrics):
+    best_metrics = "\n".join([f"- {k}: {v}" for k, v in best_metrics.items()])
+    best_params = "\n".join([f"- {k}: {v}" for k, v in best_params.items()])
+    return MARKDOWN.format(
+        task=config.task,
+        dataset=config.data_path,
+        metrics=best_metrics,
+        params=best_params,
+    )

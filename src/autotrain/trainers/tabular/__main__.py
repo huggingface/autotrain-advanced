@@ -7,8 +7,7 @@ import joblib
 import numpy as np
 import optuna
 import pandas as pd
-from accelerate.state import PartialState
-from datasets import Dataset, load_dataset
+from datasets import load_dataset
 from huggingface_hub import HfApi
 from sklearn import pipeline, preprocessing
 from sklearn.compose import ColumnTransformer
@@ -57,8 +56,6 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
 
     if model_name == "xgboost":
         params["eval_metric"] = eval_metric
-        early_stopping_rounds = params["early_stopping_rounds"]
-        del params["early_stopping_rounds"]
 
     _model = utils.TabularModel(model_name, preprocessor=None, sub_task=task, params=params)
     model = _model.pipeline
@@ -72,7 +69,6 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
                 _m.fit(
                     xtrain,
                     ytrain[:, idx],
-                    model__early_stopping_rounds=early_stopping_rounds,
                     model__eval_set=[(xvalid, yvalid[:, idx])],
                     model__verbose=False,
                 )
@@ -94,7 +90,6 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
             model.fit(
                 xtrain,
                 ytrain,
-                model__early_stopping_rounds=early_stopping_rounds,
                 model__eval_set=[(xvalid, yvalid)],
                 model__verbose=False,
             )
@@ -125,7 +120,7 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
 
     logger.info(f"Metrics: {metric_dict}")
     if isinstance(trial, dict):
-        return models, preprocessor
+        return models, preprocessor, metric_dict
     return metric_dict["loss"]
 
 
@@ -141,19 +136,17 @@ def train(config):
 
     train_data = None
     valid_data = None
-    # check if config.train_split.csv exists in config.data_path
-    if config.train_split is not None:
-        train_path = f"{config.data_path}/{config.train_split}.csv"
-        if os.path.exists(train_path):
-            logger.info("loading dataset from csv")
-            train_data = pd.read_csv(train_path)
-        else:
-            train_data = load_dataset(
-                config.data_path,
-                split=config.train_split,
-                token=config.token,
-            )
-            train_data = train.to_pandas()
+    train_path = f"{config.data_path}/{config.train_split}.csv"
+    if os.path.exists(train_path):
+        logger.info("loading dataset from csv")
+        train_data = pd.read_csv(train_path)
+    else:
+        train_data = load_dataset(
+            config.data_path,
+            split=config.train_split,
+            token=config.token,
+        )
+        train_data = train.to_pandas()
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
@@ -168,13 +161,27 @@ def train(config):
             )
             valid_data = valid_data.to_pandas()
 
+    if valid_data is None:
+        raise Exception("valid_data is None. Please provide a valid_split for tabular training.")
+
     # determine which columns are categorical
     if config.categorical_columns is None:
         config.categorical_columns = utils.get_categorical_columns(train_data)
     if config.numerical_columns is None:
         config.numerical_columns = utils.get_numerical_columns(train_data)
 
+    logger.info(f"Categorical columns: {config.categorical_columns}")
+    logger.info(f"Numerical columns: {config.numerical_columns}")
+
+    # convert object columns to categorical
+    for col in config.categorical_columns:
+        train_data[col] = train_data[col].astype("category")
+        valid_data[col] = valid_data[col].astype("category")
+
     useful_columns = config.categorical_columns + config.numerical_columns
+    useful_columns = [c for c in useful_columns if c not in config.target_columns]
+    if config.id_column is not None:
+        useful_columns = [c for c in useful_columns if c != config.id_column]
 
     target_encoders = {}
     if config.task == "classification":
@@ -194,7 +201,7 @@ def train(config):
     preprocessor = None
 
     numeric_steps = []
-    imputer = utils.get_imputer(config.numeric_imputer)
+    imputer = utils.get_imputer(config.numerical_imputer)
     scaler = utils.get_scaler(config.numeric_scaler)
     if imputer is not None:
         numeric_steps.append(("num_imputer", imputer))
@@ -210,7 +217,7 @@ def train(config):
     if imputer is not None:
         categorical_steps.append(("cat_imputer", imputer))
 
-    if config.categorical_scaler is not None:
+    if len(config.categorical_columns) > 0:
         if config.model in ("xgboost", "lightgbm", "randomforest", "catboost", "extratrees"):
             categorical_steps.append(
                 (
@@ -238,8 +245,6 @@ def train(config):
         preprocessor = ColumnTransformer(transformers=transformers, verbose=True, n_jobs=-1)
         logger.info(f"Preprocessor: {preprocessor}")
 
-    eval_metric, direction = utils.get_metric_direction(config.task)
-
     xtrain = train_data[useful_columns].reset_index(drop=True)
     xvalid = valid_data[useful_columns].reset_index(drop=True)
 
@@ -261,6 +266,8 @@ def train(config):
         else:
             sub_task = "single_column_regression"
 
+    eval_metric, direction = utils.get_metric_direction(sub_task)
+
     args = {
         "model_name": config.model,
         "xtrain": xtrain,
@@ -278,8 +285,7 @@ def train(config):
     best_params = study.best_params
 
     logger.info(f"Best params: {best_params}")
-
-    best_models, best_preprocessors = optimize(best_params, **args)
+    best_models, best_preprocessors, best_metrics = optimize(best_params, **args)
 
     models = (
         [pipeline.Pipeline([("preprocessor", best_preprocessors), ("model", m)]) for m in best_models]
@@ -287,10 +293,45 @@ def train(config):
         else best_models
     )
 
-    # joblib.dump(
-    #     models[0] if len(models) == 1 else models,
-    #     os.path.join(model_path, "model.joblib"),
-    # )
+    joblib.dump(
+        models[0] if len(models) == 1 else models,
+        os.path.join(config.project_name, "model.joblib"),
+    )
+    joblib.dump(target_encoders, os.path.join(config.project_name, "target_encoders.joblib"))
+
+    model_card = utils.create_model_card(config, sub_task, best_params, best_metrics)
+
+    if model_card is not None:
+        with open(os.path.join(config.project_name, "README.md"), "w") as fp:
+            fp.write(f"{model_card}")
+
+    # remove token key from training_params.json located in output directory
+    # first check if file exists
+    if os.path.exists(f"{config.project_name}/training_params.json"):
+        training_params = json.load(open(f"{config.project_name}/training_params.json"))
+        training_params.pop("token")
+        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
+
+    # save model card to output directory as README.md
+    with open(f"{config.project_name}/README.md", "w") as f:
+        f.write(model_card)
+
+    if config.push_to_hub:
+        logger.info("Pushing model to hub...")
+        api = HfApi(token=config.token)
+        api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+        api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+
+    if "SPACE_ID" in os.environ:
+        # shut down the space
+        logger.info("Pausing space...")
+        api = HfApi(token=config.token)
+        api.pause_space(repo_id=os.environ["SPACE_ID"])
+
+    if "ENDPOINT_ID" in os.environ:
+        # shut down the endpoint
+        logger.info("Pausing endpoint...")
+        utils.pause_endpoint(config)
 
 
 if __name__ == "__main__":
