@@ -165,12 +165,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 "type": str,
             },
             {
-                "arg": "--categorical-scaler",
-                "help": "Categorical scaler",
-                "required": False,
-                "type": str,
-            },
-            {
                 "arg": "--backend",
                 "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
                 "required": False,
@@ -258,7 +252,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 categorical_imputer=self.args.categorical_imputer,
                 numerical_imputer=self.args.numerical_imputer,
                 numeric_scaler=self.args.numeric_scaler,
-                categorical_scaler=self.args.categorical_scaler,
             )
 
             if self.args.backend.startswith("spaces"):

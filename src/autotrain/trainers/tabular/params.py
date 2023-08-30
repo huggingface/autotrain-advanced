@@ -26,4 +26,3 @@ class TabularParams(AutoTrainParams):
     categorical_imputer: str = Field(None, title="Categorical imputer")
     numerical_imputer: str = Field(None, title="Numerical imputer")
     numeric_scaler: str = Field(None, title="Numeric scaler")
-    categorical_scaler: str = Field(None, title="Categorical scaler")
