@@ -18,6 +18,8 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 def _tabular_munge_data(params, username):
     if isinstance(params.target_columns, str):
         col_map_label = [params.target_columns]
+    else:
+        col_map_label = params.target_columns
     task = params.task
     if task == "classification" and len(col_map_label) > 1:
         task = "tabular_multi_label_classification"
@@ -197,6 +199,8 @@ class SpaceRunner:
             "a100": "a100-large",
             "t4m": "t4-medium",
             "t4s": "t4-small",
+            "cpu": "cpu-upgrade",
+            "cpuf": "cpu-basic",
         }
         if self.params.repo_id is not None:
             self.username = self.params.repo_id.split("/")[0]

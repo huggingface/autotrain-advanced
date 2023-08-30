@@ -19,8 +19,8 @@ BACKEND_CHOICES = {
     "A100 Large": 4.13,
     "T4 Medium": 0.9,
     "T4 Small": 0.6,
-    # "CPU Upgrade": 0.03,
-    # "CPU": 0.0,
+    "CPU Upgrade": 0.03,
+    "CPU (Free)": 0.0,
     # "Local": 0.0,
     # "AutoTrain": -1,
 }

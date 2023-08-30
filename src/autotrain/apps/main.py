@@ -2,11 +2,13 @@ import gradio as gr
 
 from autotrain.apps import utils as app_utils
 from autotrain.apps.llm import main as llm
+from autotrain.apps.tabular import main as tabular
 from autotrain.apps.text_classification import main as text_classification
 
 
 llm = llm()
 text_classification = text_classification()
+tabular = tabular()
 
 
 def main():
@@ -26,9 +28,12 @@ def main():
             gr.Markdown("- A100 Large: $0.06883/minute")
             gr.Markdown("- T4 Medium: $0.015/minute")
             gr.Markdown("- T4 Small: $0.1/minute")
+            gr.Markdown("- CPU: $0.0005/minute")
         with gr.Tabs():
             with gr.Tab(label="LLM"):
                 llm.render()
             with gr.Tab(label="Text Classification"):
                 text_classification.render()
+            with gr.Tab(label="Tabular"):
+                tabular.render()
     return demo

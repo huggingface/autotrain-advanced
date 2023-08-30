@@ -146,7 +146,7 @@ def train(config):
             split=config.train_split,
             token=config.token,
         )
-        train_data = train.to_pandas()
+        train_data = train_data.to_pandas()
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"

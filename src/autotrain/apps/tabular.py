@@ -13,6 +13,13 @@ ALLOWED_MODELS = [
     "xgboost",
     "random_forest",
     "ridge",
+    "logistic_regression",
+    "svm",
+    "extra_trees",
+    "gradient_boosting",
+    "adaboost",
+    "decision_tree",
+    "knn",
 ]
 
 

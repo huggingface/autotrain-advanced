@@ -52,11 +52,10 @@ class AutoTrainProject:
             self.col_map_text = "autotrain_text"
         if self.task.startswith("tabular_"):
             self.col_map_id = "autotrain_id"
-            self.col_map_target = (
-                ["autotrain_label"]
-                if isinstance(self.col_mapping["label"], str)
-                else ",".join([f"autotrain_label_{i}" for i in range(len(self.col_mapping["label"]))])
-            )
+            _tabular_target_cols = ["autotrain_label"]
+            if isinstance(self.col_mapping["label"], str) or len(self.col_mapping["label"]) > 1:
+                _tabular_target_cols = [f"autotrain_label_{i}" for i in range(len(self.col_mapping["label"]))]
+            self.col_map_target = _tabular_target_cols
 
         self.spaces_backends = {
             "A10G Large": "spaces-a10gl",
@@ -64,6 +63,8 @@ class AutoTrainProject:
             "A100 Large": "spaces-a100",
             "T4 Medium": "spaces-t4m",
             "T4 Small": "spaces-t4s",
+            "CPU Upgrade": "spaces-cpu",
+            "CPU (Free)": "spaces-cpuf",
             # "Local": "local",
             # "AutoTrain": "autotrain",
         }
