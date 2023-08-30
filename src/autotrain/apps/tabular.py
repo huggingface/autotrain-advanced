@@ -90,7 +90,6 @@ def main():
                         choices=[],
                         visible=True,
                         interactive=True,
-                        
                         elem_id="col_map_id",
                     )
                     col_map_target = gr.Dropdown(
