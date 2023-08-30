@@ -10,6 +10,7 @@ from huggingface_hub import HfApi
 from autotrain import logger
 from autotrain.dataset import AutoTrainDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -189,7 +190,7 @@ class EndpointsRunner:
 
 @dataclass
 class SpaceRunner:
-    params: Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams]
+    params: Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams, GenericParams, TabularParams]
     backend: str
 
     def __post_init__(self):
@@ -202,18 +203,24 @@ class SpaceRunner:
             "cpu": "cpu-upgrade",
             "cpuf": "cpu-basic",
         }
-        if self.params.repo_id is not None:
-            self.username = self.params.repo_id.split("/")[0]
-        elif self.params.username is not None:
-            self.username = self.params.username
+        if not isinstance(self.params, GenericParams):
+            if self.params.repo_id is not None:
+                self.username = self.params.repo_id.split("/")[0]
+            elif self.params.username is not None:
+                self.username = self.params.username
+            else:
+                raise ValueError("Must provide either repo_id or username")
         else:
-            raise ValueError("Must provide either repo_id or username")
+            self.username = self.params.username
+
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
         elif isinstance(self.params, TextClassificationParams):
             self.task_id = 2
         elif isinstance(self.params, TabularParams):
             self.task_id = 26
+        elif isinstance(self.params, GenericParams):
+            self.task_id = 27
 
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
@@ -234,6 +241,10 @@ class SpaceRunner:
             self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
+        if isinstance(self.params, GenericParams):
+            self.task_id = 27
+            space_id = self._create_space()
+            return space_id
         raise NotImplementedError
 
     def _create_readme(self):
@@ -250,14 +261,21 @@ class SpaceRunner:
         return _readme
 
     def _add_secrets(self, api, repo_id):
+        if isinstance(self.params, GenericParams):
+            for k, v in self.params.env.items():
+                api.add_space_secret(repo_id=repo_id, key=k, value=v)
+            self.params.env = {}
+
         api.add_space_secret(repo_id=repo_id, key="HF_TOKEN", value=self.params.token)
         api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
         api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.params.project_name)
-        api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(self.params.json()))
-        api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.data_path)
         api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
-        api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.params.model)
-        api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
+        api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.data_path)
+        api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(self.params.json()))
+
+        if not isinstance(self.params, GenericParams):
+            api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.params.model)
+            api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
 
     def _create_space(self):
         api = HfApi(token=self.params.token)

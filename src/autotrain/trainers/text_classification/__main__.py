@@ -19,6 +19,7 @@ from autotrain import logger
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.utils import monitor
 
 
 def parse_args():
@@ -28,6 +29,7 @@ def parse_args():
     return parser.parse_args()
 
 
+@monitor
 def train(config):
     if isinstance(config, dict):
         config = TextClassificationParams(**config)

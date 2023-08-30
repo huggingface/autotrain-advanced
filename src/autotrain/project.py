@@ -12,9 +12,9 @@ import pandas as pd
 from codecarbon import EmissionsTracker
 
 from autotrain import logger
+from autotrain.backend import SpaceRunner
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
-from autotrain.spacerunner import SpaceRunner
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.tabular.params import TabularParams

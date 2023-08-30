@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
-from autotrain.spacerunner import EndpointsRunner, SpaceRunner
+from autotrain.backend import EndpointsRunner, SpaceRunner
 from autotrain.trainers.tabular.__main__ import train as train_tabular
 from autotrain.trainers.tabular.params import TabularParams
 

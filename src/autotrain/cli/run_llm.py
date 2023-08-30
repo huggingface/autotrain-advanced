@@ -6,8 +6,8 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
+from autotrain.backend import EndpointsRunner, SpaceRunner
 from autotrain.infer.text_generation import TextGenerationInference
-from autotrain.spacerunner import EndpointsRunner, SpaceRunner
 from autotrain.trainers.clm.__main__ import train as train_llm
 from autotrain.trainers.clm.params import LLMTrainingParams
 
