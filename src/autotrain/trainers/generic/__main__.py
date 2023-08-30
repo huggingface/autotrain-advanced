@@ -5,9 +5,9 @@ import os
 from huggingface_hub import HfApi
 
 from autotrain import logger
-from autotrain.trainers.common import monitor
 from autotrain.trainers.generic import utils
 from autotrain.trainers.generic.params import GenericParams
+from autotrain.utils import monitor
 
 
 def parse_args():
@@ -24,7 +24,7 @@ def run(config):
 
     # download the data repo
     logger.info("Downloading data repo...")
-    utils.pull_dataset_repo()
+    utils.pull_dataset_repo(config)
 
     # install the requirements
     logger.info("Installing requirements...")

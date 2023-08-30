@@ -30,6 +30,7 @@ def pull_dataset_repo(params):
         repo_id=params.data_path,
         local_dir=params.project_name,
         token=params.token,
+        repo_type="dataset",
     )
 
 
