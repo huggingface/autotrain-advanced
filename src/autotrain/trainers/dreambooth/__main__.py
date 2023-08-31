@@ -51,7 +51,7 @@ def train(config):
             token=config.token,
             repo_type="dataset",
         )
-        config.project_name = "/tmp/model/concept1/"
+        config.image_path = "/tmp/model/concept1/"
 
     accelerator_project_config = ProjectConfiguration(
         project_dir=config.project_name, logging_dir=os.path.join(config.project_name, "logs")
@@ -268,6 +268,13 @@ def train(config):
         tokenizers=tokenizers,
     )
     trainer.train()
+
+    # remove token key from training_params.json located in output directory
+    # first check if file exists
+    if os.path.exists(f"{config.project_name}/training_params.json"):
+        training_params = json.load(open(f"{config.project_name}/training_params.json"))
+        training_params.pop("token")
+        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
 
     if config.push_to_hub:
         trainer.push_to_hub()
