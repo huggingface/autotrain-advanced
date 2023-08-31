@@ -55,7 +55,12 @@ def _update_hub_model_choices(task):
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
 
     if task == "dreambooth":
-        choices = ["stabilityai/stable-diffusion-xl-base-1.0"] + [m["id"] for m in hub_models]
+        choices = [
+            "stabilityai/stable-diffusion-xl-base-1.0",
+            "runwayml/stable-diffusion-v1-5",
+            "stabilityai/stable-diffusion-2-1",
+            "stabilityai/stable-diffusion-2-1-base",
+        ]
         value = choices[0]
         return gr.Dropdown.update(
             choices=choices,

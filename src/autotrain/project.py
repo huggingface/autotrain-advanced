@@ -17,6 +17,7 @@ from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, Auto
 from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.utils import http_get, http_post
@@ -136,6 +137,17 @@ class AutoTrainProject:
 
         return _params
 
+    def _munge_params_dreambooth(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
+        _params["image_path"] = self.data_path
+
+        if "weight_decay" in _params:
+            _params["adam_weight_decay"] = _params["weight_decay"]
+            _params.pop("weight_decay")
+
+        return _params
+
     def create_spaces(self):
         _created_spaces = []
         for job_idx in range(self.num_jobs):
@@ -148,6 +160,11 @@ class AutoTrainProject:
             elif self.task_id in (13, 14, 15, 16, 26):
                 _params = self._munge_params_tabular(job_idx)
                 _params = TabularParams.parse_obj(_params)
+            elif self.task_id == 25:
+                _params = self._munge_params_dreambooth(job_idx)
+                _params = DreamBoothTrainingParams.parse_obj(_params)
+            else:
+                raise NotImplementedError
             logger.info(f"Creating Space for job: {job_idx}")
             logger.info(f"Using params: {_params}")
             sr = SpaceRunner(params=_params, backend=self.spaces_backends[self.backend])

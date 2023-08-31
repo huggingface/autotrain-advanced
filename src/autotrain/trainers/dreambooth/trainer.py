@@ -188,7 +188,7 @@ class Trainer:
             path = os.path.basename(self.config.resume_from_checkpoint)
         else:
             # Get the mos recent checkpoint
-            dirs = os.listdir(self.config.output)
+            dirs = os.listdir(self.config.project_name)
             dirs = [d for d in dirs if d.startswith("checkpoint")]
             dirs = sorted(dirs, key=lambda x: int(x.split("-")[1]))
             path = dirs[-1] if len(dirs) > 0 else None
@@ -200,7 +200,7 @@ class Trainer:
             self.config.resume_from_checkpoint = None
         else:
             self.accelerator.print(f"Resuming from checkpoint {path}")
-            self.accelerator.load_state(os.path.join(self.config.output, path))
+            self.accelerator.load_state(os.path.join(self.config.project_name, path))
             self.global_step = int(path.split("-")[1])
 
             resume_global_step = self.global_step * self.config.gradient_accumulation
@@ -258,7 +258,7 @@ class Trainer:
             if self.global_step % self.config.checkpointing_steps == 0:
                 # _before_ saving state, check if this save would set us over the `checkpoints_total_limit`
                 if self.config.checkpoints_total_limit is not None:
-                    checkpoints = os.listdir(self.config.output)
+                    checkpoints = os.listdir(self.config.project_name)
                     checkpoints = [d for d in checkpoints if d.startswith("checkpoint")]
                     checkpoints = sorted(checkpoints, key=lambda x: int(x.split("-")[1]))
 
@@ -273,10 +273,10 @@ class Trainer:
                         logger.info(f"removing checkpoints: {', '.join(removing_checkpoints)}")
 
                         for removing_checkpoint in removing_checkpoints:
-                            removing_checkpoint = os.path.join(self.config.output, removing_checkpoint)
+                            removing_checkpoint = os.path.join(self.config.project_name, removing_checkpoint)
                             shutil.rmtree(removing_checkpoint)
 
-                save_path = os.path.join(self.config.output, f"checkpoint-{self.global_step}")
+                save_path = os.path.join(self.config.project_name, f"checkpoint-{self.global_step}")
                 self.accelerator.save_state(save_path)
                 logger.info(f"Saved state to {save_path}")
 
@@ -421,7 +421,7 @@ class Trainer:
 
             if self.config.xl:
                 StableDiffusionXLPipeline.save_lora_weights(
-                    save_directory=self.config.output,
+                    save_directory=self.config.project_name,
                     unet_lora_layers=unet_lora_layers,
                     text_encoder_lora_layers=text_encoder_lora_layers_1,
                     text_encoder_2_lora_layers=text_encoder_lora_layers_2,
@@ -429,7 +429,7 @@ class Trainer:
                 )
             else:
                 LoraLoaderMixin.save_lora_weights(
-                    save_directory=self.config.output,
+                    save_directory=self.config.project_name,
                     unet_lora_layers=unet_lora_layers,
                     text_encoder_lora_layers=text_encoder_lora_layers_1,
                     safe_serialization=True,
@@ -438,10 +438,10 @@ class Trainer:
 
     def push_to_hub(self):
         repo_id = create_repo(
-            repo_id=self.config.hub_model_id,
+            repo_id=self.config.repo_id,
             exist_ok=True,
             private=True,
-            token=self.config.hub_token,
+            token=self.config.token,
         ).repo_id
 
         utils.create_model_card(
@@ -449,12 +449,12 @@ class Trainer:
             base_model=self.config.model,
             train_text_encoder=self.config.train_text_encoder,
             prompt=self.config.prompt,
-            repo_folder=self.config.output,
+            repo_folder=self.config.project_name,
         )
         upload_folder(
             repo_id=repo_id,
-            folder_path=self.config.output,
+            folder_path=self.config.project_name,
             commit_message="End of training",
             ignore_patterns=["step_*", "epoch_*"],
-            token=self.config.hub_token,
+            token=self.config.token,
         )

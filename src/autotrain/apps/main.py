@@ -1,6 +1,7 @@
 import gradio as gr
 
 from autotrain.apps import utils as app_utils
+from autotrain.apps.dreambooth import main as dreambooth
 from autotrain.apps.llm import main as llm
 from autotrain.apps.tabular import main as tabular
 from autotrain.apps.text_classification import main as text_classification
@@ -9,6 +10,7 @@ from autotrain.apps.text_classification import main as text_classification
 llm = llm()
 text_classification = text_classification()
 tabular = tabular()
+dreambooth = dreambooth()
 
 
 def main():
@@ -36,4 +38,6 @@ def main():
                 text_classification.render()
             with gr.Tab(label="Tabular"):
                 tabular.render()
+            with gr.Tab(label="DreamBooth"):
+                dreambooth.render()
     return demo

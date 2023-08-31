@@ -8,8 +8,9 @@ import requests
 from huggingface_hub import HfApi
 
 from autotrain import logger
-from autotrain.dataset import AutoTrainDataset
+from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.tabular.params import TabularParams
@@ -99,6 +100,23 @@ def _text_clf_munge_data(params, username):
         return f"{username}/autotrain-data-{params.project_name}"
 
     return params.data_path
+
+
+def _dreambooth_munge_data(params, username):
+    # check if params.image_path is a directory
+    if os.path.isdir(params.image_path):
+        training_data = [os.path.join(params.image_path, f) for f in os.listdir(params.image_path)]
+        training_data = [io.BytesIO(open(f, "rb").read()) for f in training_data]
+        dset = AutoTrainDreamboothDataset(
+            concept_images=training_data,
+            concept_name=params.prompt,
+            token=params.token,
+            project_name=params.project_name,
+            username=username,
+        )
+        dset.prepare()
+        return f"{username}/autotrain-data-{params.project_name}"
+    return params.image_path
 
 
 @dataclass
@@ -221,6 +239,10 @@ class SpaceRunner:
             self.task_id = 26
         elif isinstance(self.params, GenericParams):
             self.task_id = 27
+        elif isinstance(self.params, DreamBoothTrainingParams):
+            self.task_id = 25
+        else:
+            raise NotImplementedError
 
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
@@ -243,6 +265,11 @@ class SpaceRunner:
             return space_id
         if isinstance(self.params, GenericParams):
             self.task_id = 27
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, DreamBoothTrainingParams):
+            self.task_id = 25
+            data_path = _dreambooth_munge_data(self.params, self.username)
             space_id = self._create_space()
             return space_id
         raise NotImplementedError
@@ -270,8 +297,12 @@ class SpaceRunner:
         api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
         api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.params.project_name)
         api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
-        api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.data_path)
         api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(self.params.json()))
+
+        if isinstance(self.params, DreamBoothTrainingParams):
+            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.image_path)
+        else:
+            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.data_path)
 
         if not isinstance(self.params, GenericParams):
             api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.params.model)
