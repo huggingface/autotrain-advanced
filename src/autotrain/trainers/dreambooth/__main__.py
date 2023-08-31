@@ -41,6 +41,9 @@ def train(config):
         config = DreamBoothTrainingParams(**config)
     config.prompt = str(config.prompt).strip()
 
+    if config.model in utils.XL_MODELS:
+        config.xl = True
+
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
 
