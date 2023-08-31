@@ -7,6 +7,17 @@ from autotrain.trainers.generic.utils import create_dataset_repo
 from . import BaseAutoTrainCommand
 
 
+BACKEND_CHOICES = [
+    "spaces-a10gl",
+    "spaces-a10gs",
+    "spaces-a100",
+    "spaces-t4m",
+    "spaces-t4s",
+    "spaces-cpu",
+    "spaces-cpuf",
+]
+
+
 def run_spacerunner_command_factory(args):
     return RunAutoTrainSpaceRunnerCommand(args)
 
@@ -50,6 +61,7 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
                 "help": "Environment variables, e.g. --env FOO=bar;FOO2=bar2;FOO3=bar3",
                 "required": False,
                 "type": str,
+                "choices": BACKEND_CHOICES,
             },
         ]
         run_spacerunner_parser = parser.add_parser("spacerunner", description="✨ Run AutoTrain SpaceRunner")
@@ -63,6 +75,7 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
                     required=arg.get("required", False),
                     action=arg.get("action"),
                     default=arg.get("default"),
+                    choices=arg.get("choices"),
                 )
             else:
                 run_spacerunner_parser.add_argument(
@@ -72,6 +85,7 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
                     required=arg.get("required", False),
                     type=arg.get("type"),
                     default=arg.get("default"),
+                    choices=arg.get("choices"),
                 )
         run_spacerunner_parser.set_defaults(func=run_spacerunner_command_factory)
 
