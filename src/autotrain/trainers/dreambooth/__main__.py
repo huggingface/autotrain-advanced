@@ -279,6 +279,14 @@ def train(config):
         training_params.pop("token")
         json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
 
+    # remove config.image_path directory if it exists
+    if os.path.exists(config.image_path):
+        os.system(f"rm -rf {config.image_path}")
+
+    # add config.prompt as a text file in the output directory
+    with open(f"{config.project_name}/prompt.txt", "w") as f:
+        f.write(config.prompt)
+
     if config.push_to_hub:
         trainer.push_to_hub()
 
