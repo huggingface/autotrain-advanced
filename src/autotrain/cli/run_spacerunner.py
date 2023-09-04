@@ -55,13 +55,13 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
                 "help": "Hugging Face backend to use",
                 "required": True,
                 "type": str,
+                "choices": BACKEND_CHOICES,
             },
             {
                 "arg": "--env",
                 "help": "Environment variables, e.g. --env FOO=bar;FOO2=bar2;FOO3=bar3",
                 "required": False,
                 "type": str,
-                "choices": BACKEND_CHOICES,
             },
         ]
         run_spacerunner_parser = parser.add_parser("spacerunner", description="✨ Run AutoTrain SpaceRunner")
