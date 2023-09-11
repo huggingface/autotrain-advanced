@@ -7,6 +7,9 @@ from fastapi import FastAPI
 
 from autotrain import logger
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.generic.params import GenericParams
+from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
 
@@ -71,6 +74,40 @@ def run_training():
                 os.path.join(params.project_name, "training_params.json"),
             ]
         )
+    elif TASK_ID in (13, 14, 15, 16, 26):
+        params = TabularParams.parse_raw(params)
+        params.project_name = "/tmp/model"
+        params.save(output_dir=params.project_name)
+        cmd = [
+            "python",
+            "-m",
+            "autotrain.trainers.tabular",
+            "--training_config",
+            os.path.join(params.project_name, "training_params.json"),
+        ]
+    elif TASK_ID == 27:
+        params = GenericParams.parse_raw(params)
+        params.project_name = "/tmp/model"
+        params.save(output_dir=params.project_name)
+        cmd = [
+            "python",
+            "-m",
+            "autotrain.trainers.generic",
+            "--config",
+            os.path.join(params.project_name, "training_params.json"),
+        ]
+    elif TASK_ID == 25:
+        params = DreamBoothTrainingParams.parse_raw(params)
+        params.project_name = "/tmp/model"
+        params.save(output_dir=params.project_name)
+        cmd = [
+            "python",
+            "-m",
+            "autotrain.trainers.dreambooth",
+            "--training_config",
+            os.path.join(params.project_name, "training_params.json"),
+        ]
+
     else:
         raise NotImplementedError
 

@@ -56,7 +56,7 @@ class DreamboothPreprocessor:
         )
 
     def prepare(self):
-        api = HfApi()
+        api = HfApi(token=self.token)
         for _file in self.concept_images:
             self._upload_concept_images(_file, api)
 

@@ -7,7 +7,7 @@ from autotrain.cli import BaseAutoTrainCommand
 
 
 try:
-    from autotrain.trainers.dreambooth import train as train_dreambooth
+    from autotrain.trainers.dreambooth.__main__ import train as train_dreambooth
     from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
     from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
 except ImportError:
@@ -100,8 +100,8 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "type": float,
             },
             {
-                "arg": "--output",
-                "help": "Output directory",
+                "arg": "--project-name",
+                "help": "Output directory or repo id",
                 "required": True,
                 "type": str,
             },
@@ -340,14 +340,14 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--hub-token",
+                "arg": "--token",
                 "help": "Hub token",
                 "required": False,
                 "type": str,
             },
             {
-                "arg": "--hub-model-id",
-                "help": "Hub model id",
+                "arg": "--repo-id",
+                "help": "Hub repo id",
                 "required": False,
                 "type": str,
             },
@@ -394,6 +394,12 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Logging using tensorboard",
                 "required": False,
                 "action": "store_true",
+            },
+            {
+                "arg": "--username",
+                "help": "Hugging Face Hub Username",
+                "required": False,
+                "type": str,
             },
         ]
 
@@ -456,8 +462,8 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
             raise ValueError("❌ Please specify a valid image directory")
 
         if self.args.push_to_hub:
-            if self.args.hub_model_id is None:
-                raise ValueError("❌ Please specify a hub model id")
+            if self.args.repo_id is None and self.args.username is None:
+                raise ValueError("❌ Please specify a username or repo id to push to hub")
 
         if self.args.model in XL_MODELS:
             self.args.xl = True

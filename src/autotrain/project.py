@@ -12,11 +12,13 @@ import pandas as pd
 from codecarbon import EmissionsTracker
 
 from autotrain import logger
+from autotrain.backend import SpaceRunner
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.languages import SUPPORTED_LANGUAGES
-from autotrain.spacerunner import SpaceRunner
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.utils import http_get, http_post
 
@@ -31,11 +33,15 @@ class AutoTrainProject:
         self.project_name = self.dataset.project_name
         self.username = self.dataset.username
         self.task = self.dataset.task
+        if isinstance(self.dataset, AutoTrainDataset):
+            self.col_mapping = self.dataset.column_mapping
         self.data_path = f"{self.username}/autotrain-data-{self.project_name}"
 
         self.backend = self.job_params.loc[0, "backend"]
-        self.model_choice = self.job_params.loc[0, "model_choice"]
-        self.param_choice = self.job_params.loc[0, "param_choice"]
+        if "model_choice" in self.job_params.columns:
+            self.model_choice = self.job_params.loc[0, "model_choice"]
+        if "param_choice" in self.job_params.columns:
+            self.param_choice = self.job_params.loc[0, "param_choice"]
 
         self.task_id = TASKS.get(self.task)
         self.num_jobs = len(self.job_params)
@@ -45,6 +51,12 @@ class AutoTrainProject:
             self.col_map_target = "autotrain_label"
         if self.task == "lm_training":
             self.col_map_text = "autotrain_text"
+        if self.task.startswith("tabular_"):
+            self.col_map_id = "autotrain_id"
+            _tabular_target_cols = ["autotrain_label"]
+            if isinstance(self.col_mapping["label"], str) or len(self.col_mapping["label"]) > 1:
+                _tabular_target_cols = [f"autotrain_label_{i}" for i in range(len(self.col_mapping["label"]))]
+            self.col_map_target = _tabular_target_cols
 
         self.spaces_backends = {
             "A10G Large": "spaces-a10gl",
@@ -52,6 +64,8 @@ class AutoTrainProject:
             "A100 Large": "spaces-a100",
             "T4 Medium": "spaces-t4m",
             "T4 Small": "spaces-t4s",
+            "CPU Upgrade": "spaces-cpu",
+            "CPU (Free)": "spaces-cpuf",
             # "Local": "local",
             # "AutoTrain": "autotrain",
         }
@@ -66,12 +80,12 @@ class AutoTrainProject:
         _params["push_to_hub"] = True
         _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
         _params["data_path"] = self.data_path
-        _params["model"] = self.model_choice
         _params["username"] = self.username
         return _params
 
     def _munge_params_llm(self, job_idx):
         _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
         _params["text_column"] = self.col_map_text
 
         if "trainer" in _params:
@@ -97,6 +111,7 @@ class AutoTrainProject:
 
     def _munge_params_text_clf(self, job_idx):
         _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
         _params["text_column"] = self.col_map_text
         _params["target_column"] = self.col_map_target
         _params["valid_split"] = "validation"
@@ -104,6 +119,32 @@ class AutoTrainProject:
         if "use_fp16" in _params:
             _params["fp16"] = _params["use_fp16"]
             _params.pop("use_fp16")
+
+        return _params
+
+    def _munge_params_tabular(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["id_column"] = self.col_map_id
+        _params["target_columns"] = self.col_map_target
+        _params["valid_split"] = "validation"
+
+        if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
+            _params["categorical_imputer"] = None
+        if len(_params["numerical_imputer"].strip()) == 0 or _params["numerical_imputer"].lower() == "none":
+            _params["numerical_imputer"] = None
+        if len(_params["numeric_scaler"].strip()) == 0 or _params["numeric_scaler"].lower() == "none":
+            _params["numeric_scaler"] = None
+
+        return _params
+
+    def _munge_params_dreambooth(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
+        _params["image_path"] = self.data_path
+
+        if "weight_decay" in _params:
+            _params["adam_weight_decay"] = _params["weight_decay"]
+            _params.pop("weight_decay")
 
         return _params
 
@@ -116,7 +157,14 @@ class AutoTrainProject:
             elif self.task_id in (1, 2):
                 _params = self._munge_params_text_clf(job_idx)
                 _params = TextClassificationParams.parse_obj(_params)
-
+            elif self.task_id in (13, 14, 15, 16, 26):
+                _params = self._munge_params_tabular(job_idx)
+                _params = TabularParams.parse_obj(_params)
+            elif self.task_id == 25:
+                _params = self._munge_params_dreambooth(job_idx)
+                _params = DreamBoothTrainingParams.parse_obj(_params)
+            else:
+                raise NotImplementedError
             logger.info(f"Creating Space for job: {job_idx}")
             logger.info(f"Using params: {_params}")
             sr = SpaceRunner(params=_params, backend=self.spaces_backends[self.backend])

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -17,23 +18,46 @@ from diffusers.models.attention_processor import (
     LoRAAttnProcessor2_0,
     SlicedAttnAddedKVProcessor,
 )
-from PIL import Image
+from huggingface_hub import HfApi, snapshot_download
 
 from autotrain import logger
-from autotrain import utils as at_utils
-from autotrain.params import DreamboothParams
 from autotrain.trainers.dreambooth import utils
 from autotrain.trainers.dreambooth.datasets import DreamBoothDataset, collate_fn
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.dreambooth.trainer import Trainer
+from autotrain.utils import monitor
 
 
+def parse_args():
+    # get training_config.json from the end user
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--training_config", type=str, required=True)
+    return parser.parse_args()
+
+
+@monitor
 def train(config):
     if isinstance(config, dict):
         config = DreamBoothTrainingParams(**config)
     config.prompt = str(config.prompt).strip()
+
+    if config.model in utils.XL_MODELS:
+        config.xl = True
+
+    if config.repo_id is None and config.username is not None:
+        config.repo_id = f"{config.username}/{config.project_name}"
+
+    if config.project_name == "/tmp/model":
+        snapshot_download(
+            repo_id=config.image_path,
+            local_dir=config.project_name,
+            token=config.token,
+            repo_type="dataset",
+        )
+        config.image_path = "/tmp/model/concept1/"
+
     accelerator_project_config = ProjectConfiguration(
-        project_dir=config.output, logging_dir=os.path.join(config.output, "logs")
+        project_dir=config.project_name, logging_dir=os.path.join(config.project_name, "logs")
     )
 
     if config.fp16:
@@ -71,8 +95,8 @@ def train(config):
 
     # Handle the repository creation
     if accelerator.is_main_process:
-        if config.output is not None:
-            os.makedirs(config.output, exist_ok=True)
+        if config.project_name is not None:
+            os.makedirs(config.project_name, exist_ok=True)
 
     weight_dtype = torch.float32
     if accelerator.mixed_precision == "fp16":
@@ -248,113 +272,33 @@ def train(config):
     )
     trainer.train()
 
+    # remove token key from training_params.json located in output directory
+    # first check if file exists
+    if os.path.exists(f"{config.project_name}/training_params.json"):
+        training_params = json.load(open(f"{config.project_name}/training_params.json"))
+        training_params.pop("token")
+        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
+
+    # remove config.image_path directory if it exists
+    if os.path.exists(config.image_path):
+        os.system(f"rm -rf {config.image_path}")
+
+    # add config.prompt as a text file in the output directory
+    with open(f"{config.project_name}/prompt.txt", "w") as f:
+        f.write(config.prompt)
+
     if config.push_to_hub:
         trainer.push_to_hub()
 
-
-def pad_image(image):
-    w, h = image.size
-    if w == h:
-        return image
-    elif w > h:
-        new_image = Image.new(image.mode, (w, w), (0, 0, 0))
-        new_image.paste(image, (0, (w - h) // 2))
-        return new_image
-    else:
-        new_image = Image.new(image.mode, (h, h), (0, 0, 0))
-        new_image.paste(image, ((h - w) // 2, 0))
-        return new_image
+    if "SPACE_ID" in os.environ:
+        # shut down the space
+        logger.info("Pausing space...")
+        api = HfApi(token=config.token)
+        api.pause_space(repo_id=os.environ["SPACE_ID"])
 
 
-def process_images(data_path, job_config):
-    # create processed_data folder in data_path
-    processed_data_path = os.path.join(data_path, "processed_data")
-    os.makedirs(processed_data_path, exist_ok=True)
-    # find all folders in data_path that start with "concept"
-    concept_folders = [f for f in os.listdir(data_path) if f.startswith("concept")]
-    concept_prompts = json.load(open(os.path.join(data_path, "prompts.json")))
-
-    for concept_folder in concept_folders:
-        concept_folder_path = os.path.join(data_path, concept_folder)
-        # find all images in concept_folder_path
-        ALLOWED_EXTENSIONS = ["jpg", "png", "jpeg"]
-        images = [
-            f for f in os.listdir(concept_folder_path) if any(f.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
-        ]
-        for image_index, image in enumerate(images):
-            image_path = os.path.join(concept_folder_path, image)
-            img = Image.open(image_path)
-            img = pad_image(img)
-            img = img.resize((job_config.image_size, job_config.image_size))
-            img = img.convert("RGB")
-            processed_filename = f"{concept_prompts[concept_folder]}_{image_index}.jpg"
-            img.save(os.path.join(processed_data_path, processed_filename), format="JPEG", quality=100)
-    return concept_prompts
-
-
-@at_utils.job_watcher
-def train_ui(co2_tracker, payload, huggingface_token, model_path):
-    data_repo_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data_path = "/tmp/data"
-    data_repo = at_utils.clone_hf_repo(
-        local_dir=data_path,
-        repo_url="https://huggingface.co/datasets/" + data_repo_path,
-        token=huggingface_token,
-    )
-    data_repo.git_pull()
-
-    job_config = payload["config"]["params"][0]
-    job_config["model_name"] = payload["config"]["hub_model"]
-
-    model_name = job_config["model_name"]
-    # device = job_config.get("device", "cuda")
-    del job_config["model_name"]
-    if "device" in job_config:
-        del job_config["device"]
-    logger.info(f"job_config: {job_config}")
-    job_config = DreamboothParams(**job_config)
-    logger.info(f"job_config: {job_config}")
-
-    logger.info("Create model repo")
-    project_name = payload["proj_name"]
-    repo_name = f"autotrain-{project_name}"
-    repo_user = payload["username"]
-
-    # print contents of data_path folder
-    logger.info("contents of data_path folder")
-    os.system(f"ls -l {data_path}")
-
-    logger.info("processing images")
-    concept_prompts = process_images(data_path=data_path, job_config=job_config)
-    # convert concept_prompts dict to string
-    concept_prompts = list(concept_prompts.values())[0]
-    logger.info("done processing images")
-
-    xl = False
-    if model_name in utils.XL_MODELS:
-        xl = True
-
-    args = DreamBoothTrainingParams(
-        model=model_name,
-        image_path=os.path.join(data_path, "processed_data"),
-        output=model_path,
-        seed=42,
-        resolution=job_config.image_size,
-        fp16=True,
-        batch_size=job_config.train_batch_size,
-        gradient_accumulation=job_config.gradient_accumulation_steps,
-        use_8bit_adam=True,
-        lr=job_config.learning_rate,
-        scheduler="constant",
-        warmup_steps=0,
-        num_steps=job_config.num_steps,
-        revision=None,
-        push_to_hub=True,
-        hub_model_id=f"{repo_user}/{repo_name}",
-        xl=xl,
-        prompt=concept_prompts,
-        hub_token=huggingface_token,
-    )
-    train(args)
-
-    _ = co2_tracker.stop()
+if __name__ == "__main__":
+    args = parse_args()
+    training_config = json.load(open(args.training_config))
+    config = DreamBoothTrainingParams(**training_config)
+    train(config)

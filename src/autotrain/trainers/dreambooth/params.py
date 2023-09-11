@@ -1,7 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from autotrain.trainers.common import AutoTrainParams
 
 
-class DreamBoothTrainingParams(BaseModel):
+class DreamBoothTrainingParams(AutoTrainParams):
     model: str = Field(None, title="Model name")
     revision: str = Field(None, title="Revision")
     tokenizer: str = Field(None, title="Tokenizer, if different from model")
@@ -15,7 +17,7 @@ class DreamBoothTrainingParams(BaseModel):
     prior_preservation: bool = Field(False, title="With prior preservation")
     prior_loss_weight: float = Field(1.0, title="Prior loss weight")
 
-    output: str = Field("dreambooth-model", title="Output directory")
+    project_name: str = Field("dreambooth-model", title="Output directory")
     seed: int = Field(42, title="Seed")
     resolution: int = Field(512, title="Resolution")
     center_crop: bool = Field(False, title="Center crop")
@@ -59,9 +61,10 @@ class DreamBoothTrainingParams(BaseModel):
     fp16: bool = Field(False, title="FP16")
     bf16: bool = Field(False, title="BF16")
 
-    hub_token: str = Field(None, title="Hub token")
-    hub_model_id: str = Field(None, title="Hub model id")
+    token: str = Field(None, title="Hub token")
+    repo_id: str = Field(None, title="Hub model id")
     push_to_hub: bool = Field(False, title="Push to hub")
+    username: str = Field(None, title="Hub username")
 
     # disabled:
     validation_prompt: str = Field(None, title="Validation prompt")

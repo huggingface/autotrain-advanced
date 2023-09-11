@@ -47,14 +47,14 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.task = task
 
     def run(self):
-        if self.task == "dreambooth":
-            from ..dreambooth_app import main
+        if os.environ.get("TASK") == "Dreambooth" or self.task == "dreambooth":
+            from ..apps.dreambooth import main
         elif os.environ.get("TASK") == "LLM":
             from ..apps.llm import main
         elif os.environ.get("TASK") == "TEXT_CLASSIFICATION":
             from ..apps.text_classification import main
         else:
-            from ..app import main
+            from ..apps.main import main
 
         demo = main()
         demo.queue(concurrency_count=10).launch()
