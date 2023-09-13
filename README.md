@@ -27,4 +27,6 @@ Please make sure that you have git lfs installed. Check out the instructions her
 | How to Train SDXL Dreambooth | https://youtu.be/gF078Lhnr94 |
 
 
-## Coming Soon!
+## Documentation
+
+Documentation is available at https://hf.co/docs/autotrain/
