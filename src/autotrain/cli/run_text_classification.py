@@ -7,8 +7,6 @@ import torch
 
 from autotrain import logger
 from autotrain.backend import EndpointsRunner, SpaceRunner
-from autotrain.trainers.text_classification.__main__ import train as train_text_classification
-from autotrain.trainers.text_classification.params import TextClassificationParams
 
 from . import BaseAutoTrainCommand
 
@@ -294,6 +292,9 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             self.args.token = os.environ.get("HF_TOKEN", None)
 
     def run(self):
+        from autotrain.trainers.text_classification.__main__ import train as train_text_classification
+        from autotrain.trainers.text_classification.params import TextClassificationParams
+
         logger.info("Running Text Classification")
         if self.args.train:
             params = TextClassificationParams(

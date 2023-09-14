@@ -6,8 +6,6 @@ import torch
 
 from autotrain import logger
 from autotrain.backend import EndpointsRunner, SpaceRunner
-from autotrain.trainers.tabular.__main__ import train as train_tabular
-from autotrain.trainers.tabular.params import TabularParams
 
 from . import BaseAutoTrainCommand
 
@@ -229,6 +227,9 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
         self.args.target_columns = [k.strip() for k in self.args.target_columns.split(",")]
 
     def run(self):
+        from autotrain.trainers.tabular.__main__ import train as train_tabular
+        from autotrain.trainers.tabular.params import TabularParams
+
         logger.info("Running Tabular Training...")
         if self.args.train:
             params = TabularParams(

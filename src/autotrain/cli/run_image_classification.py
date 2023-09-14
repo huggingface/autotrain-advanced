@@ -5,8 +5,6 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
-from autotrain.trainers.image_classification.__main__ import train as train_image_classification
-from autotrain.trainers.image_classification.params import ImageClassificationParams
 
 from . import BaseAutoTrainCommand
 
@@ -262,6 +260,9 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
         self.num_gpus = torch.cuda.device_count()
 
     def run(self):
+        from autotrain.trainers.image_classification.__main__ import train as train_image_classification
+        from autotrain.trainers.image_classification.params import ImageClassificationParams
+
         logger.info("Running Text Classification")
         if self.args.train:
             params = ImageClassificationParams(

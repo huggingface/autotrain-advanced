@@ -6,10 +6,6 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
-from autotrain.backend import EndpointsRunner, SpaceRunner
-from autotrain.infer.text_generation import TextGenerationInference
-from autotrain.trainers.clm.__main__ import train as train_llm
-from autotrain.trainers.clm.params import LLMTrainingParams
 
 from . import BaseAutoTrainCommand
 
@@ -392,6 +388,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                     raise ValueError("Token must be specified for spaces backend")
 
         if self.args.inference:
+            from autotrain.infer.text_generation import TextGenerationInference
+
             tgi = TextGenerationInference(
                 self.args.project_name, use_int4=self.args.use_int4, use_int8=self.args.use_int8
             )
@@ -407,6 +405,10 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         self.num_gpus = torch.cuda.device_count()
 
     def run(self):
+        from autotrain.backend import EndpointsRunner, SpaceRunner
+        from autotrain.trainers.clm.__main__ import train as train_llm
+        from autotrain.trainers.clm.params import LLMTrainingParams
+
         logger.info("Running LLM")
         logger.info(f"Params: {self.args}")
         if self.args.train:
