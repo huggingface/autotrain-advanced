@@ -2,6 +2,15 @@
 
 AutoTrain Advanced: faster and easier training and deployments of state-of-the-art machine learning models
 
+[![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-lg.svg)](https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced)
+
+
+## Documentation
+
+Documentation is available [here](https://hf.co/docs/autotrain/).
+
+
+
 ## Installation
 
 You can Install AutoTrain-Advanced python package via PIP. Please note you will need python >= 3.8 for AutoTrain Advanced to work properly.
