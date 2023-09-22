@@ -59,8 +59,9 @@ RUN conda create -p /app/env -y python=3.9
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
 RUN conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia && conda clean -ya
-RUN pip install git+https://github.com/huggingface/peft.git
 RUN pip install xformers
 COPY --chown=1000:1000 . /app/
 
 RUN pip install -e .
+RUN pip install git+https://github.com/huggingface/peft.git
+RUN pip install git+https://github.com/huggingface/trl.git
