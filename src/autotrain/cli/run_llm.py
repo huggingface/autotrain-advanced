@@ -325,6 +325,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--use_flash_attention_2",
+                "help": "Use flash attention 2",
+                "required": False,
+                "action": "store_true",
+                "alias": ["--use-flash-attention-2", "--use-fa2"],
+            },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
@@ -364,6 +371,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "use_int8",
             "use_int4",
             "merge_adapter",
+            "use_flash_attention_2",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -451,6 +459,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 token=self.args.token,
                 merge_adapter=self.args.merge_adapter,
                 username=self.args.username,
+                use_flash_attention_2=self.args.use_flash_attention_2,
             )
 
             # space training

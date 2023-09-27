@@ -127,6 +127,7 @@ def train(config):
             torch_dtype=torch.float16,
             device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
             trust_remote_code=True,
+            use_flash_attention_2=config.use_flash_attention_2,
         )
     else:
         model = AutoModelForCausalLM.from_pretrained(
@@ -134,6 +135,7 @@ def train(config):
             config=model_config,
             use_auth_token=config.token,
             trust_remote_code=True,
+            use_flash_attention_2=config.use_flash_attention_2,
         )
 
     model.resize_token_embeddings(len(tokenizer))
