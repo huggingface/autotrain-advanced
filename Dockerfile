@@ -65,3 +65,4 @@ COPY --chown=1000:1000 . /app/
 RUN pip install -e .
 RUN pip install git+https://github.com/huggingface/peft.git
 RUN pip install git+https://github.com/huggingface/trl.git
+RUN pip install flash-attn

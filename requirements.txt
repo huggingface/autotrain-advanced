@@ -32,4 +32,3 @@ transformers
 accelerate
 diffusers
 bitsandbytes
-flash-attn
