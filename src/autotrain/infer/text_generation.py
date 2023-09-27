@@ -42,6 +42,8 @@ class TextGenerationInference:
             eos_token_id=self.tokenizer.eos_token_id,
             do_sample=self.do_sample,
             max_new_tokens=self.max_new_tokens,
+            pad_token_id=self.tokenizer.eos_token_id
+
         )
 
     def chat(self, prompt):
