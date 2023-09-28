@@ -327,7 +327,7 @@ class SpaceRunner:
             repo_type="space",
         )
 
-        _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain api --port 7860 --host 0.0.0.0"
+        _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain setup\nCMD autotrain api --port 7860 --host 0.0.0.0"
         _dockerfile = io.BytesIO(_dockerfile.encode())
         api.upload_file(
             path_or_fileobj=_dockerfile,
