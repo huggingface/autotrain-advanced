@@ -207,7 +207,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     )
 
     data_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data = load_dataset(data_path, use_auth_token=huggingface_token)
+    data = load_dataset(data_path, token=huggingface_token)
     logger.info(f"Loaded data from {data_path}")
     job_config = payload["config"]["params"][0]
     job_config["model_name"] = payload["config"]["hub_model"]
@@ -220,7 +220,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
 
     job_config = LMTrainingParams(**job_config)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=huggingface_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=huggingface_token)
 
     if tokenizer.model_max_length > 2048:
         tokenizer.model_max_length = 2048
@@ -245,7 +245,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
 
     model_config = AutoConfig.from_pretrained(
         model_name,
-        use_auth_token=huggingface_token,
+        token=huggingface_token,
         trust_remote_code=True,
     )
     logger.info(model_config)
@@ -254,7 +254,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 config=model_config,
-                use_auth_token=huggingface_token,
+                token=huggingface_token,
                 torch_dtype=torch.float16,
                 load_in_8bit=use_int8,
                 device_map="auto",
@@ -264,7 +264,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 config=model_config,
-                use_auth_token=huggingface_token,
+                token=huggingface_token,
                 from_tf=True,
                 torch_dtype=torch.float16,
                 load_in_8bit=use_int8,
@@ -276,14 +276,14 @@ def train(co2_tracker, payload, huggingface_token, model_path):
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 config=model_config,
-                use_auth_token=huggingface_token,
+                token=huggingface_token,
                 trust_remote_code=True,
             )
         except OSError:
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 config=model_config,
-                use_auth_token=huggingface_token,
+                token=huggingface_token,
                 from_tf=True,
                 trust_remote_code=True,
             )

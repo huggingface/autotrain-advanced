@@ -152,7 +152,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     )
 
     data_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data = load_dataset(data_path, use_auth_token=huggingface_token)
+    data = load_dataset(data_path, token=huggingface_token)
     logger.info(f"Loaded data from {data_path}")
     job_config = payload["config"]["params"][0]
     job_config["model_name"] = payload["config"]["hub_model"]

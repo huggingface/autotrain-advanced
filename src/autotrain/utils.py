@@ -177,7 +177,7 @@ def clone_hf_repo(repo_url: str, local_dir: str, token: str) -> Repository:
         cwd=local_dir,
     )
 
-    data_repo = Repository(local_dir=local_dir, use_auth_token=token)
+    data_repo = Repository(local_dir=local_dir, token=token)
     return data_repo
 
 

@@ -164,7 +164,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     )
 
     data_path = f"{payload['username']}/autotrain-data-{payload['proj_name']}"
-    data = load_dataset(data_path, use_auth_token=huggingface_token)
+    data = load_dataset(data_path, token=huggingface_token)
     logger.info(f"Loaded data from {data_path}")
     job_config = payload["config"]["params"][0]
     job_config["model_name"] = payload["config"]["hub_model"]
@@ -196,7 +196,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     model_config = AutoConfig.from_pretrained(
         model_name,
         num_labels=num_classes,
-        use_auth_token=huggingface_token,
+        token=huggingface_token,
     )
 
     model_config._num_labels = len(label2id)
@@ -209,19 +209,19 @@ def train(co2_tracker, payload, huggingface_token, model_path):
         model = AutoModelForImageClassification.from_pretrained(
             model_name,
             config=model_config,
-            use_auth_token=huggingface_token,
+            token=huggingface_token,
             ignore_mismatched_sizes=True,
         )
     except OSError:
         model = AutoModelForImageClassification.from_pretrained(
             model_name,
             config=model_config,
-            use_auth_token=huggingface_token,
+            token=huggingface_token,
             from_tf=True,
             ignore_mismatched_sizes=True,
         )
 
-    image_processor = AutoImageProcessor.from_pretrained(model_name, use_auth_token=huggingface_token)
+    image_processor = AutoImageProcessor.from_pretrained(model_name, token=huggingface_token)
 
     train_dataset, valid_dataset = process_data(train_data, valid_data, image_processor)
 
