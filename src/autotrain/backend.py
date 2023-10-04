@@ -17,6 +17,16 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
 
+_DOCKERFILE = """
+FROM huggingface/autotrain-advanced:latest
+
+CMD autotrain api --port 7860 --host 0.0.0.0
+"""
+
+# format _DOCKERFILE
+_DOCKERFILE = _DOCKERFILE.replace("\n", " ").replace("  ", "\n").strip()
+
+
 def _tabular_munge_data(params, username):
     if isinstance(params.target_columns, str):
         col_map_label = [params.target_columns]
@@ -327,8 +337,7 @@ class SpaceRunner:
             repo_type="space",
         )
 
-        _dockerfile = "FROM huggingface/autotrain-advanced:latest\nCMD autotrain setup && autotrain api --port 7860 --host 0.0.0.0"
-        _dockerfile = io.BytesIO(_dockerfile.encode())
+        _dockerfile = io.BytesIO(_DOCKERFILE.encode())
         api.upload_file(
             path_or_fileobj=_dockerfile,
             path_in_repo="Dockerfile",
