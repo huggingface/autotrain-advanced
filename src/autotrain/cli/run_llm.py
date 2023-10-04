@@ -68,6 +68,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--text-column"],
             },
             {
+                "arg": "--rejected_text_column",
+                "help": "Rejected text column to use",
+                "required": False,
+                "type": str,
+                "default": "rejected",
+                "alias": ["--rejected-text-column"],
+            },
+            {
                 "arg": "--model",
                 "help": "Model to use",
                 "required": False,
@@ -460,6 +468,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 merge_adapter=self.args.merge_adapter,
                 username=self.args.username,
                 use_flash_attention_2=self.args.use_flash_attention_2,
+                rejected_text_column=self.args.rejected_text_column,
             )
 
             # space training

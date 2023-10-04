@@ -12,6 +12,7 @@ class LLMTrainingParams(BaseModel):
     train_split: str = Field("train", title="Train data config")
     valid_split: str = Field(None, title="Validation data config")
     text_column: str = Field("text", title="Text column")
+    rejected_text_column: str = Field(None, title="Rejected text column")
     token: str = Field(None, title="Huggingface token")
     lr: float = Field(3e-5, title="Learning rate")
     epochs: int = Field(1, title="Number of training epochs")

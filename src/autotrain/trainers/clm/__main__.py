@@ -20,7 +20,7 @@ from transformers import (
     TrainingArguments,
     default_data_collator,
 )
-from trl import SFTTrainer
+from trl import SFTTrainer, RewardTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -61,6 +61,14 @@ def train(config):
                 split=config.train_split,
                 token=config.token,
             )
+        # rename columns for reward trainer
+        if config.trainer == "reward":
+            if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
+                train_data = train_data.rename_column(config.text_column, "chosen")
+            if not (
+                config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names
+            ):
+                train_data = train_data.rename_column(config.rejected_text_column, "rejected")
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
@@ -74,6 +82,14 @@ def train(config):
                 split=config.valid_split,
                 token=config.token,
             )
+
+        if config.trainer == "reward":
+            if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
+                valid_data = valid_data.rename_column(config.text_column, "chosen")
+            if not (
+                config.rejected_text_column == "rejected" and config.rejected_text_column in valid_data.column_names
+            ):
+                valid_data = valid_data.rename_column(config.rejected_text_column, "rejected")
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model,
@@ -143,14 +159,24 @@ def train(config):
     if config.use_peft:
         if config.use_int8 or config.use_int4:
             model = prepare_model_for_kbit_training(model)
-        peft_config = LoraConfig(
-            r=config.lora_r,
-            lora_alpha=config.lora_alpha,
-            lora_dropout=config.lora_dropout,
-            bias="none",
-            task_type="CAUSAL_LM",
-            target_modules=utils.get_target_modules(config),
-        )
+        if config.trainer == "reward":
+            peft_config = LoraConfig(
+                r=config.lora_r,
+                lora_alpha=config.lora_alpha,
+                lora_dropout=config.lora_dropout,
+                bias="none",
+                task_type="SEQ_CLS",
+                target_modules=utils.get_target_modules(config),
+            )
+        else:
+            peft_config = LoraConfig(
+                r=config.lora_r,
+                lora_alpha=config.lora_alpha,
+                lora_dropout=config.lora_dropout,
+                bias="none",
+                task_type="CAUSAL_LM",
+                target_modules=utils.get_target_modules(config),
+            )
         model = get_peft_model(model, peft_config)
 
     if config.block_size == -1:
@@ -280,6 +306,14 @@ def train(config):
             max_seq_length=config.block_size,
             tokenizer=tokenizer,
             packing=True,
+        )
+    elif config.trainer == "reward":
+        trainer = RewardTrainer(
+            **trainer_args,
+            train_dataset=train_data,
+            eval_dataset=valid_data if config.valid_split is not None else None,
+            peft_config=peft_config if config.use_peft else None,
+            tokenizer=tokenizer,
         )
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")
