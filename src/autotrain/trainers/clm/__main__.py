@@ -129,6 +129,7 @@ def train(config):
             trust_remote_code=True,
             use_flash_attention_2=config.use_flash_attention_2,
         )
+
     else:
         model = AutoModelForCausalLM.from_pretrained(
             config.model,
