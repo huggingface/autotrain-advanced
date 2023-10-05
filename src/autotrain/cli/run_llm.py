@@ -408,7 +408,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 print(f"Bot: {tgi.chat(prompt)}")
 
         cuda_available = torch.cuda.is_available()
-        mps_available = torch.mps.is_available()
+        mps_available = torch.backends.mps.is_available()
 
         if not cuda_available and not mps_available:
             raise ValueError("No GPU/MPS device found. LLM training requires an accelerator")
