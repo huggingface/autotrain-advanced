@@ -225,6 +225,10 @@ def train(config):
 
     else:
         logging_steps = config.logging_steps
+    
+    report_to = "tensorboard"
+    if config.log_to_wandb:
+        report_to = "wandb"
 
     training_args = dict(
         output_dir=config.project_name,
@@ -237,7 +241,7 @@ def train(config):
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
         gradient_accumulation_steps=config.gradient_accumulation,
-        report_to="tensorboard",
+        report_to=report_to,
         auto_find_batch_size=config.auto_find_batch_size,
         lr_scheduler_type=config.scheduler,
         optim=config.optimizer,
