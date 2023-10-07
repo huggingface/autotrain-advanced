@@ -34,6 +34,7 @@ class TextClassificationParams(BaseModel):
     repo_id: str = Field(None, title="Repo id")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     username: str = Field(None, title="Hugging Face Username")
+    log_to_wandb: bool = Field(False, title="Logging using Weights & Biases")
 
     def __str__(self):
         data = self.dict()

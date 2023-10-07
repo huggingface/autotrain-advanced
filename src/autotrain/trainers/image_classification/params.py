@@ -30,6 +30,7 @@ class ImageClassificationParams(BaseModel):
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     image_column: str = Field("image", title="Image column")
     target_column: str = Field("target", title="Target column")
+    log_to_wandb: bool = Field(False, title="Logging using Weights & Biases")
 
     def __str__(self):
         data = self.dict()
