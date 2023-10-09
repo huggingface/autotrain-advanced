@@ -203,6 +203,12 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--log-to-wandb",
+                "help": "Use Weights & Biases tracking",
+                "required": False,
+                "action": "store_true",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"

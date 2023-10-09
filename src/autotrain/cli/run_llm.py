@@ -332,6 +332,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "action": "store_true",
                 "alias": ["--use-flash-attention-2", "--use-fa2"],
             },
+            {
+                "arg": "--log_to_wandb",
+                "help": "Use Weights & Biases tracking",
+                "required": False,
+                "action": "store_true",
+                "alias": ["--log-to-wandb"],
+            },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:

@@ -232,6 +232,12 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--log-to-wandb",
+                "help": "Use Weights & Biases tracking",
+                "required": False,
+                "action": "store_true",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "text-classification", description="✨ Run AutoTrain Text Classification"
