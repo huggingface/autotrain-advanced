@@ -81,6 +81,7 @@ class AutoTrainProject:
         _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
         _params["data_path"] = self.data_path
         _params["username"] = self.username
+        _params["log_to_wandb"] = True
         return _params
 
     def _munge_params_llm(self, job_idx):

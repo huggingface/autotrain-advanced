@@ -271,6 +271,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             "auto_find_batch_size",
             "fp16",
             "push_to_hub",
+            "log_to_wandb",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -332,6 +333,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 repo_id=self.args.repo_id,
                 token=self.args.token,
                 username=self.args.username,
+                log_to_wandb=self.args.log_to_wandb,
             )
 
             if self.args.backend.startswith("spaces"):

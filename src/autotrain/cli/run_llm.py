@@ -379,6 +379,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "use_int4",
             "merge_adapter",
             "use_flash_attention_2",
+            "log_to_wandb",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -473,6 +474,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 merge_adapter=self.args.merge_adapter,
                 username=self.args.username,
                 use_flash_attention_2=self.args.use_flash_attention_2,
+                log_to_wandb=self.args.log_to_wandb,
             )
 
             # space training
