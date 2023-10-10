@@ -203,6 +203,12 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--log-to-wandb",
+                "help": "Use Weights & Biases tracking",
+                "required": False,
+                "action": "store_true",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
@@ -236,6 +242,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             "auto_find_batch_size",
             "fp16",
             "push_to_hub",
+            "log_to_wandb"
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -291,6 +298,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 fp16=self.args.fp16,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
+                log_to_wandb=self.args.log_to_wandb,
             )
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:

@@ -204,6 +204,10 @@ def train(co2_tracker, payload, huggingface_token, model_path):
     fp16 = True
     if model_config.model_type in FP32_MODELS or device == "cpu":
         fp16 = False
+    
+    report_to = "none"
+    if job_config.log_to_wandb:
+        report_to = "wandb"
 
     training_args = dict(
         output_dir="/tmp/autotrain",
@@ -219,7 +223,7 @@ def train(co2_tracker, payload, huggingface_token, model_path):
         save_strategy="epoch",
         disable_tqdm=not bool(os.environ.get("ENABLE_TQDM", 0)),
         gradient_accumulation_steps=job_config.gradient_accumulation_steps,
-        report_to="none",
+        report_to=report_to,
         auto_find_batch_size=True,
         lr_scheduler_type=job_config.scheduler,
         optim=job_config.optimizer,
