@@ -19,12 +19,16 @@ from transformers import (
     Trainer,
     TrainingArguments,
     default_data_collator,
+    AutoModelForSequenceClassification,
 )
 from trl import SFTTrainer, RewardTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
-from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
+from autotrain.trainers.clm.callbacks import (
+    LoadBestPeftModelCallback,
+    SavePeftModelCallback,
+)
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.utils import monitor
 
@@ -63,12 +67,18 @@ def train(config):
             )
         # rename columns for reward trainer
         if config.trainer == "reward":
-            if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
+            if not (
+                config.text_column == "chosen"
+                and config.text_column in train_data.column_names
+            ):
                 train_data = train_data.rename_column(config.text_column, "chosen")
             if not (
-                config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names
+                config.rejected_text_column == "rejected"
+                and config.rejected_text_column in train_data.column_names
             ):
-                train_data = train_data.rename_column(config.rejected_text_column, "rejected")
+                train_data = train_data.rename_column(
+                    config.rejected_text_column, "rejected"
+                )
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
@@ -84,12 +94,18 @@ def train(config):
             )
 
         if config.trainer == "reward":
-            if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
+            if not (
+                config.text_column == "chosen"
+                and config.text_column in valid_data.column_names
+            ):
                 valid_data = valid_data.rename_column(config.text_column, "chosen")
             if not (
-                config.rejected_text_column == "rejected" and config.rejected_text_column in valid_data.column_names
+                config.rejected_text_column == "rejected"
+                and config.rejected_text_column in valid_data.column_names
             ):
-                valid_data = valid_data.rename_column(config.rejected_text_column, "rejected")
+                valid_data = valid_data.rename_column(
+                    config.rejected_text_column, "rejected"
+                )
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model,
@@ -102,6 +118,9 @@ def train(config):
 
     if getattr(tokenizer, "pad_token", None) is None:
         tokenizer.pad_token = tokenizer.eos_token
+
+    if getattr(tokenizer, "pad_token_id", None) is None:
+        tokenizer.pad_token_id = tokenizer.eos_token_id
 
     if config.trainer == "default":
         train_data = utils.process_data(
@@ -121,6 +140,10 @@ def train(config):
         token=config.token,
         trust_remote_code=True,
     )
+    if config.trainer == "reward":
+        model_config.num_labels = 1
+        model_config.pad_token_id = tokenizer.pad_token_id
+        model_config.pad_token = tokenizer.pad_token
 
     if config.use_peft:
         if config.use_int4:
@@ -133,32 +156,61 @@ def train(config):
         elif config.use_int8:
             bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
         else:
-            bnb_config = BitsAndBytesConfig()
+            bnb_config = None
 
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model,
-            config=model_config,
-            token=config.token,
-            quantization_config=bnb_config,
-            torch_dtype=torch.float16,
-            device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
-            trust_remote_code=True,
-            use_flash_attention_2=config.use_flash_attention_2,
-        )
+        if config.trainer == "reward":
+            model = AutoModelForSequenceClassification.from_pretrained(
+                config.model,
+                config=model_config,
+                token=config.token,
+                quantization_config=bnb_config,
+                torch_dtype=torch.float16,
+                device_map={"": Accelerator().process_index}
+                if torch.cuda.is_available()
+                else None,
+                trust_remote_code=True,
+                use_flash_attention_2=config.use_flash_attention_2,
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                config.model,
+                config=model_config,
+                token=config.token,
+                quantization_config=bnb_config,
+                torch_dtype=torch.float16,
+                device_map={"": Accelerator().process_index}
+                if torch.cuda.is_available()
+                else None,
+                trust_remote_code=True,
+                use_flash_attention_2=config.use_flash_attention_2,
+            )
     else:
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model,
-            config=model_config,
-            token=config.token,
-            trust_remote_code=True,
-            use_flash_attention_2=config.use_flash_attention_2,
-        )
+        if config.trainer == "reward":
+            model = AutoModelForSequenceClassification.from_pretrained(
+                config.model,
+                trust_remote_code=True,
+                num_labels=1,
+                use_flash_attention_2=config.use_flash_attention_2,
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                config.model,
+                config=model_config,
+                token=config.token,
+                trust_remote_code=True,
+                use_flash_attention_2=config.use_flash_attention_2,
+            )
 
     model.resize_token_embeddings(len(tokenizer))
 
     if config.use_peft:
         if config.use_int8 or config.use_int4:
-            model = prepare_model_for_kbit_training(model)
+            model = prepare_model_for_kbit_training(
+                model,
+                use_gradient_checkpointing=False
+                if config.trainer == "reward"
+                else True,
+            )
         if config.trainer == "reward":
             peft_config = LoraConfig(
                 r=config.lora_r,
@@ -167,6 +219,7 @@ def train(config):
                 bias="none",
                 task_type="SEQ_CLS",
                 target_modules=utils.get_target_modules(config),
+                modules_to_save=["scores"],
             )
         else:
             peft_config = LoraConfig(
@@ -200,6 +253,7 @@ def train(config):
         block_size = min(config.block_size, tokenizer.model_max_length)
 
     config.block_size = block_size
+    logger.info(f"Using block size {block_size}")
 
     if config.trainer == "default":
         tokenize_fn = partial(utils.tokenize, tokenizer=tokenizer, config=config)
@@ -237,6 +291,30 @@ def train(config):
                 desc=f"Grouping texts in chunks of {block_size}",
             )
 
+    elif config.trainer == "reward":
+        reward_proc = partial(utils.preprocess_reward, tokenizer=tokenizer)
+        train_data = train_data.map(
+            reward_proc,
+            batched=True,
+            num_proc=4,
+            desc="Running tokenizer on train dataset",
+        )
+        train_data = train_data.filter(
+            lambda x: len(x["input_ids_chosen"]) <= config.block_size
+            and len(x["input_ids_rejected"]) <= config.block_size
+        )
+        if config.valid_split is not None:
+            valid_data = valid_data.map(
+                reward_proc,
+                batched=True,
+                num_proc=4,
+                desc="Running tokenizer on validation dataset",
+            )
+            valid_data = valid_data.filter(
+                lambda x: len(x["input_ids_chosen"]) <= config.block_size
+                and len(x["input_ids_rejected"]) <= config.block_size
+            )
+
     logger.info("creating trainer")
     # trainer specific
     if config.logging_steps == -1:
@@ -256,7 +334,9 @@ def train(config):
         per_device_eval_batch_size=config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
+        evaluation_strategy=config.evaluation_strategy
+        if config.valid_split is not None
+        else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
@@ -312,7 +392,7 @@ def train(config):
             **trainer_args,
             train_dataset=train_data,
             eval_dataset=valid_data if config.valid_split is not None else None,
-            peft_config=peft_config if config.use_peft else None,
+            peft_config=None,
             tokenizer=tokenizer,
         )
     else:
@@ -333,6 +413,7 @@ def train(config):
         #         if script_args.bf16 and module.weight.dtype == torch.float32:
         #             module = module.to(torch.bfloat16)
 
+    print(train_data[0])
     trainer.train()
 
     logger.info("Finished training, saving model...")
@@ -354,18 +435,29 @@ def train(config):
             )
         except Exception as e:
             logger.warning(f"Failed to merge adapter weights: {e}")
-            logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
+            logger.warning(
+                "Skipping adapter merge. Only adapter weights will be saved."
+            )
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
             logger.info("Pushing model to hub...")
             if os.path.exists(f"{config.project_name}/training_params.json"):
-                training_params = json.load(open(f"{config.project_name}/training_params.json"))
+                training_params = json.load(
+                    open(f"{config.project_name}/training_params.json")
+                )
                 training_params.pop("token")
-                json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
+                json.dump(
+                    training_params,
+                    open(f"{config.project_name}/training_params.json", "w"),
+                )
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
-            api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+            api.upload_folder(
+                folder_path=config.project_name,
+                repo_id=config.repo_id,
+                repo_type="model",
+            )
 
     if PartialState().process_index == 0:
         if "SPACE_ID" in os.environ:

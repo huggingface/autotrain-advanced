@@ -393,9 +393,17 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.args.model is None:
                 raise ValueError("Model must be specified")
             if self.args.push_to_hub:
-                if self.args.repo_id is None:
-                    raise ValueError("Repo id must be specified for push to hub")
-            if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
+                # must have project_name, username and token OR project_name, repo_id, token
+                if self.args.username is None and self.args.repo_id is None:
+                    raise ValueError(
+                        "Username or repo id must be specified for push to hub"
+                    )
+                if self.args.token is None:
+                    raise ValueError("Token must be specified for push to hub")
+
+            if self.args.backend.startswith("spaces") or self.args.backend.startswith(
+                "ep-"
+            ):
                 if not self.args.push_to_hub:
                     raise ValueError("Push to hub must be specified for spaces backend")
                 if self.args.repo_id is None:
@@ -407,7 +415,9 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             from autotrain.infer.text_generation import TextGenerationInference
 
             tgi = TextGenerationInference(
-                self.args.project_name, use_int4=self.args.use_int4, use_int8=self.args.use_int8
+                self.args.project_name,
+                use_int4=self.args.use_int4,
+                use_int8=self.args.use_int8,
             )
             while True:
                 prompt = input("User: ")
@@ -479,7 +489,9 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                     backend=self.args.backend,
                 )
                 space_id = sr.prepare()
-                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
+                logger.info(
+                    f"Training Space created. Check progress at https://hf.co/spaces/{space_id}"
+                )
                 sys.exit(0)
 
             if self.args.backend.startswith("ep-"):
@@ -497,7 +509,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_llm(params)
             else:
-                cmd = ["accelerate", "launch", "--multi_gpu", "--num_machines", "1", "--num_processes"]
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                ]
                 cmd.append(str(self.num_gpus))
                 cmd.append("--mixed_precision")
                 if self.args.fp16:
