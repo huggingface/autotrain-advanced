@@ -32,6 +32,25 @@ widget:
 """
 
 
+def preprocess_reward(examples, tokenizer):
+    new_examples = {
+        "input_ids_chosen": [],
+        "attention_mask_chosen": [],
+        "input_ids_rejected": [],
+        "attention_mask_rejected": [],
+    }
+    for chosen, rejected in zip(examples["chosen"], examples["rejected"]):
+        tokenized_chosen = tokenizer(chosen, truncation=True)
+        tokenized_rejected = tokenizer(rejected, truncation=True)
+
+        new_examples["input_ids_chosen"].append(tokenized_chosen["input_ids"])
+        new_examples["attention_mask_chosen"].append(tokenized_chosen["attention_mask"])
+        new_examples["input_ids_rejected"].append(tokenized_rejected["input_ids"])
+        new_examples["attention_mask_rejected"].append(tokenized_rejected["attention_mask"])
+
+    return new_examples
+
+
 def get_target_modules(config):
     if config.target_modules is None:
         return TARGET_MODULES.get(config.model)

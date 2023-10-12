@@ -12,6 +12,7 @@ class LLMTrainingParams(BaseModel):
     train_split: str = Field("train", title="Train data config")
     valid_split: str = Field(None, title="Validation data config")
     text_column: str = Field("text", title="Text column")
+    rejected_text_column: str = Field(None, title="Rejected text column")
     token: str = Field(None, title="Huggingface token")
     lr: float = Field(3e-5, title="Learning rate")
     epochs: int = Field(1, title="Number of training epochs")
@@ -45,6 +46,7 @@ class LLMTrainingParams(BaseModel):
     merge_adapter: bool = Field(False, title="Merge adapter")
     username: str = Field(None, title="Hugging Face Username")
     use_flash_attention_2: bool = Field(False, title="Use flash attention 2")
+    disable_gradient_checkpointing: bool = Field(True, title="Gradient checkpointing")
 
     def save(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)
