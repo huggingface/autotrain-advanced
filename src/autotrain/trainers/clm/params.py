@@ -46,6 +46,7 @@ class LLMTrainingParams(BaseModel):
     merge_adapter: bool = Field(False, title="Merge adapter")
     username: str = Field(None, title="Hugging Face Username")
     use_flash_attention_2: bool = Field(False, title="Use flash attention 2")
+    disable_gradient_checkpointing: bool = Field(True, title="Gradient checkpointing")
 
     def save(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)

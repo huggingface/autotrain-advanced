@@ -46,9 +46,7 @@ def preprocess_reward(examples, tokenizer):
         new_examples["input_ids_chosen"].append(tokenized_chosen["input_ids"])
         new_examples["attention_mask_chosen"].append(tokenized_chosen["attention_mask"])
         new_examples["input_ids_rejected"].append(tokenized_rejected["input_ids"])
-        new_examples["attention_mask_rejected"].append(
-            tokenized_rejected["attention_mask"]
-        )
+        new_examples["attention_mask_rejected"].append(tokenized_rejected["attention_mask"])
 
     return new_examples
 
@@ -82,10 +80,7 @@ def group_texts(examples, config):
         total_length = 0
     # Split by chunks of max_len.
     result = {
-        k: [
-            t[i : i + config.block_size]
-            for i in range(0, total_length, config.block_size)
-        ]
+        k: [t[i : i + config.block_size] for i in range(0, total_length, config.block_size)]
         for k, t in concatenated_examples.items()
     }
     result["labels"] = result["input_ids"].copy()

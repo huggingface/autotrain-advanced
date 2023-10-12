@@ -14,21 +14,18 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForSequenceClassification,
     AutoTokenizer,
     BitsAndBytesConfig,
     Trainer,
     TrainingArguments,
     default_data_collator,
-    AutoModelForSequenceClassification,
 )
-from trl import SFTTrainer, RewardTrainer
+from trl import RewardConfig, RewardTrainer, SFTTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
-from autotrain.trainers.clm.callbacks import (
-    LoadBestPeftModelCallback,
-    SavePeftModelCallback,
-)
+from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.utils import monitor
 
@@ -48,10 +45,6 @@ def train(config):
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
 
-    # TODO: remove when SFT is fixed
-    # if config.trainer == "sft":
-    #     config.trainer = "default"
-
     # check if config.train_split.csv exists in config.data_path
     if config.train_split is not None:
         train_path = f"{config.data_path}/{config.train_split}.csv"
@@ -67,18 +60,12 @@ def train(config):
             )
         # rename columns for reward trainer
         if config.trainer == "reward":
-            if not (
-                config.text_column == "chosen"
-                and config.text_column in train_data.column_names
-            ):
+            if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
                 train_data = train_data.rename_column(config.text_column, "chosen")
             if not (
-                config.rejected_text_column == "rejected"
-                and config.rejected_text_column in train_data.column_names
+                config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names
             ):
-                train_data = train_data.rename_column(
-                    config.rejected_text_column, "rejected"
-                )
+                train_data = train_data.rename_column(config.rejected_text_column, "rejected")
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
@@ -94,18 +81,12 @@ def train(config):
             )
 
         if config.trainer == "reward":
-            if not (
-                config.text_column == "chosen"
-                and config.text_column in valid_data.column_names
-            ):
+            if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
                 valid_data = valid_data.rename_column(config.text_column, "chosen")
             if not (
-                config.rejected_text_column == "rejected"
-                and config.rejected_text_column in valid_data.column_names
+                config.rejected_text_column == "rejected" and config.rejected_text_column in valid_data.column_names
             ):
-                valid_data = valid_data.rename_column(
-                    config.rejected_text_column, "rejected"
-                )
+                valid_data = valid_data.rename_column(config.rejected_text_column, "rejected")
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model,
@@ -165,9 +146,7 @@ def train(config):
                 token=config.token,
                 quantization_config=bnb_config,
                 torch_dtype=torch.float16,
-                device_map={"": Accelerator().process_index}
-                if torch.cuda.is_available()
-                else None,
+                device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
             )
@@ -178,9 +157,7 @@ def train(config):
                 token=config.token,
                 quantization_config=bnb_config,
                 torch_dtype=torch.float16,
-                device_map={"": Accelerator().process_index}
-                if torch.cuda.is_available()
-                else None,
+                device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
             )
@@ -207,9 +184,7 @@ def train(config):
         if config.use_int8 or config.use_int4:
             model = prepare_model_for_kbit_training(
                 model,
-                use_gradient_checkpointing=False
-                if config.trainer == "reward"
-                else True,
+                use_gradient_checkpointing=not config.disable_gradient_checkpointing,
             )
         if config.trainer == "reward":
             peft_config = LoraConfig(
@@ -219,7 +194,7 @@ def train(config):
                 bias="none",
                 task_type="SEQ_CLS",
                 target_modules=utils.get_target_modules(config),
-                modules_to_save=["scores"],
+                # modules_to_save=["scores"],
             )
         else:
             peft_config = LoraConfig(
@@ -334,9 +309,7 @@ def train(config):
         per_device_eval_batch_size=config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        evaluation_strategy=config.evaluation_strategy
-        if config.valid_split is not None
-        else "no",
+        evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
@@ -352,9 +325,14 @@ def train(config):
         push_to_hub=False,
         load_best_model_at_end=True if config.valid_split is not None else False,
         ddp_find_unused_parameters=False,
+        gradient_checkpointing=not config.disable_gradient_checkpointing,
     )
 
-    args = TrainingArguments(**training_args)
+    if config.trainer == "reward":
+        training_args["max_length"] = config.block_size
+        args = RewardConfig(**training_args)
+    else:
+        args = TrainingArguments(**training_args)
 
     callbacks = []
     if config.use_peft:
@@ -392,7 +370,7 @@ def train(config):
             **trainer_args,
             train_dataset=train_data,
             eval_dataset=valid_data if config.valid_split is not None else None,
-            peft_config=None,
+            peft_config=peft_config,
             tokenizer=tokenizer,
         )
     else:
@@ -413,7 +391,6 @@ def train(config):
         #         if script_args.bf16 and module.weight.dtype == torch.float32:
         #             module = module.to(torch.bfloat16)
 
-    print(train_data[0])
     trainer.train()
 
     logger.info("Finished training, saving model...")
@@ -435,17 +412,13 @@ def train(config):
             )
         except Exception as e:
             logger.warning(f"Failed to merge adapter weights: {e}")
-            logger.warning(
-                "Skipping adapter merge. Only adapter weights will be saved."
-            )
+            logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
             logger.info("Pushing model to hub...")
             if os.path.exists(f"{config.project_name}/training_params.json"):
-                training_params = json.load(
-                    open(f"{config.project_name}/training_params.json")
-                )
+                training_params = json.load(open(f"{config.project_name}/training_params.json"))
                 training_params.pop("token")
                 json.dump(
                     training_params,
