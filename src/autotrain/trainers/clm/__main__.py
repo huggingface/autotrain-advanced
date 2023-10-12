@@ -134,8 +134,10 @@ def train(config):
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=False,
             )
+            config.fp16 = True
         elif config.use_int8:
             bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
+            config.fp16 = True
         else:
             bnb_config = None
 

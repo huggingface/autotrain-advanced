@@ -429,10 +429,16 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                     break
                 print(f"Bot: {tgi.chat(prompt)}")
 
-        if not torch.cuda.is_available():
-            raise ValueError("No GPU found. Please install CUDA and try again.")
+        cuda_available = torch.cuda.is_available()
+        mps_available = torch.backends.mps.is_available()
 
-        self.num_gpus = torch.cuda.device_count()
+        if not cuda_available and not mps_available:
+            raise ValueError("No GPU/MPS device found. LLM training requires an accelerator")
+
+        if cuda_available:
+            self.num_gpus = torch.cuda.device_count()
+        elif mps_available:
+            self.num_gpus = 1
 
     def run(self):
         from autotrain.backend import EndpointsRunner, SpaceRunner
