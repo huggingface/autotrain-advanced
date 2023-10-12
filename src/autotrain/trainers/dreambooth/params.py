@@ -74,3 +74,4 @@ class DreamBoothTrainingParams(AutoTrainParams):
     validation_images: str = Field(None, title="Validation images")
 
     logging: bool = Field(False, title="Logging using tensorboard")
+    log_to_wandb: bool = Field(False, title="Logging using Weights & Biases")

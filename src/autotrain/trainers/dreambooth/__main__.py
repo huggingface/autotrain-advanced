@@ -67,10 +67,14 @@ def train(config):
     else:
         mixed_precision = "no"
 
+    log_with = None
+    if config.logging:
+        log_with = "wandb" if config.log_to_wandb else "tensorboard"
+
     accelerator = Accelerator(
         gradient_accumulation_steps=config.gradient_accumulation,
         mixed_precision=mixed_precision,
-        log_with="tensorboard" if config.logging else None,
+        log_with=log_with,
         project_config=accelerator_project_config,
     )
 

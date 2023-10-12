@@ -109,7 +109,7 @@ class Trainer:
         self.config.epochs = math.ceil(self.config.num_steps / self.num_update_steps_per_epoch)
 
         if self.accelerator.is_main_process:
-            self.accelerator.init_trackers("dreambooth")
+            self.accelerator.init_trackers("dreambooth", config=self.config.dict())
 
         self.total_batch_size = (
             self.config.batch_size * self.accelerator.num_processes * self.config.gradient_accumulation
