@@ -41,7 +41,7 @@ class RunSetupCommand(BaseAutoTrainCommand):
         _, _ = pipe.communicate()
         logger.info("Successfully installed latest peft")
 
-        cmd = "pip uninstall -y diffusers && pip install git+https://github.com/huggingface/diffusers.git"
+        cmd = "pip uninstall -y diffusers && pip install diffusers==0.21.4"
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info("Installing latest diffusers@main")
         _, _ = pipe.communicate()
