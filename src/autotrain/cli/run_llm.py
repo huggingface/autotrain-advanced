@@ -341,12 +341,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--use-flash-attention-2", "--use-fa2"],
             },
             {
-                "arg": "--log_to_wandb",
-                "help": "Use Weights & Biases tracking",
+                "arg": "--log",
+                "help": "Use experiment tracking",
                 "required": False,
-                "action": "store_true",
-                "alias": ["--log-to-wandb"],
+                "type": str,
+                "default": "none",
             },
+            {
                 "arg": "--disable_gradient_checkpointing",
                 "help": "Disable gradient checkpointing",
                 "required": False,
@@ -393,7 +394,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "use_int4",
             "merge_adapter",
             "use_flash_attention_2",
-            "log_to_wandb",
             "disable_gradient_checkpointing",
         ]
         for arg_name in store_true_arg_names:
@@ -495,7 +495,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 merge_adapter=self.args.merge_adapter,
                 username=self.args.username,
                 use_flash_attention_2=self.args.use_flash_attention_2,
-                log_to_wandb=self.args.log_to_wandb,
+                log=self.args.log,
                 rejected_text_column=self.args.rejected_text_column,
                 disable_gradient_checkpointing=self.args.disable_gradient_checkpointing,
             )
