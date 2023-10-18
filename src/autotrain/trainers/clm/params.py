@@ -46,7 +46,7 @@ class LLMTrainingParams(BaseModel):
     merge_adapter: bool = Field(False, title="Merge adapter")
     username: str = Field(None, title="Hugging Face Username")
     use_flash_attention_2: bool = Field(False, title="Use flash attention 2")
-    log_to_wandb: bool = Field(False, title="Logging using Weights & Biases")
+    log: str = Field("none", title="Logging using experiment tracking")
     disable_gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
 
     def save(self, output_dir):
