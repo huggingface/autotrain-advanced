@@ -347,6 +347,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "type": str,
                 "default": "none",
             },
+            {
                 "arg": "--disable_gradient_checkpointing",
                 "help": "Disable gradient checkpointing",
                 "required": False,
