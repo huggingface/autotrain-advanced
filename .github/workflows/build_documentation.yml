@@ -15,5 +15,4 @@ jobs:
       package: autotrain-advanced
       package_name: autotrain
     secrets:
-      token: ${{ secrets.HUGGINGFACE_PUSH }}
       hf_token: ${{ secrets.HF_DOC_BUILD_PUSH }}
