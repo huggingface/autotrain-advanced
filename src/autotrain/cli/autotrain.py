@@ -6,6 +6,7 @@ from .run_app import RunAutoTrainAppCommand
 from .run_dreambooth import RunAutoTrainDreamboothCommand
 from .run_image_classification import RunAutoTrainImageClassificationCommand
 from .run_llm import RunAutoTrainLLMCommand
+from .run_seq2seq import RunAutoTrainSeq2SeqCommand
 from .run_setup import RunSetupCommand
 from .run_spacerunner import RunAutoTrainSpaceRunnerCommand
 from .run_tabular import RunAutoTrainTabularCommand
@@ -31,6 +32,7 @@ def main():
     RunAutoTrainImageClassificationCommand.register_subcommand(commands_parser)
     RunAutoTrainTabularCommand.register_subcommand(commands_parser)
     RunAutoTrainSpaceRunnerCommand.register_subcommand(commands_parser)
+    RunAutoTrainSeq2SeqCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

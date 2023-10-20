@@ -11,11 +11,11 @@ from autotrain.backend import EndpointsRunner, SpaceRunner
 from . import BaseAutoTrainCommand
 
 
-def run_text_classification_command_factory(args):
-    return RunAutoTrainTextClassificationCommand(args)
+def run_seq2seq_command_factory(args):
+    return RunAutoTrainSeq2SeqCommand(args)
 
 
-class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
+class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
@@ -94,6 +94,13 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             {
                 "arg": "--max-seq-length",
                 "help": "Maximum number of tokens in a sequence to use",
+                "required": False,
+                "type": int,
+                "default": 128,
+            },
+            {
+                "arg": "--max-target-length",
+                "help": "Maximum number of tokens in a target sequence to use",
                 "required": False,
                 "type": int,
                 "default": 128,
@@ -232,13 +239,51 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--use-peft",
+                "help": "Use PEFT",
+                "required": False,
+                "action": "store_true",
+            },
+            {
+                "arg": "--use-int8",
+                "help": "Use INT8",
+                "required": False,
+                "action": "store_true",
+            },
+            {
+                "arg": "--lora-r",
+                "help": "LoRA-R",
+                "required": False,
+                "type": int,
+                "default": 16,
+            },
+            {
+                "arg": "--lora-alpha",
+                "help": "LoRA-Alpha",
+                "required": False,
+                "type": int,
+                "default": 32,
+            },
+            {
+                "arg": "--lora-dropout",
+                "help": "LoRA-Dropout",
+                "required": False,
+                "type": float,
+                "default": 0.05,
+            },
+            {
+                "arg": "--target-modules",
+                "help": "Target modules",
+                "required": False,
+                "type": str,
+                "default": "",
+            },
         ]
-        run_text_classification_parser = parser.add_parser(
-            "text-classification", description="✨ Run AutoTrain Text Classification"
-        )
+        run_seq2seq_parser = parser.add_parser("seq2seq", description="✨ Run AutoTrain Seq2Seq")
         for arg in arg_list:
             if "action" in arg:
-                run_text_classification_parser.add_argument(
+                run_seq2seq_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
@@ -246,14 +291,14 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                     default=arg.get("default"),
                 )
             else:
-                run_text_classification_parser.add_argument(
+                run_seq2seq_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),
                     default=arg.get("default"),
                 )
-        run_text_classification_parser.set_defaults(func=run_text_classification_command_factory)
+        run_seq2seq_parser.set_defaults(func=run_seq2seq_command_factory)
 
     def __init__(self, args):
         self.args = args
@@ -265,6 +310,8 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             "auto_find_batch_size",
             "fp16",
             "push_to_hub",
+            "use_peft",
+            "use_int8",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -291,13 +338,18 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
         if len(str(self.args.token)) < 6:
             self.args.token = os.environ.get("HF_TOKEN", None)
 
-    def run(self):
-        from autotrain.trainers.text_classification.__main__ import train as train_text_classification
-        from autotrain.trainers.text_classification.params import TextClassificationParams
+        if len(self.args.target_modules.strip()) == 0:
+            self.args.target_modules = []
+        else:
+            self.args.target_modules = self.args.target_modules.split(",")
 
-        logger.info("Running Text Classification")
+    def run(self):
+        from autotrain.trainers.seq2seq.__main__ import train as train_seq2seq
+        from autotrain.trainers.seq2seq.params import Seq2SeqParams
+
+        logger.info("Running Seq2Seq Classification")
         if self.args.train:
-            params = TextClassificationParams(
+            params = Seq2SeqParams(
                 data_path=self.args.data_path,
                 train_split=self.args.train_split,
                 valid_split=self.args.valid_split,
@@ -307,6 +359,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 lr=self.args.lr,
                 epochs=self.args.epochs,
                 max_seq_length=self.args.max_seq_length,
+                max_target_length=self.args.max_target_length,
                 batch_size=self.args.batch_size,
                 warmup_ratio=self.args.warmup_ratio,
                 gradient_accumulation=self.args.gradient_accumulation,
@@ -326,6 +379,12 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 repo_id=self.args.repo_id,
                 token=self.args.token,
                 username=self.args.username,
+                use_peft=self.args.use_peft,
+                use_int8=self.args.use_int8,
+                lora_r=self.args.lora_r,
+                lora_alpha=self.args.lora_alpha,
+                lora_dropout=self.args.lora_dropout,
+                target_modules=self.args.target_modules,
             )
 
             if self.args.backend.startswith("spaces"):
@@ -350,7 +409,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
 
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
-                train_text_classification(params)
+                train_seq2seq(params)
             else:
                 cmd = [
                     "accelerate",
@@ -370,7 +429,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 cmd.extend(
                     [
                         "-m",
-                        "autotrain.trainers.text_classification",
+                        "autotrain.trainers.seq2seq",
                         "--training_config",
                         os.path.join(self.args.project_name, "training_params.json"),
                     ]
