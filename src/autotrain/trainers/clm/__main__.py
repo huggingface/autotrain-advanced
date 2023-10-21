@@ -188,6 +188,8 @@ def train(config):
                 model,
                 use_gradient_checkpointing=not config.disable_gradient_checkpointing,
             )
+        else:
+            model.enable_input_require_grads()
         if config.trainer == "reward":
             peft_config = LoraConfig(
                 r=config.lora_r,
