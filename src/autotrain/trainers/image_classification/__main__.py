@@ -98,7 +98,7 @@ def train(config):
 
     else:
         logging_steps = config.logging_steps
-    
+
     training_args = dict(
         output_dir=config.project_name,
         per_device_train_batch_size=config.batch_size,
