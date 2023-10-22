@@ -232,6 +232,13 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--log",
+                "help": "Use experiment tracking",
+                "required": False,
+                "type": str,
+                "default": "none",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "text-classification", description="✨ Run AutoTrain Text Classification"
@@ -326,6 +333,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 repo_id=self.args.repo_id,
                 token=self.args.token,
                 username=self.args.username,
+                log=self.args.log,
             )
 
             if self.args.backend.startswith("spaces"):

@@ -341,6 +341,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--use-flash-attention-2", "--use-fa2"],
             },
             {
+                "arg": "--log",
+                "help": "Use experiment tracking",
+                "required": False,
+                "type": str,
+                "default": "none",
+            },
+            {
                 "arg": "--disable_gradient_checkpointing",
                 "help": "Disable gradient checkpointing",
                 "required": False,
@@ -488,6 +495,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 merge_adapter=self.args.merge_adapter,
                 username=self.args.username,
                 use_flash_attention_2=self.args.use_flash_attention_2,
+                log=self.args.log,
                 rejected_text_column=self.args.rejected_text_column,
                 disable_gradient_checkpointing=self.args.disable_gradient_checkpointing,
             )

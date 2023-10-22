@@ -203,6 +203,13 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--log",
+                "help": "Use experiment tracking",
+                "required": False,
+                "type": str,
+                "default": "none",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
@@ -291,6 +298,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 fp16=self.args.fp16,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
+                log=self.args.log,
             )
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
