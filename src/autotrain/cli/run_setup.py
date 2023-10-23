@@ -60,9 +60,9 @@ class RunSetupCommand(BaseAutoTrainCommand):
         logger.info("Successfully installed latest trl")
 
         if self.colab:
-            cmd = "pip install -U xformers"
+            cmd = "pip install -U xformers==0.0.22"
         else:
-            cmd = "pip uninstall -U xformers==0.0.22"
+            cmd = "pip uninstall -U xformers"
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info("Installing latest xformers")
         _, _ = pipe.communicate()
