@@ -36,7 +36,7 @@ def _seq2seq_metrics(pred, tokenizer):
     decoded_labels = ["\n".join(nltk.sent_tokenize(label.strip())) for label in decoded_labels]
 
     result = ROUGE_METRIC.compute(predictions=decoded_preds, references=decoded_labels, use_stemmer=True)
-    result = {key: value.mid.fmeasure * 100 for key, value in result.items()}
+    result = {key: value * 100 for key, value in result.items()}
 
     prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in predictions]
     result["gen_len"] = np.mean(prediction_lens)
