@@ -17,6 +17,7 @@ from autotrain.preprocessor.tabular import (
 )
 from autotrain.preprocessor.text import (
     LLMPreprocessor,
+    Seq2SeqPreprocessor,
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
@@ -256,6 +257,22 @@ class AutoTrainDataset:
             text_column = self.column_mapping["text"]
             label_column = self.column_mapping["label"]
             preprocessor = TextSingleColumnRegressionPreprocessor(
+                train_data=self.train_df,
+                text_column=text_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+            )
+            preprocessor.prepare()
+
+        elif self.task == "seq2seq":
+            text_column = self.column_mapping["text"]
+            label_column = self.column_mapping["label"]
+            preprocessor = Seq2SeqPreprocessor(
                 train_data=self.train_df,
                 text_column=text_column,
                 label_column=label_column,

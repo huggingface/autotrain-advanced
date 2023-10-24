@@ -13,6 +13,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
@@ -80,6 +81,29 @@ def _llm_munge_data(params, username):
             project_name=params.project_name,
             username=username,
             column_mapping={"text": params.text_column},
+            valid_data=valid_data_path,
+            percent_valid=None,  # TODO: add to UI
+        )
+        dset.prepare()
+        return f"{username}/autotrain-data-{params.project_name}"
+
+    return params.data_path
+
+
+def _seq2seq_munge_data(params, username):
+    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+    else:
+        valid_data_path = []
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            task="seq2seq",
+            token=params.token,
+            project_name=params.project_name,
+            username=username,
+            column_mapping={"text": params.text_column, "label": params.target_column},
             valid_data=valid_data_path,
             percent_valid=None,  # TODO: add to UI
         )
@@ -218,7 +242,15 @@ class EndpointsRunner:
 
 @dataclass
 class SpaceRunner:
-    params: Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams, GenericParams, TabularParams]
+    params: Union[
+        TextClassificationParams,
+        ImageClassificationParams,
+        LLMTrainingParams,
+        GenericParams,
+        TabularParams,
+        DreamBoothTrainingParams,
+        Seq2SeqParams,
+    ]
     backend: str
 
     def __post_init__(self):
@@ -241,6 +273,9 @@ class SpaceRunner:
         else:
             self.username = self.params.username
 
+        if self.params.repo_id is None and self.params.username is not None:
+            self.params.repo_id = f"{self.params.username}/{self.params.project_name}"
+
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
         elif isinstance(self.params, TextClassificationParams):
@@ -251,6 +286,8 @@ class SpaceRunner:
             self.task_id = 27
         elif isinstance(self.params, DreamBoothTrainingParams):
             self.task_id = 25
+        elif isinstance(self.params, Seq2SeqParams):
+            self.task_id = 28
         else:
             raise NotImplementedError
 
@@ -280,6 +317,11 @@ class SpaceRunner:
         if isinstance(self.params, DreamBoothTrainingParams):
             self.task_id = 25
             data_path = _dreambooth_munge_data(self.params, self.username)
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, Seq2SeqParams):
+            self.task_id = 28
+            data_path = _seq2seq_munge_data(self.params, self.username)
             space_id = self._create_space()
             return space_id
         raise NotImplementedError
