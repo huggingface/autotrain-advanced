@@ -63,5 +63,6 @@ COPY --chown=1000:1000 . /app/
 
 RUN pip install -e .
 
+RUN python -m nltk.downloader punkt
 RUN autotrain setup
 RUN pip install flash-attn
