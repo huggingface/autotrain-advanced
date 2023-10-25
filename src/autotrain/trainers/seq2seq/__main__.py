@@ -9,7 +9,7 @@ from accelerate import Accelerator
 from accelerate.state import PartialState
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
-from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoConfig,
     AutoModelForSeq2SeqLM,
@@ -126,7 +126,7 @@ def train(config):
             task_type=TaskType.SEQ_2_SEQ_LM,
         )
         if config.use_int8:
-            model = prepare_model_for_int8_training(model)
+            model = prepare_model_for_kbit_training(model)
 
         model = get_peft_model(model, lora_config)
 

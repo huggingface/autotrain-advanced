@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC
@@ -58,7 +58,7 @@ RUN conda create -p /app/env -y python=3.9
 
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
-RUN conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia && conda clean -ya
+RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && conda clean -ya
 COPY --chown=1000:1000 . /app/
 
 RUN pip install -e .
