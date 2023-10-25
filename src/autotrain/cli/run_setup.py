@@ -34,31 +34,6 @@ class RunSetupCommand(BaseAutoTrainCommand):
         self.colab = colab
 
     def run(self):
-        # install latest transformers
-        cmd = "pip uninstall -y transformers && pip install git+https://github.com/huggingface/transformers.git"
-        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info("Installing latest transformers@main")
-        _, _ = pipe.communicate()
-        logger.info("Successfully installed latest transformers")
-
-        cmd = "pip uninstall -y peft && pip install git+https://github.com/huggingface/peft.git"
-        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info("Installing latest peft@main")
-        _, _ = pipe.communicate()
-        logger.info("Successfully installed latest peft")
-
-        cmd = "pip uninstall -y diffusers && pip install diffusers==0.21.4"
-        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info("Installing latest diffusers@main")
-        _, _ = pipe.communicate()
-        logger.info("Successfully installed latest diffusers")
-
-        cmd = "pip uninstall -y trl && pip install git+https://github.com/huggingface/trl.git"
-        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info("Installing latest trl@main")
-        _, _ = pipe.communicate()
-        logger.info("Successfully installed latest trl")
-
         if self.colab:
             cmd = "pip install -U xformers==0.0.22"
         else:

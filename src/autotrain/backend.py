@@ -49,7 +49,7 @@ def _tabular_munge_data(params, username):
     if params.valid_split is not None:
         valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
     else:
-        valid_data_path = []
+        valid_data_path = None
     if os.path.exists(train_data_path):
         dset = AutoTrainDataset(
             train_data=[train_data_path],
@@ -58,7 +58,7 @@ def _tabular_munge_data(params, username):
             project_name=params.project_name,
             username=username,
             column_mapping={"id": params.col_map_id, "label": col_map_label},
-            valid_data=valid_data_path,
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()
@@ -72,7 +72,7 @@ def _llm_munge_data(params, username):
     if params.valid_split is not None:
         valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
     else:
-        valid_data_path = []
+        valid_data_path = None
     if os.path.exists(train_data_path):
         dset = AutoTrainDataset(
             train_data=[train_data_path],
@@ -81,7 +81,7 @@ def _llm_munge_data(params, username):
             project_name=params.project_name,
             username=username,
             column_mapping={"text": params.text_column},
-            valid_data=valid_data_path,
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()
@@ -95,7 +95,7 @@ def _seq2seq_munge_data(params, username):
     if params.valid_split is not None:
         valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
     else:
-        valid_data_path = []
+        valid_data_path = None
     if os.path.exists(train_data_path):
         dset = AutoTrainDataset(
             train_data=[train_data_path],
@@ -104,7 +104,7 @@ def _seq2seq_munge_data(params, username):
             project_name=params.project_name,
             username=username,
             column_mapping={"text": params.text_column, "label": params.target_column},
-            valid_data=valid_data_path,
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()

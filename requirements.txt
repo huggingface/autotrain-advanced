@@ -26,13 +26,13 @@ invisible-watermark==0.2.0
 packaging==23.1
 # latest versions
 tensorboard
-peft
-trl
-tiktoken
-transformers
-accelerate
+peft==0.5.0
+trl==0.7.2
+tiktoken==0.5.1
+transformers==4.34.1
+accelerate==0.24.0
 diffusers==0.21.4
-bitsandbytes
+bitsandbytes==0.41.0
 # extras
 rouge_score==0.1.2
 py7zr==0.20.6

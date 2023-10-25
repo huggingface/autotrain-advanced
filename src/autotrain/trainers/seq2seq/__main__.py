@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from functools import partial
 
 import pandas as pd
@@ -98,7 +99,7 @@ def train(config):
             config=model_config,
             token=config.token,
             quantization_config=bnb_config,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float16 if config.fp16 else None,
             device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
             trust_remote_code=True,
         )
@@ -194,6 +195,14 @@ def train(config):
         tokenizer=tokenizer,
     )
 
+    model.config.use_cache = False
+
+    if torch.__version__ >= "2" and sys.platform != "win32":
+        model = torch.compile(model)
+
+    for name, module in trainer.model.named_modules():
+        if "norm" in name:
+            module = module.to(torch.float32)
     trainer.train()
 
     logger.info("Finished training, saving model...")
