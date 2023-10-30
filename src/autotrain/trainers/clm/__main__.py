@@ -344,6 +344,7 @@ def train(config):
         load_best_model_at_end=True if config.valid_split is not None else False,
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
+        remove_unused_columns=False,
     )
 
     if config.trainer == "reward":
