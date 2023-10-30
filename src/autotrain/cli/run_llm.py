@@ -76,8 +76,22 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--rejected-text-column"],
             },
             {
+                "arg": "--prompt-text-column",
+                "help": "Prompt text column to use",
+                "required": False,
+                "type": str,
+                "default": "prompt",
+                "alias": ["--prompt-text-column"],
+            },
+            {
                 "arg": "--model",
                 "help": "Model to use",
+                "required": False,
+                "type": str,
+            },
+            {
+                "arg": "--model-ref",
+                "help": "Reference model to use for DPO when not using PEFT",
                 "required": False,
                 "type": str,
             },
@@ -169,8 +183,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "arg": "--block_size",
                 "help": "Block size to use",
                 "required": False,
-                "type": int,
-                "default": -1,
+                "type": str,
+                "default": "-1",
                 "alias": ["--block-size"],
             },
             {
@@ -354,6 +368,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "action": "store_true",
                 "alias": ["--disable-gradient-checkpointing", "--disable-gc"],
             },
+            {
+                "arg": "--dpo-beta",
+                "help": "Beta for DPO trainer",
+                "required": False,
+                "type": float,
+                "default": 0.1,
+                "alias": ["--dpo-beta"],
+            },
         ]
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
@@ -399,6 +421,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
                 setattr(self.args, arg_name, False)
+
+        block_size_split = self.args.block_size.strip().split(",")
+        if len(block_size_split) == 1:
+            self.args.block_size = int(block_size_split[0])
+        elif len(block_size_split) > 1:
+            self.args.block_size = [int(x.strip()) for x in block_size_split]
+        else:
+            raise ValueError("Invalid block size")
 
         if self.args.train:
             if self.args.project_name is None:
@@ -498,6 +528,9 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 log=self.args.log,
                 rejected_text_column=self.args.rejected_text_column,
                 disable_gradient_checkpointing=self.args.disable_gradient_checkpointing,
+                model_ref=self.args.model_ref,
+                dpo_beta=self.args.dpo_beta,
+                prompt_text_column=self.args.prompt_text_column,
             )
 
             # space training
