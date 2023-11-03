@@ -7,3 +7,5 @@ test/
 test.py
 .DS_Store
 .vscode/
+op*
+op_*

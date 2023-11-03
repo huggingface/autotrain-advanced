@@ -78,7 +78,11 @@ class Trainer:
                     self.train_dataloader,
                     self.scheduler,
                 ) = self.accelerator.prepare(
-                    self.unet, self.text_encoder1, self.optimizer, self.train_dataloader, self.scheduler
+                    self.unet,
+                    self.text_encoder1,
+                    self.optimizer,
+                    self.train_dataloader,
+                    self.scheduler,
                 )
             elif len(text_encoders) == 2:
                 (
@@ -98,9 +102,12 @@ class Trainer:
                 )
 
         else:
-            self.unet, self.optimizer, self.train_dataloader, self.scheduler = accelerator.prepare(
-                self.unet, self.optimizer, self.train_dataloader, self.scheduler
-            )
+            (
+                self.unet,
+                self.optimizer,
+                self.train_dataloader,
+                self.scheduler,
+            ) = accelerator.prepare(self.unet, self.optimizer, self.train_dataloader, self.scheduler)
 
         self.num_update_steps_per_epoch = math.ceil(len(self.train_dataloader) / self.config.gradient_accumulation)
         if overrode_max_train_steps:
@@ -152,17 +159,19 @@ class Trainer:
         # Handle instance prompt.
         instance_time_ids = self.compute_time_ids()
         if not self.config.train_text_encoder:
-            instance_prompt_hidden_states, instance_pooled_prompt_embeds = self.compute_text_embeddings(
-                self.config.prompt
-            )
+            (
+                instance_prompt_hidden_states,
+                instance_pooled_prompt_embeds,
+            ) = self.compute_text_embeddings(self.config.prompt)
 
         # Handle class prompt for prior-preservation.
         if self.config.prior_preservation:
             class_time_ids = self.compute_time_ids()
             if not self.config.train_text_encoder:
-                class_prompt_hidden_states, class_pooled_prompt_embeds = self.compute_text_embeddings(
-                    self.config.class_prompt
-                )
+                (
+                    class_prompt_hidden_states,
+                    class_pooled_prompt_embeds,
+                ) = self.compute_text_embeddings(self.config.class_prompt)
 
         self.add_time_ids = instance_time_ids
         if self.config.prior_preservation:
@@ -247,7 +256,9 @@ class Trainer:
                 params_to_clip = itertools.chain(self.unet_lora_parameters, self.text_lora_parameters[0])
             elif len(self.text_lora_parameters) == 2:
                 params_to_clip = itertools.chain(
-                    self.unet_lora_parameters, self.text_lora_parameters[0], self.text_lora_parameters[1]
+                    self.unet_lora_parameters,
+                    self.text_lora_parameters[0],
+                    self.text_lora_parameters[1],
                 )
             else:
                 raise ValueError("More than 2 text encoders are not supported.")
@@ -305,7 +316,10 @@ class Trainer:
                 unet_added_conditions.update({"text_embeds": pooled_prompt_embeds.repeat(elems_to_repeat, 1)})
                 prompt_embeds = prompt_embeds.repeat(elems_to_repeat, 1, 1)
                 model_pred = self.unet(
-                    noisy_model_input, timesteps, prompt_embeds, added_cond_kwargs=unet_added_conditions
+                    noisy_model_input,
+                    timesteps,
+                    prompt_embeds,
+                    added_cond_kwargs=unet_added_conditions,
                 ).sample
 
         else:
@@ -328,14 +342,18 @@ class Trainer:
                 class_labels = None
 
             model_pred = self.unet(
-                noisy_model_input, timesteps, encoder_hidden_states, class_labels=class_labels
+                noisy_model_input,
+                timesteps,
+                encoder_hidden_states,
+                class_labels=class_labels,
             ).sample
 
         return model_pred
 
     def train(self):
         progress_bar = tqdm(
-            range(self.global_step, self.config.num_steps), disable=not self.accelerator.is_local_main_process
+            range(self.global_step, self.config.num_steps),
+            disable=not self.accelerator.is_local_main_process,
         )
         progress_bar.set_description("Steps")
 
@@ -373,7 +391,10 @@ class Trainer:
                     bsz, channels, height, width = model_input.shape
                     # Sample a random timestep for each image
                     timesteps = torch.randint(
-                        0, self.noise_scheduler.config.num_train_timesteps, (bsz,), device=model_input.device
+                        0,
+                        self.noise_scheduler.config.num_train_timesteps,
+                        (bsz,),
+                        device=model_input.device,
                     )
                     timesteps = timesteps.long()
 
@@ -394,7 +415,10 @@ class Trainer:
                     self.global_step += 1
                     self._save_checkpoint()
 
-                logs = {"loss": loss.detach().item(), "lr": self.scheduler.get_last_lr()[0]}
+                logs = {
+                    "loss": loss.detach().item(),
+                    "lr": self.scheduler.get_last_lr()[0],
+                }
                 progress_bar.set_postfix(**logs)
                 self.accelerator.log(logs, step=self.global_step)
 

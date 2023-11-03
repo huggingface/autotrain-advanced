@@ -4,7 +4,6 @@ import os
 
 import diffusers
 import torch
-import torch.nn.functional as F
 import transformers
 from accelerate import Accelerator
 from accelerate.utils import ProjectConfiguration, set_seed
@@ -13,11 +12,9 @@ from diffusers.loaders import LoraLoaderMixin, text_encoder_lora_state_dict
 from diffusers.models.attention_processor import (
     AttnAddedKVProcessor,
     AttnAddedKVProcessor2_0,
-    LoRAAttnAddedKVProcessor,
-    LoRAAttnProcessor,
-    LoRAAttnProcessor2_0,
     SlicedAttnAddedKVProcessor,
 )
+from diffusers.models.lora import LoRALinearLayer
 from huggingface_hub import HfApi, snapshot_download
 
 from autotrain import logger
@@ -57,7 +54,8 @@ def train(config):
         config.image_path = "/tmp/model/concept1/"
 
     accelerator_project_config = ProjectConfiguration(
-        project_dir=config.project_name, logging_dir=os.path.join(config.project_name, "logs")
+        project_dir=config.project_name,
+        logging_dir=os.path.join(config.project_name, "logs"),
     )
 
     if config.fp16:
@@ -110,31 +108,68 @@ def train(config):
     utils.enable_xformers(unet, config)
     utils.enable_gradient_checkpointing(unet, text_encoders, config)
 
-    unet_lora_attn_procs = {}
     unet_lora_parameters = []
-    for name, attn_processor in unet.attn_processors.items():
-        cross_attention_dim = None if name.endswith("attn1.processor") else unet.config.cross_attention_dim
-        if name.startswith("mid_block"):
-            hidden_size = unet.config.block_out_channels[-1]
-        elif name.startswith("up_blocks"):
-            block_id = int(name[len("up_blocks.")])
-            hidden_size = list(reversed(unet.config.block_out_channels))[block_id]
-        elif name.startswith("down_blocks"):
-            block_id = int(name[len("down_blocks.")])
-            hidden_size = unet.config.block_out_channels[block_id]
+    for attn_processor_name, attn_processor in unet.attn_processors.items():
+        # Parse the attention module.
+        attn_module = unet
+        for n in attn_processor_name.split(".")[:-1]:
+            attn_module = getattr(attn_module, n)
 
-        if isinstance(attn_processor, (AttnAddedKVProcessor, SlicedAttnAddedKVProcessor, AttnAddedKVProcessor2_0)):
-            lora_attn_processor_class = LoRAAttnAddedKVProcessor
-        else:
-            lora_attn_processor_class = (
-                LoRAAttnProcessor2_0 if hasattr(F, "scaled_dot_product_attention") else LoRAAttnProcessor
+        # Set the `lora_layer` attribute of the attention-related matrices.
+        attn_module.to_q.set_lora_layer(
+            LoRALinearLayer(
+                in_features=attn_module.to_q.in_features,
+                out_features=attn_module.to_q.out_features,
             )
+        )
+        attn_module.to_k.set_lora_layer(
+            LoRALinearLayer(
+                in_features=attn_module.to_k.in_features,
+                out_features=attn_module.to_k.out_features,
+            )
+        )
+        attn_module.to_v.set_lora_layer(
+            LoRALinearLayer(
+                in_features=attn_module.to_v.in_features,
+                out_features=attn_module.to_v.out_features,
+            )
+        )
+        attn_module.to_out[0].set_lora_layer(
+            LoRALinearLayer(
+                in_features=attn_module.to_out[0].in_features,
+                out_features=attn_module.to_out[0].out_features,
+            )
+        )
 
-        module = lora_attn_processor_class(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim)
-        unet_lora_attn_procs[name] = module
-        unet_lora_parameters.extend(module.parameters())
+        # Accumulate the LoRA params to optimize.
+        unet_lora_parameters.extend(attn_module.to_q.lora_layer.parameters())
+        unet_lora_parameters.extend(attn_module.to_k.lora_layer.parameters())
+        unet_lora_parameters.extend(attn_module.to_v.lora_layer.parameters())
+        unet_lora_parameters.extend(attn_module.to_out[0].lora_layer.parameters())
 
-    unet.set_attn_processor(unet_lora_attn_procs)
+        if not config.xl:
+            if isinstance(
+                attn_processor,
+                (
+                    AttnAddedKVProcessor,
+                    SlicedAttnAddedKVProcessor,
+                    AttnAddedKVProcessor2_0,
+                ),
+            ):
+                attn_module.add_k_proj.set_lora_layer(
+                    LoRALinearLayer(
+                        in_features=attn_module.add_k_proj.in_features,
+                        out_features=attn_module.add_k_proj.out_features,
+                    )
+                )
+                attn_module.add_v_proj.set_lora_layer(
+                    LoRALinearLayer(
+                        in_features=attn_module.add_v_proj.in_features,
+                        out_features=attn_module.add_v_proj.out_features,
+                    )
+                )
+                unet_lora_parameters.extend(attn_module.add_k_proj.lora_layer.parameters())
+                unet_lora_parameters.extend(attn_module.add_v_proj.lora_layer.parameters())
 
     text_lora_parameters = []
     if config.train_text_encoder:
@@ -160,30 +195,38 @@ def train(config):
             # make sure to pop weight so that corresponding model is not saved again
             weights.pop()
 
-        if len(text_encoder_lora_layers_to_save) == 0:
-            LoraLoaderMixin.save_lora_weights(
-                output_dir,
-                unet_lora_layers=unet_lora_layers_to_save,
-                text_encoder_lora_layers=None,
-                safe_serialization=True,
-            )
-        elif len(text_encoder_lora_layers_to_save) == 1:
-            LoraLoaderMixin.save_lora_weights(
-                output_dir,
-                unet_lora_layers=unet_lora_layers_to_save,
-                text_encoder_lora_layers=text_encoder_lora_layers_to_save[0],
-                safe_serialization=True,
-            )
-        elif len(text_encoder_lora_layers_to_save) == 2:
-            StableDiffusionXLPipeline.save_lora_weights(
-                output_dir,
-                unet_lora_layers=unet_lora_layers_to_save,
-                text_encoder_lora_layers=text_encoder_lora_layers_to_save[0],
-                text_encoder_2_lora_layers=text_encoder_lora_layers_to_save[1],
-                safe_serialization=True,
-            )
+        if config.xl:
+            if len(text_encoder_lora_layers_to_save) > 1:
+                StableDiffusionXLPipeline.save_lora_weights(
+                    output_dir,
+                    unet_lora_layers=unet_lora_layers_to_save,
+                    text_encoder_lora_layers=text_encoder_lora_layers_to_save[0],
+                    text_encoder_2_lora_layers=text_encoder_lora_layers_to_save[1],
+                    safe_serialization=True,
+                )
+            else:
+                StableDiffusionXLPipeline.save_lora_weights(
+                    output_dir,
+                    unet_lora_layers=unet_lora_layers_to_save,
+                    text_encoder_lora_layers=None,
+                    text_encoder_2_lora_layers=None,
+                    safe_serialization=True,
+                )
         else:
-            raise ValueError("unexpected number of text encoders")
+            if len(text_encoder_lora_layers_to_save) > 0:
+                LoraLoaderMixin.save_lora_weights(
+                    output_dir,
+                    unet_lora_layers=unet_lora_layers_to_save,
+                    text_encoder_lora_layers=text_encoder_lora_layers_to_save[0],
+                    safe_serialization=True,
+                )
+            else:
+                LoraLoaderMixin.save_lora_weights(
+                    output_dir,
+                    unet_lora_layers=unet_lora_layers_to_save,
+                    text_encoder_lora_layers=None,
+                    safe_serialization=True,
+                )
 
     def load_model_hook(models, input_dir):
         unet_ = None
@@ -198,34 +241,29 @@ def train(config):
                 if isinstance(model, type(accelerator.unwrap_model(_text_encoder))):
                     text_encoders_.append(model)
 
-        lora_state_dict, network_alpha = LoraLoaderMixin.lora_state_dict(input_dir)
-        LoraLoaderMixin.load_lora_into_unet(lora_state_dict, network_alpha=network_alpha, unet=unet_)
+        lora_state_dict, network_alphas = LoraLoaderMixin.lora_state_dict(input_dir)
+        LoraLoaderMixin.load_lora_into_unet(lora_state_dict, network_alpha=network_alphas, unet=unet_)
 
-        if len(text_encoders_) == 0:
+        if config.xl:
+            text_encoder_state_dict = {k: v for k, v in lora_state_dict.items() if "text_encoder." in k}
             LoraLoaderMixin.load_lora_into_text_encoder(
-                lora_state_dict,
-                network_alpha=network_alpha,
-                text_encoder=None,
-            )
-        elif len(text_encoders_) == 1:
-            LoraLoaderMixin.load_lora_into_text_encoder(
-                lora_state_dict,
-                network_alpha=network_alpha,
+                text_encoder_state_dict,
+                network_alphas=network_alphas,
                 text_encoder=text_encoders_[0],
             )
-        elif len(text_encoders_) == 2:
+
+            text_encoder_2_state_dict = {k: v for k, v in lora_state_dict.items() if "text_encoder_2." in k}
             LoraLoaderMixin.load_lora_into_text_encoder(
-                lora_state_dict,
-                network_alpha=network_alpha,
-                text_encoder=text_encoders_[0],
-            )
-            LoraLoaderMixin.load_lora_into_text_encoder(
-                lora_state_dict,
-                network_alpha=network_alpha,
+                text_encoder_2_state_dict,
+                network_alphas=network_alphas,
                 text_encoder=text_encoders_[1],
             )
         else:
-            raise ValueError("unexpected number of text encoders")
+            LoraLoaderMixin.load_lora_into_text_encoder(
+                lora_state_dict,
+                network_alphas=network_alphas,
+                text_encoder=text_encoders_[0],
+            )
 
     accelerator.register_save_state_pre_hook(save_model_hook)
     accelerator.register_load_state_pre_hook(load_model_hook)
@@ -276,12 +314,12 @@ def train(config):
     # first check if file exists
     if os.path.exists(f"{config.project_name}/training_params.json"):
         training_params = json.load(open(f"{config.project_name}/training_params.json"))
-        training_params.pop("token")
-        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
-
-    # remove config.image_path directory if it exists
-    if os.path.exists(config.image_path):
-        os.system(f"rm -rf {config.image_path}")
+        if "token" in training_params:
+            training_params.pop("token")
+            json.dump(
+                training_params,
+                open(f"{config.project_name}/training_params.json", "w"),
+            )
 
     # add config.prompt as a text file in the output directory
     with open(f"{config.project_name}/prompt.txt", "w") as f:
@@ -291,6 +329,9 @@ def train(config):
         trainer.push_to_hub()
 
     if "SPACE_ID" in os.environ:
+        # remove config.image_path directory if it exists
+        if os.path.exists(config.image_path):
+            os.system(f"rm -rf {config.image_path}")
         # shut down the space
         logger.info("Pausing space...")
         api = HfApi(token=config.token)
