@@ -52,6 +52,7 @@ class LLMTrainingParams(BaseModel):
     model_ref: str = Field(None, title="Reference, for DPO trainer")
     dpo_beta: float = Field(0.1, title="Beta for DPO trainer")
     prompt_text_column: str = Field(None, title="Prompt text column")
+    neftune_noise_alpha: int = Field(5, title="Adding noise to embedding vectors")
 
     def save(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)

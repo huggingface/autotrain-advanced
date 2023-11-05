@@ -382,6 +382,7 @@ def train(config):
             dataset_text_field=config.text_column,
             max_seq_length=config.block_size,
             tokenizer=tokenizer,
+            neftune_noise_alpha=config.neftune_noise_alpha,
             packing=True,
         )
     elif config.trainer == "reward":
