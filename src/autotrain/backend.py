@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import subprocess
 from dataclasses import dataclass
 from typing import Union
 
@@ -262,6 +263,7 @@ class SpaceRunner:
             "t4s": "t4-small",
             "cpu": "cpu-upgrade",
             "cpuf": "cpu-basic",
+            "dgx-a100": "dgxa100.80g.1.norm",
         }
         if not isinstance(self.params, GenericParams):
             if self.params.repo_id is not None:
@@ -361,6 +363,30 @@ class SpaceRunner:
             api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
 
     def _create_space(self):
+        if self.backend.startswith("dgx-"):
+            env_vars = {
+                "HF_TOKEN": self.params.token,
+                "AUTOTRAIN_USERNAME": self.username,
+                "PROJECT_NAME": self.params.project_name,
+                "TASK_ID": str(self.task_id),
+                "PARAMS": json.dumps(self.params.json()),
+            }
+            if isinstance(self.params, DreamBoothTrainingParams):
+                env_vars["DATA_PATH"] = self.params.image_path
+            else:
+                env_vars["DATA_PATH"] = self.params.data_path
+
+            if not isinstance(self.params, GenericParams):
+                env_vars["MODEL"] = self.params.model
+                env_vars["OUTPUT_MODEL_REPO"] = self.params.repo_id
+
+            ngc_runner = NGCRunner(
+                job_name=self.params.repo_id.replace("/", "-"),
+                env_vars=env_vars,
+                backend=self.backend,
+            )
+            ngc_runner.create()
+            return
         api = HfApi(token=self.params.token)
         repo_id = f"{self.username}/autotrain-{self.params.project_name}"
         api.create_repo(
@@ -387,3 +413,42 @@ class SpaceRunner:
             repo_type="space",
         )
         return repo_id
+
+
+@dataclass
+class NGCRunner:
+    job_name: str
+    env_vars: dict
+    backend: str
+
+    def __post_init__(self):
+        self.ngc_ace = os.environ.get("NGC_ACE")
+        self.ngc_org = os.environ.get("NGC_ORG")
+        self.instance_map = {
+            "dgx-a100": "dgxa100.80g.1.norm",
+        }
+        logger.info("Creating NGC Job")
+        logger.info(f"NGC_ACE: {self.ngc_ace}")
+        logger.info(f"NGC_ORG: {self.ngc_org}")
+        logger.info(f"job_name: {self.job_name}")
+        logger.info(f"backend: {self.backend}")
+
+    def create(self):
+        cmd = "ngc base-command job run --name {job_name}"
+        cmd += " --priority NORMAL --order 50 --preempt RUNONCE --min-timeslice 0s"
+        cmd += " --total-runtime 3600s --ace {ngc_ace} --org {ngc_org} --instance {instance}"
+        cmd += " --commandline 'set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0' -p 7860 --result /results"
+        cmd += " --image '{ngc_org}/autotrain-advanced:latest'"
+
+        cmd = cmd.format(
+            job_name=self.job_name,
+            ngc_ace=self.ngc_ace,
+            ngc_org=self.ngc_org,
+            instance=self.instance_map[self.backend],
+        )
+
+        for k, v in self.env_vars.items():
+            cmd += f" --env-var {k}:{v}"
+
+        # run using subprocess, wait for completion
+        subprocess.run(cmd, shell=True, check=True)

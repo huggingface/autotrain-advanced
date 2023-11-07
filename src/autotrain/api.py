@@ -38,7 +38,10 @@ def run_training():
     params = json.loads(PARAMS)
     logger.info(params)
     if TASK_ID == 9:
-        params = LLMTrainingParams.parse_raw(params)
+        try:
+            params = LLMTrainingParams.parse_raw(params)
+        except Exception:
+            params = LLMTrainingParams.parse_obj(params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]

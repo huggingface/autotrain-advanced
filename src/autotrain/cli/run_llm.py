@@ -447,8 +447,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
                 if not self.args.push_to_hub:
                     raise ValueError("Push to hub must be specified for spaces backend")
-                if self.args.repo_id is None:
-                    raise ValueError("Repo id must be specified for spaces backend")
+                if self.args.username is None and self.args.repo_id is None:
+                    raise ValueError("Repo id or username must be specified for spaces backend")
                 if self.args.token is None:
                     raise ValueError("Token must be specified for spaces backend")
 
@@ -534,7 +534,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             )
 
             # space training
-            if self.args.backend.startswith("spaces"):
+            if self.args.backend.startswith("spaces") or self.args.backend.startswith("dgx"):
                 logger.info("Creating space...")
                 sr = SpaceRunner(
                     params=params,
