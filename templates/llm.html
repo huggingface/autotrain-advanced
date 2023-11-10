@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV File Upload with Progress</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        #progress-bar {
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-xl font-bold mb-4">Upload Dataset (CSV)</h1>
+        <form id="upload-form">
+            <div class="mb-4">
+                <label for="file-upload" class="block text-gray-700 text-sm font-bold mb-2">
+                    Choose a file
+                </label>
+                <input type="file" id="file-upload" name="file-upload" accept=".csv"
+                       class="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Upload
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var fileInput = document.getElementById('file-upload');
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append('file-upload', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/your-server-endpoint', true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var percentComplete = (e.loaded / e.total) * 100;
+                    document.getElementById('progress-bar').style.width = percentComplete + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    alert('File successfully uploaded');
+                } else {
+                    alert('An error occurred during the upload');
+                }
+            };
+
+            xhr.send(formData);
+        });
+    </script>
+</body>
+</html>

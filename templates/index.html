@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <header class="bg-white-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+          <img src="/static/logo.png" alt="AutoTrain", class="w-32">
+        </div>
+    </header>
+<div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-lg">
+  <header>
+    <h2 class="text-2xl font-bold mb-2">New Project</h2>
+    <p class="mb-4 text-gray-600">Select a task you are interested in. You will prepare data in the next step.</p>
+  </header>
+  <form action="/create_project" method="post" class="space-y-4">
+    <div class="form-group">
+      <div class="mb-4">
+        <label for="project_name" class="block text-sm font-medium text-gray-700">Project name</label>
+        <input type="text" name="project_name" id="project_name" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="eg: imdb-sentiment-analysis">
+      </div>
+      <div>
+        <label for="token" class="block text-sm font-medium text-gray-700">HuggingFace Token</label>
+        <input type="password" name="token" id="token" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="task" class="block text-sm font-medium text-gray-700">Task</label>
+      <select id="task" name="task" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+        <option value="llm">LLM Finetuning</option>
+        <option value="dreambooth">DreamBooth LoRA</option>
+        <option value="text-classification">Text Classification</option>
+        <option value="image-classification">Image Classification</option>
+        <option value="tabular">Tabular Classification/Regression</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="hardware" class="block text-sm font-medium text-gray-700">Hardware</label>
+      <select id="hardware" name="hardware" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+        <option value="a100">A100</option>
+        <option value="a10gl">A10g Large</option>
+      </select>
+    </div>
+    <div class="form-actions mt-6">
+      <button type="submit" class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Create Project</button>
+    </div>
+  </form>
+</div>
+</body>
+<script>
+  // Function to generate a random alphanumeric string
+  function generateRandomString(length) {
+      let result = '';
+      const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      const charactersLength = characters.length;
+      for (let i = 0; i < length; i++) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      }
+      return result;
+  }
+
+  // Function to set a random project name
+  function setRandomProjectName() {
+      // Generate parts of the string
+      const part1 = generateRandomString(4);
+      const part2 = generateRandomString(4);
+      const part3 = generateRandomString(4);
+
+      // Combine parts with hyphens
+      const randomName = `${part1}-${part2}-${part3}`;
+
+      // Set the value of the project_name input field
+      document.getElementById('project_name').value = randomName;
+  }
+
+  // Call the function on page load
+  window.onload = setRandomProjectName;
+</script>
+</html>
