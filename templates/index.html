@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" crossorigin src="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.js"></script>
 </head>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -115,46 +114,82 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 </body>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-      // Select the form element
-      const form = document.querySelector('form');
-      // Select the loading spinner
-      const loadingSpinner = document.getElementById('loadingSpinner');
+<script type="module">
+import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
+document.addEventListener("DOMContentLoaded", function() {
+    // Select the form element
+    const form = document.querySelector('form');
+    // Select the loading spinner
+    const loadingSpinner = document.getElementById('loadingSpinner');
 
-      // Add an event listener for the form submission
-      form.addEventListener('submit', function(event) {
-          // Prevent the default form submission
-          event.preventDefault();
+    // Add an event listener for the form submission
+    form.addEventListener('submit', async function(event) {
+        // Prevent the default form submission
+        event.preventDefault();
 
-          // Show the loading spinner
-          loadingSpinner.classList.remove('hidden');
+        // Show the loading spinner
+        loadingSpinner.classList.remove('hidden');
 
-          // Get form data
-          const formData = new FormData(form);
+        // Get form data
+        const formData = new FormData(form);
 
-          // Create an AJAX request
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/create_project', true); // Replace '/create_project' with your FastAPI endpoint URL
+        // Extract necessary data for Hugging Face
+        const token = formData.get('token');
+        const username = formData.get('username');
+        const project_name = formData.get('project_name');
+        const files = formData.getAll('data_files');
 
-          // Handle the response
-          xhr.onload = function() {
-              // Hide the loading spinner
-              loadingSpinner.classList.add('hidden');
+        // Prepare credentials and repo information for Hugging Face
+        const credentials = { accessToken: token };
+        const repo = { type: 'model', name: `${username}/${project_name}` };
 
-              if (xhr.status === 200) {
-                  // Success logic here
-                  console.log('Response:', xhr.responseText);
-              } else {
-                  // Error logic here
-                  console.error('Error:', xhr.status, xhr.statusText);
-              }
-          };
+        await createRepo({
+          repo: repo,
+          credentials: credentials
+        });
 
-          // Send the request with the FormData object
-          xhr.send(formData);
-      });
-  });
+        // Upload files to Hugging Face Hub
+        try {
+            for (let file of files) {
+                await uploadFiles({
+                    repo,
+                    credentials,
+                    files: [{
+                        path: file.name,
+                        content: file
+                    }],
+                });
+            }
+            console.log('Files uploaded to Hugging Face Hub successfully');
+        } catch (error) {
+            console.error('Error uploading files to Hugging Face Hub:', error);
+            // Hide the loading spinner and return to stop further processing
+            loadingSpinner.classList.add('hidden');
+            return;
+        }
+
+        // Send request to internal API
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/create_project', true); // Replace '/create_project' with your FastAPI endpoint URL
+
+        // Handle the response
+        xhr.onload = function() {
+            // Hide the loading spinner
+            loadingSpinner.classList.add('hidden');
+
+            if (xhr.status === 200) {
+                // Success logic here
+                console.log('Response:', xhr.responseText);
+            } else {
+                // Error logic here
+                console.error('Error:', xhr.status, xhr.statusText);
+            }
+        };
+
+        // Send the request with the FormData object
+        xhr.send(formData);
+    });
+});
 </script>
 
 
