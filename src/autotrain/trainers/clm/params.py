@@ -69,7 +69,7 @@ class LLMTrainingParams(BaseModel):
         super().__init__(**data)
 
         # Parameters not supplied by the user
-        defaults = {f.name for f in self.__fields__.values() if f.default == self.__dict__[f.name]}
+        defaults = set(self.model_fields.keys())
         supplied = set(data.keys())
         not_supplied = defaults - supplied
         if not_supplied:
@@ -77,6 +77,6 @@ class LLMTrainingParams(BaseModel):
 
         # Parameters that were supplied but not used
         # This is a naive implementation. It might catch some internal Pydantic params.
-        unused = supplied - set(self.__fields__)
+        unused = supplied - set(self.model_fields)
         if unused:
             logger.warning(f"Parameters supplied but not used: {', '.join(unused)}")

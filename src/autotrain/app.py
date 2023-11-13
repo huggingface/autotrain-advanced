@@ -6,6 +6,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
+from autotrain.trainers.clm.params import LLMTrainingParams
+
+
+PARAMS = {}
+PARAMS["llm"] = LLMTrainingParams().model_dump()
+
 
 app = FastAPI()
 app.mount("/css", StaticFiles(directory="css"), name="css")  # Mounting the static directory
@@ -31,8 +37,10 @@ async def fetch_params(task: str):
     :return: JSONResponse
     """
     logger.info(f"Task: {task}")
-    ret = {f"{task}_arg{j}": f"value{j}" for j in range(1, 25)}
-    return ret
+    logger.info(PARAMS[task])
+    if task in PARAMS:
+        return PARAMS[task]
+    return {"error": "Task not found"}
 
 
 @app.post("/create_project", response_class=JSONResponse)
@@ -43,7 +51,7 @@ async def handle_form(
     username: str = Form(...),
     hardware: str = Form(...),
     data_files: List[UploadFile] = File(...),
-    params: str = Form(...),
+    params: UploadFile = File(...),
 ):
     """
     This function is used to handle the form submission
