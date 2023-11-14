@@ -1,12 +1,11 @@
-import os
 from typing import List, Union
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from autotrain import logger
+from autotrain.trainers.common import AutoTrainParams
 
 
-class LLMTrainingParams(BaseModel):
+class LLMTrainingParams(AutoTrainParams):
     model: str = Field("gpt2", title="Model name")
     data_path: str = Field("data", title="Data path")
     project_name: str = Field("Project Name", title="Output directory")
@@ -52,31 +51,3 @@ class LLMTrainingParams(BaseModel):
     model_ref: str = Field(None, title="Reference, for DPO trainer")
     dpo_beta: float = Field(0.1, title="Beta for DPO trainer")
     prompt_text_column: str = Field(None, title="Prompt text column")
-
-    def save(self, output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-        path = os.path.join(output_dir, "training_params.json")
-        # save formatted json
-        with open(path, "w") as f:
-            f.write(self.json(indent=4))
-
-    def __str__(self):
-        data = self.dict()
-        data["token"] = "*****" if data.get("token") else None
-        return str(data)
-
-    def __init__(self, **data):
-        super().__init__(**data)
-
-        # Parameters not supplied by the user
-        defaults = set(self.model_fields.keys())
-        supplied = set(data.keys())
-        not_supplied = defaults - supplied
-        if not_supplied:
-            logger.warning(f"Parameters not supplied by user and set to default: {', '.join(not_supplied)}")
-
-        # Parameters that were supplied but not used
-        # This is a naive implementation. It might catch some internal Pydantic params.
-        unused = supplied - set(self.model_fields)
-        if unused:
-            logger.warning(f"Parameters supplied but not used: {', '.join(unused)}")

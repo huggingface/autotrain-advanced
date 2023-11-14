@@ -4,6 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('json-error-message').textContent = '';
+        // Function to fetch data and update the textarea
+        function fetchDataAndUpdateTextarea() {
+            const taskValue = document.getElementById('task').value;
+            fetch(`/params/${taskValue}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('params').value = JSON.stringify(data, null, 2);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Function to validate JSON in the textarea
+        function validateJSON() {
+            try {
+                JSON.parse(document.getElementById('params').value);
+                document.getElementById('error-message').textContent = '';
+            } catch (e) {
+              document.getElementById('error-message').textContent = 'Invalid parameters: ' + e.message;
+            }
+        }
+
+        // Event listener for dropdown changes
+        document.getElementById('task').addEventListener('change', fetchDataAndUpdateTextarea);
+
+        // Event listener for textarea changes
+        document.getElementById('params').addEventListener('blur', validateJSON);
+
+        // Initial call to populate the textarea when the page loads
+        fetchDataAndUpdateTextarea();
+    });
+</script>
 </head>
 
 <body>
@@ -24,28 +58,46 @@
           <input type="password" name="token" id="token" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>  
       </div>
-      <div class="mb-4">
-        <label for="project_name" class="block text-sm font-medium text-gray-700">Project name</label>
-        <input type="text" name="project_name" id="project_name" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="eg: imdb-sentiment-analysis">
+      <div class="columns-2">
+        <div class="mb-4">
+          <label for="project_name" class="block text-sm font-medium text-gray-700">Project name</label>
+          <input type="text" name="project_name" id="project_name" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="eg: imdb-sentiment-analysis">
+        </div>
+        <div class="form-group">
+          <label for="task" class="block text-sm font-medium text-gray-700">Task</label>
+          <select id="task" name="task" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <optgroup label="LLM Finetuning">
+              <option value="llm:sft">LLM SFT</option>
+              <option value="llm:generic">LLM Generic</option>
+              <option value="llm:dpo">LLM DPO</option>
+              <option value="llm:reward">LLM Reward</option>
+            </optgroup>
+            <optgroup label="Other Text Tasks">
+              <option value="text-classification">Text Classification</option>
+              <option value="seq2seq">Sequence To Sequence</option>
+            </optgroup>
+            <optgroup label="Image Tasks">
+              <option value="dreambooth">DreamBooth LoRA</option>
+              <option value="image-classification">Image Classification</option>
+            </optgroup>
+            <optgroup label="Tabular Tasks">
+              <option value="tabular:classification">Tabular Classification</option>
+              <option value="tabular:regression">Tabular Regression</option>
+            </optgroup>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <div class="columns-2">
-          
           <div class="form-group">
-            <label for="task" class="block text-sm font-medium text-gray-700">Task</label>
-            <select id="task" name="task" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="llm">LLM Finetuning</option>
-              <option value="dreambooth">DreamBooth LoRA</option>
-              <option value="text-classification">Text Classification</option>
-              <option value="image-classification">Image Classification</option>
-              <option value="tabular">Tabular Classification/Regression</option>
-            </select>
+            <label for="base_model" class="block text-sm font-medium text-gray-700">Base Model</label>
+            <input type="text" name="base_model" id="base_model" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="HuggingFaceH4/zephyr-7b-beta">
           </div>
           <div class="form-group">
             <label for="hardware" class="block text-sm font-medium text-gray-700">Hardware</label>
             <select id="hardware" name="hardware" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="a100">A100</option>
-              <option value="a10gl">A10g Large</option>
+              <option value="A100 Large">A100 Large</option>
+              <option value="A10G Large">A10G Large</option>
             </select>
           </div>
         </div>
@@ -58,30 +110,25 @@
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                   </svg>
                   <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Data File(s)
+                    <p class="mb-2 text-xs text-gray-400"><span class="font-semibold">You need to upload train.csv, valid.csv (optional) in correct format!
                   <p class="mb-2 text-sm text-gray-700" id="file-container"></p>
               </div>
               <input id="data_files" name="data_files" type="file" multiple class="hidden"/>
           </label>
         </div> 
-        <div class="form-group">
-          <label for="params" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer">
-            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                </svg>
-                <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Training Config (config.json)
-                <p class="mb-2 text-sm text-gray-700" id="params-file-container"></p>
-            </div>
-            <input id="params" name="params" type="file" class="hidden"/>
-        </label>
-        </div>
         <!-- <textarea id="params" name="params" rows="4" class="block p-2.5 w-full text-sm rounded-lg border "></textarea> -->
+      </div>
+      <div class="form-group">
+        <label for="params" class="block mb-2 text-sm font-medium text-gray-700">Training Parameters (find params to copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
+        <textarea id="params" rows="4" class="block p-2.5 w-full text-sm text-gray-900" placeholder="Loading..."></textarea>
       </div>
       <div class="form-actions mt-6">
         <button type="submit" class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start Training</button>
       </div>
     </form>
+    <div id="json-error-message" style="color: red;"></div>
     <div id="error-message" style="color: red;"></div>
+    <div id="success-message" style="color: green;"></div>
     <div  id="loadingSpinner" role="status" class="hidden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2">
       <!-- <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/><path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/></svg> -->
       <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -97,6 +144,8 @@
 <script type="module">
 import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
 document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById('success-message').textContent = '';
+    document.getElementById('error-message').textContent = '';
     // Select the form element
     const form = document.querySelector('form');
     // Select the loading spinner
@@ -106,6 +155,12 @@ document.addEventListener("DOMContentLoaded", function() {
     form.addEventListener('submit', async function(event) {
         // Prevent the default form submission
         event.preventDefault();
+
+        // Confirmation dialog
+        const userConfirmed = window.confirm("AutoTrain is a paid service and you will be charged. Confirm to continue!");
+        if (!userConfirmed) {
+            return; // Stop the function if the user did not confirm
+        }
 
         // Show the loading spinner
         loadingSpinner.classList.remove('hidden');
@@ -121,32 +176,33 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Prepare credentials and repo information for Hugging Face
         const credentials = { accessToken: token };
-        const repo = { type: 'model', name: `${username}/${project_name}` };
-        
+        const repo = { type: 'model', name: `${username}/autotrain-data-${project_name}` };
+
         // Upload files to Hugging Face Hub
-        try {
-            await createRepo({
-              repo: repo,
-              credentials: credentials
-            });
-            for (let file of files) {
-                await uploadFiles({
-                    repo,
-                    credentials,
-                    files: [{
-                        path: file.name,
-                        content: file
-                    }],
-                });
-            }
-            console.log('Files uploaded to Hugging Face Hub successfully');
-        } catch (error) {
-            console.error('Error uploading files to Hugging Face Hub:', error);
-            // Hide the loading spinner and return to stop further processing
-            document.getElementById('error-message').textContent = 'Error uploading files to Hugging Face Hub: ' + error.message;
-            loadingSpinner.classList.add('hidden');
-            return;
-        }
+        // try {
+        //     await createRepo({
+        //       repo: repo,
+        //       credentials: credentials
+        //     });
+        //     for (let file of files) {
+        //         await uploadFiles({
+        //             repo,
+        //             credentials,
+        //             files: [{
+        //                 path: file.name,
+        //                 content: file
+        //             }],
+        //         });
+        //     }
+        //     console.log('Files uploaded to Hugging Face Hub successfully');
+        //     document.getElementById('success-message').textContent = 'Uploaded files to Hugging Face Hub successfully';
+        // } catch (error) {
+        //     console.error('Error uploading files to Hugging Face Hub:', error);
+        //     // Hide the loading spinner and return to stop further processing
+        //     document.getElementById('error-message').textContent = 'Error uploading files to Hugging Face Hub: ' + error.message;
+        //     loadingSpinner.classList.add('hidden');
+        //     return;
+        // }
 
         // Send request to internal API
         const xhr = new XMLHttpRequest();
