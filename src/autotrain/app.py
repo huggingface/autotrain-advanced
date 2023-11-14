@@ -55,6 +55,9 @@ HIDDEN_PARAMS = [
     "num_validation_images",
     "validation_prompt",
     "sample_batch_size",
+    "log",
+    "image_column",
+    "target_column",
 ]
 
 PARAMS = {}

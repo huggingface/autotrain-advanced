@@ -96,13 +96,20 @@
           <div class="form-group">
             <label for="hardware" class="block text-sm font-medium text-gray-700">Hardware</label>
             <select id="hardware" name="hardware" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="A100 Large">A100 Large</option>
-              <option value="A10G Large">A10G Large</option>
+              <optgroup label="Hugging Face Spaces">
+                <option value="A100 Large">A100 Large</option>
+                <option value="A10G Large">A10G Large</option>
+              </optgroup>
+              <optgroup label="DGX Cloud">
+                <option value="A100 Large">4xA100 DGX</option>
+                <option value="A10G Large">2xA100 DGX</option>
+              </optgroup>
             </select>
           </div>
         </div>
       </div>
       <div class="form-group">
+        <label class="block text-sm font-medium text-gray-700">Data Files(s)</label>
         <div class="flex items-center justify-center w-full">
           <label for="data_files" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer">
               <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -182,7 +189,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // try {
         //     await createRepo({
         //       repo: repo,
-        //       credentials: credentials
+        //       credentials: credentials,
+        //       private: true,
         //     });
         //     for (let file of files) {
         //         await uploadFiles({

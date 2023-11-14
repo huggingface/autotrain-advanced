@@ -7,7 +7,7 @@ from autotrain.trainers.common import AutoTrainParams
 
 class ImageClassificationParams(AutoTrainParams):
     data_path: str = Field(None, title="Data path")
-    model_name: str = Field("bert-base-uncased", title="Model name")
+    model: str = Field("google/vit-base-patch16-224", title="Model name")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
     batch_size: int = Field(8, title="Training batch size")
