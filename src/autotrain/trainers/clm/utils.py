@@ -17,10 +17,6 @@ DEFAULT_BOS_TOKEN = "</s>"
 DEFAULT_UNK_TOKEN = "</s>"
 TARGET_MODULES = {
     "Salesforce/codegen25-7b-multi": "q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
-    "HuggingFaceH4/zephyr-7b-beta": "q_proj,v_proj",
-    "HuggingFaceH4/zephyr-7b-alpha": "q_proj,v_proj",
-    "mistralai/Mistral-7B-Instruct-v0.1": "q_proj,v_proj",
-    "mistralai/Mistral-7B-v0.1": "q_proj,v_proj",
 }
 
 MODEL_CARD = """
