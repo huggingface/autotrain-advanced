@@ -114,6 +114,9 @@ async def fetch_params(task: str):
         trainer = task.split(":")[1].lower()
         task = task.split(":")[0].lower()
 
+    if task.startswith("tabular"):
+        task = "tabular"
+
     if task in PARAMS:
         task_params = PARAMS[task]
         task_params = {k: v for k, v in task_params.items() if k not in HIDDEN_PARAMS}
@@ -154,7 +157,8 @@ async def handle_form(
     username: str = Form(...),
     base_model: str = Form(...),
     hardware: str = Form(...),
-    data_files: List[UploadFile] = File(...),
+    data_files_training: List[UploadFile] = File(...),
+    data_files_valid: List[UploadFile] = File(...),
     params: UploadFile = File(...),
 ):
     """
@@ -167,7 +171,6 @@ async def handle_form(
         "base_model": base_model,
         "username": username,
         "hardware": hardware,
-        "data_files": data_files,
         "params": params,
     }
     logger.info(data)
@@ -215,4 +218,4 @@ async def handle_form(
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
     ids = project.create()
     logger.info(ids)
-    return {"success": "true"}
+    return {"success": "true", "space_ids": ids}

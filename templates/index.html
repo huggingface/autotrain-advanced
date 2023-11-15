@@ -109,6 +109,48 @@
         </div>
       </div>
       <div class="form-group">
+        <div class="mb-4">
+          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" data-tabs-toggle="#default-tab-content" role="tablist">
+              <li class="me-2" role="presentation">
+                  <button class="inline-block p-4 border-b-2 rounded-t-lg" id="training-data-tab" data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data" aria-selected="false">Training Data</button>
+              </li>
+              <li class="me-2" role="presentation">
+                  <button class="inline-block p-4 border-b-2 rounded-t-lg" id="valid-data-tab" data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data" aria-selected="false">Validation Data (optional)</button>
+              </li>
+          </ul>
+        </div>
+        <div id="default-tab-content">
+          <div class="hidden p-4 rounded-lg" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
+            <div class="flex items-center justify-center w-full h-20">
+              <label for="data_files_training" class="flex flex-col items-center justify-center w-full h-40cursor-pointer">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
+                      <p class="text-xs text-gray-700" id="file-container-training"></p>
+                  </div>
+                  <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden"/>
+              </label>
+            </div>
+          </div>
+          <div class="hidden p-4 rounded-lg" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
+            <div class="flex items-center justify-center w-full h-20">
+              <label for="data_files_valid" class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
+                      <p class="text-xs text-gray-700" id="file-container-valid"></p>
+                  </div>
+                  <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden"/>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="form-group">
         <label class="block text-sm font-medium text-gray-700">Data Files(s)</label>
         <div class="flex items-center justify-center w-full">
           <label for="data_files" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer">
@@ -123,8 +165,7 @@
               <input id="data_files" name="data_files" type="file" multiple class="hidden"/>
           </label>
         </div> 
-        <!-- <textarea id="params" name="params" rows="4" class="block p-2.5 w-full text-sm rounded-lg border "></textarea> -->
-      </div>
+      </div> -->
       <div class="form-group">
         <label for="params" class="block mb-2 text-sm font-medium text-gray-700">Training Parameters (find params to copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
         <textarea id="params" rows="4" class="block p-2.5 w-full text-sm text-gray-900" placeholder="Loading..."></textarea>
@@ -147,6 +188,72 @@
   </div>
 </div>
 </body>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const taskSelect = document.getElementById('task');
+    const validDataTab = document.getElementById('valid-data-tab');
+
+    function toggleValidationTab() {
+        const task = taskSelect.value;
+        // Check if the selected task is DreamBooth or any LLM task
+        if (task === 'dreambooth' || task.includes('llm:')) {
+            validDataTab.style.display = 'none'; // Hide the tab
+        } else {
+            validDataTab.style.display = 'block'; // Show the tab
+        }
+    }
+
+    // Initialize the state of the validation tab
+    toggleValidationTab();
+
+    // Add event listener for changes in the task dropdown
+    taskSelect.addEventListener('change', toggleValidationTab);
+});
+
+</script>
+
+<script>
+  // Function to hide all tab contents
+  function hideAllTabContents() {
+      document.querySelectorAll('#default-tab-content > div').forEach(function(tabContent) {
+          tabContent.classList.add('hidden');
+      });
+  }
+
+  // Function to deactivate all tabs
+  function deactivateAllTabs() {
+      document.querySelectorAll('#default-tab > li > button').forEach(function(tabButton) {
+          tabButton.classList.remove('border-b-2', 'rounded-t-lg');
+          tabButton.setAttribute('aria-selected', 'false');
+      });
+  }
+
+  // Function to activate a tab
+  function activateTab(tabButton, tabContent) {
+      // Hide all tab contents and deactivate all tabs
+      hideAllTabContents();
+      deactivateAllTabs();
+
+      // Show the selected tab content and activate the tab
+      tabContent.classList.remove('hidden');
+      tabButton.classList.add('border-b-2', 'rounded-t-lg');
+      tabButton.setAttribute('aria-selected', 'true');
+  }
+
+  // Event listeners for tab buttons
+  document.querySelector('#training-data-tab').addEventListener('click', function() {
+      activateTab(this, document.querySelector('#training-data'));
+  });
+
+  document.querySelector('#valid-data-tab').addEventListener('click', function() {
+      activateTab(this, document.querySelector('#valid-data'));
+  });
+
+  // Initialize by showing the first tab
+  activateTab(document.querySelector('#training-data-tab'), document.querySelector('#training-data'));
+
+</script>
 
 <script type="module">
 import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
@@ -179,13 +286,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const token = formData.get('token');
         const username = formData.get('username');
         const project_name = formData.get('project_name');
-        const files = formData.getAll('data_files');
+        const train_files = formData.getAll('data_files_training');
+        const valid_files = formData.getAll('data_files_valid');
 
         // Prepare credentials and repo information for Hugging Face
         const credentials = { accessToken: token };
         const repo = { type: 'model', name: `${username}/autotrain-data-${project_name}` };
 
         // Upload files to Hugging Face Hub
+        // MODIFY for training and valid files both
         // try {
         //     await createRepo({
         //       repo: repo,
@@ -241,8 +350,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 <script>
-  document.getElementById('data_files').addEventListener('change', function() {
-    var fileContainer = document.getElementById('file-container');
+  document.getElementById('data_files_training').addEventListener('change', function() {
+    var fileContainer = document.getElementById('file-container-training');
     var files = this.files;
     var fileText = '';
 
@@ -252,10 +361,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     fileContainer.innerHTML = fileText;
 });
-</script>
-<script>
-  document.getElementById('params').addEventListener('change', function() {
-    var fileContainer = document.getElementById('params-file-container');
+document.getElementById('data_files_valid').addEventListener('change', function() {
+    var fileContainer = document.getElementById('file-container-valid');
     var files = this.files;
     var fileText = '';
 
