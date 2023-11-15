@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from fastapi import FastAPI, File, Form, Request, UploadFile
@@ -158,7 +158,7 @@ async def handle_form(
     base_model: str = Form(...),
     hardware: str = Form(...),
     data_files_training: List[UploadFile] = File(...),
-    data_files_valid: List[UploadFile] = File(...),
+    data_files_valid: Optional[List[UploadFile]] = File(None),
     params: UploadFile = File(...),
 ):
     """
@@ -177,29 +177,18 @@ async def handle_form(
     # check if data_files has train.csv and valid.csv
     # check if params is a valid JSON
 
-    if task not in ("dreambooth", "image-classification"):
-        training_file = None
-        validation_file = None
-        for f in data_files:
-            if f.filename == "train.csv":
-                training_file = f
-            if f.filename == "valid.csv":
-                validation_file = f
-
-        if training_file is None:
-            return {"error": "Training file not found"}
-
-        training_file = training_file.file
-        validation_file = validation_file.file if validation_file else None
+    if task.startswith("llm") or task in ("text-classification", "seq2seq"):
+        training_files = [f.file for f in data_files_training]
+        validation_files = [f.file for f in data_files_valid] if data_files_valid else []
 
         dset = AutoTrainDataset(
-            train_data=[training_file],
+            train_data=training_files,
             task="lm_training",
             token=token,
             project_name=project_name,
             username=username,
             column_mapping={"text": "text"},
-            valid_data=[validation_file] if validation_file else [],
+            valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()

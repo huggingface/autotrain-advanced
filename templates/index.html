@@ -46,6 +46,7 @@
           <img src="/static/logo.png" alt="AutoTrain", class="w-32">
         </div>
     </header>
+    
   <div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-2xl">
     <form action="#" method="post" class="space-y-4" enctype="multipart/form-data">
       <div class="columns-2">
@@ -185,6 +186,19 @@
     <div  class="hidden justify-center items-center">
       <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
+    <div id="confirmation-modal" tabindex="-1" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+      <div class="relative p-4 w-full max-w-md max-h-full">
+          <div class="relative bg-white rounded-lg shadow-2xl">
+              <div class="p-4 md:p-5 text-center">
+                  <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be charged for this action. Are you sure you want to continue?</h3>
+                  <button data-modal-hide="confirmation-modal" type="button" class="confirm text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">
+                      Yes, I'm sure
+                  </button>
+                  <button data-modal-hide="confirmation-modal" type="button" class="cancel text-white bg-red-600 hover:bg-red-100 focus:ring-4 focus:outline-none focus:ring-red-200 rounded-lg border border-red-200 text-sm font-medium px-5 py-2.5 hover:text-red-900 focus:z-10">No, cancel</button>
+              </div>
+          </div>
+      </div>
+   </div>
   </div>
 </div>
 </body>
@@ -265,16 +279,36 @@ document.addEventListener("DOMContentLoaded", function() {
     // Select the loading spinner
     const loadingSpinner = document.getElementById('loadingSpinner');
 
+    // Function to show the modal
+    function showModal() {
+        const modal = document.getElementById('confirmation-modal');
+        modal.classList.add('flex');
+        modal.classList.remove('hidden');
+    }
+
+    // Function to hide the modal
+    function hideModal() {
+        const modal = document.getElementById('confirmation-modal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+
     // Add an event listener for the form submission
     form.addEventListener('submit', async function(event) {
         // Prevent the default form submission
         event.preventDefault();
+        showModal();
+    });
+
+    document.querySelector('#confirmation-modal .confirm').addEventListener('click', async function() {
+        hideModal();
+        loadingSpinner.classList.remove('hidden');
 
         // Confirmation dialog
-        const userConfirmed = window.confirm("AutoTrain is a paid service and you will be charged. Confirm to continue!");
-        if (!userConfirmed) {
-            return; // Stop the function if the user did not confirm
-        }
+        // const userConfirmed = window.confirm("AutoTrain is a paid service and you will be charged. Confirm to continue!");
+        // if (!userConfirmed) {
+        //     return; // Stop the function if the user did not confirm
+        // }
 
         // Show the loading spinner
         loadingSpinner.classList.remove('hidden');
@@ -341,6 +375,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Send the request with the FormData object
         xhr.send(formData);
+    });
+    document.querySelector('#confirmation-modal .cancel').addEventListener('click', function() {
+        hideModal();
     });
 });
 </script>
