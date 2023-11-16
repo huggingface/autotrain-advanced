@@ -29,7 +29,7 @@ def main():
             gr.Markdown("- A10g Small: $0.0175/minute")
             gr.Markdown("- A100 Large: $0.06883/minute")
             gr.Markdown("- T4 Medium: $0.015/minute")
-            gr.Markdown("- T4 Small: $0.1/minute")
+            gr.Markdown("- T4 Small: $0.01/minute")
             gr.Markdown("- CPU: $0.0005/minute")
         with gr.Tabs():
             with gr.Tab(label="LLM"):
