@@ -35,3 +35,4 @@ bitsandbytes==0.41.0
 rouge_score==0.1.2
 py7zr==0.20.6
 fastapi==0.104.1
+uvicorn==0.22.0
