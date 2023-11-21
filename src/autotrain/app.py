@@ -93,9 +93,9 @@ PARAMS["seq2seq"] = Seq2SeqParams().model_dump()
 PARAMS["tabular"] = TabularParams().model_dump()
 
 app = FastAPI()
-app.mount("/css", StaticFiles(directory="css"), name="css")  # Mounting the static directory
-app.mount("/static", StaticFiles(directory="static"), name="static")  # Mounting the static directory
-templates = Jinja2Templates(directory="templates")  # Assuming your HTML is in a folder named 'templates'
+# app.mount("/css", StaticFiles(directory="css"), name="css")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 async def get_request_data(request: Request):
@@ -128,6 +128,8 @@ async def read_form(request: Request):
     :param request:
     :return:
     """
+    if HF_TOKEN is None or HF_USERNAME is None:
+        return templates.TemplateResponse("error.html", {"request": request})
     return templates.TemplateResponse("index.html", {"request": request})  # The form.html is your saved html file
 
 
@@ -191,6 +193,11 @@ async def handle_form(
     """
     This function is used to handle the form submission
     """
+
+    # if HF_TOKEN is None or HF_USERNAME is None, return error
+    if HF_TOKEN is None or HF_USERNAME is None:
+        return {"error": "HF_TOKEN or HF_USERNAME not set"}
+
     params = json.loads(params)
     training_files = [f.file for f in data_files_training if f.filename != ""]
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
