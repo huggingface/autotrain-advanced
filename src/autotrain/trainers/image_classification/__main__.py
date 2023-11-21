@@ -62,14 +62,14 @@ def train(config):
                 f"Number of classes in train and valid are not the same. Training has {num_classes} and valid has {num_classes_valid}"
             )
 
-    model_config = AutoConfig.from_pretrained(config.model_name, num_labels=num_classes)
+    model_config = AutoConfig.from_pretrained(config.model, num_labels=num_classes)
     model_config._num_labels = len(label2id)
     model_config.label2id = label2id
     model_config.id2label = {v: k for k, v in label2id.items()}
 
     try:
         model = AutoModelForImageClassification.from_pretrained(
-            config.model_name,
+            config.model,
             config=model_config,
             trust_remote_code=True,
             token=config.token,
@@ -77,7 +77,7 @@ def train(config):
         )
     except OSError:
         model = AutoModelForImageClassification.from_pretrained(
-            config.model_name,
+            config.model,
             config=model_config,
             from_tf=True,
             trust_remote_code=True,
@@ -85,7 +85,7 @@ def train(config):
             ignore_mismatched_sizes=True,
         )
 
-    image_processor = AutoImageProcessor.from_pretrained(config.model_name, token=config.token)
+    image_processor = AutoImageProcessor.from_pretrained(config.model, token=config.token)
     train_data, valid_data = utils.process_data(train_data, valid_data, image_processor, config)
 
     if config.logging_steps == -1:

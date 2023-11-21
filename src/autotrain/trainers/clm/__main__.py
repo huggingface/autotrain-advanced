@@ -69,6 +69,7 @@ def train(config):
         if config.trainer == "dpo":
             if not (config.prompt_text_column == "prompt" and config.prompt_text_column in train_data.column_names):
                 train_data = train_data.rename_column(config.prompt_text_column, "prompt")
+
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
         if os.path.exists(valid_path):

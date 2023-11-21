@@ -54,6 +54,8 @@ def preprocess_reward(examples, tokenizer):
 def get_target_modules(config):
     if config.target_modules is None:
         return TARGET_MODULES.get(config.model)
+    elif config.target_modules.strip() == "":
+        return TARGET_MODULES.get(config.model)
     return config.target_modules.split(",")
 
 

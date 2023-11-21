@@ -1,11 +1,11 @@
-import os
+from pydantic import Field
 
-from pydantic import BaseModel, Field
+from autotrain.trainers.common import AutoTrainParams
 
 
-class ImageClassificationParams(BaseModel):
+class ImageClassificationParams(AutoTrainParams):
     data_path: str = Field(None, title="Data path")
-    model_name: str = Field("bert-base-uncased", title="Model name")
+    model: str = Field("google/vit-base-patch16-224", title="Model name")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
     batch_size: int = Field(8, title="Training batch size")
@@ -31,15 +31,3 @@ class ImageClassificationParams(BaseModel):
     image_column: str = Field("image", title="Image column")
     target_column: str = Field("target", title="Target column")
     log: str = Field("none", title="Logging using experiment tracking")
-
-    def __str__(self):
-        data = self.dict()
-        data["token"] = "*****" if data.get("token") else None
-        return str(data)
-
-    def save(self, output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-        path = os.path.join(output_dir, "training_params.json")
-        # save formatted json
-        with open(path, "w") as f:
-            f.write(self.json(indent=4))

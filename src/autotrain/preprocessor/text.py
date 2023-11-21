@@ -10,7 +10,7 @@ RESERVED_COLUMNS = ["autotrain_text", "autotrain_label"]
 LLM_RESERVED_COLUMNS = [
     "autotrain_prompt",
     "autotrain_context",
-    "autotrain_response",
+    "autotrain_rejected_text",
     "autotrain_prompt_start",
 ]
 
@@ -130,33 +130,31 @@ class LLMPreprocessor:
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
-    context_column: Optional[str] = None
-    prompt_start_column: Optional[str] = None
     text_column: Optional[str] = None
     prompt_column: Optional[str] = None
-    response_column: Optional[str] = None
+    rejected_text_column: Optional[str] = None
 
     def __post_init__(self):
-        # user can either provide text_column or prompt_column and response_column
-        if self.text_column is not None and (self.prompt_column is not None or self.response_column is not None):
-            raise ValueError("Please provide either text_column or prompt_column and response_column")
+        # user can either provide text_column or prompt_column and rejected_text_column
+        if self.text_column is not None and (self.prompt_column is not None or self.rejected_text_column is not None):
+            raise ValueError("Please provide either text_column or prompt_column and rejected_text_column")
 
         if self.text_column is not None:
-            # if text_column is provided, use it for prompt_column and response_column
+            # if text_column is provided, use it for prompt_column and rejected_text_column
             self.prompt_column = self.text_column
-            self.response_column = self.text_column
+            self.rejected_text_column = self.text_column
 
-        # check if text_column and response_column are in train_data
+        # check if text_column and rejected_text_column are in train_data
         if self.prompt_column not in self.train_data.columns:
             raise ValueError(f"{self.prompt_column} not in train data")
-        if self.response_column not in self.train_data.columns:
-            raise ValueError(f"{self.response_column} not in train data")
-        # check if text_column and response_column are in valid_data
+        if self.rejected_text_column not in self.train_data.columns:
+            raise ValueError(f"{self.rejected_text_column} not in train data")
+        # check if text_column and rejected_text_column are in valid_data
         if self.valid_data is not None:
             if self.prompt_column not in self.valid_data.columns:
                 raise ValueError(f"{self.prompt_column} not in valid data")
-            if self.response_column not in self.valid_data.columns:
-                raise ValueError(f"{self.response_column} not in valid data")
+            if self.rejected_text_column not in self.valid_data.columns:
+                raise ValueError(f"{self.rejected_text_column} not in valid data")
 
         # make sure no reserved columns are in train_data or valid_data
         for column in RESERVED_COLUMNS + LLM_RESERVED_COLUMNS:
@@ -194,25 +192,11 @@ class LLMPreprocessor:
             train_df.loc[:, "autotrain_prompt"] = train_df[self.prompt_column]
             valid_df.loc[:, "autotrain_prompt"] = valid_df[self.prompt_column]
 
-            train_df.loc[:, "autotrain_response"] = train_df[self.response_column]
-            valid_df.loc[:, "autotrain_response"] = valid_df[self.response_column]
+            train_df.loc[:, "autotrain_rejected_text"] = train_df[self.rejected_text_column]
+            valid_df.loc[:, "autotrain_rejected_text"] = valid_df[self.rejected_text_column]
 
-            train_df = train_df.drop(columns=[self.prompt_column, self.response_column])
-            valid_df = valid_df.drop(columns=[self.prompt_column, self.response_column])
-
-            if self.context_column is not None:
-                train_df.loc[:, "autotrain_context"] = train_df[self.context_column]
-                valid_df.loc[:, "autotrain_context"] = valid_df[self.context_column]
-
-                train_df = train_df.drop(columns=[self.context_column])
-                valid_df = valid_df.drop(columns=[self.context_column])
-
-            if self.prompt_start_column is not None:
-                train_df.loc[:, "autotrain_prompt_start"] = train_df[self.prompt_start_column]
-                valid_df.loc[:, "autotrain_prompt_start"] = valid_df[self.prompt_start_column]
-
-                train_df = train_df.drop(columns=[self.prompt_start_column])
-                valid_df = valid_df.drop(columns=[self.prompt_start_column])
+            train_df = train_df.drop(columns=[self.prompt_column, self.rejected_text_column])
+            valid_df = valid_df.drop(columns=[self.prompt_column, self.rejected_text_column])
 
             return train_df, valid_df
 
