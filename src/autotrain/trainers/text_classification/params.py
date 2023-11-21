@@ -1,8 +1,5 @@
-import os
+from pydantic import Field
 
-from pydantic import BaseModel, Field
-
-from autotrain import logger
 from autotrain.trainers.common import AutoTrainParams
 
 

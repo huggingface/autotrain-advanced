@@ -1,6 +1,4 @@
-import os
-
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from autotrain.trainers.common import AutoTrainParams
 

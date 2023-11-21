@@ -75,13 +75,18 @@ def _llm_munge_data(params, username):
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
+        col_map = {"text": params.text_column}
+        if params.rejected_text_column is not None:
+            col_map["rejected_text"] = params.rejected_text_column
+        if params.prompt_column is not None:
+            col_map["prompt"] = params.prompt_column
         dset = AutoTrainDataset(
             train_data=[train_data_path],
             task="lm_training",
             token=params.token,
             project_name=params.project_name,
             username=username,
-            column_mapping={"text": params.text_column},
+            column_mapping=col_map,
             valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
         )

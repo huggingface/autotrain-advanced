@@ -3,24 +3,19 @@ Copyright 2023 The HuggingFace Team
 """
 
 import json
-import os
-import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import Union
 
 import pandas as pd
-from codecarbon import EmissionsTracker
 
 from autotrain import logger
 from autotrain.backend import SpaceRunner
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
-from autotrain.languages import SUPPORTED_LANGUAGES
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
-from autotrain.utils import http_get, http_post
 
 
 @dataclass

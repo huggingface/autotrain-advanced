@@ -121,6 +121,7 @@ class TabularMultiLabelClassificationPreprocessor:
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
+    token: Optional[str] = None
 
     def __post_init__(self):
         # check if id_column and label_column are in train_data

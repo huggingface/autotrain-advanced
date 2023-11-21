@@ -151,25 +151,13 @@
           </div>
         </div>
       </div>
-      <!-- <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700">Data Files(s)</label>
-        <div class="flex items-center justify-center w-full">
-          <label for="data_files" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer">
-              <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                  </svg>
-                  <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Data File(s)
-                    <p class="mb-2 text-xs text-gray-400"><span class="font-semibold">You need to upload train.csv, valid.csv (optional) in correct format!
-                  <p class="mb-2 text-sm text-gray-700" id="file-container"></p>
-              </div>
-              <input id="data_files" name="data_files" type="file" multiple class="hidden"/>
-          </label>
-        </div> 
-      </div> -->
+      <div class="hidden form-group">
+        <label for="column_mapping" class="block mb-2 text-sm font-medium text-gray-700">Column Mapping (task_column: user_data_column)</label>
+        <input id="column_mapping" name="column_mapping" class="block p-2.5 w-full text-sm text-gray-900" placeholder=""></input>
+      </div>
       <div class="form-group">
         <label for="params" class="block mb-2 text-sm font-medium text-gray-700">Training Parameters (find params to copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
-        <textarea id="params" rows="4" class="block p-2.5 w-full text-sm text-gray-900" placeholder="Loading..."></textarea>
+        <textarea id="params" name="params" rows="4" class="block p-2.5 w-full text-sm text-gray-900" placeholder="Loading..."></textarea>
       </div>
       <div class="form-actions mt-6">
         <button type="submit" class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start Training</button>
@@ -217,6 +205,42 @@
   </div>
 </div>
 </body>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var taskSelect = document.getElementById('task');
+    var columnMappingInput = document.getElementById('column_mapping');
+
+    // Function to update the placeholder based on the selected task
+    function updatePlaceholder() {
+        var selectedTask = taskSelect.value;
+        var placeholderText = '';
+
+        switch(selectedTask) {
+            case 'llm:sft':
+                placeholderText = '{"text": "text"}';
+                break;
+            case 'llm:generic':
+                placeholderText = 'Enter column mapping for LLM Generic...';
+                break;
+            // Add cases for other task options
+            default:
+                placeholderText = 'Enter column mapping...';
+        }
+
+        columnMappingInput.value = placeholderText;
+    }
+
+    // Event listener for when the task selection changes
+    taskSelect.addEventListener('change', function() {
+        updatePlaceholder();
+    });
+
+    // Initial placeholder update
+    updatePlaceholder();
+});
+
+</script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {

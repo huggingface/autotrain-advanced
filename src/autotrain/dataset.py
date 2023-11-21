@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from autotrain import logger
-from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
+from autotrain.preprocessor.dreambooth import DreamboothPreprocessor, DreamboothPreprocessorV2
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
     TabularMultiClassClassificationPreprocessor,
@@ -53,6 +53,7 @@ class AutoTrainDreamboothDataset:
     token: str
     project_name: str
     username: str
+    use_v2: bool = False
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -67,13 +68,22 @@ class AutoTrainDreamboothDataset:
         return len(self.concept_images)
 
     def prepare(self):
-        preprocessor = DreamboothPreprocessor(
-            concept_images=self.concept_images,
-            concept_name=self.concept_name,
-            token=self.token,
-            project_name=self.project_name,
-            username=self.username,
-        )
+        if self.use_v2:
+            preprocessor = DreamboothPreprocessorV2(
+                concept_images=self.concept_images,
+                concept_name=self.concept_name,
+                token=self.token,
+                project_name=self.project_name,
+                username=self.username,
+            )
+        else:
+            preprocessor = DreamboothPreprocessor(
+                concept_images=self.concept_images,
+                concept_name=self.concept_name,
+                token=self.token,
+                project_name=self.project_name,
+                username=self.username,
+            )
         preprocessor.prepare()
 
 
@@ -286,22 +296,14 @@ class AutoTrainDataset:
             preprocessor.prepare()
 
         elif self.task == "lm_training":
-            text_column = self.column_mapping.get("text", None)
-            if text_column is None:
-                prompt_column = self.column_mapping["prompt"]
-                response_column = self.column_mapping["response"]
-            else:
-                prompt_column = None
-                response_column = None
-            context_column = self.column_mapping.get("context", None)
-            prompt_start_column = self.column_mapping.get("prompt_start", None)
+            text_column = self.column_mapping["text"]
+            prompt_column = self.column_mapping.get("prompt")
+            rejected_text_column = self.column_mapping.get("rejected_text")
             preprocessor = LLMPreprocessor(
                 train_data=self.train_df,
                 text_column=text_column,
                 prompt_column=prompt_column,
-                response_column=response_column,
-                context_column=context_column,
-                prompt_start_column=prompt_start_column,
+                rejected_text_column=rejected_text_column,
                 username=self.username,
                 project_name=self.project_name,
                 valid_data=self.valid_df,

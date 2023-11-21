@@ -19,7 +19,6 @@ werkzeug==2.3.6
 xgboost==1.7.6
 huggingface_hub>=0.16.4
 requests==2.31.0
-gradio==3.41.0
 einops==0.6.1
 invisible-watermark==0.2.0
 packaging==23.1
@@ -35,4 +34,4 @@ bitsandbytes==0.41.0
 # extras
 rouge_score==0.1.2
 py7zr==0.20.6
-fastapi
+fastapi==0.104.1
