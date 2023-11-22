@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC
@@ -6,10 +6,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 ENV PATH="${HOME}/miniconda3/bin:${PATH}"
 ARG PATH="${HOME}/miniconda3/bin:${PATH}"
 
-RUN mkdir -p /tmp/model
-RUN chown -R 1000:1000 /tmp/model
-RUN mkdir -p /tmp/data
-RUN chown -R 1000:1000 /tmp/data
+RUN mkdir -p /tmp/model && \
+    chown -R 1000:1000 /tmp/model && \
+    mkdir -p /tmp/data && \
+    chown -R 1000:1000 /tmp/data
 
 RUN apt-get update &&  \
     apt-get upgrade -y &&  \
@@ -28,7 +28,8 @@ RUN apt-get update &&  \
     git \
     git-lfs \
     libgl1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
@@ -58,11 +59,13 @@ RUN conda create -p /app/env -y python=3.10
 
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
-RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && conda clean -ya
+RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && \
+    conda clean -ya && \
+    conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && conda clean -ya
+
 COPY --chown=1000:1000 . /app/
-
-RUN pip install -e .
-
-RUN python -m nltk.downloader punkt
-RUN autotrain setup
-RUN pip install flash-attn
+RUN pip install -e . && \
+    python -m nltk.downloader punkt && \
+    autotrain setup && \
+    pip install flash-attn && \
+    pip cache purge
