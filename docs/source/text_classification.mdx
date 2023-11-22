@@ -10,7 +10,7 @@ Let's train a model for classifying the sentiment of a movie review. The data sh
 in the following CSV format:
 
 ```csv
-review,sentiment
+text,target
 "this movie is great",positive
 "this movie is bad",negative
 .
@@ -41,18 +41,6 @@ for chunk in pd.read_csv('example.csv', chunksize=chunk_size):
     i += 1
 ```
 
-Once the data has been uploaded, you have to select the proper column mapping
+## Columns
 
-## Column Mapping
-
-![Column Mapping](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/text_classification_1.png)
-
-In our example, the text column is called `review` and the label column is called `sentiment`.
-Thus, we have to select `review` for the text column and `sentiment` for the label column.
-Please note that, if column mapping is not done correctly, the training will fail.
-
-
-## Training
-
-Once you have uploaded the data, selected the column mapping, and set the hyperparameters (AutoTrain or Manual mode), you can add the jobs.
-To start the training, click on the `Start Training` button.
+Your CSV dataset must have two columns: `text` and `target`.

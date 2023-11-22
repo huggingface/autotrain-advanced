@@ -45,7 +45,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             },
             {
                 "arg": "--train_split",
-                "help": "Test dataset split to use",
+                "help": "Train dataset split to use",
                 "required": False,
                 "type": str,
                 "default": "train",
