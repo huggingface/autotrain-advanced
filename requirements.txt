@@ -37,3 +37,4 @@ py7zr==0.20.6
 fastapi==0.104.1
 uvicorn==0.22.0
 python-multipart==0.0.6
+gradio==3.41.0
