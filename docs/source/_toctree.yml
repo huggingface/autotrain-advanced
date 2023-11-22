@@ -8,21 +8,17 @@
   - local: support
     title: Get help and support
   title: Get started
-- sections:
-  - local: model_choice
-    title: Model Selection
-  - local: param_choice
-    title: Parameter Selection
-  title: Selecting Models and Parameters
 - sections: 
   - local: text_classification
     title: Text Classification
   - local: llm_finetuning
     title: LLM Finetuning
-  title: Text Tasks
-- sections:
   - local: image_classification
     title: Image Classification
   - local: dreambooth
     title: DreamBooth
-  title: Image Tasks
+  - local: seq2seq
+    title: Seq2Seq
+  - local: tabular
+    title: Tabular
+  title: Data Formats

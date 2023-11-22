@@ -7,37 +7,47 @@ AutoTrain supports the following types of LLM finetuning:
 - Causal Language Modeling (CLM)
 - Masked Language Modeling (MLM) [Coming Soon]
 
-For LLM finetuning, only Hugging Face Hub model choice is available. 
-User needs to select a model from Hugging Face Hub, that they want to finetune and select the parameters on their own (Manual Parameter Selection),
-or use AutoTrain's Auto Parameter Selection to automatically select the best parameters for the task.
-
 ## Data Preparation
 
 LLM finetuning accepts data in CSV format.
-There are two modes for LLM finetuning: `generic` and `chat`.
-An example dataset with both formats in the same dataset can be found here: https://huggingface.co/datasets/tatsu-lab/alpaca
 
-### Generic
+### Data Format For SFT / Generic Trainer
 
-In generic mode, only one column is required: `text`.
-The user can take care of how the data is formatted for the task.
-A sample instance for this format is presented below:
+For SFT / Generic Trainer, the data should be in the following format:
 
-```
-Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request. 
+| text |
+| This is the first sentence. |
+| This is the second sentence. |
 
-### Instruction: Evaluate this sentence for spelling and grammar mistakes 
+An example dataset for this format can be found here: https://huggingface.co/datasets/timdettmers/openassistant-guanaco
 
-### Input: He finnished his meal and left the resturant 
+For SFT/Generic training, your dataset must have a `text` column
 
-### Response: He finished his meal and left the restaurant.
-```
+### Data Format For Reward Trainer
 
-![Generic LLM Finetuning](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/llm_1.png)
+For Reward Trainer, the data should be in the following format:
 
-Please note that above is the format for instruction finetuning. You can also finetune on any other format as you want, for example generic finetuning. The data can be changed according to the requirements.
+| text                                                          | rejected_text                                                     |
+|---------------------------------------------------------------|-------------------------------------------------------------------|
+| human: hello \n bot: hi nice to meet you                      | humna: hello \n bot: leave me alone                               |
+| human: how are you \n bot: I am fine                          | human: how are you \n bot: I am not fine                          |
+| human: What is your name? \n bot: My name is Mary             | human: What is your name? \n bot: Whats it to you?                |
+| human: Which is the best programming language? \n bot: Python | human: Which is the best programming language? \n bot: Javascript |
 
+For Reward Trainer, your dataset must have a `text` column (aka chosen text) and a `rejected_text` column.
 
-## Training
+### Data Format For DPO Trainer
 
-Once you have your data ready and jobs added, you can start training your model by clicking the "Start Training" button.
+For DPO Trainer, the data should be in the following format:
+
+| prompt                                  | text                | rejected_text      |
+|-----------------------------------------|---------------------|--------------------|
+| hello                                   | hi nice to meet you | leave me alone     |
+| how are you                             | I am fine           | I am not fine      |
+| What is your name?                      | My name is Mary     | Whats it to you?   |
+| What is your name?                      | My name is Mary     | I dont have a name |
+| Which is the best programming language? | Python              | Javascript         |
+| Which is the best programming language? | Python              | C++                |
+| Which is the best programming language? | Java                | C++                |
+
+For DPO Trainer, your dataset must have a `prompt` column, a `text` column (aka chosen text) and a `rejected_text` column.
