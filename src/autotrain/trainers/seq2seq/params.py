@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -8,16 +8,16 @@ from autotrain.trainers.common import AutoTrainParams
 class Seq2SeqParams(AutoTrainParams):
     data_path: str = Field(None, title="Data path")
     model: str = Field("google/flan-t5-base", title="Model name")
-    username: str = Field(None, title="Hugging Face Username")
+    username: Optional[str] = Field(None, title="Hugging Face Username")
     seed: int = Field(42, title="Seed")
     train_split: str = Field("train", title="Train split")
-    valid_split: str = Field(None, title="Validation split")
+    valid_split: Optional[str] = Field(None, title="Validation split")
     project_name: str = Field("Project Name", title="Output directory")
-    token: str = Field(None, title="Hub Token")
+    token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
     text_column: str = Field("text", title="Text column")
     target_column: str = Field("target", title="Target text column")
-    repo_id: str = Field(None, title="Repo ID")
+    repo_id: Optional[str] = Field(None, title="Repo ID")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
     max_seq_length: int = Field(128, title="Max sequence length")
@@ -35,7 +35,7 @@ class Seq2SeqParams(AutoTrainParams):
     fp16: bool = Field(False, title="Enable fp16")
     save_total_limit: int = Field(1, title="Save total limit")
     save_strategy: str = Field("epoch", title="Save strategy")
-    token: str = Field(None, title="Hub Token")
+    token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
     use_peft: bool = Field(False, title="Use PEFT")
     use_int8: bool = Field(False, title="Use INT8")

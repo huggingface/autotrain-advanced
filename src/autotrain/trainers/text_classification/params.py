@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import Field
 
 from autotrain.trainers.common import AutoTrainParams
@@ -18,7 +20,7 @@ class TextClassificationParams(AutoTrainParams):
     max_grad_norm: float = Field(1.0, title="Max gradient norm")
     seed: int = Field(42, title="Seed")
     train_split: str = Field("train", title="Train split")
-    valid_split: str = Field(None, title="Validation split")
+    valid_split: Optional[str] = Field(None, title="Validation split")
     text_column: str = Field("text", title="Text column")
     target_column: str = Field("target", title="Target column")
     logging_steps: int = Field(-1, title="Logging steps")
@@ -27,9 +29,9 @@ class TextClassificationParams(AutoTrainParams):
     fp16: bool = Field(False, title="Enable fp16")
     save_total_limit: int = Field(1, title="Save total limit")
     save_strategy: str = Field("epoch", title="Save strategy")
-    token: str = Field(None, title="Hub Token")
+    token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
-    repo_id: str = Field(None, title="Repo id")
+    repo_id: Optional[str] = Field(None, title="Repo id")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
-    username: str = Field(None, title="Hugging Face Username")
+    username: Optional[str] = Field(None, title="Hugging Face Username")
     log: str = Field("none", title="Logging using experiment tracking")

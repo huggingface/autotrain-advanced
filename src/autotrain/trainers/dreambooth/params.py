@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import Field
 
 from autotrain.trainers.common import AutoTrainParams
@@ -5,14 +7,14 @@ from autotrain.trainers.common import AutoTrainParams
 
 class DreamBoothTrainingParams(AutoTrainParams):
     model: str = Field(None, title="Model name")
-    revision: str = Field(None, title="Revision")
-    tokenizer: str = Field(None, title="Tokenizer, if different from model")
+    revision: Optional[str] = Field(None, title="Revision")
+    tokenizer: Optional[str] = Field(None, title="Tokenizer, if different from model")
     image_path: str = Field(None, title="Image path")
-    class_image_path: str = Field(None, title="Class image path")
+    class_image_path: Optional[str] = Field(None, title="Class image path")
     prompt: str = Field(None, title="Instance prompt")
-    class_prompt: str = Field(None, title="Class prompt")
+    class_prompt: Optional[str] = Field(None, title="Class prompt")
     num_class_images: int = Field(100, title="Number of class images")
-    class_labels_conditioning: str = Field(None, title="Class labels conditioning")
+    class_labels_conditioning: Optional[str] = Field(None, title="Class labels conditioning")
 
     prior_preservation: bool = Field(False, title="With prior preservation")
     prior_loss_weight: float = Field(1.0, title="Prior loss weight")
@@ -27,7 +29,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     epochs: int = Field(1, title="Number of training epochs")
     num_steps: int = Field(None, title="Max train steps")
     checkpointing_steps: int = Field(500, title="Checkpointing steps")
-    resume_from_checkpoint: str = Field(None, title="Resume from checkpoint")
+    resume_from_checkpoint: Optional[str] = Field(None, title="Resume from checkpoint")
 
     gradient_accumulation: int = Field(1, title="Gradient accumulation steps")
     gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
@@ -48,7 +50,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     max_grad_norm: float = Field(1.0, title="Max grad norm")
 
     allow_tf32: bool = Field(False, title="Allow TF32")
-    prior_generation_precision: str = Field(None, title="Prior generation precision")
+    prior_generation_precision: Optional[str] = Field(None, title="Prior generation precision")
     local_rank: int = Field(-1, title="Local rank")
     xformers: bool = Field(False, title="Enable xformers memory efficient attention")
     pre_compute_text_embeddings: bool = Field(False, title="Pre compute text embeddings")
@@ -61,16 +63,16 @@ class DreamBoothTrainingParams(AutoTrainParams):
     fp16: bool = Field(False, title="FP16")
     bf16: bool = Field(False, title="BF16")
 
-    token: str = Field(None, title="Hub token")
-    repo_id: str = Field(None, title="Hub model id")
+    token: Optional[str] = Field(None, title="Hub token")
+    repo_id: Optional[str] = Field(None, title="Hub model id")
     push_to_hub: bool = Field(False, title="Push to hub")
-    username: str = Field(None, title="Hub username")
+    username: Optional[str] = Field(None, title="Hub username")
 
     # disabled:
-    validation_prompt: str = Field(None, title="Validation prompt")
+    validation_prompt: Optional[str] = Field(None, title="Validation prompt")
     num_validation_images: int = Field(4, title="Number of validation images")
     validation_epochs: int = Field(50, title="Validation epochs")
     checkpoints_total_limit: int = Field(None, title="Checkpoints total limit")
-    validation_images: str = Field(None, title="Validation images")
+    validation_images: Optional[str] = Field(None, title="Validation images")
 
     logging: bool = Field(False, title="Logging using tensorboard")

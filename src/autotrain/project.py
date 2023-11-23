@@ -82,6 +82,8 @@ class AutoTrainProject:
         _params = self._munge_common_params(job_idx)
         _params["model"] = self.model_choice
         _params["text_column"] = self.col_map_text
+        _params["prompt_text_column"] = "autotrain_prompt"
+        _params["rejected_text_column"] = "autotrain_rejected_text"
 
         if "trainer" in _params:
             _params["trainer"] = _params["trainer"].lower()

@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import Field
 
@@ -10,10 +10,10 @@ class LLMTrainingParams(AutoTrainParams):
     data_path: str = Field("data", title="Data path")
     project_name: str = Field("Project Name", title="Output directory")
     train_split: str = Field("train", title="Train data config")
-    valid_split: str = Field(None, title="Validation data config")
+    valid_split: Optional[str] = Field(None, title="Validation data config")
     text_column: str = Field("text", title="Text column")
-    rejected_text_column: str = Field(None, title="Rejected text column")
-    token: str = Field(None, title="Huggingface token")
+    rejected_text_column: Optional[str] = Field(None, title="Rejected text column")
+    token: Optional[str] = Field(None, title="Huggingface token")
     lr: float = Field(3e-5, title="Learning rate")
     epochs: int = Field(1, title="Number of training epochs")
     batch_size: int = Field(2, title="Training batch size")
@@ -39,15 +39,15 @@ class LLMTrainingParams(AutoTrainParams):
     push_to_hub: bool = Field(False, title="Push to hub")
     use_int8: bool = Field(False, title="Use int8")
     model_max_length: int = Field(2048, title="Model max length")
-    repo_id: str = Field(None, title="Repo id")
+    repo_id: Optional[str] = Field(None, title="Repo id")
     use_int4: bool = Field(False, title="Use int4")
     trainer: str = Field("default", title="Trainer type")
-    target_modules: str = Field(None, title="Target modules")
+    target_modules: Optional[str] = Field(None, title="Target modules")
     merge_adapter: bool = Field(False, title="Merge adapter")
-    username: str = Field(None, title="Hugging Face Username")
+    username: Optional[str] = Field(None, title="Hugging Face Username")
     use_flash_attention_2: bool = Field(False, title="Use flash attention 2")
     log: str = Field("none", title="Logging using experiment tracking")
     disable_gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
-    model_ref: str = Field(None, title="Reference, for DPO trainer")
+    model_ref: Optional[str] = Field(None, title="Reference, for DPO trainer")
     dpo_beta: float = Field(0.1, title="Beta for DPO trainer")
-    prompt_text_column: str = Field(None, title="Prompt text column")
+    prompt_text_column: Optional[str] = Field(None, title="Prompt text column")

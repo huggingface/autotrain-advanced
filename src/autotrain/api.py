@@ -38,7 +38,7 @@ def run_training():
     params = json.loads(PARAMS)
     logger.info(params)
     if TASK_ID == 9:
-        params = LLMTrainingParams.model_validate_json(params)
+        params = LLMTrainingParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
@@ -57,7 +57,7 @@ def run_training():
             ]
         )
     elif TASK_ID == 28:
-        params = Seq2SeqParams.model_validate_json(params)
+        params = Seq2SeqParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
@@ -76,7 +76,7 @@ def run_training():
             ]
         )
     elif TASK_ID in (1, 2):
-        params = TextClassificationParams.model_validate_json(params)
+        params = TextClassificationParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
@@ -95,7 +95,7 @@ def run_training():
             ]
         )
     elif TASK_ID in (13, 14, 15, 16, 26):
-        params = TabularParams.model_validate_json(params)
+        params = TabularParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = [
@@ -106,7 +106,7 @@ def run_training():
             os.path.join(params.project_name, "training_params.json"),
         ]
     elif TASK_ID == 27:
-        params = GenericParams.model_validate_json(params)
+        params = GenericParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = [
@@ -117,7 +117,7 @@ def run_training():
             os.path.join(params.project_name, "training_params.json"),
         ]
     elif TASK_ID == 25:
-        params = DreamBoothTrainingParams.model_validate_json(params)
+        params = DreamBoothTrainingParams(**params)
         params.project_name = "/tmp/model"
         params.save(output_dir=params.project_name)
         cmd = [

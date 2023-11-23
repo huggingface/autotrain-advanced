@@ -356,7 +356,7 @@ class SpaceRunner:
         api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
         api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.params.project_name)
         api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
-        api.add_space_secret(repo_id=repo_id, key="PARAMS", value=json.dumps(self.params.json()))
+        api.add_space_secret(repo_id=repo_id, key="PARAMS", value=self.params.model_dump_json())
 
         if isinstance(self.params, DreamBoothTrainingParams):
             api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.image_path)

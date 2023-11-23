@@ -45,6 +45,12 @@ def train(config):
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
 
+    if config.model_ref == "":
+        config.model_ref = None
+
+    if config.valid_split == "":
+        config.valid_split = None
+
     # check if config.train_split.csv exists in config.data_path
     if config.train_split is not None:
         train_path = f"{config.data_path}/{config.train_split}.csv"
