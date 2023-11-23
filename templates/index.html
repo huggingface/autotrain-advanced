@@ -112,8 +112,8 @@
             <select id="hardware" name="hardware"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               <optgroup label="Hugging Face Spaces">
-                <option value="A100 Large">A100 Large</option>
                 <option value="A10G Large">A10G Large</option>
+                <option value="A100 Large">A100 Large</option>
                 <option value="A10G Small">A10G Small</option>
                 <option value="T4 Medium">T4 Medium</option>
                 <option value="T4 Small">T4 Small</option>
@@ -465,9 +465,13 @@
         var finalModalContent = document.querySelector('#final-modal .text-center');
 
         if (xhr.status === 200) {
-          // Success logic here
           console.log('Response:', xhr.responseText);
-          finalModalContent.innerHTML = '<p>Response: ' + xhr.responseText + '</p>';
+          var responseObj = JSON.parse(xhr.responseText);
+          var firstSpaceId = responseObj.space_ids[0];
+          var link = "https://hf.co/spaces/" + firstSpaceId;
+          finalModalContent.innerHTML = '<p>Response: ' + xhr.responseText + '</p>' +
+            '<p>You can check the progress of your training here: <a href="' + link + '" target="_blank">' + link + '</a></p>';
+
           showFinalModal();
         } else {
           // Error logic here
