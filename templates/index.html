@@ -67,6 +67,16 @@
           <input type="password" name="token" id="token" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>  
       </div> -->
+      <div class="form-group">
+        <label for="autotrain_user" class="block text-sm font-medium text-gray-700">Hugging Face User</label>
+        <select name="autotrain_user" , id="autotrain_user"
+          class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          {% for user in valid_users %}
+          <option value="{{ user }}">{{ user }}</option>
+          {% endfor %}
+        </select>
+
+      </div>
       <div class="columns-2">
         <div class="mb-4">
           <label for="project_name" class="block text-sm font-medium text-gray-700">Project name</label>

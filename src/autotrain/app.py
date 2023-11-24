@@ -7,8 +7,8 @@ from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from loguru import logger
 
+from autotrain import app_utils, logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
@@ -20,7 +20,8 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
-HF_USERNAME = os.environ.get("HF_USERNAME", None)
+_, _, USERS = app_utils.user_validation()
+
 
 HIDDEN_PARAMS = [
     "token",
@@ -92,6 +93,7 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
 PARAMS["seq2seq"] = Seq2SeqParams().model_dump()
 PARAMS["tabular"] = TabularParams().model_dump()
 
+
 app = FastAPI()
 # app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -128,9 +130,10 @@ async def read_form(request: Request):
     :param request:
     :return:
     """
-    if HF_TOKEN is None or HF_USERNAME is None:
+    if HF_TOKEN is None:
         return templates.TemplateResponse("error.html", {"request": request})
-    return templates.TemplateResponse("index.html", {"request": request})  # The form.html is your saved html file
+    context = {"request": request, "valid_users": USERS}
+    return templates.TemplateResponse("index.html", context)
 
 
 @app.get("/params/{task}", response_class=JSONResponse)
@@ -187,6 +190,7 @@ async def handle_form(
     base_model: str = Form(...),
     hardware: str = Form(...),
     params: str = Form(...),
+    autotrain_user: str = Form(...),
     data_files_training: List[UploadFile] = File(...),
     data_files_valid: List[UploadFile] = File(...),
 ):
@@ -194,9 +198,9 @@ async def handle_form(
     This function is used to handle the form submission
     """
 
-    # if HF_TOKEN is None or HF_USERNAME is None, return error
-    if HF_TOKEN is None or HF_USERNAME is None:
-        return {"error": "HF_TOKEN or HF_USERNAME not set"}
+    # if HF_TOKEN is None is None, return error
+    if HF_TOKEN is None:
+        return {"error": "HF_TOKEN not set"}
 
     params = json.loads(params)
     training_files = [f.file for f in data_files_training if f.filename != ""]
@@ -215,7 +219,7 @@ async def handle_form(
             task="lm_training",
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             column_mapping=col_map,
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
@@ -227,7 +231,7 @@ async def handle_form(
             task="text_multi_class_classification",
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             column_mapping={"text": "text", "label": "target"},
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
@@ -240,7 +244,7 @@ async def handle_form(
             task="seq2seq",
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             column_mapping={"text": "text", "label": "target"},
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
@@ -259,7 +263,7 @@ async def handle_form(
             task=task,
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             column_mapping={"id": "id", "label": ["target"]},
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
@@ -270,7 +274,7 @@ async def handle_form(
             train_data=training_files,
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
         )
@@ -281,7 +285,7 @@ async def handle_form(
             concept_name=params["prompt"],
             token=HF_TOKEN,
             project_name=project_name,
-            username=HF_USERNAME,
+            username=autotrain_user,
             use_v2=True,
         )
         dset.prepare()
