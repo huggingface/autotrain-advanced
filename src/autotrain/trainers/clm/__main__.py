@@ -463,6 +463,10 @@ def train(config):
                 target_model_path=config.project_name,
                 adapter_path=config.project_name,
             )
+            # remove adapter weights: adapter_*
+            for file in os.listdir(config.project_name):
+                if file.startswith("adapter_"):
+                    os.remove(f"{config.project_name}/{file}")
         except Exception as e:
             logger.warning(f"Failed to merge adapter weights: {e}")
             logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
