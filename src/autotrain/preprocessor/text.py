@@ -261,7 +261,6 @@ class Seq2SeqPreprocessor:
                 self.train_data,
                 test_size=self.test_size,
                 random_state=self.seed,
-                stratify=self.train_data[self.label_column],
             )
             train_df = train_df.reset_index(drop=True)
             valid_df = valid_df.reset_index(drop=True)
