@@ -54,7 +54,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     local_rank: int = Field(-1, title="Local rank")
     xformers: bool = Field(False, title="Enable xformers memory efficient attention")
     pre_compute_text_embeddings: bool = Field(False, title="Pre compute text embeddings")
-    tokenizer_max_length: int = Field(None, title="Tokenizer max length")
+    tokenizer_max_length: Optional[int] = Field(None, title="Tokenizer max length")
     text_encoder_use_attention_mask: bool = Field(False, title="Text encoder use attention mask")
 
     rank: int = Field(4, title="Rank")
@@ -72,7 +72,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     validation_prompt: Optional[str] = Field(None, title="Validation prompt")
     num_validation_images: int = Field(4, title="Number of validation images")
     validation_epochs: int = Field(50, title="Validation epochs")
-    checkpoints_total_limit: int = Field(None, title="Checkpoints total limit")
+    checkpoints_total_limit: Optional[int] = Field(None, title="Checkpoints total limit")
     validation_images: Optional[str] = Field(None, title="Validation images")
 
     logging: bool = Field(False, title="Logging using tensorboard")

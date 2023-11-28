@@ -14,6 +14,7 @@ from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, Auto
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
@@ -41,7 +42,7 @@ class AutoTrainProject:
         self.task_id = TASKS.get(self.task)
         self.num_jobs = len(self.job_params)
 
-        if self.task in ("text_multi_class_classification", "text_binary_classification"):
+        if self.task in ("text_multi_class_classification", "text_binary_classification", "seq2seq"):
             self.col_map_text = "autotrain_text"
             self.col_map_target = "autotrain_label"
         if self.task == "lm_training":
@@ -119,6 +120,19 @@ class AutoTrainProject:
 
         return _params
 
+    def _munge_params_seq2seq(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
+        _params["text_column"] = self.col_map_text
+        _params["target_column"] = self.col_map_target
+        _params["valid_split"] = "validation"
+
+        if "use_fp16" in _params:
+            _params["fp16"] = _params["use_fp16"]
+            _params.pop("use_fp16")
+
+        return _params
+
     def _munge_params_tabular(self, job_idx):
         _params = self._munge_common_params(job_idx)
         _params["id_column"] = self.col_map_id
@@ -150,16 +164,19 @@ class AutoTrainProject:
         for job_idx in range(self.num_jobs):
             if self.task_id == 9:
                 _params = self._munge_params_llm(job_idx)
-                _params = LLMTrainingParams.parse_obj(_params)
+                _params = LLMTrainingParams(**_params)
             elif self.task_id in (1, 2):
                 _params = self._munge_params_text_clf(job_idx)
-                _params = TextClassificationParams.parse_obj(_params)
+                _params = TextClassificationParams(**_params)
             elif self.task_id in (13, 14, 15, 16, 26):
                 _params = self._munge_params_tabular(job_idx)
-                _params = TabularParams.parse_obj(_params)
+                _params = TabularParams(**_params)
             elif self.task_id == 25:
                 _params = self._munge_params_dreambooth(job_idx)
-                _params = DreamBoothTrainingParams.parse_obj(_params)
+                _params = DreamBoothTrainingParams(**_params)
+            elif self.task_id == 28:
+                _params = self._munge_params_seq2seq(job_idx)
+                _params = Seq2SeqParams(**_params)
             else:
                 raise NotImplementedError
             logger.info(f"Creating Space for job: {job_idx}")
