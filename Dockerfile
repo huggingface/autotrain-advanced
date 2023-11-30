@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 ENV PATH="${HOME}/miniconda3/bin:${PATH}"
 ARG PATH="${HOME}/miniconda3/bin:${PATH}"
+ENV PATH="/app/ngc-cli:${PATH}"
+ARG PATH="/app/ngc-cli:${PATH}"
 
 RUN mkdir -p /tmp/model && \
     chown -R 1000:1000 /tmp/model && \
@@ -28,6 +30,7 @@ RUN apt-get update &&  \
     git \
     git-lfs \
     libgl1 \
+    unzip \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
@@ -62,6 +65,10 @@ SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && \
     conda clean -ya && \
     conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && conda clean -ya
+
+# install NGC CLI
+RUN wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.34.1/files/ngccli_linux.zip -O ngccli_linux.zip && unzip ngccli_linux.zip && \
+    chmod u+x ngc-cli/ngc
 
 COPY --chown=1000:1000 . /app/
 RUN pip install -e . && \

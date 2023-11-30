@@ -62,6 +62,10 @@ class AutoTrainProject:
             "T4 Small": "spaces-t4s",
             "CPU Upgrade": "spaces-cpu",
             "CPU (Free)": "spaces-cpuf",
+            "DGX 1xA100": "dgx-a100",
+            "DGX 2xA100": "dgx-2a100",
+            "DGX 4xA100": "dgx-4a100",
+            "DGX 8xA100": "dgx-8a100",
             # "Local": "local",
             # "AutoTrain": "autotrain",
         }

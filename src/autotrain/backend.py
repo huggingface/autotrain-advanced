@@ -429,8 +429,13 @@ class NGCRunner:
     def __post_init__(self):
         self.ngc_ace = os.environ.get("NGC_ACE")
         self.ngc_org = os.environ.get("NGC_ORG")
+        self.ngc_api_key = os.environ.get("NGC_CLI_API_KEY")
+        self.ngc_team = os.environ.get("NGC_TEAM")
         self.instance_map = {
             "dgx-a100": "dgxa100.80g.1.norm",
+            "dgx-2a100": "dgxa100.80g.2.norm",
+            "dgx-4a100": "dgxa100.80g.4.norm",
+            "dgx-8a100": "dgxa100.80g.8.norm",
         }
         logger.info("Creating NGC Job")
         logger.info(f"NGC_ACE: {self.ngc_ace}")
@@ -455,5 +460,30 @@ class NGCRunner:
         for k, v in self.env_vars.items():
             cmd += f" --env-var {k}:{v}"
 
-        # run using subprocess, wait for completion
-        subprocess.run(cmd, shell=True, check=True)
+        ngc_config_cmd = "ngc config set"
+        ngc_config_cmd += " --team {ngc_team} --org {ngc_org} --ace {ngc_ace}"
+        ngc_config_cmd = ngc_config_cmd.format(
+            # ngc_api_key=self.ngc_api_key,
+            ngc_team=self.ngc_team,
+            ngc_org=self.ngc_org,
+            ngc_ace=self.ngc_ace,
+        )
+        logger.info("Setting NGC API key")
+        ngc_config_process = subprocess.Popen(ngc_config_cmd, shell=True)
+        ngc_config_process.wait()
+
+        if ngc_config_process.returncode == 0:
+            logger.info("NGC API key set successfully")
+        else:
+            logger.error("Failed to set NGC API key")
+            # print full output
+            logger.error(ngc_config_process.stdout.read())
+            logger.error(ngc_config_process.stderr.read())
+            raise Exception("Failed to set NGC API key")
+
+        logger.info("Creating NGC Job")
+        subprocess.run(
+            cmd,
+            shell=True,
+            check=True,
+        )
