@@ -21,6 +21,7 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 _, _, USERS = app_utils.user_validation()
+ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 
 
 HIDDEN_PARAMS = [
@@ -132,7 +133,11 @@ async def read_form(request: Request):
     """
     if HF_TOKEN is None:
         return templates.TemplateResponse("error.html", {"request": request})
-    context = {"request": request, "valid_users": USERS}
+    context = {
+        "request": request,
+        "valid_users": USERS,
+        "enable_ngc": ENABLE_NGC,
+    }
     return templates.TemplateResponse("index.html", context)
 
 

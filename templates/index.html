@@ -130,10 +130,14 @@
                 <option value="CPU Upgrade">CPU Upgrade</option>
                 <option value="CPU (Free)">CPU (Free)</option>
               </optgroup>
-              <!-- <optgroup label="DGX Cloud">
-                <option value="A100 Large">4xA100 DGX</option>
-                <option value="A10G Large">2xA100 DGX</option>
-              </optgroup> -->
+              {% if enable_ngc == 1 %}
+              <optgroup label="DGX Cloud">
+                <option value="DGX 1xA100">1xA100 DGX</option>
+                <option value="DGX 2xA100">2xA100 DGX</option>
+                <option value="DGX 4xA100">4xA100 DGX</option>
+                <option value="DGX 8xA100">8xA100 DGX</option>
+              </optgroup>
+              {% endif %}
             </select>
           </div>
         </div>

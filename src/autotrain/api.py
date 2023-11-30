@@ -3,6 +3,7 @@ import json
 import os
 import signal
 import subprocess
+import time
 from contextlib import asynccontextmanager
 
 import psutil
@@ -34,8 +35,14 @@ class BackgroundRunner:
 
     async def run_main(self):
         while True:
-            await monitor_training_process(PID)
-            await asyncio.sleep(0.1)
+            status = get_process_status(PID)
+            status = status.strip().lower()
+            if status in ("completed", "error", "zombie"):
+                logger.info("Training process finished. Shutting down the server.")
+                time.sleep(5)
+                kill_process(os.getpid())
+                break
+            time.sleep(5)
 
 
 runner = BackgroundRunner()
@@ -44,7 +51,9 @@ runner = BackgroundRunner()
 def get_process_status(pid):
     try:
         process = psutil.Process(pid)
-        return process.status()
+        proc_status = process.status()
+        logger.info(f"Process status: {proc_status}")
+        return proc_status
     except psutil.NoSuchProcess:
         logger.info(f"No process found with PID: {pid}")
         return "Completed"
@@ -80,13 +89,11 @@ def kill_process(pid):
         return f"Process {pid} or one of its children has not terminated in time"
 
 
-async def monitor_training_process(pid: int):
-    while True:
-        status = get_process_status(pid)
-        if status == "Completed" or status == "Error":
-            logger.info("Training process finished. Shutting down the server.")
-            os.kill(os.getpid(), signal.SIGINT)
-            break
+def monitor_training_process(pid: int):
+    status = get_process_status(pid)
+    if status == "Completed" or status == "Error":
+        logger.info("Training process finished. Shutting down the server.")
+        os.kill(os.getpid(), signal.SIGINT)
 
 
 def run_training():

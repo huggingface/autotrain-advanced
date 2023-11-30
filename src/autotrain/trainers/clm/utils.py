@@ -36,6 +36,7 @@ This model was trained using AutoTrain. For more information, please visit [Auto
 # Usage
 
 ```python
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_path = "PATH_TO_THIS_REPO"
@@ -58,7 +59,7 @@ response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tok
 
 # Model response: "Hello! How can I assist you today?"
 print(response)
-
+```
 
 """
 

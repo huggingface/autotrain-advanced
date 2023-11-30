@@ -200,8 +200,12 @@ def train(config):
                     trust_remote_code=True,
                     use_flash_attention_2=config.use_flash_attention_2,
                 )
+            else:
+                model_ref = None
 
     model.resize_token_embeddings(len(tokenizer))
+    if model_ref is not None:
+        model_ref.resize_token_embeddings(len(tokenizer))
 
     if config.use_peft:
         if config.use_int8 or config.use_int4:
