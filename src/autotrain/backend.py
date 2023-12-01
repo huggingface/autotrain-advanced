@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -207,7 +206,7 @@ class EndpointsRunner:
                             "HF_TOKEN": self.params.token,
                             "AUTOTRAIN_USERNAME": self.username,
                             "PROJECT_NAME": self.params.project_name,
-                            "PARAMS": json.dumps(self.params.json()),
+                            "PARAMS": self.params.model_dump_json(),
                             "DATA_PATH": self.params.data_path,
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
@@ -368,13 +367,13 @@ class SpaceRunner:
             api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
 
     def _create_space(self):
-        if self.backend.startswith("dgx-"):
+        if self.backend.startswith("dgx-") or self.backend == "local":
             env_vars = {
                 "HF_TOKEN": self.params.token,
                 "AUTOTRAIN_USERNAME": self.username,
                 "PROJECT_NAME": self.params.project_name,
                 "TASK_ID": str(self.task_id),
-                "PARAMS": json.dumps(self.params.json()),
+                "PARAMS": self.params.model_dump_json(),
             }
             if isinstance(self.params, DreamBoothTrainingParams):
                 env_vars["DATA_PATH"] = self.params.image_path
@@ -385,12 +384,16 @@ class SpaceRunner:
                 env_vars["MODEL"] = self.params.model
                 env_vars["OUTPUT_MODEL_REPO"] = self.params.repo_id
 
-            ngc_runner = NGCRunner(
-                job_name=self.params.repo_id.replace("/", "-"),
-                env_vars=env_vars,
-                backend=self.backend,
-            )
-            ngc_runner.create()
+            if self.backend.startswith("dgx-"):
+                ngc_runner = NGCRunner(
+                    job_name=self.params.repo_id.replace("/", "-"),
+                    env_vars=env_vars,
+                    backend=self.backend,
+                )
+                ngc_runner.create()
+            else:
+                local_runner = LocalRunner(env_vars=env_vars)
+                local_runner.create()
             return
         api = HfApi(token=self.params.token)
         repo_id = f"{self.username}/autotrain-{self.params.project_name}"
@@ -418,6 +421,43 @@ class SpaceRunner:
             repo_type="space",
         )
         return repo_id
+
+
+def run_server():
+    import uvicorn
+
+    from autotrain.api import api
+
+    uvicorn.run(api, host="0.0.0.0", port=17860)
+
+
+@dataclass
+class LocalRunner:
+    env_vars: dict
+
+    def create(self):
+        logger.info("Starting server")
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+        os.environ["API_PORT"] = "17860"
+        import threading
+
+        thread = threading.Thread(target=run_server)
+        thread.start()
+        print("Server is running in a separate thread")
+        # cmd = "autotrain api --port 17860 --host 0.0.0.0"
+        # # start the server in the background as a new process
+        # logger.info("Starting server")
+        # proc = subprocess.Popen(cmd, shell=True, env=self.env_vars)
+        # proc.wait()
+        # if proc.returncode == 0:
+        #     logger.info("Server started successfully")
+        # else:
+        #     logger.error("Failed to start server")
+        #     # print full output
+        #     logger.error(proc.stdout.read())
+        #     logger.error(proc.stderr.read())
+        #     raise Exception("Failed to start server")
 
 
 @dataclass

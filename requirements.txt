@@ -27,7 +27,7 @@ tensorboard
 peft==0.6.2
 trl==0.7.4
 tiktoken==0.5.1
-transformers==4.35.1
+transformers==4.35.2
 accelerate==0.24.0
 diffusers==0.21.4
 bitsandbytes==0.41.0
