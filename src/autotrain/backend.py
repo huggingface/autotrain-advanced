@@ -446,7 +446,7 @@ class NGCRunner:
     def create(self):
         cmd = "ngc base-command job run --name {job_name}"
         cmd += " --priority NORMAL --order 50 --preempt RUNONCE --min-timeslice 0s"
-        cmd += " --total-runtime 3600s --ace {ngc_ace} --org {ngc_org} --instance {instance}"
+        cmd += " --total-runtime 259200s --ace {ngc_ace} --org {ngc_org} --instance {instance}"
         cmd += " --commandline 'set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0' -p 7860 --result /results"
         cmd += " --image '{ngc_org}/autotrain-advanced:latest'"
 
