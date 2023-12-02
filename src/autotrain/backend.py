@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -9,6 +8,7 @@ import requests
 from huggingface_hub import HfApi
 
 from autotrain import logger
+from autotrain.app_utils import run_training
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -207,7 +207,7 @@ class EndpointsRunner:
                             "HF_TOKEN": self.params.token,
                             "AUTOTRAIN_USERNAME": self.username,
                             "PROJECT_NAME": self.params.project_name,
-                            "PARAMS": json.dumps(self.params.json()),
+                            "PARAMS": self.params.model_dump_json(),
                             "DATA_PATH": self.params.data_path,
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
@@ -368,13 +368,13 @@ class SpaceRunner:
             api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
 
     def _create_space(self):
-        if self.backend.startswith("dgx-"):
+        if self.backend.startswith("dgx-") or self.backend == "local":
             env_vars = {
                 "HF_TOKEN": self.params.token,
                 "AUTOTRAIN_USERNAME": self.username,
                 "PROJECT_NAME": self.params.project_name,
                 "TASK_ID": str(self.task_id),
-                "PARAMS": json.dumps(self.params.json()),
+                "PARAMS": self.params.model_dump_json(),
             }
             if isinstance(self.params, DreamBoothTrainingParams):
                 env_vars["DATA_PATH"] = self.params.image_path
@@ -385,13 +385,19 @@ class SpaceRunner:
                 env_vars["MODEL"] = self.params.model
                 env_vars["OUTPUT_MODEL_REPO"] = self.params.repo_id
 
-            ngc_runner = NGCRunner(
-                job_name=self.params.repo_id.replace("/", "-"),
-                env_vars=env_vars,
-                backend=self.backend,
-            )
-            ngc_runner.create()
-            return
+            if self.backend.startswith("dgx-"):
+                ngc_runner = NGCRunner(
+                    job_name=self.params.repo_id.replace("/", "-"),
+                    env_vars=env_vars,
+                    backend=self.backend,
+                )
+                ngc_runner.create()
+                return
+            else:
+                local_runner = LocalRunner(env_vars=env_vars)
+                pid = local_runner.create()
+                return pid
+
         api = HfApi(token=self.params.token)
         repo_id = f"{self.username}/autotrain-{self.params.project_name}"
         api.create_repo(
@@ -418,6 +424,18 @@ class SpaceRunner:
             repo_type="space",
         )
         return repo_id
+
+
+@dataclass
+class LocalRunner:
+    env_vars: dict
+
+    def create(self):
+        logger.info("Starting server")
+        params = self.env_vars["PARAMS"]
+        task_id = int(self.env_vars["TASK_ID"])
+        training_pid = run_training(params, task_id, local=True)
+        return training_pid
 
 
 @dataclass

@@ -1,8 +1,6 @@
 import asyncio
-import json
 import os
 import signal
-import subprocess
 import time
 from contextlib import asynccontextmanager
 
@@ -10,12 +8,7 @@ import psutil
 from fastapi import FastAPI
 
 from autotrain import logger
-from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
-from autotrain.trainers.generic.params import GenericParams
-from autotrain.trainers.seq2seq.params import Seq2SeqParams
-from autotrain.trainers.tabular.params import TabularParams
-from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.app_utils import run_training
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -30,16 +23,12 @@ PID = None
 
 
 class BackgroundRunner:
-    def __init__(self):
-        self.value = 0
-
     async def run_main(self):
         while True:
             status = get_process_status(PID)
             status = status.strip().lower()
             if status in ("completed", "error", "zombie"):
                 logger.info("Training process finished. Shutting down the server.")
-                time.sleep(5)
                 kill_process(os.getpid())
                 break
             time.sleep(5)
@@ -96,118 +85,13 @@ def monitor_training_process(pid: int):
         os.kill(os.getpid(), signal.SIGINT)
 
 
-def run_training():
-    params = json.loads(PARAMS)
-    logger.info(params)
-    if TASK_ID == 9:
-        params = LLMTrainingParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.clm",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
-    elif TASK_ID == 28:
-        params = Seq2SeqParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.seq2seq",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
-    elif TASK_ID in (1, 2):
-        params = TextClassificationParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.text_classification",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
-    elif TASK_ID in (13, 14, 15, 16, 26):
-        params = TabularParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.tabular",
-            "--training_config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
-    elif TASK_ID == 27:
-        params = GenericParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.generic",
-            "--config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
-    elif TASK_ID == 25:
-        params = DreamBoothTrainingParams(**params)
-        params.project_name = "/tmp/model"
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.dreambooth",
-            "--training_config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
-
-    else:
-        raise NotImplementedError
-
-    cmd = [str(c) for c in cmd]
-    logger.info(cmd)
-    env = os.environ.copy()
-    process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
-    return process.pid
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    process_pid = run_training()
+    process_pid = run_training(params=PARAMS, task_id=TASK_ID)
     logger.info(f"Started training with PID {process_pid}")
     global PID
     PID = process_pid
     asyncio.create_task(runner.run_main())
-    # background_tasks.add_task(monitor_training_process, PID)
     yield
 
 
@@ -220,21 +104,13 @@ logger.info(f"MODEL: {MODEL}")
 logger.info(f"OUTPUT_MODEL_REPO: {OUTPUT_MODEL_REPO}")
 
 
-# @api.on_event("startup")
-# async def startup_event():
-#     process_pid = run_training()
-#     logger.info(f"Started training with PID {process_pid}")
-#     global PID
-#     PID = process_pid
-
-
 @api.get("/")
 async def root():
     return "Your model is being trained..."
 
 
 @api.get("/status")
-async def status():
+async def app_status():
     return get_process_status(pid=PID)
 
 

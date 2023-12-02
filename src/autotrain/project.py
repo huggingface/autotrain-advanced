@@ -66,7 +66,7 @@ class AutoTrainProject:
             "DGX 2xA100": "dgx-2a100",
             "DGX 4xA100": "dgx-4a100",
             "DGX 8xA100": "dgx-8a100",
-            # "Local": "local",
+            "Local": "local",
             # "AutoTrain": "autotrain",
         }
 
@@ -193,8 +193,6 @@ class AutoTrainProject:
 
     def create(self):
         if self.backend == "AutoTrain":
-            raise NotImplementedError
-        if self.backend == "Local":
             raise NotImplementedError
         if self.backend in self.spaces_backends:
             return self.create_spaces()

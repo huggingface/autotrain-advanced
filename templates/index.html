@@ -47,8 +47,7 @@
       <img src="/static/logo.png" alt="AutoTrain" , class="w-32">
     </div>
   </header>
-
-  <div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-2xl">
+  <div class="form-container max-w-5xl mx-auto mt-10 p-6 shadow-2xl">
     <div class="block text-sm font-normal text-gray-700">AutoTrain Advanced is a no-code solution that
       allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct
       format for project to be created.
@@ -56,162 +55,155 @@
         class="text-blue-700">here</a>.
     </div>
     <hr class="h-px my-4 bg-gray-200 border-b-2 dark:bg-gray-700">
-    <form action="#" method="post" class="space-y-4" enctype="multipart/form-data">
-      <!-- <div class="columns-2">
-        <div>
-          <label for="username" class="block text-sm font-medium text-gray-700">AutoTrain Username</label>
-          <input type="text" name="username" id="username" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
-        <div>
-          <label for="token" class="block text-sm font-medium text-gray-700">HuggingFace Token</label>
-          <input type="password" name="token" id="token" class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-        </div>  
-      </div> -->
-      <div class="form-group">
-        <label for="autotrain_user" class="block text-sm font-medium text-gray-700">Hugging Face User</label>
-        <select name="autotrain_user" , id="autotrain_user"
-          class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          {% for user in valid_users %}
-          <option value="{{ user }}">{{ user }}</option>
-          {% endfor %}
-        </select>
-
-      </div>
-      <div class="columns-2">
-        <div class="mb-4">
-          <label for="project_name" class="block text-sm font-medium text-gray-700">Project name</label>
-          <input type="text" name="project_name" id="project_name"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="eg: imdb-sentiment-analysis">
-        </div>
+    <form action="#" method="post" class="grid grid-cols-2 gap-2" enctype="multipart/form-data">
+      <div>
         <div class="form-group">
-          <label for="task" class="block text-sm font-medium text-gray-700">Task</label>
-          <select id="task" name="task"
+          <label for="autotrain_user" class="block text-sm font-medium text-gray-700">Hugging Face User</label>
+          <select name="autotrain_user" , id="autotrain_user"
             class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            <optgroup label="LLM Finetuning">
-              <option value="llm:sft">LLM SFT</option>
-              <option value="llm:generic">LLM Generic</option>
-              <option value="llm:dpo">LLM DPO</option>
-              <option value="llm:reward">LLM Reward</option>
-            </optgroup>
-            <optgroup label="Other Text Tasks">
-              <option value="text-classification">Text Classification</option>
-              <option value="seq2seq">Sequence To Sequence</option>
-            </optgroup>
-            <optgroup label="Image Tasks">
-              <option value="dreambooth">DreamBooth LoRA</option>
-              <option value="image-classification">Image Classification</option>
-            </optgroup>
-            <optgroup label="Tabular Tasks">
-              <option value="tabular:classification">Tabular Classification</option>
-              <option value="tabular:regression">Tabular Regression</option>
-            </optgroup>
+            {% for user in valid_users %}
+            <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
           </select>
         </div>
-      </div>
-      <div class="form-group">
         <div class="columns-2">
           <div class="form-group">
-            <label for="base_model" class="block text-sm font-medium text-gray-700">Base Model</label>
-            <input type="text" name="base_model" id="base_model"
+            <label for="project_name" class="text-sm font-medium text-gray-700">Project name</label>
+            <input type="text" name="project_name" id="project_name"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="HuggingFaceH4/zephyr-7b-beta">
+              placeholder="eg: imdb-sentiment-analysis">
           </div>
           <div class="form-group">
-            <label for="hardware" class="block text-sm font-medium text-gray-700">Hardware</label>
-            <select id="hardware" name="hardware"
+            <label for="task" class="text-sm font-medium text-gray-700">Task</label>
+            <select id="task" name="task"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <optgroup label="Hugging Face Spaces">
-                <option value="A10G Large">A10G Large</option>
-                <option value="A100 Large">A100 Large</option>
-                <option value="A10G Small">A10G Small</option>
-                <option value="T4 Medium">T4 Medium</option>
-                <option value="T4 Small">T4 Small</option>
-                <option value="CPU Upgrade">CPU Upgrade</option>
-                <option value="CPU (Free)">CPU (Free)</option>
+              <optgroup label="LLM Finetuning">
+                <option value="llm:sft">LLM SFT</option>
+                <option value="llm:generic">LLM Generic</option>
+                <option value="llm:dpo">LLM DPO</option>
+                <option value="llm:reward">LLM Reward</option>
               </optgroup>
-              {% if enable_ngc == 1 %}
-              <optgroup label="DGX Cloud">
-                <option value="DGX 1xA100">1xA100 DGX</option>
-                <option value="DGX 2xA100">2xA100 DGX</option>
-                <option value="DGX 4xA100">4xA100 DGX</option>
-                <option value="DGX 8xA100">8xA100 DGX</option>
+              <optgroup label="Other Text Tasks">
+                <option value="text-classification">Text Classification</option>
+                <option value="seq2seq">Sequence To Sequence</option>
               </optgroup>
-              {% endif %}
+              <optgroup label="Image Tasks">
+                <option value="dreambooth">DreamBooth LoRA</option>
+                <option value="image-classification">Image Classification</option>
+              </optgroup>
+              <optgroup label="Tabular Tasks">
+                <option value="tabular:classification">Tabular Classification</option>
+                <option value="tabular:regression">Tabular Regression</option>
+              </optgroup>
             </select>
           </div>
         </div>
-      </div>
-      <div class="form-group">
-        <div class="mb-4">
-          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
-            data-tabs-toggle="#default-tab-content" role="tablist">
-            <li class="me-2" role="presentation">
-              <button class="inline-block p-4 border-b-2 rounded-t-lg" id="training-data-tab"
-                data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
-                aria-selected="false">Training Data</button>
-            </li>
-            <li class="me-2" role="presentation">
-              <button class="inline-block p-4 border-b-2 rounded-t-lg" id="valid-data-tab"
-                data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
-                aria-selected="false">Validation Data
-                (optional)</button>
-            </li>
-          </ul>
+        <div class="form-group">
+          <label for="base_model" class="text-sm font-medium text-gray-700">Base Model</label>
+          <input type="text" name="base_model" id="base_model"
+            class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="HuggingFaceH4/zephyr-7b-beta">
         </div>
-        <div id="default-tab-content">
-          <div class="hidden p-4 rounded-lg" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
-            <div class="flex items-center justify-center w-full h-20">
-              <label for="data_files_training"
-                class="flex flex-col items-center justify-center w-full h-40cursor-pointer">
-                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 20 16">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                  </svg>
-                  <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
-                      <p class="text-xs text-gray-700" id="file-container-training"></p>
-                </div>
-                <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
-              </label>
+        <div class="form-group">
+          <label for="hardware" class="text-sm font-medium text-gray-700">Hardware</label>
+          <select id="hardware" name="hardware"
+            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            {% if enable_local == 1 %}
+            <option value="Local">Local</option>
+            {% else %}
+            <optgroup label="Hugging Face Spaces">
+              <option value="A10G Large">A10G Large</option>
+              <option value="A100 Large">A100 Large</option>
+              <option value="A10G Small">A10G Small</option>
+              <option value="T4 Medium">T4 Medium</option>
+              <option value="T4 Small">T4 Small</option>
+              <option value="CPU Upgrade">CPU Upgrade</option>
+              <option value="CPU (Free)">CPU (Free)</option>
+            </optgroup>
+            {% if enable_ngc == 1 %}
+            <optgroup label="DGX Cloud">
+              <option value="DGX 1xA100">1xA100 DGX</option>
+              <option value="DGX 2xA100">2xA100 DGX</option>
+              <option value="DGX 4xA100">4xA100 DGX</option>
+              <option value="DGX 8xA100">8xA100 DGX</option>
+            </optgroup>
+            {% endif %}
+            {% endif %}
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="mb-4">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
+              data-tabs-toggle="#default-tab-content" role="tablist">
+              <li class="me-2" role="presentation">
+                <button class="inline-block p-4 border-b-2 rounded-t-lg" id="training-data-tab"
+                  data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
+                  aria-selected="false">Training Data</button>
+              </li>
+              <li class="me-2" role="presentation">
+                <button class="inline-block p-4 border-b-2 rounded-t-lg" id="valid-data-tab"
+                  data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
+                  aria-selected="false">Validation Data
+                  (optional)</button>
+              </li>
+            </ul>
+          </div>
+          <div id="default-tab-content">
+            <div class="hidden p-4 rounded-lg" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
+              <div class="flex items-center justify-center w-full h-20">
+                <label for="data_files_training"
+                  class="flex flex-col items-center justify-center w-full h-40cursor-pointer">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                      fill="none" viewBox="0 0 20 16">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                    </svg>
+                    <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
+                        <p class="text-xs text-gray-700" id="file-container-training"></p>
+                  </div>
+                  <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
+                </label>
+              </div>
+            </div>
+            <div class="hidden p-4 rounded-lg" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
+              <div class="flex items-center justify-center w-full h-20">
+                <label for="data_files_valid"
+                  class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                      fill="none" viewBox="0 0 20 16">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                    </svg>
+                    <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
+                        <p class="text-xs text-gray-700" id="file-container-valid"></p>
+                  </div>
+                  <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
+                </label>
+              </div>
             </div>
           </div>
-          <div class="hidden p-4 rounded-lg" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
-            <div class="flex items-center justify-center w-full h-20">
-              <label for="data_files_valid"
-                class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
-                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 20 16">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                  </svg>
-                  <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
-                      <p class="text-xs text-gray-700" id="file-container-valid"></p>
-                </div>
-                <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
-              </label>
-            </div>
-          </div>
+        </div>
+        <div class="hidden form-group">
+          <label for="column_mapping" class="block mb-2 text-sm font-medium text-gray-700">Column Mapping (task_column:
+            user_data_column)</label>
+          <input id="column_mapping" name="column_mapping" class="block p-2.5 w-full text-sm text-gray-900"
+            placeholder=""></input>
+        </div>
+        <div class="form-actions mt-6">
+          <button type="submit"
+            class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
+            Training</button>
         </div>
       </div>
-      <div class="hidden form-group">
-        <label for="column_mapping" class="block mb-2 text-sm font-medium text-gray-700">Column Mapping (task_column:
-          user_data_column)</label>
-        <input id="column_mapping" name="column_mapping" class="block p-2.5 w-full text-sm text-gray-900"
-          placeholder=""></input>
-      </div>
-      <div class="form-group">
-        <label for="params" class="block mb-2 text-sm font-medium text-gray-700">Training Parameters (find params to
-          copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
-        <textarea id="params" name="params" rows="4" class="block p-2.5 w-full text-sm text-gray-900"
-          placeholder="Loading..."></textarea>
-      </div>
-      <div class="form-actions mt-6">
-        <button type="submit"
-          class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
-          Training</button>
+      <div>
+        <div class="form-group">
+          <label for="params" class="text-sm font-medium text-gray-700">Training Parameters (find params to
+            copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
+          <textarea id="params" name="params" rows="20" class="p-2.5 w-full text-sm text-gray-900"
+            placeholder="Loading..."></textarea>
+        </div>
       </div>
     </form>
     <div id="json-error-message" style="color: red;"></div>
