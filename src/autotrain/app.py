@@ -3,13 +3,14 @@ import os
 from typing import List
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from autotrain import app_utils, logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
+from autotrain.db import AutoTrainDB
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -22,6 +23,8 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 _, _, USERS = app_utils.user_validation()
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
+DB = AutoTrainDB("autotrain.db")
+AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 0))
 
 
 HIDDEN_PARAMS = [
@@ -137,6 +140,7 @@ async def read_form(request: Request):
         "request": request,
         "valid_users": USERS,
         "enable_ngc": ENABLE_NGC,
+        "enable_local": AUTOTRAIN_LOCAL,
     }
     return templates.TemplateResponse("index.html", context)
 
@@ -202,8 +206,30 @@ async def handle_form(
     """
     This function is used to handle the form submission
     """
+    logger.info(f"hardware: {hardware}")
+    if hardware == "Local":
+        running_jobs = DB.get_running_jobs()
+        logger.info(f"Running jobs: {running_jobs}")
+        if running_jobs:
+            for _pid in running_jobs:
+                logger.info(f"Killing PID: {_pid}")
+                proc_status = app_utils.get_process_status(_pid)
+                proc_status = proc_status.strip().lower()
+                if proc_status in ("completed", "error", "zombie"):
+                    logger.info(f"Process {_pid} is already completed. Skipping...")
+                    try:
+                        app_utils.kill_process_by_pid(_pid)
+                    except Exception as e:
+                        logger.info(f"Error while killing process: {e}")
+                    DB.delete_job(_pid)
 
-    # if HF_TOKEN is None is None, return error
+        running_jobs = DB.get_running_jobs()
+        if running_jobs:
+            logger.info(f"Running jobs: {running_jobs}")
+            raise HTTPException(
+                status_code=409, detail="Another job is already running. Please wait for it to finish."
+            )
+
     if HF_TOKEN is None:
         return {"error": "HF_TOKEN not set"}
 
@@ -304,4 +330,7 @@ async def handle_form(
     jobs_df = pd.DataFrame([params])
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
     ids = project.create()
+    if hardware == "Local":
+        for _id in ids:
+            DB.add_job(_id)
     return {"success": "true", "space_ids": ids}

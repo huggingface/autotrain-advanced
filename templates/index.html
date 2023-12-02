@@ -108,6 +108,9 @@
           <label for="hardware" class="text-sm font-medium text-gray-700">Hardware</label>
           <select id="hardware" name="hardware"
             class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            {% if enable_local == 1 %}
+            <option value="Local">Local</option>
+            {% else %}
             <optgroup label="Hugging Face Spaces">
               <option value="A10G Large">A10G Large</option>
               <option value="A100 Large">A100 Large</option>
@@ -116,7 +119,6 @@
               <option value="T4 Small">T4 Small</option>
               <option value="CPU Upgrade">CPU Upgrade</option>
               <option value="CPU (Free)">CPU (Free)</option>
-              <option value="Local">Local</option>
             </optgroup>
             {% if enable_ngc == 1 %}
             <optgroup label="DGX Cloud">
@@ -125,6 +127,7 @@
               <option value="DGX 4xA100">4xA100 DGX</option>
               <option value="DGX 8xA100">8xA100 DGX</option>
             </optgroup>
+            {% endif %}
             {% endif %}
           </select>
         </div>

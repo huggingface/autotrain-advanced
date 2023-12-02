@@ -8,6 +8,7 @@ import requests
 from huggingface_hub import HfApi
 
 from autotrain import logger
+from autotrain.app_utils import run_training
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -391,10 +392,12 @@ class SpaceRunner:
                     backend=self.backend,
                 )
                 ngc_runner.create()
+                return
             else:
                 local_runner = LocalRunner(env_vars=env_vars)
-                local_runner.create()
-            return
+                pid = local_runner.create()
+                return pid
+
         api = HfApi(token=self.params.token)
         repo_id = f"{self.username}/autotrain-{self.params.project_name}"
         api.create_repo(
@@ -423,41 +426,16 @@ class SpaceRunner:
         return repo_id
 
 
-def run_server():
-    import uvicorn
-
-    from autotrain.api import api
-
-    uvicorn.run(api, host="0.0.0.0", port=17860)
-
-
 @dataclass
 class LocalRunner:
     env_vars: dict
 
     def create(self):
         logger.info("Starting server")
-        for key, value in self.env_vars.items():
-            os.environ[key] = value
-        os.environ["API_PORT"] = "17860"
-        import threading
-
-        thread = threading.Thread(target=run_server)
-        thread.start()
-        print("Server is running in a separate thread")
-        # cmd = "autotrain api --port 17860 --host 0.0.0.0"
-        # # start the server in the background as a new process
-        # logger.info("Starting server")
-        # proc = subprocess.Popen(cmd, shell=True, env=self.env_vars)
-        # proc.wait()
-        # if proc.returncode == 0:
-        #     logger.info("Server started successfully")
-        # else:
-        #     logger.error("Failed to start server")
-        #     # print full output
-        #     logger.error(proc.stdout.read())
-        #     logger.error(proc.stderr.read())
-        #     raise Exception("Failed to start server")
+        params = self.env_vars["PARAMS"]
+        task_id = int(self.env_vars["TASK_ID"])
+        training_pid = run_training(params, task_id, local=True)
+        return training_pid
 
 
 @dataclass

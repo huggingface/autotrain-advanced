@@ -1,7 +1,10 @@
 import json
 import os
+import signal
+import socket
 import subprocess
 
+import psutil
 import requests
 
 from autotrain import config, logger
@@ -11,6 +14,41 @@ from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+
+
+def get_process_status(pid):
+    try:
+        process = psutil.Process(pid)
+        proc_status = process.status()
+        logger.info(f"Process status: {proc_status}")
+        return proc_status
+    except psutil.NoSuchProcess:
+        logger.info(f"No process found with PID: {pid}")
+        return "Completed"
+
+
+def find_pid_by_port(port):
+    """Find PID by port number."""
+    try:
+        result = subprocess.run(["lsof", "-i", f":{port}", "-t"], capture_output=True, text=True, check=True)
+        pids = result.stdout.strip().split("\n")
+        return [int(pid) for pid in pids if pid.isdigit()]
+    except subprocess.CalledProcessError:
+        return []
+
+
+def kill_process_by_pid(pid):
+    """Kill process by PID."""
+    os.kill(pid, signal.SIGTERM)
+
+
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("localhost", port)) == 0
+
+
+def kill_process_on_port(port):
+    os.system(f"fuser -k {port}/tcp")
 
 
 def user_authentication(token):
@@ -64,12 +102,12 @@ def user_validation():
     return user_token, valid_can_pay, who_is_training
 
 
-def run_training(params, task_id):
+def run_training(params, task_id, local=False):
     params = json.loads(params)
     logger.info(params)
     if task_id == 9:
         params = LLMTrainingParams(**params)
-        if os.environ.get("API_PORT") is None:
+        if not local:
             params.project_name = "/tmp/model"
         else:
             params.project_name = os.path.join("output", params.project_name)
@@ -91,7 +129,10 @@ def run_training(params, task_id):
         )
     elif task_id == 28:
         params = Seq2SeqParams(**params)
-        params.project_name = "/tmp/model"
+        if not local:
+            params.project_name = "/tmp/model"
+        else:
+            params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
         cmd.append("--mixed_precision")
@@ -110,7 +151,10 @@ def run_training(params, task_id):
         )
     elif task_id in (1, 2):
         params = TextClassificationParams(**params)
-        params.project_name = "/tmp/model"
+        if not local:
+            params.project_name = "/tmp/model"
+        else:
+            params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
         cmd.append("--mixed_precision")
@@ -129,7 +173,10 @@ def run_training(params, task_id):
         )
     elif task_id in (13, 14, 15, 16, 26):
         params = TabularParams(**params)
-        params.project_name = "/tmp/model"
+        if not local:
+            params.project_name = "/tmp/model"
+        else:
+            params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         cmd = [
             "python",
@@ -140,7 +187,10 @@ def run_training(params, task_id):
         ]
     elif task_id == 27:
         params = GenericParams(**params)
-        params.project_name = "/tmp/model"
+        if not local:
+            params.project_name = "/tmp/model"
+        else:
+            params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         cmd = [
             "python",
@@ -151,7 +201,10 @@ def run_training(params, task_id):
         ]
     elif task_id == 25:
         params = DreamBoothTrainingParams(**params)
-        params.project_name = "/tmp/model"
+        if not local:
+            params.project_name = "/tmp/model"
+        else:
+            params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         cmd = [
             "python",

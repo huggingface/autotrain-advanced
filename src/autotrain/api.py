@@ -1,7 +1,6 @@
 import asyncio
 import os
 import signal
-import subprocess
 import time
 from contextlib import asynccontextmanager
 
@@ -21,8 +20,6 @@ DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 PID = None
-API_PORT = os.environ.get("API_PORT", None)
-logger.info(f"API_PORT: {API_PORT}")
 
 
 class BackgroundRunner:
@@ -32,11 +29,7 @@ class BackgroundRunner:
             status = status.strip().lower()
             if status in ("completed", "error", "zombie"):
                 logger.info("Training process finished. Shutting down the server.")
-                time.sleep(5)
-                if API_PORT is not None:
-                    subprocess.run(f"fuser -k {API_PORT}/tcp", shell=True, check=True)
-                else:
-                    kill_process(os.getpid())
+                kill_process(os.getpid())
                 break
             time.sleep(5)
 
@@ -99,7 +92,6 @@ async def lifespan(app: FastAPI):
     global PID
     PID = process_pid
     asyncio.create_task(runner.run_main())
-    # background_tasks.add_task(monitor_training_process, PID)
     yield
 
 
@@ -118,7 +110,7 @@ async def root():
 
 
 @api.get("/status")
-async def status():
+async def app_status():
     return get_process_status(pid=PID)
 
 
