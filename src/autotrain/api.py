@@ -1,7 +1,6 @@
 import asyncio
 import os
 import signal
-import time
 from contextlib import asynccontextmanager
 
 import psutil
@@ -31,7 +30,7 @@ class BackgroundRunner:
                 logger.info("Training process finished. Shutting down the server.")
                 kill_process(os.getpid())
                 break
-            time.sleep(5)
+            await asyncio.sleep(5)
 
 
 runner = BackgroundRunner()
