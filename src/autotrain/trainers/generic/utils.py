@@ -60,7 +60,8 @@ def run_command(params):
         if params.args:
             for arg in params.args:
                 cmd.append(f"--{arg}")
-                cmd.append(params.args[arg])
+                if params.args[arg] != "":
+                    cmd.append(params.args[arg])
         pipe = subprocess.Popen(cmd, cwd=params.project_name)
         pipe.wait()
         logger.info("Command finished.")

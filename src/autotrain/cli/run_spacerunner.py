@@ -65,7 +65,7 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             },
             {
                 "arg": "--args",
-                "help": "Arguments to pass to the script, e.g. --args foo=bar;foo2=bar2;foo3=bar3",
+                "help": "Arguments to pass to the script, e.g. --args foo=bar;foo2=bar2;foo3=bar3;store_true_arg",
                 "required": False,
                 "type": str,
             },
@@ -105,13 +105,27 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
 
         env_vars = {}
         if self.args.env:
-            env_vars = dict([env_var.split("=") for env_var in self.args.env.split(";")])
+            for env_name_value in self.args.env.split(";"):
+                if len(env_name_value.split("=")) == 2:
+                    env_vars[env_name_value.split("=")[0]] = env_name_value.split("=")[1]
+                else:
+                    raise ValueError("Invalid environment variable format.")
         self.args.env = env_vars
 
-        args = {}
+        app_args = {}
+        store_true_args = []
         if self.args.args:
-            args = dict([arg.split("=") for arg in self.args.args.split(";")])
-        self.args.args = args
+            for arg_name_value in self.args.args.split(";"):
+                if len(arg_name_value.split("=")) == 1:
+                    store_true_args.append(arg_name_value)
+                elif len(arg_name_value.split("=")) == 2:
+                    app_args[arg_name_value.split("=")[0]] = arg_name_value.split("=")[1]
+                else:
+                    raise ValueError("Invalid argument format.")
+
+        for arg_name in store_true_args:
+            app_args[arg_name] = ""
+        self.args.args = app_args
 
     def run(self):
         dataset_id = create_dataset_repo(
