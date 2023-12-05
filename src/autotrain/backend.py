@@ -500,12 +500,16 @@ class NGCRunner:
             logger.error(ngc_config_process.stderr.read())
             raise Exception("Failed to set NGC API key")
 
-        # run ngc diag all and print output
-        ngc_diag_cmd = "ngc diag all"
-        ngc_diag_process = subprocess.Popen(ngc_diag_cmd, shell=True)
-        ngc_diag_process.wait()
-        logger.info("NGC Diag output")
-        logger.info(ngc_diag_process.stdout.read())
+        ngc_diag_cmd = ["ngc", "diag", "all"]
+        process = subprocess.run(ngc_diag_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = process.stdout
+        error = process.stderr
+        if process.returncode != 0:
+            logger.info("NGC DIAG ALL Error occurred:")
+            logger.info(error)
+        else:
+            logger.info("NGC DIAG ALL output:")
+            logger.info(output)
 
         logger.info("Creating NGC Job")
         subprocess.run(
