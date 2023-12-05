@@ -57,6 +57,10 @@ def install_requirements(params):
 def run_command(params):
     if os.path.exists(f"{params.project_name}/script.py"):
         cmd = ["python", "script.py"]
+        if params.args:
+            for arg in params.args:
+                cmd.append(f"--{arg}")
+                cmd.append(params.args[arg])
         pipe = subprocess.Popen(cmd, cwd=params.project_name)
         pipe.wait()
         logger.info("Command finished.")

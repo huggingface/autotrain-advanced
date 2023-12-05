@@ -63,6 +63,12 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--args",
+                "help": "Arguments to pass to the script, e.g. --args foo=bar;foo2=bar2;foo3=bar3",
+                "required": False,
+                "type": str,
+            },
         ]
         run_spacerunner_parser = parser.add_parser("spacerunner", description="✨ Run AutoTrain SpaceRunner")
         for arg in arg_list:
@@ -102,6 +108,11 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             env_vars = dict([env_var.split("=") for env_var in self.args.env.split(";")])
         self.args.env = env_vars
 
+        args = {}
+        if self.args.args:
+            args = dict([arg.split("=") for arg in self.args.args.split(";")])
+        self.args.args = args
+
     def run(self):
         dataset_id = create_dataset_repo(
             username=self.args.username,
@@ -117,6 +128,8 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             backend=self.args.backend,
             script_path=self.args.script_path,
             env=self.args.env,
+            args=self.args.args,
+            repo_id=f"{self.args.username}/{self.args.project_name}",
         )
         sr = SpaceRunner(params=params, backend=self.args.backend)
         sr.prepare()
