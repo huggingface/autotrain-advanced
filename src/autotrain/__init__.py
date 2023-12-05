@@ -24,10 +24,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import warnings
 
-from autotrain.logging import custom_logger as logger
-
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 
-__version__ = "0.6.48.dev0"
+__version__ = "0.6.48"
