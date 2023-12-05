@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -374,7 +375,7 @@ class SpaceRunner:
                 "AUTOTRAIN_USERNAME": self.username,
                 "PROJECT_NAME": self.params.project_name,
                 "TASK_ID": str(self.task_id),
-                "PARAMS": self.params.model_dump_json(),
+                "PARAMS": json.dumps(self.params.model_dump_json()),
             }
             if isinstance(self.params, DreamBoothTrainingParams):
                 env_vars["DATA_PATH"] = self.params.image_path
