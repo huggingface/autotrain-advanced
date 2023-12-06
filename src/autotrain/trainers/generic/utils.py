@@ -34,10 +34,50 @@ def pull_dataset_repo(params):
     )
 
 
+def uninstall_requirements(params):
+    if os.path.exists(f"{params.project_name}/requirements.txt"):
+        # read the requirements.txt
+        uninstall_list = []
+        with open(f"{params.project_name}/requirements.txt", "r") as f:
+            for line in f:
+                if line.startswith("-"):
+                    uninstall_list.append(line[1:])
+
+        # create an uninstall.txt
+        with open(f"{params.project_name}/uninstall.txt", "w") as f:
+            for line in uninstall_list:
+                f.write(line)
+
+        pipe = subprocess.Popen(
+            [
+                "pip",
+                "uninstall",
+                "-r",
+                "uninstall.txt",
+                "-y",
+            ],
+            cwd=params.project_name,
+        )
+        pipe.wait()
+        logger.info("Requirements uninstalled.")
+        return
+
+
 def install_requirements(params):
     # check if params.project_name has a requirements.txt
     if os.path.exists(f"{params.project_name}/requirements.txt"):
         # install the requirements using subprocess, wait for it to finish
+        install_list = []
+
+        with open(f"{params.project_name}/requirements.txt", "r") as f:
+            for line in f:
+                if not line.startswith("-"):
+                    install_list.append(line)
+
+        with open(f"{params.project_name}/requirements.txt", "w") as f:
+            for line in install_list:
+                f.write(line)
+
         pipe = subprocess.Popen(
             [
                 "pip",

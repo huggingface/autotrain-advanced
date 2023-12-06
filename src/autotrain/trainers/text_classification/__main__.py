@@ -91,11 +91,20 @@ def train(config):
 
     try:
         model = AutoModelForSequenceClassification.from_pretrained(
-            config.model, config=model_config, trust_remote_code=True, token=config.token
+            config.model,
+            config=model_config,
+            trust_remote_code=True,
+            token=config.token,
+            ignore_mismatched_sizes=True,
         )
     except OSError:
         model = AutoModelForSequenceClassification.from_pretrained(
-            config.model, config=model_config, from_tf=True, trust_remote_code=True, token=config.token
+            config.model,
+            config=model_config,
+            from_tf=True,
+            trust_remote_code=True,
+            token=config.token,
+            ignore_mismatched_sizes=True,
         )
 
     tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)

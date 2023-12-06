@@ -33,12 +33,6 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             help="Host to run the app on",
             required=False,
         )
-        run_app_parser.add_argument(
-            "--task",
-            type=str,
-            required=False,
-            help="Task to run",
-        )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
     def __init__(self, port, host, task):
@@ -47,14 +41,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.task = task
 
     def run(self):
-        if os.environ.get("TASK") == "Dreambooth" or self.task == "dreambooth":
-            from ..apps.dreambooth import main
-        elif os.environ.get("TASK") == "LLM":
-            from ..apps.llm import main
-        elif os.environ.get("TASK") == "TEXT_CLASSIFICATION":
-            from ..apps.text_classification import main
-        else:
-            from ..apps.main import main
+        import uvicorn
 
-        demo = main()
-        demo.queue(concurrency_count=10).launch()
+        from autotrain.app import app
+
+        uvicorn.run(app, host=self.host, port=self.port, workers=os.cpu_count())

@@ -26,6 +26,9 @@ def run(config):
     logger.info("Downloading data repo...")
     utils.pull_dataset_repo(config)
 
+    logger.info("Unintalling requirements...")
+    utils.uninstall_requirements(config)
+
     # install the requirements
     logger.info("Installing requirements...")
     utils.install_requirements(config)
