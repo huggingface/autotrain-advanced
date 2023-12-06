@@ -67,7 +67,11 @@ class AutoTrainProject:
             "DGX 4xA100": "dgx-4a100",
             "DGX 8xA100": "dgx-8a100",
             "Local": "local",
-            # "AutoTrain": "autotrain",
+            "EP US-East-1 1xA10g": "ep-aws-useast1-m",
+            "EP US-East-1 1xA100": "ep-aws-useast1-xl",
+            "EP US-East-1 2xA100": "ep-aws-useast1-2xl",
+            "EP US-East-1 4xA100": "ep-aws-useast1-4xl",
+            "EP US-East-1 8xA100": "ep-aws-useast1-8xl",
         }
 
         self.job_params_json = self.job_params.to_json(orient="records")

@@ -269,8 +269,16 @@ class SpaceRunner:
             "t4s": "t4-small",
             "cpu": "cpu-upgrade",
             "cpuf": "cpu-basic",
-            "dgx-a100": "dgxa100.80g.1.norm",
+            "dgx-a100": "dgx-ngc",
+            "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
+            "ep-aws-useast1-m": "aws_us-east-1_gpu_medium_g5.2xlarge",
+            "ep-aws-useast1-l": "aws_us-east-1_gpu_large_g4dn.12xlarge",
+            "ep-aws-useast1-xl": "aws_us-east-1_gpu_xlarge_p4de",
+            "ep-aws-useast1-2xl": "aws_us-east-1_gpu_2xlarge_p4de",
+            "ep-aws-useast1-4xl": "aws_us-east-1_gpu_4xlarge_p4de",
+            "ep-aws-useast1-8xl": "aws_us-east-1_gpu_8xlarge_p4de",
         }
+
         if not isinstance(self.params, GenericParams):
             if self.params.repo_id is not None:
                 self.username = self.params.repo_id.split("/")[0]
@@ -280,6 +288,8 @@ class SpaceRunner:
                 raise ValueError("Must provide either repo_id or username")
         else:
             self.username = self.params.username
+
+        self.ep_api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{self.username}"
 
         if self.params.repo_id is None and self.params.username is not None:
             self.params.repo_id = f"{self.params.username}/{self.params.project_name}"
@@ -368,6 +378,53 @@ class SpaceRunner:
             api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.params.model)
             api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
 
+    def _create_endpoint(self):
+        hardware = self.spaces_backends[self.backend]
+        accelerator = hardware.split("_")[2]
+        instance_size = hardware.split("_")[3]
+        region = hardware.split("_")[1]
+        vendor = hardware.split("_")[0]
+        instance_type = hardware.split("_")[4]
+        payload = {
+            "accountId": self.username,
+            "compute": {
+                "accelerator": accelerator,
+                "instanceSize": instance_size,
+                "instanceType": instance_type,
+                "scaling": {"maxReplica": 1, "minReplica": 1},
+            },
+            "model": {
+                "framework": "custom",
+                "image": {
+                    "custom": {
+                        "env": {
+                            "HF_TOKEN": self.params.token,
+                            "AUTOTRAIN_USERNAME": self.username,
+                            "PROJECT_NAME": self.params.project_name,
+                            "PARAMS": self.params.model_dump_json(),
+                            "DATA_PATH": self.params.data_path,
+                            "TASK_ID": str(self.task_id),
+                            "MODEL": self.params.model,
+                            "OUTPUT_MODEL_REPO": self.params.repo_id,
+                            "ENDPOINT_ID": f"{self.username}/{self.params.project_name}",
+                        },
+                        "health_route": "/",
+                        "port": 7860,
+                        "url": "huggingface/autotrain-advanced-api:latest",
+                    }
+                },
+                "repository": "autotrain-projects/autotrain-advanced",
+                "revision": "main",
+                "task": "custom",
+            },
+            "name": self.params.project_name,
+            "provider": {"region": region, "vendor": vendor},
+            "type": "protected",
+        }
+        headers = {"Authorization": f"Bearer {self.params.token}"}
+        r = requests.post(self.ep_api_url, json=payload, headers=headers, timeout=120)
+        return r.json()["name"]
+
     def _create_space(self):
         if self.backend.startswith("dgx-") or self.backend == "local":
             env_vars = {
@@ -398,6 +455,10 @@ class SpaceRunner:
                 local_runner = LocalRunner(env_vars=env_vars)
                 pid = local_runner.create()
                 return pid
+
+        if self.backend.startswith("ep-"):
+            endpoint_id = self._create_endpoint()
+            return endpoint_id
 
         api = HfApi(token=self.params.token)
         repo_id = f"{self.username}/autotrain-{self.params.project_name}"

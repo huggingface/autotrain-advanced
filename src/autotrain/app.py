@@ -330,7 +330,13 @@ async def handle_form(
     jobs_df = pd.DataFrame([params])
     project = AutoTrainProject(dataset=dset, job_params=jobs_df)
     ids = project.create()
+    monitor_url = ""
     if hardware == "Local":
         for _id in ids:
             DB.add_job(_id)
-    return {"success": "true", "space_ids": ids}
+        monitor_url = "Monitor your job locally / in logs"
+    elif hardware.startswith("EP"):
+        monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{ids[0]}"
+    else:
+        monitor_url = f"https://hf.co/spaces/{ids[0]}"
+    return {"success": "true", "monitor_url": monitor_url}

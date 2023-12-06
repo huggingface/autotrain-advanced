@@ -120,6 +120,13 @@
               <option value="CPU Upgrade">CPU Upgrade</option>
               <option value="CPU (Free)">CPU (Free)</option>
             </optgroup>
+            <optgroup label="Hugging Face Endpoints">
+              <option value="EP US-East-1 1xA10g">1xA10G</option>
+              <option value="EP US-East-1 1xA100">1xA100</option>
+              <option value="EP US-East-1 2xA100">2xA100</option>
+              <option value="EP US-East-1 4xA100">4xA100</option>
+              <option value="EP US-East-1 8xA100">8xA100</option>
+            </optgroup>
             {% if enable_ngc == 1 %}
             <optgroup label="DGX Cloud">
               <option value="DGX 1xA100">1xA100 DGX</option>
@@ -473,10 +480,9 @@
         if (xhr.status === 200) {
           console.log('Response:', xhr.responseText);
           var responseObj = JSON.parse(xhr.responseText);
-          var firstSpaceId = responseObj.space_ids[0];
-          var link = "https://hf.co/spaces/" + firstSpaceId;
-          finalModalContent.innerHTML = '<p>Response: ' + xhr.responseText + '</p>' +
-            '<p>You can check the progress of your training here: <a href="' + link + '" target="_blank">' + link + '</a></p>';
+          var monitorURL = responseObj.monitor_url;
+          finalModalContent.innerHTML = '<p>Success!</p>' +
+            '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
 
           showFinalModal();
         } else {
