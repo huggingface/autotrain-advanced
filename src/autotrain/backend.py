@@ -401,7 +401,7 @@ class SpaceRunner:
                             "HF_TOKEN": self.params.token,
                             "AUTOTRAIN_USERNAME": self.username,
                             "PROJECT_NAME": self.params.project_name,
-                            "PARAMS": self.params.model_dump_json(),
+                            "PARAMS": json.dumps(self.params.model_dump_json()),
                             "DATA_PATH": self.params.data_path,
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
