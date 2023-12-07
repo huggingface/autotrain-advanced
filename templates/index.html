@@ -487,7 +487,7 @@
           showFinalModal();
         } else {
           // Error logic here
-          finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>';
+          finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
           console.error('Error:', xhr.status, xhr.statusText);
           showFinalModal();
         }
