@@ -29,8 +29,10 @@ jobs:
 
       - name: Build and Push Docker Image
         run: make docker
+
   ecr:
     name: Amazon ECR
+    needs: dockerhub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
