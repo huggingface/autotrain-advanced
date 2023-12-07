@@ -7,7 +7,6 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  AWS_PROFILE: autonlp
   ECR_REPOSITORY: public.ecr.aws/z4c3o6n6
   CONTAINER_NAME: autotrain-api  
 
@@ -43,7 +42,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ env.AWS_PROFILE }}
+          role-to-assume: ${{ secrets.AWS_ROLE }}
 
       - name: Login to Amazon ECR
         id: login-ecr
