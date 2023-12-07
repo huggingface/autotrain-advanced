@@ -217,7 +217,7 @@ class EndpointsRunner:
                         },
                         "health_route": "/",
                         "port": 7860,
-                        "url": "huggingface/autotrain-advanced-api:latest",
+                        "url": "public.ecr.aws/z4c3o6n6/autotrain:latest",
                     }
                 },
                 "repository": "autotrain-projects/autotrain-advanced",
@@ -401,7 +401,7 @@ class SpaceRunner:
                             "HF_TOKEN": self.params.token,
                             "AUTOTRAIN_USERNAME": self.username,
                             "PROJECT_NAME": self.params.project_name,
-                            "PARAMS": json.dumps(self.params.model_dump_json()),
+                            "PARAMS": self.params.model_dump_json(),
                             "DATA_PATH": self.params.data_path,
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
@@ -410,7 +410,7 @@ class SpaceRunner:
                         },
                         "health_route": "/",
                         "port": 7860,
-                        "url": "huggingface/autotrain-advanced-api:latest",
+                        "url": "public.ecr.aws/z4c3o6n6/autotrain:latest",
                     }
                 },
                 "repository": "autotrain-projects/autotrain-advanced",
