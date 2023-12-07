@@ -32,7 +32,6 @@ jobs:
   ecr:
     name: Amazon ECR
     runs-on: ubuntu-latest
-    depends-on: dockerhub
     steps:
       - name: Checkout
         uses: actions/checkout@v4
