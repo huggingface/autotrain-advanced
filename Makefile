@@ -19,7 +19,9 @@ test:
 docker:
 	docker build -t autotrain-advanced:latest .
 	docker tag autotrain-advanced:latest huggingface/autotrain-advanced:latest
+	docker tag autotrain-advanced:latest huggingface/autotrain-advanced-api:latest
 	docker push huggingface/autotrain-advanced:latest
+	docker push huggingface/autotrain-advanced-api:latest
 
 ngc:
 	docker build -t autotrain-advanced:latest .
