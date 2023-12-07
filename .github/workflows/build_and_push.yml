@@ -32,6 +32,7 @@ jobs:
         run: make docker
   ecr:
     name: Build and push to Amazon ECR
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
