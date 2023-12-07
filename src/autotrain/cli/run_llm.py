@@ -478,7 +478,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             self.num_gpus = 1
 
     def run(self):
-        from autotrain.backend import EndpointsRunner, SpaceRunner
+        from autotrain.backend import SpaceRunner
         from autotrain.trainers.clm.__main__ import train as train_llm
         from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -542,16 +542,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 )
                 space_id = sr.prepare()
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            if self.args.backend.startswith("ep-"):
-                logger.info("Creating training endpoint...")
-                sr = EndpointsRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                sr.prepare()
-                logger.info("Training endpoint created.")
                 sys.exit(0)
 
             # local training

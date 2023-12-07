@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
-from autotrain.backend import EndpointsRunner, SpaceRunner
+from autotrain.backend import SpaceRunner
 
 from . import BaseAutoTrainCommand
 
@@ -263,16 +263,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 )
                 space_id = sr.prepare()
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            if self.args.backend.startswith("ep-"):
-                logger.info("Creating training endpoint...")
-                sr = EndpointsRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                sr.prepare()
-                logger.info("Training endpoint created.")
                 sys.exit(0)
 
             params.save(output_dir=self.args.project_name)
