@@ -280,16 +280,18 @@ def monitor(func):
             return func(*args, **kwargs)
         except Exception:
             if PartialState().process_index == 0:
-                error_message = f'''{func.__name__} has failed due to an exception: {traceback.format_exc()}'''
+                error_message = f"""{func.__name__} has failed due to an exception: {traceback.format_exc()}"""
                 logger.error(error_message)
                 if "SPACE_ID" in os.environ:
                     # shut down the space
                     logger.info("Pausing space...")
                     api = HfApi(token=os.environ["HF_TOKEN"])
                     api.pause_space(repo_id=os.environ["SPACE_ID"])
-                    api.create_discussion(repo_id=os.environ['SPACE_ID'],
-                                          title="Your training has failed ❌",
-                                          description=error_message,
-                                          repo_type="space"
-                                         )
+                    api.create_discussion(
+                        repo_id=os.environ["SPACE_ID"],
+                        title="Your training has failed ❌",
+                        description=error_message,
+                        repo_type="space",
+                    )
+
     return wrapper

@@ -499,7 +499,13 @@ def train(config):
             logger.info("Pausing space...")
             api = HfApi(token=config.token)
             api.pause_space(repo_id=os.environ["SPACE_ID"])
-
+            success_message = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{config.username}/{config.project-name})"
+            api.create_discussion(
+                repo_id=os.environ["SPACE_ID"],
+                title="Your training has finished successfully ✅",
+                description=success_message,
+                repo_type="space",
+            )
         if "ENDPOINT_ID" in os.environ:
             # shut down the endpoint
             logger.info("Pausing endpoint...")

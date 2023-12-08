@@ -192,7 +192,11 @@ def train(config):
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
-            api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+            api.upload_folder(
+                folder_path=config.project_name,
+                repo_id=config.repo_id,
+                repo_type="model",
+            )
 
     if PartialState().process_index == 0:
         if "SPACE_ID" in os.environ:
@@ -200,7 +204,13 @@ def train(config):
             logger.info("Pausing space...")
             api = HfApi(token=config.token)
             api.pause_space(repo_id=os.environ["SPACE_ID"])
-
+            success_message = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{config.username}/{config.project-name})"
+            api.create_discussion(
+                repo_id=os.environ["SPACE_ID"],
+                title="Your training has finished successfully ✅",
+                description=success_message,
+                repo_type="space",
+            )
         if "ENDPOINT_ID" in os.environ:
             # shut down the endpoint
             logger.info("Pausing endpoint...")
