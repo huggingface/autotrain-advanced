@@ -552,12 +552,16 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 cmd = [
                     "accelerate",
                     "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
+                    # "--multi_gpu",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    # "--num_machines",
+                    # "1",
+                    # "--num_processes",
                 ]
-                cmd.append(str(self.num_gpus))
+
+                # cmd.append(str(self.num_gpus))
                 cmd.append("--mixed_precision")
                 if self.args.fp16:
                     cmd.append("fp16")
