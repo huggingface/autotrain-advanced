@@ -3,11 +3,11 @@ import os
 import signal
 from contextlib import asynccontextmanager
 
-import psutil
 from fastapi import FastAPI
 
 from autotrain import logger
-from autotrain.app_utils import run_training
+from autotrain.app_utils import get_process_status, kill_process_by_pid, run_training
+from autotrain.db import AutoTrainDB
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -18,78 +18,40 @@ PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
-PID = None
+DB = AutoTrainDB("autotrain.db")
 
 
 class BackgroundRunner:
     async def run_main(self):
         while True:
-            status = get_process_status(PID)
-            status = status.strip().lower()
-            if status in ("completed", "error", "zombie"):
-                logger.info("Training process finished. Shutting down the server.")
-                kill_process(os.getpid())
-                break
-            await asyncio.sleep(5)
+            running_jobs = DB.get_running_jobs()
+            if running_jobs:
+                for _pid in running_jobs:
+                    proc_status = get_process_status(_pid)
+                    proc_status = proc_status.strip().lower()
+                    if proc_status in ("completed", "error", "zombie"):
+                        logger.info(f"Process {_pid} is already completed. Skipping...")
+                        try:
+                            kill_process_by_pid(_pid)
+                        except Exception as e:
+                            logger.info(f"Error while killing process: {e}")
+                        DB.delete_job(_pid)
+
+            running_jobs = DB.get_running_jobs()
+            if not running_jobs:
+                logger.info("No running jobs found. Shutting down the server.")
+                os.kill(os.getpid(), signal.SIGINT)
+            await asyncio.sleep(30)
 
 
 runner = BackgroundRunner()
-
-
-def get_process_status(pid):
-    try:
-        process = psutil.Process(pid)
-        proc_status = process.status()
-        logger.info(f"Process status: {proc_status}")
-        return proc_status
-    except psutil.NoSuchProcess:
-        logger.info(f"No process found with PID: {pid}")
-        return "Completed"
-
-
-def kill_process(pid):
-    try:
-        parent_process = psutil.Process(pid)
-        children = parent_process.children(recursive=True)  # This will get all the child processes recursively
-
-        # First, terminate the child processes
-        for child in children:
-            child.terminate()
-
-        # Wait for the child processes to terminate, and kill them if they don't
-        gone, still_alive = psutil.wait_procs(children, timeout=3)
-        for child in still_alive:
-            child.kill()
-
-        # Now, terminate the parent process
-        parent_process.terminate()
-        parent_process.wait(timeout=5)
-
-        logger.info(f"Process with pid {pid} and its children have been killed")
-        return f"Process with pid {pid} and its children have been killed"
-
-    except psutil.NoSuchProcess:
-        logger.info(f"No process found with pid {pid}")
-        return f"No process found with pid {pid}"
-
-    except psutil.TimeoutExpired:
-        logger.info(f"Process {pid} or one of its children has not terminated in time")
-        return f"Process {pid} or one of its children has not terminated in time"
-
-
-def monitor_training_process(pid: int):
-    status = get_process_status(pid)
-    if status == "Completed" or status == "Error":
-        logger.info("Training process finished. Shutting down the server.")
-        os.kill(os.getpid(), signal.SIGINT)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     process_pid = run_training(params=PARAMS, task_id=TASK_ID)
     logger.info(f"Started training with PID {process_pid}")
-    global PID
-    PID = process_pid
+    DB.add_job(process_pid)
     asyncio.create_task(runner.run_main())
     yield
 
@@ -106,16 +68,6 @@ logger.info(f"OUTPUT_MODEL_REPO: {OUTPUT_MODEL_REPO}")
 @api.get("/")
 async def root():
     return "Your model is being trained..."
-
-
-@api.get("/status")
-async def app_status():
-    return get_process_status(pid=PID)
-
-
-@api.get("/kill")
-async def kill():
-    return kill_process(pid=PID)
 
 
 @api.get("/health")
