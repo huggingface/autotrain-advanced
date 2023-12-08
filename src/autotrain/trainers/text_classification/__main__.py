@@ -16,6 +16,7 @@ from transformers import (
 )
 
 from autotrain import logger
+from autotrain.trainers.common import pause_space
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -192,19 +193,14 @@ def train(config):
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
-            api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+            api.upload_folder(
+                folder_path=config.project_name,
+                repo_id=config.repo_id,
+                repo_type="model",
+            )
 
     if PartialState().process_index == 0:
-        if "SPACE_ID" in os.environ:
-            # shut down the space
-            logger.info("Pausing space...")
-            api = HfApi(token=config.token)
-            api.pause_space(repo_id=os.environ["SPACE_ID"])
-
-        if "ENDPOINT_ID" in os.environ:
-            # shut down the endpoint
-            logger.info("Pausing endpoint...")
-            utils.pause_endpoint(config)
+        pause_space(config)
 
 
 if __name__ == "__main__":

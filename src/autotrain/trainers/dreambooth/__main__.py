@@ -15,9 +15,9 @@ from diffusers.models.attention_processor import (
     SlicedAttnAddedKVProcessor,
 )
 from diffusers.models.lora import LoRALinearLayer
-from huggingface_hub import HfApi, snapshot_download
+from huggingface_hub import snapshot_download
 
-from autotrain import logger
+from autotrain.trainers.common import pause_space
 from autotrain.trainers.dreambooth import utils
 from autotrain.trainers.dreambooth.datasets import DreamBoothDataset, collate_fn
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -328,14 +328,7 @@ def train(config):
     if config.push_to_hub:
         trainer.push_to_hub()
 
-    if "SPACE_ID" in os.environ:
-        # remove config.image_path directory if it exists
-        if os.path.exists(config.image_path):
-            os.system(f"rm -rf {config.image_path}")
-        # shut down the space
-        logger.info("Pausing space...")
-        api = HfApi(token=config.token)
-        api.pause_space(repo_id=os.environ["SPACE_ID"])
+    pause_space(config)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,8 @@
 import argparse
 import json
-import os
-
-from huggingface_hub import HfApi
 
 from autotrain import logger
+from autotrain.trainers.common import pause_space
 from autotrain.trainers.generic import utils
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.utils import monitor
@@ -37,16 +35,7 @@ def run(config):
     logger.info("Running command...")
     utils.run_command(config)
 
-    if "SPACE_ID" in os.environ:
-        # shut down the space
-        logger.info("Pausing space...")
-        api = HfApi(token=config.token)
-        api.pause_space(repo_id=os.environ["SPACE_ID"])
-
-    if "ENDPOINT_ID" in os.environ:
-        # shut down the endpoint
-        logger.info("Pausing endpoint...")
-        utils.pause_endpoint(config)
+    pause_space(config)
 
 
 if __name__ == "__main__":
