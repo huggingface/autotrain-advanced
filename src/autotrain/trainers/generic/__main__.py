@@ -1,10 +1,8 @@
 import argparse
 import json
-import os
-
-from huggingface_hub import HfApi
 
 from autotrain import logger
+from autotrain.trainers.common import pause_space
 from autotrain.trainers.generic import utils
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.utils import monitor
@@ -37,22 +35,7 @@ def run(config):
     logger.info("Running command...")
     utils.run_command(config)
 
-    if "SPACE_ID" in os.environ:
-        # shut down the space
-        logger.info("Pausing space...")
-        api = HfApi(token=config.token)
-        api.pause_space(repo_id=os.environ["SPACE_ID"])
-        success_message = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{config.username}/{config.project_name})"
-        api.create_discussion(
-            repo_id=os.environ["SPACE_ID"],
-            title="Your training has finished successfully ✅",
-            description=success_message,
-            repo_type="space",
-        )
-    if "ENDPOINT_ID" in os.environ:
-        # shut down the endpoint
-        logger.info("Pausing endpoint...")
-        utils.pause_endpoint(config)
+    pause_space(config)
 
 
 if __name__ == "__main__":

@@ -3,9 +3,40 @@ Common classes and functions for all trainers.
 """
 import os
 
+import requests
+from huggingface_hub import HfApi
 from pydantic import BaseModel
 
 from autotrain import logger
+
+
+def pause_endpoint(params):
+    endpoint_id = os.environ["ENDPOINT_ID"]
+    username = endpoint_id.split("/")[0]
+    project_name = endpoint_id.split("/")[1]
+    api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{username}/{project_name}/pause"
+    headers = {"Authorization": f"Bearer {params.token}"}
+    r = requests.post(api_url, headers=headers, timeout=120)
+    return r.json()
+
+
+def pause_space(params):
+    if "SPACE_ID" in os.environ:
+        # shut down the space
+        logger.info("Pausing space...")
+        api = HfApi(token=params.token)
+        success_message = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{params.repo_id})"
+        api.create_discussion(
+            repo_id=os.environ["SPACE_ID"],
+            title="Your training has finished successfully ✅",
+            description=success_message,
+            repo_type="space",
+        )
+        api.pause_space(repo_id=os.environ["SPACE_ID"])
+    if "ENDPOINT_ID" in os.environ:
+        # shut down the endpoint
+        logger.info("Pausing endpoint...")
+        pause_endpoint(params)
 
 
 class AutoTrainParams(BaseModel):

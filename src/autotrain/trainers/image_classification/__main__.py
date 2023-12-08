@@ -14,6 +14,7 @@ from transformers import (
 )
 
 from autotrain import logger
+from autotrain.trainers.common import pause_space
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -162,6 +163,9 @@ def train(config):
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model")
             api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
+
+    if PartialState().process_index == 0:
+        pause_space(config)
 
 
 if __name__ == "__main__":

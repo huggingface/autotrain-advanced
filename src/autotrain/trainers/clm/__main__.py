@@ -27,6 +27,7 @@ from autotrain import logger
 from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.common import pause_space
 from autotrain.utils import monitor
 
 
@@ -494,22 +495,7 @@ def train(config):
             )
 
     if PartialState().process_index == 0:
-        if "SPACE_ID" in os.environ:
-            # shut down the space
-            logger.info("Pausing space...")
-            api = HfApi(token=config.token)
-            api.pause_space(repo_id=os.environ["SPACE_ID"])
-            success_message = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{config.username}/{config.project_name})"
-            api.create_discussion(
-                repo_id=os.environ["SPACE_ID"],
-                title="Your training has finished successfully ✅",
-                description=success_message,
-                repo_type="space",
-            )
-        if "ENDPOINT_ID" in os.environ:
-            # shut down the endpoint
-            logger.info("Pausing endpoint...")
-            utils.pause_endpoint(config)
+        pause_space(config)
 
 
 if __name__ == "__main__":

@@ -286,12 +286,12 @@ def monitor(func):
                     # shut down the space
                     logger.info("Pausing space...")
                     api = HfApi(token=os.environ["HF_TOKEN"])
-                    api.pause_space(repo_id=os.environ["SPACE_ID"])
                     api.create_discussion(
                         repo_id=os.environ["SPACE_ID"],
                         title="Your training has failed ❌",
                         description=error_message,
                         repo_type="space",
                     )
+                    api.pause_space(repo_id=os.environ["SPACE_ID"])
 
     return wrapper
