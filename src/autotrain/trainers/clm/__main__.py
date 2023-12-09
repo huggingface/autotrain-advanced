@@ -158,7 +158,7 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                torch_dtype=torch.float16,
+                # torch_dtype=torch.float16,
                 # device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
@@ -169,7 +169,7 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                torch_dtype=torch.float16,
+                # torch_dtype=torch.float16,
                 # device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
@@ -399,7 +399,7 @@ def train(config):
             **trainer_args,
             train_dataset=train_data,
             eval_dataset=valid_data if config.valid_split is not None else None,
-            peft_config=peft_config,
+            peft_config=peft_config if config.use_peft else None,
             tokenizer=tokenizer,
         )
     elif config.trainer == "dpo":
@@ -427,7 +427,7 @@ def train(config):
             max_length=max_length,
             max_prompt_length=max_prompt_length,
             max_target_length=max_target_length,
-            peft_config=peft_config,
+            peft_config=peft_config if config.use_peft else None,
         )
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")

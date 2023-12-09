@@ -112,7 +112,21 @@ def run_training(params, task_id, local=False):
         else:
             params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
-        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
+        cmd = [
+            "accelerate",
+            "launch",
+            # "--num_machines",
+            # "1",
+            # "--num_processes",
+            # "1",
+            "--use_deepspeed",
+            "--zero_stage",
+            "3",
+            "--offload_optimizer_device",
+            "cpu",
+            "--offload_param_device",
+            "cpu",
+        ]
         cmd.append("--mixed_precision")
         if params.fp16:
             cmd.append("fp16")
