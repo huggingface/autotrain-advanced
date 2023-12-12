@@ -353,12 +353,16 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 cmd = [
                     "accelerate",
                     "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "cpu",
+                    "--offload_param_device",
+                    "cpu",
+                    "--zero3_save_16bit_model",
+                    "true",
                 ]
-                cmd.append(str(self.num_gpus))
                 cmd.append("--mixed_precision")
                 if self.args.fp16:
                     cmd.append("fp16")

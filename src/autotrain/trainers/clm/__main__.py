@@ -148,11 +148,20 @@ def train(config):
                 bnb_4bit_use_double_quant=False,
             )
             config.fp16 = True
+            additional_kwargs = {
+                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
+                "torch_dtype": torch.float16,
+            }
         elif config.use_int8:
             bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
             config.fp16 = True
+            additional_kwargs = {
+                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
+                "torch_dtype": torch.float16,
+            }
         else:
             bnb_config = None
+            additional_kwargs = {}
 
         if config.trainer == "reward":
             model = AutoModelForSequenceClassification.from_pretrained(
@@ -160,10 +169,9 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                torch_dtype=torch.float16,
-                device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
+                **additional_kwargs,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
@@ -171,10 +179,9 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                torch_dtype=torch.float16,
-                device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
+                **additional_kwargs,
             )
             model_ref = None
     else:
@@ -401,7 +408,7 @@ def train(config):
             **trainer_args,
             train_dataset=train_data,
             eval_dataset=valid_data if config.valid_split is not None else None,
-            peft_config=peft_config,
+            peft_config=peft_config if config.use_peft else None,
             tokenizer=tokenizer,
         )
     elif config.trainer == "dpo":
@@ -429,7 +436,7 @@ def train(config):
             max_length=max_length,
             max_prompt_length=max_prompt_length,
             max_target_length=max_target_length,
-            peft_config=peft_config,
+            peft_config=peft_config if config.use_peft else None,
         )
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")
