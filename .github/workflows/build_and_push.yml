@@ -51,6 +51,13 @@ jobs:
         with:
           registry-type: public
 
+      - name: Remove all docker images and cleanup
+        run: |
+          docker stop $(docker ps -a -q)
+          docker rm $(docker ps -a -q)
+          docker rmi $(docker images -q)
+          docker system prune -a -f --volumes
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
