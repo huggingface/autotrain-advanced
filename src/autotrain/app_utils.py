@@ -114,30 +114,40 @@ def run_training(params, task_id, local=False):
             params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         num_gpus = torch.cuda.device_count()
-        if params.use_int4 or params.use_int8 or (params.fp16 and params.use_peft):
+        if num_gpus == 1:
             cmd = [
                 "accelerate",
                 "launch",
-                "--multi_gpu",
                 "--num_machines",
                 "1",
                 "--num_processes",
             ]
             cmd.append(str(num_gpus))
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "cpu",
-                "--offload_param_device",
-                "cpu",
-                "--zero3_save_16bit_model",
-                "true",
-            ]
+            if params.use_int4 or params.use_int8 or (params.fp16 and params.use_peft):
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                ]
+                cmd.append(str(num_gpus))
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "cpu",
+                    "--offload_param_device",
+                    "cpu",
+                    "--zero3_save_16bit_model",
+                    "true",
+                ]
         cmd.append("--mixed_precision")
         if params.fp16:
             cmd.append("fp16")
@@ -160,30 +170,32 @@ def run_training(params, task_id, local=False):
             params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         num_gpus = torch.cuda.device_count()
-        if params.use_int8 or (params.fp16 and params.use_peft):
+        if num_gpus == 1:
             cmd = [
                 "accelerate",
                 "launch",
-                "--multi_gpu",
                 "--num_machines",
                 "1",
                 "--num_processes",
             ]
             cmd.append(str(num_gpus))
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "cpu",
-                "--offload_param_device",
-                "cpu",
-                "--zero3_save_16bit_model",
-                "true",
-            ]
+            if params.use_int8 or (params.fp16 and params.use_peft):
+                cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "cpu",
+                    "--offload_param_device",
+                    "cpu",
+                    "--zero3_save_16bit_model",
+                    "true",
+                ]
         cmd.append("--mixed_precision")
         if params.fp16:
             cmd.append("fp16")
