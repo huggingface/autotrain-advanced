@@ -401,15 +401,30 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_seq2seq(params)
             else:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                ]
-                cmd.append(str(self.num_gpus))
+                if self.args.use_int8 or (self.args.fp16 and self.args.use_peft):
+                    cmd = [
+                        "accelerate",
+                        "launch",
+                        "--multi_gpu",
+                        "--num_machines",
+                        "1",
+                        "--num_processes",
+                    ]
+                    cmd.append(str(self.num_gpus))
+                else:
+                    cmd = [
+                        "accelerate",
+                        "launch",
+                        "--use_deepspeed",
+                        "--zero_stage",
+                        "3",
+                        "--offload_optimizer_device",
+                        "cpu",
+                        "--offload_param_device",
+                        "cpu",
+                        "--zero3_save_16bit_model",
+                        "true",
+                    ]
                 cmd.append("--mixed_precision")
                 if self.args.fp16:
                     cmd.append("fp16")

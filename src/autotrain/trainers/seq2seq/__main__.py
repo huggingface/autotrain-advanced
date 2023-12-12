@@ -91,17 +91,21 @@ def train(config):
         if config.use_int8:
             bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
             config.fp16 = True
+            additional_kwargs = {
+                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
+                "torch_dtype": torch.float16,
+            }
         else:
             bnb_config = None
+            additional_kwargs = {}
 
         model = AutoModelForSeq2SeqLM.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
             quantization_config=bnb_config,
-            torch_dtype=torch.float16 if config.fp16 else None,
-            device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
             trust_remote_code=True,
+            **additional_kwargs,
         )
     else:
         model = AutoModelForSeq2SeqLM.from_pretrained(

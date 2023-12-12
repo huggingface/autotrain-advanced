@@ -6,6 +6,7 @@ from functools import partial
 
 import pandas as pd
 import torch
+from accelerate import Accelerator
 from accelerate.state import PartialState
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
@@ -146,11 +147,20 @@ def train(config):
                 bnb_4bit_use_double_quant=False,
             )
             config.fp16 = True
+            additional_kwargs = {
+                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
+                "torch_dtype": torch.float16,
+            }
         elif config.use_int8:
             bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
             config.fp16 = True
+            additional_kwargs = {
+                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
+                "torch_dtype": torch.float16,
+            }
         else:
             bnb_config = None
+            additional_kwargs = {}
 
         if config.trainer == "reward":
             model = AutoModelForSequenceClassification.from_pretrained(
@@ -158,10 +168,9 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                # torch_dtype=torch.float16,
-                # device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
+                **additional_kwargs,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
@@ -169,10 +178,9 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                # torch_dtype=torch.float16,
-                # device_map={"": Accelerator().process_index} if torch.cuda.is_available() else None,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
+                **additional_kwargs,
             )
             model_ref = None
     else:
