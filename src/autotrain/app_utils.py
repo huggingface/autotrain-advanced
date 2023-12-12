@@ -114,6 +114,8 @@ def run_training(params, task_id, local=False):
             params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         num_gpus = torch.cuda.device_count()
+        if num_gpus == 0:
+            raise ValueError("No GPU found. Please use a GPU instance.")
         if num_gpus == 1:
             cmd = [
                 "accelerate",
@@ -121,8 +123,8 @@ def run_training(params, task_id, local=False):
                 "--num_machines",
                 "1",
                 "--num_processes",
+                "1",
             ]
-            cmd.append(str(num_gpus))
         else:
             if params.use_int4 or params.use_int8 or (params.fp16 and params.use_peft):
                 cmd = [
@@ -170,6 +172,8 @@ def run_training(params, task_id, local=False):
             params.project_name = os.path.join("output", params.project_name)
         params.save(output_dir=params.project_name)
         num_gpus = torch.cuda.device_count()
+        if num_gpus == 0:
+            raise ValueError("No GPU found. Please use a GPU instance.")
         if num_gpus == 1:
             cmd = [
                 "accelerate",
@@ -177,11 +181,19 @@ def run_training(params, task_id, local=False):
                 "--num_machines",
                 "1",
                 "--num_processes",
+                "1",
             ]
-            cmd.append(str(num_gpus))
         else:
             if params.use_int8 or (params.fp16 and params.use_peft):
-                cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                ]
+                cmd.append(str(num_gpus))
             else:
                 cmd = [
                     "accelerate",
