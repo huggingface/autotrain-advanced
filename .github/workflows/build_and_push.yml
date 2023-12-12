@@ -53,9 +53,9 @@ jobs:
 
       - name: Remove all docker images and cleanup
         run: |
-          docker rm $(docker ps -a -q)
-          docker rmi $(docker images -q)
-          docker system prune -a -f --volumes
+          docker rm $(docker ps -a -q) || true
+          docker rmi $(docker images -q) || true
+          docker system prune -a -f --volumes || true
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
