@@ -1,6 +1,7 @@
 """
 Common classes and functions for all trainers.
 """
+import json
 import os
 
 import requests
@@ -8,6 +9,18 @@ from huggingface_hub import HfApi
 from pydantic import BaseModel
 
 from autotrain import logger
+
+
+def save_training_params(config):
+    if os.path.exists(f"{config.project_name}/training_params.json"):
+        training_params = json.load(open(f"{config.project_name}/training_params.json"))
+        if "token" in training_params:
+            training_params.pop("token")
+            json.dump(
+                training_params,
+                open(f"{config.project_name}/training_params.json", "w"),
+                indent=4,
+            )
 
 
 def pause_endpoint(params):

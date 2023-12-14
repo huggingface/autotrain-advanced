@@ -14,7 +14,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import pause_space, save_training_params
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -106,7 +106,6 @@ def train(config):
         per_device_eval_batch_size=2 * config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        fp16=config.fp16,
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
@@ -123,6 +122,11 @@ def train(config):
         load_best_model_at_end=True if config.valid_split is not None else False,
         ddp_find_unused_parameters=False,
     )
+
+    if config.mixed_precision == "fp16":
+        training_args["fp16"] = True
+    if config.mixed_precision == "bf16":
+        training_args["bf16"] = True
 
     if config.valid_split is not None:
         early_stop = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
@@ -159,6 +163,7 @@ def train(config):
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model")

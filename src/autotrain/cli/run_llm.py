@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
+from autotrain.commands import launch_command
 
 from . import BaseAutoTrainCommand
 
@@ -188,8 +189,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--block-size"],
             },
             {
-                "arg": "--use_peft",
-                "help": "Use PEFT to use",
+                "arg": "--peft",
+                "help": "Use PEFT",
                 "required": False,
                 "action": "store_true",
                 "alias": ["--use-peft"],
@@ -265,10 +266,20 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--auto-find-batch-size"],
             },
             {
-                "arg": "--fp16",
-                "help": "FP16 True/False",
+                "arg": "--mixed-precision",
+                "help": "fp16, bf16, or None",
                 "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": None,
+                "alias": ["--mixed-precision", "--mp"],
+            },
+            {
+                "arg": "--quantization",
+                "help": "int4, int8, or None",
+                "required": False,
+                "type": str,
+                "default": None,
+                "alias": ["--quantization"],
             },
             {
                 "arg": "--push_to_hub",
@@ -276,13 +287,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
                 "alias": ["--push-to-hub"],
-            },
-            {
-                "arg": "--use_int8",
-                "help": "Use int8 True/False",
-                "required": False,
-                "action": "store_true",
-                "alias": ["--use-int8"],
             },
             {
                 "arg": "--model_max_length",
@@ -298,13 +302,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "alias": ["--repo-id"],
-            },
-            {
-                "arg": "--use_int4",
-                "help": "Use int4 True/False",
-                "required": False,
-                "action": "store_true",
-                "alias": ["--use-int4"],
             },
             {
                 "arg": "--trainer",
@@ -408,12 +405,9 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "deploy",
             "inference",
             "add_eos_token",
-            "use_peft",
+            "peft",
             "auto_find_batch_size",
-            "fp16",
             "push_to_hub",
-            "use_int8",
-            "use_int4",
             "merge_adapter",
             "use_flash_attention_2",
             "disable_gradient_checkpointing",
@@ -452,19 +446,23 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 if self.args.token is None:
                     raise ValueError("Token must be specified for spaces backend")
 
+        if self.args.deploy:
+            raise NotImplementedError("Deploy is not implemented yet")
         if self.args.inference:
-            from autotrain.infer.text_generation import TextGenerationInference
+            raise NotImplementedError("Inference is not implemented yet")
+        # if self.args.inference:
+        #     from autotrain.infer.text_generation import TextGenerationInference
 
-            tgi = TextGenerationInference(
-                self.args.project_name,
-                use_int4=self.args.use_int4,
-                use_int8=self.args.use_int8,
-            )
-            while True:
-                prompt = input("User: ")
-                if prompt == "exit()":
-                    break
-                print(f"Bot: {tgi.chat(prompt)}")
+        #     tgi = TextGenerationInference(
+        #         self.args.project_name,
+        #         use_int4=self.args.use_int4,
+        #         use_int8=self.args.use_int8,
+        #     )
+        #     while True:
+        #         prompt = input("User: ")
+        #         if prompt == "exit()":
+        #             break
+        #         print(f"Bot: {tgi.chat(prompt)}")
 
         cuda_available = torch.cuda.is_available()
         mps_available = torch.backends.mps.is_available()
@@ -503,7 +501,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 seed=self.args.seed,
                 add_eos_token=self.args.add_eos_token,
                 block_size=self.args.block_size,
-                use_peft=self.args.use_peft,
+                peft=self.args.peft,
                 lora_r=self.args.lora_r,
                 lora_alpha=self.args.lora_alpha,
                 lora_dropout=self.args.lora_dropout,
@@ -513,12 +511,11 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 save_total_limit=self.args.save_total_limit,
                 save_strategy=self.args.save_strategy,
                 auto_find_batch_size=self.args.auto_find_batch_size,
-                fp16=self.args.fp16,
+                mixed_precision=self.args.mixed_precision,
                 push_to_hub=self.args.push_to_hub,
-                use_int8=self.args.use_int8,
                 model_max_length=self.args.model_max_length,
                 repo_id=self.args.repo_id,
-                use_int4=self.args.use_int4,
+                quantization=self.args.quantization,
                 trainer=self.args.trainer,
                 target_modules=self.args.target_modules,
                 token=self.args.token,
@@ -549,45 +546,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_llm(params)
             else:
-                if self.args.use_int4 or self.args.use_int8 or (self.args.fp16 and self.args.use_peft):
-                    cmd = [
-                        "accelerate",
-                        "launch",
-                        "--multi_gpu",
-                        "--num_machines",
-                        "1",
-                        "--num_processes",
-                    ]
-                    cmd.append(str(self.num_gpus))
-                else:
-                    cmd = [
-                        "accelerate",
-                        "launch",
-                        "--use_deepspeed",
-                        "--zero_stage",
-                        "3",
-                        "--offload_optimizer_device",
-                        "cpu",
-                        "--offload_param_device",
-                        "cpu",
-                        "--zero3_save_16bit_model",
-                        "true",
-                    ]
-                cmd.append("--mixed_precision")
-                if self.args.fp16:
-                    cmd.append("fp16")
-                else:
-                    cmd.append("no")
-
-                cmd.extend(
-                    [
-                        "-m",
-                        "autotrain.trainers.clm",
-                        "--training_config",
-                        os.path.join(self.args.project_name, "training_params.json"),
-                    ]
-                )
-
+                cmd = launch_command(params=params)
                 env = os.environ.copy()
                 process = subprocess.Popen(cmd, env=env)
                 process.wait()

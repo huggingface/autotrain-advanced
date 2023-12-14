@@ -6,12 +6,13 @@ import subprocess
 
 import psutil
 import requests
-import torch
 
 from autotrain import config, logger
+from autotrain.commands import launch_command
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
+from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -21,7 +22,6 @@ def get_process_status(pid):
     try:
         process = psutil.Process(pid)
         proc_status = process.status()
-        logger.info(f"Process status: {proc_status}")
         return proc_status
     except psutil.NoSuchProcess:
         logger.info(f"No process found with PID: {pid}")
@@ -108,187 +108,27 @@ def run_training(params, task_id, local=False):
     logger.info(params)
     if task_id == 9:
         params = LLMTrainingParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        num_gpus = torch.cuda.device_count()
-        if num_gpus == 0:
-            raise ValueError("No GPU found. Please use a GPU instance.")
-        if num_gpus == 1:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--num_machines",
-                "1",
-                "--num_processes",
-                "1",
-            ]
-        else:
-            if params.use_int4 or params.use_int8 or (params.fp16 and params.use_peft):
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                ]
-                cmd.append(str(num_gpus))
-            else:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--use_deepspeed",
-                    "--zero_stage",
-                    "3",
-                    "--offload_optimizer_device",
-                    "cpu",
-                    "--offload_param_device",
-                    "cpu",
-                    "--zero3_save_16bit_model",
-                    "true",
-                ]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.clm",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
     elif task_id == 28:
         params = Seq2SeqParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        num_gpus = torch.cuda.device_count()
-        if num_gpus == 0:
-            raise ValueError("No GPU found. Please use a GPU instance.")
-        if num_gpus == 1:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--num_machines",
-                "1",
-                "--num_processes",
-                "1",
-            ]
-        else:
-            if params.use_int8 or (params.fp16 and params.use_peft):
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                ]
-                cmd.append(str(num_gpus))
-            else:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--use_deepspeed",
-                    "--zero_stage",
-                    "3",
-                    "--offload_optimizer_device",
-                    "cpu",
-                    "--offload_param_device",
-                    "cpu",
-                    "--zero3_save_16bit_model",
-                    "true",
-                ]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.seq2seq",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
     elif task_id in (1, 2):
         params = TextClassificationParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        cmd = ["accelerate", "launch", "--num_machines", "1", "--num_processes", "1"]
-        cmd.append("--mixed_precision")
-        if params.fp16:
-            cmd.append("fp16")
-        else:
-            cmd.append("no")
-
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.text_classification",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
     elif task_id in (13, 14, 15, 16, 26):
         params = TabularParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.tabular",
-            "--training_config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
     elif task_id == 27:
         params = GenericParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.generic",
-            "--config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
     elif task_id == 25:
         params = DreamBoothTrainingParams(**params)
-        if not local:
-            params.project_name = "/tmp/model"
-        else:
-            params.project_name = os.path.join("output", params.project_name)
-        params.save(output_dir=params.project_name)
-        cmd = [
-            "python",
-            "-m",
-            "autotrain.trainers.dreambooth",
-            "--training_config",
-            os.path.join(params.project_name, "training_params.json"),
-        ]
-
+    elif task_id == 18:
+        params = ImageClassificationParams(**params)
     else:
         raise NotImplementedError
+
+    if not local:
+        params.project_name = "/tmp/model"
+    else:
+        params.project_name = os.path.join("output", params.project_name)
+    params.save(output_dir=params.project_name)
+    cmd = launch_command(params=params)
 
     cmd = [str(c) for c in cmd]
     logger.info(cmd)

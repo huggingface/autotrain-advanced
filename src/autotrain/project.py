@@ -14,6 +14,7 @@ from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, Auto
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -97,22 +98,6 @@ class AutoTrainProject:
         if "trainer" in _params:
             _params["trainer"] = _params["trainer"].lower()
 
-        if "use_fp16" in _params:
-            _params["fp16"] = _params["use_fp16"]
-            _params.pop("use_fp16")
-
-        if "int4_8" in _params:
-            if _params["int4_8"] == "int4":
-                _params["use_int4"] = True
-                _params["use_int8"] = False
-            elif _params["int4_8"] == "int8":
-                _params["use_int4"] = False
-                _params["use_int8"] = True
-            else:
-                _params["use_int4"] = False
-                _params["use_int8"] = False
-            _params.pop("int4_8")
-
         return _params
 
     def _munge_params_text_clf(self, job_idx):
@@ -121,10 +106,6 @@ class AutoTrainProject:
         _params["text_column"] = self.col_map_text
         _params["target_column"] = self.col_map_target
         _params["valid_split"] = "validation"
-
-        if "use_fp16" in _params:
-            _params["fp16"] = _params["use_fp16"]
-            _params.pop("use_fp16")
 
         return _params
 
@@ -135,9 +116,12 @@ class AutoTrainProject:
         _params["target_column"] = self.col_map_target
         _params["valid_split"] = "validation"
 
-        if "use_fp16" in _params:
-            _params["fp16"] = _params["use_fp16"]
-            _params.pop("use_fp16")
+        return _params
+
+    def _munge_params_img_clf(self, job_idx):
+        _params = self._munge_common_params(job_idx)
+        _params["model"] = self.model_choice
+        _params["valid_split"] = "validation"
 
         return _params
 
@@ -185,6 +169,9 @@ class AutoTrainProject:
             elif self.task_id == 28:
                 _params = self._munge_params_seq2seq(job_idx)
                 _params = Seq2SeqParams(**_params)
+            elif self.task_id == 18:
+                _params = self._munge_params_img_clf(job_idx)
+                _params = ImageClassificationParams(**_params)
             else:
                 raise NotImplementedError
             logger.info(f"Creating Space for job: {job_idx}")

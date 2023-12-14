@@ -16,7 +16,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import pause_space, save_training_params
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -130,7 +130,6 @@ def train(config):
         per_device_eval_batch_size=2 * config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        fp16=config.fp16,
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
@@ -147,6 +146,11 @@ def train(config):
         load_best_model_at_end=True if config.valid_split is not None else False,
         ddp_find_unused_parameters=False,
     )
+
+    if config.mixed_precision == "fp16":
+        training_args["fp16"] = True
+    if config.mixed_precision == "bf16":
+        training_args["bf16"] = True
 
     if config.valid_split is not None:
         early_stop = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
@@ -177,19 +181,13 @@ def train(config):
 
     model_card = utils.create_model_card(config, trainer, num_classes)
 
-    # remove token key from training_params.json located in output directory
-    # first check if file exists
-    if os.path.exists(f"{config.project_name}/training_params.json"):
-        training_params = json.load(open(f"{config.project_name}/training_params.json"))
-        training_params.pop("token")
-        json.dump(training_params, open(f"{config.project_name}/training_params.json", "w"))
-
     # save model card to output directory as README.md
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)

@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
@@ -64,8 +64,8 @@ RUN conda create -p /app/env -y python=3.10
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
 RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && \
-    conda clean -ya
-#conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && conda clean -ya && \
+    conda clean -ya && \
+    conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && conda clean -ya
 #conda install -c "nvidia/label/cuda-12.1.0" cuda-toolkit && conda clean -ya
 
 # install NGC CLI

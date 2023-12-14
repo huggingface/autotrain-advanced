@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import torch
 
 from autotrain import logger
+from autotrain.commands import launch_command
 
 from . import BaseAutoTrainCommand
 
@@ -186,10 +187,12 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--fp16",
-                "help": "FP16 True/False",
+                "arg": "--mixed-precision",
+                "help": "fp16, bf16, or None",
                 "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": None,
+                "choices": ["fp16", "bf16", None],
             },
             {
                 "arg": "--push-to-hub",
@@ -241,7 +244,6 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             "deploy",
             "inference",
             "auto_find_batch_size",
-            "fp16",
             "push_to_hub",
         ]
         for arg_name in store_true_arg_names:
@@ -295,7 +297,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 save_total_limit=self.args.save_total_limit,
                 save_strategy=self.args.save_strategy,
                 auto_find_batch_size=self.args.auto_find_batch_size,
-                fp16=self.args.fp16,
+                mixed_precision=self.args.mixed_precision,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
                 log=self.args.log,
@@ -304,22 +306,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_image_classification(params)
             else:
-                cmd = ["accelerate", "launch", "--multi_gpu", "--num_machines", "1", "--num_processes"]
-                cmd.append(str(self.num_gpus))
-                cmd.append("--mixed_precision")
-                if self.args.fp16:
-                    cmd.append("fp16")
-                else:
-                    cmd.append("no")
-
-                cmd.extend(
-                    [
-                        "-m",
-                        "autotrain.trainers.image_classification",
-                        "--training_config",
-                        os.path.join(self.args.project_name, "training_params.json"),
-                    ]
-                )
+                cmd = launch_command(params)
 
                 env = os.environ.copy()
                 process = subprocess.Popen(cmd, env=env)
