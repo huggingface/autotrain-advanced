@@ -106,6 +106,8 @@ def user_validation():
 def run_training(params, task_id, local=False):
     params = json.loads(params)
     logger.info(params)
+    if isinstance(params, str):
+        params = json.loads(params)
     if task_id == 9:
         params = LLMTrainingParams(**params)
     elif task_id == 28:

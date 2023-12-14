@@ -1,3 +1,4 @@
+import io
 import os
 import uuid
 import zipfile
@@ -137,7 +138,11 @@ class AutoTrainImageClassificationDataset:
         random_uuid = uuid.uuid4()
         train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
         os.makedirs(train_dir, exist_ok=True)
-        zip_ref = zipfile.ZipFile(self.train_data, "r")
+        self.train_data.seek(0)
+        content = self.train_data.read()
+        bytes_io = io.BytesIO(content)
+
+        zip_ref = zipfile.ZipFile(bytes_io, "r")
         zip_ref.extractall(train_dir)
         # remove the __MACOSX directory
         macosx_dir = os.path.join(train_dir, "__MACOSX")
@@ -150,7 +155,10 @@ class AutoTrainImageClassificationDataset:
             random_uuid = uuid.uuid4()
             valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
             os.makedirs(valid_dir, exist_ok=True)
-            zip_ref = zipfile.ZipFile(self.valid_data, "r")
+            self.valid_data.seek(0)
+            content = self.valid_data.read()
+            bytes_io = io.BytesIO(content)
+            zip_ref = zipfile.ZipFile(bytes_io, "r")
             zip_ref.extractall(valid_dir)
             # remove the __MACOSX directory
             macosx_dir = os.path.join(valid_dir, "__MACOSX")

@@ -310,7 +310,7 @@ async def handle_form(
             token=HF_TOKEN,
             project_name=project_name,
             username=autotrain_user,
-            valid_data=validation_files[0],
+            valid_data=validation_files[0] if validation_files else None,
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()
