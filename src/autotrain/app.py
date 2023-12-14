@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from huggingface_hub import list_models
+from huggingface_hub import ModelFilter, list_models
 
 from autotrain import app_utils, logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
@@ -124,9 +124,11 @@ def fetch_models():
     hub_models = get_sorted_models(hub_models)
     _mc["llm"] = hub_models
 
-    hub_models = list(
-        list_models(filter="image-classification", sort="downloads", direction=-1, limit=100, full=False)
+    _filter = ModelFilter(
+        task="image-classification",
+        library="transformers",
     )
+    hub_models = list(list_models(filter=_filter, sort="downloads", direction=-1, limit=100, full=False))
     hub_models = get_sorted_models(hub_models)
     _mc["image-classification"] = hub_models
 
