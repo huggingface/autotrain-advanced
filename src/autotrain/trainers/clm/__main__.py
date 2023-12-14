@@ -25,11 +25,7 @@ from trl import DPOTrainer, RewardConfig, RewardTrainer, SFTTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
-from autotrain.trainers.clm.callbacks import (
-    LoadBestPeftModelCallback,
-    SaveDeepSpeedPeftModelCallback,
-    SavePeftModelCallback,
-)
+from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.common import monitor, pause_space, save_training_params
 
@@ -369,8 +365,8 @@ def train(config):
         if config.valid_split is not None:
             callbacks.append(LoadBestPeftModelCallback)
 
-    if config.peft and is_deepspeed_enabled:
-        callbacks.append(SaveDeepSpeedPeftModelCallback)
+    # if config.peft and is_deepspeed_enabled:
+    #     callbacks.append(SaveDeepSpeedPeftModelCallback)
 
     trainer_args = dict(
         args=args,
