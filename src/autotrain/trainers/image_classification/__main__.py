@@ -1,5 +1,6 @@
 import argparse
 import json
+import torch
 
 from accelerate.state import PartialState
 from datasets import load_dataset
@@ -11,6 +12,7 @@ from transformers import (
     EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
+    set_seed,
 )
 
 from autotrain import logger
@@ -26,10 +28,18 @@ def parse_args():
     return parser.parse_args()
 
 
+def collate_fn(examples):
+    pixel_values = torch.stack([example["pixel_values"] for example in examples])
+    labels = torch.tensor([example["labels"] for example in examples])
+    return {"pixel_values": pixel_values, "labels": labels}
+
+
 @monitor
 def train(config):
     if isinstance(config, dict):
         config = ImageClassificationParams(**config)
+
+    set_seed(config.seed)
 
     if PartialState().process_index == 0:
         logger.info("Starting training...")
@@ -64,10 +74,15 @@ def train(config):
                 f"Number of classes in train and valid are not the same. Training has {num_classes} and valid has {num_classes_valid}"
             )
 
-    model_config = AutoConfig.from_pretrained(config.model, num_labels=num_classes)
-    model_config._num_labels = len(label2id)
-    model_config.label2id = label2id
-    model_config.id2label = {v: k for k, v in label2id.items()}
+    model_config = AutoConfig.from_pretrained(
+        config.model,
+        num_labels=num_classes,
+        label2id=label2id,
+        id2label={v: k for k, v in label2id.items()},
+        finetuning_task="image-classification",
+        trust_remote_code=True,
+        token=config.token,
+    )
 
     try:
         model = AutoModelForImageClassification.from_pretrained(
@@ -89,7 +104,6 @@ def train(config):
 
     image_processor = AutoImageProcessor.from_pretrained(config.model, token=config.token)
     train_data, valid_data = utils.process_data(train_data, valid_data, image_processor, config)
-
     if config.logging_steps == -1:
         if config.valid_split is not None:
             logging_steps = int(0.2 * len(valid_data) / config.batch_size)
@@ -122,6 +136,8 @@ def train(config):
         push_to_hub=False,
         load_best_model_at_end=True if config.valid_split is not None else False,
         ddp_find_unused_parameters=False,
+        seed=config.seed,
+        remove_unused_columns=False,
     )
 
     if config.mixed_precision == "fp16":
@@ -149,6 +165,8 @@ def train(config):
         **trainer_args,
         train_dataset=train_data,
         eval_dataset=valid_data,
+        tokenizer=image_processor,
+        data_collator=collate_fn,
     )
     trainer.train()
 

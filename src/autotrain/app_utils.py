@@ -136,4 +136,5 @@ def run_training(params, task_id, local=False):
     logger.info(cmd)
     env = os.environ.copy()
     process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
+    logger.info(env)
     return process.pid

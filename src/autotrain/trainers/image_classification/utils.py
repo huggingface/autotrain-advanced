@@ -1,9 +1,16 @@
-import albumentations as A
 import numpy as np
 from sklearn import metrics
 
-from autotrain.trainers.image_classification.dataset import ImageClassificationDataset
-
+from torchvision.transforms import (
+    CenterCrop,
+    Compose,
+    Lambda,
+    Normalize,
+    RandomHorizontalFlip,
+    RandomResizedCrop,
+    Resize,
+    ToTensor,
+)
 
 BINARY_CLASSIFICATION_EVAL_METRICS = (
     "eval_loss",
@@ -89,31 +96,51 @@ def process_data(train_data, valid_data, image_processor, config):
         size = image_processor.size["shortest_edge"]
     else:
         size = (image_processor.size["height"], image_processor.size["width"])
-    try:
-        height, width = size
-    except TypeError:
-        height = size
-        width = size
 
-    train_transforms = A.Compose(
+    normalize = (
+        Normalize(mean=image_processor.image_mean, std=image_processor.image_std)
+        if hasattr(image_processor, "image_mean") and hasattr(image_processor, "image_std")
+        else Lambda(lambda x: x)
+    )
+    _train_transforms = Compose(
         [
-            A.RandomResizedCrop(height=height, width=width),
-            A.RandomRotate90(),
-            A.HorizontalFlip(p=0.5),
-            A.RandomBrightnessContrast(p=0.2),
-            A.Normalize(mean=image_processor.image_mean, std=image_processor.image_std),
+            RandomResizedCrop(size),
+            RandomHorizontalFlip(),
+            ToTensor(),
+            normalize,
+        ]
+    )
+    _val_transforms = Compose(
+        [
+            Resize(size),
+            CenterCrop(size),
+            ToTensor(),
+            normalize,
         ]
     )
 
-    val_transforms = A.Compose(
-        [
-            A.Resize(height=height, width=width),
-            A.Normalize(mean=image_processor.image_mean, std=image_processor.image_std),
+    def train_transforms(example_batch):
+        """Apply _train_transforms across a batch."""
+        example_batch["pixel_values"] = [
+            _train_transforms(pil_img.convert("RGB")) for pil_img in example_batch[config.image_column]
         ]
-    )
-    train_data = ImageClassificationDataset(train_data, train_transforms, config)
+        example_batch["labels"] = example_batch[config.target_column]
+        return example_batch
+
+    def val_transforms(example_batch):
+        """Apply _val_transforms across a batch."""
+        example_batch["pixel_values"] = [
+            _val_transforms(pil_img.convert("RGB")) for pil_img in example_batch[config.image_column]
+        ]
+        example_batch["labels"] = example_batch[config.target_column]
+        return example_batch
+
+    # train_data = ImageClassificationDataset(train_data, train_transforms, config)
+    train_data.set_transform(train_transforms)
+
     if valid_data is not None:
-        valid_data = ImageClassificationDataset(valid_data, val_transforms, config)
+        # valid_data = ImageClassificationDataset(valid_data, val_transforms, config)
+        valid_data.set_transform(val_transforms)
         return train_data, valid_data
     return train_data, None
 
