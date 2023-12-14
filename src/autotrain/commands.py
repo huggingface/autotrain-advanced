@@ -26,19 +26,30 @@ def launch_command(params):
                 "1",
             ]
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "none",
-                "--offload_param_device",
-                "none",
-                "--zero3_save_16bit_model",
-                "true",
-            ]
+            if params.quantization in ("int8", "int4") and params.peft:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                    str(num_gpus),
+                ]
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "none",
+                    "--offload_param_device",
+                    "none",
+                    "--zero3_save_16bit_model",
+                    "true",
+                ]
 
         cmd.append("--mixed_precision")
         if params.mixed_precision == "fp16":
@@ -179,19 +190,30 @@ def launch_command(params):
                 "1",
             ]
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "none",
-                "--offload_param_device",
-                "none",
-                "--zero3_save_16bit_model",
-                "true",
-            ]
+            if params.quantization in ("int8", "int4") and params.peft:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                    str(num_gpus),
+                ]
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "none",
+                    "--offload_param_device",
+                    "none",
+                    "--zero3_save_16bit_model",
+                    "true",
+                ]
         cmd.append("--mixed_precision")
         if params.mixed_precision == "fp16":
             cmd.append("fp16")
