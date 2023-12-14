@@ -37,3 +37,25 @@ class LoadBestPeftModelCallback(TrainerCallback):
         model = kwargs["model"]
         set_peft_model_state_dict(model, adapters_weights)
         return control
+
+
+class SaveDeepSpeedPeftModelCallback(TrainerCallback):
+    def __init__(self, trainer, save_steps=500):
+        self.trainer = trainer
+        self.save_steps = save_steps
+
+    def on_step_end(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs,
+    ):
+        if (state.global_step + 1) % self.save_steps == 0:
+            self.trainer.accelerator.wait_for_everyone()
+            state_dict = self.trainer.accelerator.get_state_dict(self.trainer.deepspeed)
+            unwrapped_model = self.trainer.accelerator.unwrap_model(self.trainer.deepspeed)
+            if self.trainer.accelerator.is_main_process:
+                unwrapped_model.save_pretrained(args.output_dir, state_dict=state_dict)
+            self.trainer.accelerator.wait_for_everyone()
+        return control

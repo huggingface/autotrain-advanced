@@ -6,7 +6,6 @@ from functools import partial
 
 import pandas as pd
 import torch
-from accelerate import Accelerator
 from accelerate.state import PartialState
 from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi
@@ -23,7 +22,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import pause_space, save_training_params
 from autotrain.trainers.seq2seq import utils
 from autotrain.trainers.seq2seq.dataset import Seq2SeqDataset
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -80,7 +79,9 @@ def train(config):
 
     model_config = AutoConfig.from_pretrained(config.model, token=config.token, trust_remote_code=True)
 
-    if config.use_peft:
+    if config.peft:
+        if config.quantization == "int4":
+            raise NotImplementedError("int4 quantization is not supported")
         # if config.use_int4:
         #     bnb_config = BitsAndBytesConfig(
         #         load_in_4bit=config.use_int4,
@@ -89,16 +90,10 @@ def train(config):
         #         bnb_4bit_use_double_quant=False,
         #     )
         #     config.fp16 = True
-        if config.use_int8:
-            bnb_config = BitsAndBytesConfig(load_in_8bit=config.use_int8)
-            config.fp16 = True
-            additional_kwargs = {
-                "device_map": {"": Accelerator().process_index} if torch.cuda.is_available() else None,
-                "torch_dtype": torch.float16,
-            }
+        if config.quantization == "int8":
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
         else:
             bnb_config = None
-            additional_kwargs = {}
 
         model = AutoModelForSeq2SeqLM.from_pretrained(
             config.model,
@@ -106,7 +101,6 @@ def train(config):
             token=config.token,
             quantization_config=bnb_config,
             trust_remote_code=True,
-            **additional_kwargs,
         )
     else:
         model = AutoModelForSeq2SeqLM.from_pretrained(
@@ -122,7 +116,7 @@ def train(config):
     if len(tokenizer) > embedding_size:
         model.resize_token_embeddings(len(tokenizer))
 
-    if config.use_peft:
+    if config.peft:
         lora_config = LoraConfig(
             r=config.lora_r,
             lora_alpha=config.lora_alpha,
@@ -131,7 +125,7 @@ def train(config):
             bias="none",
             task_type=TaskType.SEQ_2_SEQ_LM,
         )
-        if config.use_int8:
+        if config.quantization is not None:
             model = prepare_model_for_kbit_training(model)
 
         model = get_peft_model(model, lora_config)
@@ -157,7 +151,6 @@ def train(config):
         per_device_eval_batch_size=2 * config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        fp16=config.fp16,
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
@@ -176,6 +169,11 @@ def train(config):
         predict_with_generate=True,
         seed=config.seed,
     )
+
+    if config.mixed_precision == "fp16":
+        training_args["fp16"] = True
+    if config.mixed_precision == "bf16":
+        training_args["bf16"] = True
 
     if config.valid_split is not None:
         early_stop = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
@@ -216,23 +214,13 @@ def train(config):
 
     model_card = utils.create_model_card(config, trainer)
 
-    # remove token key from training_params.json located in output directory
-    # first check if file exists
-    if os.path.exists(f"{config.project_name}/training_params.json"):
-        training_params = json.load(open(f"{config.project_name}/training_params.json"))
-        if "token" in training_params:
-            training_params.pop("token")
-            json.dump(
-                training_params,
-                open(f"{config.project_name}/training_params.json", "w"),
-            )
-
     # save model card to output directory as README.md
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)

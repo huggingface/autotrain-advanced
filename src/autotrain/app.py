@@ -75,16 +75,23 @@ PARAMS = {}
 PARAMS["llm"] = LLMTrainingParams(
     target_modules="",
     log="tensorboard",
-    fp16=True,
-    use_int4=True,
-    use_int8=False,
-    use_peft=True,
+    mixed_precision="fp16",
+    quantization="int4",
+    peft=True,
     block_size=1024,
     epochs=3,
 ).model_dump()
 
-PARAMS["text-classification"] = TextClassificationParams().model_dump()
-PARAMS["image-classification"] = ImageClassificationParams().model_dump()
+PARAMS["text-classification"] = TextClassificationParams(
+    mixed_precision="fp16",
+).model_dump()
+PARAMS["image-classification"] = ImageClassificationParams(
+    mixed_precision="fp16",
+).model_dump()
+PARAMS["seq2seq"] = Seq2SeqParams(
+    mixed_precision="fp16",
+).model_dump()
+PARAMS["tabular"] = TabularParams().model_dump()
 PARAMS["dreambooth"] = DreamBoothTrainingParams(
     prompt="<enter your prompt here>",
     num_steps=500,
@@ -94,9 +101,6 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
     gradient_accumulation=4,
     lr=1e-4,
 ).model_dump()
-PARAMS["seq2seq"] = Seq2SeqParams().model_dump()
-PARAMS["tabular"] = TabularParams().model_dump()
-
 
 app = FastAPI()
 # app.mount("/css", StaticFiles(directory="css"), name="css")

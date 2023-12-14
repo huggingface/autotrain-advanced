@@ -7,6 +7,7 @@ import torch
 
 from autotrain import logger
 from autotrain.backend import SpaceRunner
+from autotrain.commands import launch_command
 
 from . import BaseAutoTrainCommand
 
@@ -195,10 +196,12 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--fp16",
-                "help": "FP16 True/False",
+                "arg": "--mixed-precision",
+                "help": "fp16, bf16, or None",
                 "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": None,
+                "choices": ["fp16", "bf16", None],
             },
             {
                 "arg": "--token",
@@ -270,7 +273,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             "deploy",
             "inference",
             "auto_find_batch_size",
-            "fp16",
             "push_to_hub",
         ]
         for arg_name in store_true_arg_names:
@@ -328,7 +330,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 save_total_limit=self.args.save_total_limit,
                 save_strategy=self.args.save_strategy,
                 auto_find_batch_size=self.args.auto_find_batch_size,
-                fp16=self.args.fp16,
+                mixed_precision=self.args.mixed_precision,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
                 token=self.args.token,
@@ -350,33 +352,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_text_classification(params)
             else:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--use_deepspeed",
-                    "--zero_stage",
-                    "3",
-                    "--offload_optimizer_device",
-                    "cpu",
-                    "--offload_param_device",
-                    "cpu",
-                    "--zero3_save_16bit_model",
-                    "true",
-                ]
-                cmd.append("--mixed_precision")
-                if self.args.fp16:
-                    cmd.append("fp16")
-                else:
-                    cmd.append("no")
-
-                cmd.extend(
-                    [
-                        "-m",
-                        "autotrain.trainers.text_classification",
-                        "--training_config",
-                        os.path.join(self.args.project_name, "training_params.json"),
-                    ]
-                )
+                cmd = launch_command(params)
 
                 env = os.environ.copy()
                 process = subprocess.Popen(cmd, env=env)

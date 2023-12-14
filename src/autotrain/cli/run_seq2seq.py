@@ -7,6 +7,7 @@ import torch
 
 from autotrain import logger
 from autotrain.backend import SpaceRunner
+from autotrain.commands import launch_command
 
 from . import BaseAutoTrainCommand
 
@@ -202,10 +203,12 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--fp16",
-                "help": "FP16 True/False",
+                "arg": "--mixed-precision",
+                "help": "fp16, bf16, or None",
                 "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": None,
+                "choices": ["fp16", "bf16", None],
             },
             {
                 "arg": "--token",
@@ -240,16 +243,18 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "type": str,
             },
             {
-                "arg": "--use-peft",
+                "arg": "--peft",
                 "help": "Use PEFT",
                 "required": False,
                 "action": "store_true",
             },
             {
-                "arg": "--use-int8",
-                "help": "Use INT8",
+                "arg": "--quantization",
+                "help": "int8 or None",
                 "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": None,
+                "choices": ["int8", None],
             },
             {
                 "arg": "--lora-r",
@@ -308,7 +313,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
             "deploy",
             "inference",
             "auto_find_batch_size",
-            "fp16",
             "push_to_hub",
             "use_peft",
             "use_int8",
@@ -374,13 +378,12 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 save_total_limit=self.args.save_total_limit,
                 save_strategy=self.args.save_strategy,
                 auto_find_batch_size=self.args.auto_find_batch_size,
-                fp16=self.args.fp16,
+                mixed_precision=self.args.mixed_precision,
                 push_to_hub=self.args.push_to_hub,
                 repo_id=self.args.repo_id,
                 token=self.args.token,
                 username=self.args.username,
-                use_peft=self.args.use_peft,
-                use_int8=self.args.use_int8,
+                peft=self.args.peft,
                 lora_r=self.args.lora_r,
                 lora_alpha=self.args.lora_alpha,
                 lora_dropout=self.args.lora_dropout,
@@ -401,45 +404,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
             if self.num_gpus == 1:
                 train_seq2seq(params)
             else:
-                if self.args.use_int8 or (self.args.fp16 and self.args.use_peft):
-                    cmd = [
-                        "accelerate",
-                        "launch",
-                        "--multi_gpu",
-                        "--num_machines",
-                        "1",
-                        "--num_processes",
-                    ]
-                    cmd.append(str(self.num_gpus))
-                else:
-                    cmd = [
-                        "accelerate",
-                        "launch",
-                        "--use_deepspeed",
-                        "--zero_stage",
-                        "3",
-                        "--offload_optimizer_device",
-                        "cpu",
-                        "--offload_param_device",
-                        "cpu",
-                        "--zero3_save_16bit_model",
-                        "true",
-                    ]
-                cmd.append("--mixed_precision")
-                if self.args.fp16:
-                    cmd.append("fp16")
-                else:
-                    cmd.append("no")
-
-                cmd.extend(
-                    [
-                        "-m",
-                        "autotrain.trainers.seq2seq",
-                        "--training_config",
-                        os.path.join(self.args.project_name, "training_params.json"),
-                    ]
-                )
-
+                cmd = launch_command(params)
                 env = os.environ.copy()
                 process = subprocess.Popen(cmd, env=env)
                 process.wait()
