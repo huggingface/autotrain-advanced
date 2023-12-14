@@ -48,7 +48,7 @@ def pause_space(params, is_failure=False):
             title = "Your training has failed ❌"
         else:
             msg = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{params.repo_id})"
-            title = ("Your training has finished successfully ✅",)
+            title = "Your training has finished successfully ✅"
         api.create_discussion(
             repo_id=os.environ["SPACE_ID"],
             title=title,
