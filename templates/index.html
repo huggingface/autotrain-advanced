@@ -11,10 +11,29 @@
       // Function to fetch data and update the textarea
       function fetchDataAndUpdateTextarea() {
         const taskValue = document.getElementById('task').value;
+        document.getElementById('params').value = 'Loading...';
         fetch(`/params/${taskValue}`)
           .then(response => response.json())
           .then(data => {
             document.getElementById('params').value = JSON.stringify(data, null, 2);
+          })
+          .catch(error => console.error('Error:', error));
+      }
+      function fetchDataAndUpdateModels() {
+        const taskValue = document.getElementById('task').value;
+        const baseModelSelect = document.getElementById('base_model');
+        baseModelSelect.innerHTML = 'Fetching models...';
+        fetch(`/model_choices/${taskValue}`)
+          .then(response => response.json())
+          .then(data => {
+            const baseModelSelect = document.getElementById('base_model');
+            baseModelSelect.innerHTML = ''; // Clear existing options
+            data.forEach(model => {
+              let option = document.createElement('option');
+              option.value = model.id; // Assuming each model has an 'id'
+              option.textContent = model.name; // Assuming each model has a 'name'
+              baseModelSelect.appendChild(option);
+            });
           })
           .catch(error => console.error('Error:', error));
       }
@@ -31,12 +50,14 @@
 
       // Event listener for dropdown changes
       document.getElementById('task').addEventListener('change', fetchDataAndUpdateTextarea);
+      document.getElementById('task').addEventListener('change', fetchDataAndUpdateModels);
 
       // Event listener for textarea changes
       document.getElementById('params').addEventListener('blur', validateJSON);
 
       // Initial call to populate the textarea when the page loads
       fetchDataAndUpdateTextarea();
+      fetchDataAndUpdateModels();
     });
   </script>
 </head>
@@ -100,9 +121,8 @@
         </div>
         <div class="form-group">
           <label for="base_model" class="text-sm font-medium text-gray-700">Base Model</label>
-          <input type="text" name="base_model" id="base_model"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="HuggingFaceH4/zephyr-7b-beta">
+          <select name="base_model" id="base_model"
+            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>
         <div class="form-group">
           <label for="hardware" class="text-sm font-medium text-gray-700">Hardware</label>

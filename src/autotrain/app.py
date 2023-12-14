@@ -1,3 +1,4 @@
+import collections
 import json
 import os
 from typing import List
@@ -7,6 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from huggingface_hub import list_models
 
 from autotrain import app_utils, logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
@@ -102,6 +104,69 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
     lr=1e-4,
 ).model_dump()
 
+
+def get_sorted_models(hub_models):
+    hub_models = [{"id": m.modelId, "downloads": m.downloads} for m in hub_models if m.private is False]
+    hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
+    hub_models = [m["id"] for m in hub_models]
+    return hub_models
+
+
+def fetch_models():
+    _mc = collections.defaultdict(list)
+    hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100, full=False)
+    hub_models2 = list_models(filter="text-classification", sort="downloads", direction=-1, limit=100, full=False)
+    hub_models = list(hub_models1) + list(hub_models2)
+    hub_models = get_sorted_models(hub_models)
+    _mc["text-classification"] = hub_models
+
+    hub_models = list(list_models(filter="text-generation", sort="downloads", direction=-1, limit=100, full=False))
+    hub_models = get_sorted_models(hub_models)
+    _mc["llm"] = hub_models
+
+    hub_models = list(
+        list_models(filter="image-classification", sort="downloads", direction=-1, limit=100, full=False)
+    )
+    hub_models = get_sorted_models(hub_models)
+    _mc["image-classification"] = hub_models
+
+    hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100, full=False))
+    hub_models = get_sorted_models(hub_models)
+    _mc["dreambooth"] = hub_models
+
+    hub_models = list(
+        list_models(filter="text2text-generation", sort="downloads", direction=-1, limit=100, full=False)
+    )
+    hub_models = get_sorted_models(hub_models)
+    _mc["seq2seq"] = hub_models
+
+    _mc["tabular-classification"] = [
+        "xgboost",
+        "random_forest",
+        "ridge",
+        "logistic_regression",
+        "svm",
+        "extra_trees",
+        "adaboost",
+        "decision_tree",
+        "knn",
+    ]
+
+    _mc["tabular-regression"] = [
+        "xgboost",
+        "random_forest",
+        "ridge",
+        "svm",
+        "extra_trees",
+        "adaboost",
+        "decision_tree",
+        "knn",
+    ]
+    return _mc
+
+
+MODEL_CHOICE = fetch_models()
+
 app = FastAPI()
 # app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -194,6 +259,30 @@ async def fetch_params(task: str):
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         return task_params
     return {"error": "Task not found"}
+
+
+@app.get("/model_choices/{task}", response_class=JSONResponse)
+async def fetch_model_choices(task: str):
+    if task == "text-classification":
+        hub_models = MODEL_CHOICE["text-classification"]
+    elif task.startswith("llm"):
+        hub_models = MODEL_CHOICE["llm"]
+    elif task == "image-classification":
+        hub_models = MODEL_CHOICE["image-classification"]
+    elif task == "dreambooth":
+        hub_models = MODEL_CHOICE["dreambooth"]
+    elif task == "seq2seq":
+        hub_models = MODEL_CHOICE["seq2seq"]
+    elif task == "tabular:classification":
+        hub_models = MODEL_CHOICE["tabular-classification"]
+    elif task == "tabular:regression":
+        hub_models = MODEL_CHOICE["tabular-regression"]
+    else:
+        raise NotImplementedError
+    resp = []
+    for hub_model in hub_models:
+        resp.append({"id": hub_model, "name": hub_model})
+    return resp
 
 
 @app.post("/create_project", response_class=JSONResponse)
