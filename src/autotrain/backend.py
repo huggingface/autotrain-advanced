@@ -143,6 +143,17 @@ def _text_clf_munge_data(params, username):
     return params.data_path
 
 
+def _img_clf_munge_data(params, username):
+    train_data_path = f"{params.data_path}/{params.train_split}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}"
+    else:
+        valid_data_path = None
+    if os.path.isdir(train_data_path) or os.path.isdir(valid_data_path):
+        raise Exception("Image classification is not yet supported for local datasets.")
+    return params.data_path
+
+
 def _dreambooth_munge_data(params, username):
     # check if params.image_path is a directory
     if os.path.isdir(params.image_path):
@@ -219,6 +230,8 @@ class SpaceRunner:
             self.task_id = 25
         elif isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
+        elif isinstance(self.params, ImageClassificationParams):
+            self.task_id = 18
         else:
             raise NotImplementedError
 
@@ -253,6 +266,11 @@ class SpaceRunner:
         if isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
             data_path = _seq2seq_munge_data(self.params, self.username)
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, ImageClassificationParams):
+            self.task_id = 18
+            data_path = _img_clf_munge_data(self.params, self.username)
             space_id = self._create_space()
             return space_id
         raise NotImplementedError
@@ -418,6 +436,7 @@ class NGCRunner:
     job_name: str
     env_vars: dict
     backend: str
+    enable_diag: bool = False
 
     def __post_init__(self):
         self.ngc_ace = os.environ.get("NGC_ACE")
@@ -474,16 +493,17 @@ class NGCRunner:
             logger.error(ngc_config_process.stderr.read())
             raise Exception("Failed to set NGC API key")
 
-        # ngc_diag_cmd = ["ngc", "diag", "all"]
-        # process = subprocess.run(ngc_diag_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        # output = process.stdout
-        # error = process.stderr
-        # if process.returncode != 0:
-        #     logger.info("NGC DIAG ALL Error occurred:")
-        #     logger.info(error)
-        # else:
-        #     logger.info("NGC DIAG ALL output:")
-        #     logger.info(output)
+        if self.enable_diag:
+            ngc_diag_cmd = ["ngc", "diag", "all"]
+            process = subprocess.run(ngc_diag_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            output = process.stdout
+            error = process.stderr
+            if process.returncode != 0:
+                logger.info("NGC DIAG ALL Error occurred:")
+                logger.info(error)
+            else:
+                logger.info("NGC DIAG ALL output:")
+                logger.info(output)
 
         logger.info("Creating NGC Job")
         subprocess.run(
