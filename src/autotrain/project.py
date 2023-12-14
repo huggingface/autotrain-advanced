@@ -48,6 +48,9 @@ class AutoTrainProject:
             self.col_map_target = "autotrain_label"
         if self.task == "lm_training":
             self.col_map_text = "autotrain_text"
+        if self.task == "image_multi_class_classification":
+            self.col_map_image = "autotrain_image"
+            self.col_map_target = "autotrain_label"
         if self.task.startswith("tabular_"):
             self.col_map_id = "autotrain_id"
             _tabular_target_cols = ["autotrain_label"]
@@ -121,6 +124,8 @@ class AutoTrainProject:
     def _munge_params_img_clf(self, job_idx):
         _params = self._munge_common_params(job_idx)
         _params["model"] = self.model_choice
+        _params["image_column"] = self.col_map_image
+        _params["target_column"] = self.col_map_target
         _params["valid_split"] = "validation"
 
         return _params

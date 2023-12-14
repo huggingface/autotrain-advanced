@@ -305,6 +305,7 @@ async def handle_form(
         )
         dset.prepare()
     elif task == "image-classification":
+        task = "image_multi_class_classification"
         dset = AutoTrainImageClassificationDataset(
             train_data=training_files[0],
             token=HF_TOKEN,
