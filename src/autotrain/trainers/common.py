@@ -43,18 +43,21 @@ def pause_space(params, is_failure=False):
         # shut down the space
         logger.info("Pausing space...")
         api = HfApi(token=params.token)
+
         if is_failure:
             msg = "Your training run has failed! Please check the logs for more details"
             title = "Your training has failed ❌"
         else:
             msg = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{params.repo_id})"
             title = "Your training has finished successfully ✅"
-        api.create_discussion(
-            repo_id=os.environ["SPACE_ID"],
-            title=title,
-            description=msg,
-            repo_type="space",
-        )
+
+        if params.token.startswith("hf_"):
+            api.create_discussion(
+                repo_id=os.environ["SPACE_ID"],
+                title=title,
+                description=msg,
+                repo_type="space",
+            )
 
         api.pause_space(repo_id=os.environ["SPACE_ID"])
     if "ENDPOINT_ID" in os.environ:
