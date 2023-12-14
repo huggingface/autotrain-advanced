@@ -306,11 +306,11 @@ async def handle_form(
         dset.prepare()
     elif task == "image-classification":
         dset = AutoTrainImageClassificationDataset(
-            train_data=training_files,
+            train_data=training_files[0],
             token=HF_TOKEN,
             project_name=project_name,
             username=autotrain_user,
-            valid_data=validation_files,
+            valid_data=validation_files[0],
             percent_valid=None,  # TODO: add to UI
         )
         dset.prepare()
