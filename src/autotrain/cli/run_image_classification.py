@@ -280,7 +280,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 valid_split=self.args.valid_split,
                 image_column=self.args.image_column,
                 target_column=self.args.target_column,
-                model_name=self.args.model,
+                model=self.args.model,
                 lr=self.args.lr,
                 epochs=self.args.epochs,
                 batch_size=self.args.batch_size,

@@ -175,7 +175,7 @@ def train(config):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    training_config = json.load(open(args.training_config))
-    config = ImageClassificationParams(**training_config)
-    train(config)
+    _args = parse_args()
+    training_config = json.load(open(_args.training_config))
+    _config = ImageClassificationParams(**training_config)
+    train(_config)
