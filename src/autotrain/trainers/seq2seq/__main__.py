@@ -22,11 +22,10 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, save_training_params
 from autotrain.trainers.seq2seq import utils
 from autotrain.trainers.seq2seq.dataset import Seq2SeqDataset
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
-from autotrain.utils import monitor
 
 
 def parse_args():

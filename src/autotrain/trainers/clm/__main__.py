@@ -31,8 +31,7 @@ from autotrain.trainers.clm.callbacks import (
     SavePeftModelCallback,
 )
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.common import pause_space, save_training_params
-from autotrain.utils import monitor
+from autotrain.trainers.common import monitor, pause_space, save_training_params
 
 
 def parse_args():

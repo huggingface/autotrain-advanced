@@ -8,7 +8,6 @@ import traceback
 from typing import Dict, Optional
 
 import requests
-from accelerate.state import PartialState
 from huggingface_hub import HfApi, HfFolder
 from huggingface_hub.repository import Repository
 from transformers import AutoConfig
@@ -272,26 +271,3 @@ def get_model_architecture(model_path_or_name: str, revision: str = "main") -> s
             f"The model architecture is either not defined or not unique. Found architectures: {architectures}"
         )
     return architectures[0]
-
-
-def monitor(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception:
-            if PartialState().process_index == 0:
-                error_message = f"""{func.__name__} has failed due to an exception: {traceback.format_exc()}"""
-                logger.error(error_message)
-                if "SPACE_ID" in os.environ:
-                    # shut down the space
-                    logger.info("Pausing space...")
-                    api = HfApi(token=os.environ["HF_TOKEN"])
-                    api.create_discussion(
-                        repo_id=os.environ["SPACE_ID"],
-                        title="Your training has failed ❌",
-                        description=error_message,
-                        repo_type="space",
-                    )
-                    api.pause_space(repo_id=os.environ["SPACE_ID"])
-
-    return wrapper

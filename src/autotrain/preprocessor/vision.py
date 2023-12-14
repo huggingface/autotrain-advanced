@@ -105,8 +105,8 @@ class ImageClassificationPreprocessor:
             shutil.copytree(self.valid_data, os.path.join(data_dir, "validation"))
 
             dataset = load_dataset("imagefolder", data_dir=data_dir)
-            dataset.rename_column("image", "autotrain_image")
-            dataset.rename_column("label", "autotrain_label")
+            dataset["train"].rename_column("image", "autotrain_image")
+            dataset["validation"].rename_column("label", "autotrain_label")
             dataset.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
                 private=True,
@@ -143,8 +143,8 @@ class ImageClassificationPreprocessor:
                 )
 
             dataset = load_dataset("imagefolder", data_dir=data_dir)
-            dataset.rename_column("image", "autotrain_image")
-            dataset.rename_column("label", "autotrain_label")
+            dataset["train"].rename_column("image", "autotrain_image")
+            dataset["validation"].rename_column("label", "autotrain_label")
             dataset.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
                 private=True,

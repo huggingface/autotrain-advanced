@@ -17,12 +17,11 @@ from diffusers.models.attention_processor import (
 from diffusers.models.lora import LoRALinearLayer
 from huggingface_hub import snapshot_download
 
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import monitor, pause_space
 from autotrain.trainers.dreambooth import utils
 from autotrain.trainers.dreambooth.datasets import DreamBoothDataset, collate_fn
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.dreambooth.trainer import Trainer
-from autotrain.utils import monitor
 
 
 def parse_args():

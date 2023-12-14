@@ -3,6 +3,7 @@ Common classes and functions for all trainers.
 """
 import json
 import os
+import traceback
 
 import requests
 from huggingface_hub import HfApi
@@ -24,11 +25,15 @@ def save_training_params(config):
 
 
 def pause_endpoint(params):
+    if isinstance(params, dict):
+        token = params["token"]
+    else:
+        token = params.token
     endpoint_id = os.environ["ENDPOINT_ID"]
     username = endpoint_id.split("/")[0]
     project_name = endpoint_id.split("/")[1]
     api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{username}/{project_name}/pause"
-    headers = {"Authorization": f"Bearer {params.token}"}
+    headers = {"Authorization": f"Bearer {token}"}
     r = requests.post(api_url, headers=headers, timeout=120)
     return r.json()
 
@@ -50,6 +55,23 @@ def pause_space(params):
         # shut down the endpoint
         logger.info("Pausing endpoint...")
         pause_endpoint(params)
+
+
+def monitor(func):
+    def wrapper(*args, **kwargs):
+        config = kwargs.get("config", None)
+        if config is None and len(args) > 0:
+            config = args[0]
+
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            error_message = f"""{func.__name__} has failed due to an exception: {traceback.format_exc()}"""
+            logger.error(error_message)
+            logger.error(str(e))
+            pause_space(config)
+
+    return wrapper
 
 
 class AutoTrainParams(BaseModel):

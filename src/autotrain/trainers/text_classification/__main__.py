@@ -16,11 +16,10 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, save_training_params
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
-from autotrain.utils import monitor
 
 
 def parse_args():

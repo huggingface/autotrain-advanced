@@ -2,10 +2,9 @@ import argparse
 import json
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import monitor, pause_space
 from autotrain.trainers.generic import utils
 from autotrain.trainers.generic.params import GenericParams
-from autotrain.utils import monitor
 
 
 def parse_args():

@@ -14,7 +14,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, save_training_params
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -26,6 +26,7 @@ def parse_args():
     return parser.parse_args()
 
 
+@monitor
 def train(config):
     if isinstance(config, dict):
         config = ImageClassificationParams(**config)

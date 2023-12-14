@@ -13,10 +13,9 @@ from sklearn import pipeline, preprocessing
 from sklearn.compose import ColumnTransformer
 
 from autotrain import logger
-from autotrain.trainers.common import pause_space
+from autotrain.trainers.common import monitor, pause_space
 from autotrain.trainers.tabular import utils
 from autotrain.trainers.tabular.params import TabularParams
-from autotrain.utils import monitor
 
 
 def parse_args():
