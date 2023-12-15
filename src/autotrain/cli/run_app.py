@@ -63,6 +63,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
                 public_url = tunnel.public_url
                 ngrok.disconnect(public_url)
             url = ngrok.connect(addr=self.port, bind_tls=True)
-            os.environ["AUTO_TRAIN_NGROK_URL"] = url.public_url
+            logger.info(f"AutoTrain Public URL: {url}")
+            logger.info("Please wait for the app to load...")
+            logger.info("***")
 
         uvicorn.run(app, host=self.host, port=self.port)
