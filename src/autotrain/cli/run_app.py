@@ -63,6 +63,6 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
                 public_url = tunnel.public_url
                 ngrok.disconnect(public_url)
             url = ngrok.connect(addr=self.port, bind_tls=True)
-            os.environ["AUTO_TRAIN_NGROK_URL"] = url
+            os.environ["AUTO_TRAIN_NGROK_URL"] = url.public_url
 
         uvicorn.run(app, host=self.host, port=self.port)
