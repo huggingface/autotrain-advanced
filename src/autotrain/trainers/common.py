@@ -51,7 +51,7 @@ def pause_space(params, is_failure=False):
             msg = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{params.repo_id})"
             title = "Your training has finished successfully ✅"
 
-        if params.token.startswith("hf_"):
+        if not params.token.startswith("hf_oauth_"):
             api.create_discussion(
                 repo_id=os.environ["SPACE_ID"],
                 title=title,
