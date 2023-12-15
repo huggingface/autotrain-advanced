@@ -1,15 +1,10 @@
-import os
 from argparse import ArgumentParser
 
 from . import BaseAutoTrainCommand
 
 
 def run_app_command_factory(args):
-    return RunAutoTrainAppCommand(
-        args.port,
-        args.host,
-        args.task,
-    )
+    return RunAutoTrainAppCommand(args.port, args.host)
 
 
 class RunAutoTrainAppCommand(BaseAutoTrainCommand):
@@ -35,14 +30,13 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
-    def __init__(self, port, host, task):
+    def __init__(self, port, host):
         self.port = port
         self.host = host
-        self.task = task
 
     def run(self):
         import uvicorn
 
         from autotrain.app import app
 
-        uvicorn.run(app, host=self.host, port=self.port, workers=os.cpu_count())
+        uvicorn.run(app, host=self.host, port=self.port)
