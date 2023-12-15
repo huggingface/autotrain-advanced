@@ -28,6 +28,7 @@ ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 0))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AUTO_TRAIN_NGROK_URL = os.environ.get("AUTO_TRAIN_NGROK_URL", None)
 
 HIDDEN_PARAMS = [
     "token",
@@ -174,6 +175,8 @@ static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
+if AUTO_TRAIN_NGROK_URL is not None:
+    logger.info(f"AutoTrain Public URL: {AUTO_TRAIN_NGROK_URL}")
 
 
 async def get_request_data(request: Request):
