@@ -68,4 +68,15 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     keywords="automl autonlp autotrain huggingface",
+    data_files=[
+        ("static", ["src/autotrain/static/logo.png"]),
+        (
+            "templates",
+            [
+                "src/autotrain/templates/index.html",
+                "src/autotrain/templates/error.html",
+            ],
+        ),
+    ],
+    include_package_data=True,
 )

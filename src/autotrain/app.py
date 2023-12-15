@@ -27,7 +27,7 @@ _, _, USERS = app_utils.user_validation()
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 0))
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 HIDDEN_PARAMS = [
     "token",
@@ -170,9 +170,10 @@ def fetch_models():
 MODEL_CHOICE = fetch_models()
 
 app = FastAPI()
-# app.mount("/css", StaticFiles(directory="css"), name="css")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+static_path = os.path.join(BASE_DIR, "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+templates_path = os.path.join(BASE_DIR, "templates")
+templates = Jinja2Templates(directory=templates_path)
 
 
 async def get_request_data(request: Request):
