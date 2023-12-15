@@ -2,7 +2,7 @@
 
 AutoTrain Advanced: faster and easier training and deployments of state-of-the-art machine learning models
 
-[![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-mdg.svg)](https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
+[![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-md.svg)](https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
 
 
 ## Documentation
