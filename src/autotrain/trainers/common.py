@@ -78,7 +78,7 @@ def monitor(func):
             error_message = f"""{func.__name__} has failed due to an exception: {traceback.format_exc()}"""
             logger.error(error_message)
             logger.error(str(e))
-            pause_space(config)
+            pause_space(config, is_failure=True)
 
     return wrapper
 

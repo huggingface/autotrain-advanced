@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import pandas as pd
-from datasets import Dataset
+from datasets import Dataset, DatasetDict
 from sklearn.model_selection import train_test_split
 
 
@@ -20,6 +20,7 @@ class TabularBinaryClassificationPreprocessor:
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
+    local: Optional[bool] = False
 
     def __post_init__(self):
         # check if id_column and label_column are in train_data
@@ -77,18 +78,27 @@ class TabularBinaryClassificationPreprocessor:
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
-        train_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="train",
-            private=True,
-            token=self.token,
-        )
-        valid_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="validation",
-            private=True,
-            token=self.token,
-        )
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
         return train_df, valid_df
 
 
@@ -122,6 +132,7 @@ class TabularMultiLabelClassificationPreprocessor:
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
     token: Optional[str] = None
+    local: Optional[bool] = False
 
     def __post_init__(self):
         # check if id_column and label_column are in train_data
@@ -186,18 +197,27 @@ class TabularMultiLabelClassificationPreprocessor:
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
-        train_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="train",
-            private=True,
-            token=self.token,
-        )
-        valid_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="validation",
-            private=True,
-            token=self.token,
-        )
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
         return train_df, valid_df
 
 
