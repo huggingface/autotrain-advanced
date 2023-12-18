@@ -1,11 +1,13 @@
 import io
 import json
 import os
+import base64
 import subprocess
 from dataclasses import dataclass
 from typing import Union
 
 import requests
+from requests.exceptions import HTTPError
 from huggingface_hub import HfApi
 
 from autotrain import logger
@@ -439,6 +441,9 @@ class NGCRunner:
     enable_diag: bool = False
 
     def __post_init__(self):
+        self.ngc_api = os.environ.get("NGC_API", "https://api.ngc.nvidia.com/v2/org")
+        self.ngc_auth = os.environ.get("NGC_AUTH", "https://authn.nvidia.com")
+
         self.ngc_ace = os.environ.get("NGC_ACE")
         self.ngc_org = os.environ.get("NGC_ORG")
         self.ngc_api_key = os.environ.get("NGC_CLI_API_KEY")
@@ -455,59 +460,75 @@ class NGCRunner:
         logger.info(f"job_name: {self.job_name}")
         logger.info(f"backend: {self.backend}")
 
-    def create(self):
-        cmd = "ngc base-command job run --name {job_name}"
-        cmd += " --priority NORMAL --order 50 --preempt RUNONCE --min-timeslice 0s"
-        cmd += " --total-runtime 259200s --ace {ngc_ace} --org {ngc_org} --instance {instance}"
-        cmd += " --commandline 'set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0' -p 7860 --result /results"
-        cmd += " --image '{ngc_org}/autotrain-advanced:latest'"
+    def _user_authentication_ngc(self, org, team, key):
+        logger.info("Authenticating NGC user...")
+        scope = f'group/ngc'
+        
+        querystring = {"service": "ngc", "scope": scope}
+        auth = '$oauthtoken:{0}'.format(key)
+        headers = {
+                'Authorization': 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8')),
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+            }
+        try:
+            response = requests.get(
+                    self.ngc_auth + "/token",
+                    headers=headers,
+                    params=querystring)
+        except HTTPError as http_err:
+            logger.error(f'HTTP error occurred: {http_err}')
+            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, config.NGC_AUTH))
+        except (requests.Timeout, ConnectionError) as err:
+            logger.error(f"Failed to request NGC token - {repr(err)}")
+            raise Exception("%s is unreachable, please try again later." % config.NGC_AUTH)
+        return json.loads(response.text.encode('utf8'))["token"]
 
-        cmd = cmd.format(
-            job_name=self.job_name,
-            ngc_ace=self.ngc_ace,
-            ngc_org=self.ngc_org,
-            instance=self.instance_map[self.backend],
-        )
-
-        for k, v in self.env_vars.items():
-            cmd += f" --env-var {k}:{v}"
-
-        ngc_config_cmd = "ngc config set"
-        ngc_config_cmd += " --team {ngc_team} --org {ngc_org} --ace {ngc_ace}"
-        ngc_config_cmd = ngc_config_cmd.format(
-            # ngc_api_key=self.ngc_api_key,
-            ngc_team=self.ngc_team,
-            ngc_org=self.ngc_org,
-            ngc_ace=self.ngc_ace,
-        )
-        logger.info("Setting NGC API key")
-        ngc_config_process = subprocess.Popen(ngc_config_cmd, shell=True)
-        ngc_config_process.wait()
-
-        if ngc_config_process.returncode == 0:
-            logger.info("NGC API key set successfully")
-        else:
-            logger.error("Failed to set NGC API key")
-            # print full output
-            logger.error(ngc_config_process.stdout.read())
-            logger.error(ngc_config_process.stderr.read())
-            raise Exception("Failed to set NGC API key")
-
-        if self.enable_diag:
-            ngc_diag_cmd = ["ngc", "diag", "all"]
-            process = subprocess.run(ngc_diag_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            output = process.stdout
-            error = process.stderr
-            if process.returncode != 0:
-                logger.info("NGC DIAG ALL Error occurred:")
-                logger.info(error)
-            else:
-                logger.info("NGC DIAG ALL output:")
-                logger.info(output)
-
+    def _create_ngc_job(self, token, url, payload):
         logger.info("Creating NGC Job")
-        subprocess.run(
-            cmd,
-            shell=True,
-            check=True,
-        )
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}'
+        }
+        try:
+            response = requests.post(
+                    self.ngc_api + url + "/jobs",
+                    headers=headers,
+                    json=payload)
+            result = response.json()
+            if 'jobStatusHistory' in result:
+                job_status_history = result['jobStatusHistory']
+                logger.info(f"Job Status History: {job_status_history}")
+            else:
+                logger.warning("Response does not contain 'jobStatusHistory' field.")
+
+        except HTTPError as http_err:
+            logger.error(f'HTTP error occurred: {http_err}')
+            raise Exception(f"HTTP Error {response.status_code}: {http_err}")
+        except (requests.Timeout, ConnectionError) as err:
+            logger.error(f"Failed to create NGC job - {repr(err)}")
+            raise Exception(f"Unreachable, please try again later: {err}")
+        return json.loads(response.text.encode('utf8'))
+
+    def create(self):
+
+        ngc_url = f"/{self.ngc_org}/team/{self.ngc_team}"
+        ngc_cmd = "set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0"
+        ngc_payload = {
+            "name": self.job_name,
+            "aceName": self.ngc_ace,
+            "aceInstance": self.instance_map[self.backend],
+            "dockerImageName": f"{self.ngc_org}/autotrain-advanced:latest",
+            "command": ngc_cmd,
+            "envs": [{"name": key, "value": value} for key, value in self.env_vars.items()],
+            "jobOrder": 50,
+            "jobPriority": "NORMAL",
+            "resultContainerMountPoint": "/results",
+            "runPolicy": {
+                "preemptClass": "RUNONCE",
+                "totalRuntimeSeconds": 259200
+            }
+        }
+
+        ngc_token = self._user_authentication_ngc(self.ngc_org, self.ngc_team, self.ngc_api_key)
+        self._create_ngc_job(ngc_token, ngc_url, ngc_payload)
