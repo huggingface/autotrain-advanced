@@ -478,10 +478,10 @@ class NGCRunner:
                     params=querystring)
         except HTTPError as http_err:
             logger.error(f'HTTP error occurred: {http_err}')
-            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, config.NGC_AUTH))
+            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
         except (requests.Timeout, ConnectionError) as err:
             logger.error(f"Failed to request NGC token - {repr(err)}")
-            raise Exception("%s is unreachable, please try again later." % config.NGC_AUTH)
+            raise Exception("%s is unreachable, please try again later." % self.ngc_auth)
         return json.loads(response.text.encode('utf8'))["token"]
 
     def _create_ngc_job(self, token, url, payload):
