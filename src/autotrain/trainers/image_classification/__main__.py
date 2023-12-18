@@ -2,7 +2,7 @@ import argparse
 import json
 
 from accelerate.state import PartialState
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from transformers import (
     AutoConfig,
@@ -36,18 +36,27 @@ def train(config):
         logger.info(f"Training config: {config}")
 
     valid_data = None
-    train_data = load_dataset(
-        config.data_path,
-        split=config.train_split,
-        token=config.token,
-    )
-
-    if config.valid_split is not None:
-        valid_data = load_dataset(
+    if config.data_path.startswith("autotrain-data-"):
+        train_data = load_from_disk(config.data_path)[config.train_split]
+    else:
+        train_data = load_dataset(
             config.data_path,
-            split=config.valid_split,
+            split=config.train_split,
             token=config.token,
         )
+
+    if config.valid_split is not None:
+        if config.data_path.startswith("autotrain-data-"):
+            valid_data = load_from_disk(config.data_path)[config.valid_split]
+        else:
+            valid_data = load_dataset(
+                config.data_path,
+                split=config.valid_split,
+                token=config.token,
+            )
+
+    logger.info(f"Train data: {train_data}")
+    logger.info(f"Valid data: {valid_data}")
 
     classes = train_data.features[config.target_column].names
     logger.info(f"Classes: {classes}")

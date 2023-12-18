@@ -7,7 +7,7 @@ import joblib
 import numpy as np
 import optuna
 import pandas as pd
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from sklearn import pipeline, preprocessing
 from sklearn.compose import ColumnTransformer
@@ -143,11 +143,15 @@ def train(config):
         logger.info("loading dataset from csv")
         train_data = pd.read_csv(train_path)
     else:
-        train_data = load_dataset(
-            config.data_path,
-            split=config.train_split,
-            token=config.token,
-        )
+        if config.data_path.startswith("autotrain-data-"):
+            logger.info("loading dataset from disk")
+            train_data = load_from_disk(config.data_path)[config.train_split]
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
         train_data = train_data.to_pandas()
 
     if config.valid_split is not None:
@@ -156,11 +160,15 @@ def train(config):
             logger.info("loading dataset from csv")
             valid_data = pd.read_csv(valid_path)
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if config.data_path.startswith("autotrain-data-"):
+                logger.info("loading dataset from disk")
+                valid_data = load_from_disk(config.data_path)[config.valid_split]
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
             valid_data = valid_data.to_pandas()
 
     if valid_data is None:

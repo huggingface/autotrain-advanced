@@ -98,6 +98,7 @@ class AutoTrainImageClassificationDataset:
     username: str
     valid_data: Optional[str] = None
     percent_valid: Optional[float] = None
+    local: bool = False
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -174,6 +175,7 @@ class AutoTrainImageClassificationDataset:
             token=self.token,
             project_name=self.project_name,
             username=self.username,
+            local=self.local,
         )
         preprocessor.prepare()
 
@@ -189,6 +191,7 @@ class AutoTrainDataset:
     valid_data: Optional[List[str]] = None
     percent_valid: Optional[float] = None
     convert_to_class_label: Optional[bool] = False
+    local: bool = False
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -253,6 +256,7 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 convert_to_class_label=self.convert_to_class_label,
+                local=self.local,
             )
             preprocessor.prepare()
 
@@ -270,6 +274,7 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 convert_to_class_label=self.convert_to_class_label,
+                local=self.local,
             )
             preprocessor.prepare()
 
@@ -286,6 +291,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
 
@@ -302,6 +308,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
 
@@ -320,6 +327,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
 
@@ -338,6 +346,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
         elif self.task == "tabular_multi_class_classification":
@@ -355,6 +364,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
         elif self.task == "tabular_single_column_regression":
@@ -372,6 +382,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
         elif self.task == "tabular_multi_column_regression":
@@ -389,6 +400,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
         elif self.task == "tabular_multi_label_classification":
@@ -406,6 +418,7 @@ class AutoTrainDataset:
                 test_size=self.percent_valid,
                 token=self.token,
                 seed=42,
+                local=self.local,
             )
             preprocessor.prepare()
         else:
