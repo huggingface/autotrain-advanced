@@ -7,7 +7,7 @@ from functools import partial
 import pandas as pd
 import torch
 from accelerate.state import PartialState
-from datasets import Dataset, load_dataset
+from datasets import Dataset, load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
@@ -57,11 +57,15 @@ def train(config):
             train_data = pd.read_csv(train_path)
             train_data = Dataset.from_pandas(train_data)
         else:
-            train_data = load_dataset(
-                config.data_path,
-                split=config.train_split,
-                token=config.token,
-            )
+            if config.data_path.startswith("autotrain-data-"):
+                logger.info("loading dataset from disk")
+                train_data = load_from_disk(config.data_path)[config.train_split]
+            else:
+                train_data = load_dataset(
+                    config.data_path,
+                    split=config.train_split,
+                    token=config.token,
+                )
 
     if config.valid_split is not None:
         valid_path = f"{config.data_path}/{config.valid_split}.csv"
@@ -70,11 +74,15 @@ def train(config):
             valid_data = pd.read_csv(valid_path)
             valid_data = Dataset.from_pandas(valid_data)
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if config.data_path.startswith("autotrain-data-"):
+                logger.info("loading dataset from disk")
+                valid_data = load_from_disk(config.data_path)[config.valid_split]
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
 
     model_config = AutoConfig.from_pretrained(config.model, token=config.token, trust_remote_code=True)
 

@@ -23,6 +23,7 @@ class ImageClassificationPreprocessor:
     valid_data: Optional[str] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
+    local: Optional[bool] = False
 
     def __post_init__(self):
         # Check if train data path exists
@@ -106,11 +107,14 @@ class ImageClassificationPreprocessor:
 
             dataset = load_dataset("imagefolder", data_dir=data_dir)
             dataset = dataset.rename_columns({"image": "autotrain_image", "label": "autotrain_label"})
-            dataset.push_to_hub(
-                f"{self.username}/autotrain-data-{self.project_name}",
-                private=True,
-                token=self.token,
-            )
+            if self.local:
+                dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            else:
+                dataset.push_to_hub(
+                    f"{self.username}/autotrain-data-{self.project_name}",
+                    private=True,
+                    token=self.token,
+                )
 
         else:
             subfolders = [f.path for f in os.scandir(self.train_data) if f.is_dir()]
@@ -143,8 +147,11 @@ class ImageClassificationPreprocessor:
 
             dataset = load_dataset("imagefolder", data_dir=data_dir)
             dataset = dataset.rename_columns({"image": "autotrain_image", "label": "autotrain_label"})
-            dataset.push_to_hub(
-                f"{self.username}/autotrain-data-{self.project_name}",
-                private=True,
-                token=self.token,
-            )
+            if self.local:
+                dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            else:
+                dataset.push_to_hub(
+                    f"{self.username}/autotrain-data-{self.project_name}",
+                    private=True,
+                    token=self.token,
+                )

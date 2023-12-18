@@ -30,9 +30,13 @@ class AutoTrainProject:
         self.project_name = self.dataset.project_name
         self.username = self.dataset.username
         self.task = self.dataset.task
+        self.local = self.dataset.local
         if isinstance(self.dataset, AutoTrainDataset):
             self.col_mapping = self.dataset.column_mapping
-        self.data_path = f"{self.username}/autotrain-data-{self.project_name}"
+        if self.local:
+            self.data_path = f"autotrain-data-{self.project_name}"
+        else:
+            self.data_path = f"{self.username}/autotrain-data-{self.project_name}"
 
         self.backend = self.job_params.loc[0, "backend"]
         if "model_choice" in self.job_params.columns:

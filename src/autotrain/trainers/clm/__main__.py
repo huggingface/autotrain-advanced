@@ -7,7 +7,7 @@ from functools import partial
 import pandas as pd
 import torch
 from accelerate.state import PartialState
-from datasets import Dataset, load_dataset
+from datasets import Dataset, load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from peft.tuners.lora import LoraLayer
@@ -44,11 +44,15 @@ def process_input_data(config):
         train_data = pd.read_csv(train_path)
         train_data = Dataset.from_pandas(train_data)
     else:
-        train_data = load_dataset(
-            config.data_path,
-            split=config.train_split,
-            token=config.token,
-        )
+        if config.data_path.startswith("autotrain-data-"):
+            logger.info("loading dataset from disk")
+            train_data = load_from_disk(config.data_path)[config.train_split]
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
     # rename columns for reward trainer
     if config.trainer in ("dpo", "reward"):
         if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
@@ -66,11 +70,14 @@ def process_input_data(config):
             valid_data = pd.read_csv(valid_path)
             valid_data = Dataset.from_pandas(valid_data)
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if config.data_path.startswith("autotrain-data-"):
+                valid_data = load_from_disk(config.data_path)[config.valid_split]
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
 
         if config.trainer in ("dpo", "reward"):
             if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
@@ -84,6 +91,9 @@ def process_input_data(config):
                 valid_data = valid_data.rename_column(config.prompt_text_column, "prompt")
     else:
         valid_data = None
+
+    logger.info(f"Train data: {train_data}")
+    logger.info(f"Valid data: {valid_data}")
 
     return train_data, valid_data
 

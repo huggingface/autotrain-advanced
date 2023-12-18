@@ -194,6 +194,7 @@ class SpaceRunner:
             "cpu": "cpu-upgrade",
             "cpuf": "cpu-basic",
             "dgx-a100": "dgx-ngc",
+            "local": "local",
             "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
             "ep-aws-useast1-m": "aws_us-east-1_gpu_medium_g5.2xlarge",
             "ep-aws-useast1-l": "aws_us-east-1_gpu_large_g4dn.12xlarge",
@@ -238,20 +239,23 @@ class SpaceRunner:
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
-            data_path = _llm_munge_data(self.params, self.username)
-            self.params.data_path = data_path
+            if self.backend != "local":
+                data_path = _llm_munge_data(self.params, self.username)
+                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TextClassificationParams):
             self.task_id = 2
-            data_path = _text_clf_munge_data(self.params, self.username)
-            self.params.data_path = data_path
+            if self.backend != "local":
+                data_path = _text_clf_munge_data(self.params, self.username)
+                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TabularParams):
             self.task_id = 26
-            data_path = _tabular_munge_data(self.params, self.username)
-            self.params.data_path = data_path
+            if self.backend != "local":
+                data_path = _tabular_munge_data(self.params, self.username)
+                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, GenericParams):
@@ -260,17 +264,23 @@ class SpaceRunner:
             return space_id
         if isinstance(self.params, DreamBoothTrainingParams):
             self.task_id = 25
-            data_path = _dreambooth_munge_data(self.params, self.username)
+            if self.backend != "local":
+                data_path = _dreambooth_munge_data(self.params, self.username)
+                self.params.image_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
-            data_path = _seq2seq_munge_data(self.params, self.username)
+            if self.backend != "local":
+                data_path = _seq2seq_munge_data(self.params, self.username)
+                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, ImageClassificationParams):
             self.task_id = 18
-            data_path = _img_clf_munge_data(self.params, self.username)
+            if self.backend != "local":
+                data_path = _img_clf_munge_data(self.params, self.username)
+                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         raise NotImplementedError

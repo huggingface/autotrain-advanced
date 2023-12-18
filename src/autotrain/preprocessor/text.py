@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
-from datasets import ClassLabel, Dataset
+from datasets import ClassLabel, Dataset, DatasetDict
 from sklearn.model_selection import train_test_split
 
 
@@ -27,6 +27,7 @@ class TextBinaryClassificationPreprocessor:
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
     convert_to_class_label: Optional[bool] = False
+    local: Optional[bool] = False
 
     def __post_init__(self):
         # check if text_column and label_column are in train_data
@@ -87,18 +88,27 @@ class TextBinaryClassificationPreprocessor:
             train_df = train_df.cast_column("autotrain_label", ClassLabel(names=label_names))
             valid_df = valid_df.cast_column("autotrain_label", ClassLabel(names=label_names))
 
-        train_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="train",
-            private=True,
-            token=self.token,
-        )
-        valid_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="validation",
-            private=True,
-            token=self.token,
-        )
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
         return train_df, valid_df
 
 
@@ -133,6 +143,7 @@ class LLMPreprocessor:
     text_column: Optional[str] = None
     prompt_column: Optional[str] = None
     rejected_text_column: Optional[str] = None
+    local: Optional[bool] = False
 
     def __post_init__(self):
         if self.text_column is None:
@@ -196,18 +207,27 @@ class LLMPreprocessor:
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
-        train_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="train",
-            private=True,
-            token=self.token,
-        )
-        valid_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="validation",
-            private=True,
-            token=self.token,
-        )
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
         return train_df, valid_df
 
 
@@ -222,6 +242,7 @@ class Seq2SeqPreprocessor:
     valid_data: Optional[pd.DataFrame] = None
     test_size: Optional[float] = 0.2
     seed: Optional[int] = 42
+    local: Optional[bool] = False
 
     def __post_init__(self):
         # check if text_column and label_column are in train_data
@@ -275,16 +296,25 @@ class Seq2SeqPreprocessor:
         train_df = Dataset.from_pandas(train_df)
         valid_df = Dataset.from_pandas(valid_df)
 
-        train_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="train",
-            private=True,
-            token=self.token,
-        )
-        valid_df.push_to_hub(
-            f"{self.username}/autotrain-data-{self.project_name}",
-            split="validation",
-            private=True,
-            token=self.token,
-        )
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
         return train_df, valid_df

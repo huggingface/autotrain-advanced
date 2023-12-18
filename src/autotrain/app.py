@@ -308,15 +308,15 @@ async def handle_form(
         logger.info(f"Running jobs: {running_jobs}")
         if running_jobs:
             for _pid in running_jobs:
-                logger.info(f"Killing PID: {_pid}")
                 proc_status = app_utils.get_process_status(_pid)
                 proc_status = proc_status.strip().lower()
                 if proc_status in ("completed", "error", "zombie"):
-                    logger.info(f"Process {_pid} is already completed. Skipping...")
+                    logger.info(f"Killing PID: {_pid}")
                     try:
                         app_utils.kill_process_by_pid(_pid)
                     except Exception as e:
                         logger.info(f"Error while killing process: {e}")
+                        logger.info(f"Process {_pid} is already completed. Skipping...")
                     DB.delete_job(_pid)
 
         running_jobs = DB.get_running_jobs()
@@ -350,6 +350,7 @@ async def handle_form(
             column_mapping=col_map,
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     elif task == "text-classification":
@@ -363,6 +364,7 @@ async def handle_form(
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
             convert_to_class_label=True,
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     elif task == "seq2seq":
@@ -375,6 +377,7 @@ async def handle_form(
             column_mapping={"text": "text", "label": "target"},
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     elif task.startswith("tabular"):
@@ -394,6 +397,7 @@ async def handle_form(
             column_mapping={"id": "id", "label": ["target"]},
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     elif task == "image-classification":
@@ -405,6 +409,7 @@ async def handle_form(
             username=autotrain_user,
             valid_data=validation_files[0] if validation_files else None,
             percent_valid=None,  # TODO: add to UI
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     elif task == "dreambooth":
@@ -415,6 +420,7 @@ async def handle_form(
             project_name=project_name,
             username=autotrain_user,
             use_v2=True,
+            local=hardware.lower() == "local",
         )
         dset.prepare()
     else:
