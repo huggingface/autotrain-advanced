@@ -1,4 +1,4 @@
-name: Build & Push
+name: Docker Hub & Amazon ECR
 
 on:
   push:
