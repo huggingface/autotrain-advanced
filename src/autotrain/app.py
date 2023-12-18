@@ -415,6 +415,7 @@ async def handle_form(
             project_name=project_name,
             username=autotrain_user,
             use_v2=True,
+            local=AUTOTRAIN_LOCAL == 1,
         )
         dset.prepare()
     else:

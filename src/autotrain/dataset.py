@@ -55,6 +55,7 @@ class AutoTrainDreamboothDataset:
     project_name: str
     username: str
     use_v2: bool = False
+    local: bool = False
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -76,6 +77,7 @@ class AutoTrainDreamboothDataset:
                 token=self.token,
                 project_name=self.project_name,
                 username=self.username,
+                local=self.local,
             )
         else:
             preprocessor = DreamboothPreprocessor(
