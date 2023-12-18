@@ -68,10 +68,6 @@ RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c
     conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && conda clean -ya
 #conda install -c "nvidia/label/cuda-12.1.0" cuda-toolkit && conda clean -ya
 
-# install NGC CLI
-RUN wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.34.1/files/ngccli_linux.zip -O ngccli_linux.zip && unzip ngccli_linux.zip && \
-    chmod u+x ngc-cli/ngc
-
 COPY --chown=1000:1000 . /app/
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
