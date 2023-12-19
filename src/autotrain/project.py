@@ -147,6 +147,11 @@ class AutoTrainProject:
         if len(_params["numeric_scaler"].strip()) == 0 or _params["numeric_scaler"].lower() == "none":
             _params["numeric_scaler"] = None
 
+        if "classification" in self.task:
+            _params["task"] = "classification"
+        else:
+            _params["task"] = "regression"
+
         return _params
 
     def _munge_params_dreambooth(self, job_idx):

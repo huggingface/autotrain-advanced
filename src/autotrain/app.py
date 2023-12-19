@@ -93,7 +93,11 @@ PARAMS["image-classification"] = ImageClassificationParams(
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
 ).model_dump()
-PARAMS["tabular"] = TabularParams().model_dump()
+PARAMS["tabular"] = TabularParams(
+    categorical_imputer="most_frequent",
+    numerical_imputer="median",
+    numeric_scaler="robust",
+).model_dump()
 PARAMS["dreambooth"] = DreamBoothTrainingParams(
     prompt="<enter your prompt here>",
     num_steps=500,
