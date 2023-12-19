@@ -520,6 +520,7 @@ class NGCRunner:
             "envs": [{"name": key, "value": value} for key, value in self.env_vars.items()],
             "jobOrder": 50,
             "jobPriority": "NORMAL",
+            "portMappings": [{"containerPort": 7860, "protocol": "HTTPS"}],
             "resultContainerMountPoint": "/results",
             "runPolicy": {"preemptClass": "RUNONCE", "totalRuntimeSeconds": 259200},
         }
