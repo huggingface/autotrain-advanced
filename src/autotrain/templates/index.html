@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('json-error-message').textContent = '';
@@ -68,7 +69,7 @@
       <img src="/static/logo.png" alt="AutoTrain" , class="w-32">
     </div>
   </header>
-  <div class="form-container max-w-5xl mx-auto mt-10 p-6 shadow-2xl">
+  <div class="form-container max-w-5xl mx-auto mt-3 p-6 shadow-2xl">
     <div class="block text-sm font-normal text-gray-700">AutoTrain Advanced is a no-code solution that
       allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct
       format for project to be created.
@@ -78,8 +79,12 @@
     <hr class="h-px my-4 bg-gray-200 border-b-2 dark:bg-gray-700">
     <form action="#" method="post" class="grid grid-cols-2 gap-2" enctype="multipart/form-data">
       <div>
-        <div class="form-group">
-          <label for="autotrain_user" class="block text-sm font-medium text-gray-700">Hugging Face User</label>
+        <div class="form-group mb-2">
+          <label for="autotrain_user" class="block text-sm font-medium text-gray-700">Hugging Face User
+            <button type="button" id="autotrain_user_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
           <select name="autotrain_user" , id="autotrain_user"
             class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
             {% for user in valid_users %}
@@ -87,15 +92,23 @@
             {% endfor %}
           </select>
         </div>
-        <div class="columns-2">
+        <div class="columns-2  mb-2">
           <div class="form-group">
-            <label for="project_name" class="text-sm font-medium text-gray-700">Project name</label>
+            <label for="project_name" class="text-sm font-medium text-gray-700">Project name
+              <button type="button" id="project_name_info" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-info-circle"></i>
+              </button>
+            </label>
             <input type="text" name="project_name" id="project_name"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="eg: imdb-sentiment-analysis">
           </div>
-          <div class="form-group">
-            <label for="task" class="text-sm font-medium text-gray-700">Task</label>
+          <div class="form-group mb-2">
+            <label for="task" class="text-sm font-medium text-gray-700">Task
+              <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-info-circle"></i>
+              </button>
+            </label>
             <select id="task" name="task"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               <optgroup label="LLM Finetuning">
@@ -119,14 +132,12 @@
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <label for="base_model" class="text-sm font-medium text-gray-700">Base Model</label>
-          <select name="base_model" id="base_model"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="hardware" class="text-sm font-medium text-gray-700">Hardware</label>
+        <div class="form-group mb-2">
+          <label for="hardware" class="text-sm font-medium text-gray-700">Hardware
+            <button type="button" id="hardware_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
           <select id="hardware" name="hardware"
             class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
             {% if enable_local == 1 %}
@@ -158,6 +169,19 @@
             {% endif %}
             {% endif %}
           </select>
+        </div>
+        <div class="form-group">
+          <label for="base_model" class="text-sm font-medium text-gray-700">Base Model
+            <button type="button" id="base_model_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
+          <select name="base_model" id="base_model"
+            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </select>
+          <p class="text-xs font-normal text-gray-500">Note: not all models listed here are going to be compatible with
+            your data and parameters. You should select a model that is compatible with your task, data and parameters.
+          </p>
         </div>
         <div class="form-group">
           <div class="mb-4">
@@ -228,8 +252,12 @@
       <div>
         <div class="form-group">
           <label for="params" class="text-sm font-medium text-gray-700">Training Parameters (find params to
-            copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)</label>
-          <textarea id="params" name="params" rows="20" class="p-2.5 w-full text-sm text-gray-900"
+            copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)
+            <button type="button" id="params_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
+          <textarea id="params" name="params" rows="27" class="p-2.5 w-full text-sm text-gray-900"
             placeholder="Loading..."></textarea>
         </div>
       </div>
