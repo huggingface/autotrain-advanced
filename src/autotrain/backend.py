@@ -1,14 +1,13 @@
+import base64
 import io
 import json
 import os
-import base64
-import subprocess
 from dataclasses import dataclass
 from typing import Union
 
 import requests
-from requests.exceptions import HTTPError
 from huggingface_hub import HfApi
+from requests.exceptions import HTTPError
 
 from autotrain import logger
 from autotrain.app_utils import run_training
@@ -470,51 +469,44 @@ class NGCRunner:
         logger.info(f"job_name: {self.job_name}")
         logger.info(f"backend: {self.backend}")
 
-    def _user_authentication_ngc(self, org, team, key):
+    def _user_authentication_ngc(self):
         logger.info("Authenticating NGC user...")
-        scope = f'group/ngc'
-        
+        scope = "group/ngc"
+
         querystring = {"service": "ngc", "scope": scope}
-        auth = '$oauthtoken:{0}'.format(key)
+        auth = f"$oauthtoken:{self.ngc_api_key}"
         headers = {
-                'Authorization': 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8')),
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-            }
+            "Authorization": f"Basic {base64.b64encode(auth.encode('utf-8')).decode('utf-8')}",
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+        }
         try:
-            response = requests.get(
-                    self.ngc_auth + "/token",
-                    headers=headers,
-                    params=querystring)
+            response = requests.get(self.ngc_auth + "/token", headers=headers, params=querystring, timeout=30)
         except HTTPError as http_err:
-            logger.error(f'HTTP error occurred: {http_err}')
+            logger.error(f"HTTP error occurred: {http_err}")
             raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
         except (requests.Timeout, ConnectionError) as err:
             logger.error(f"Failed to request NGC token - {repr(err)}")
             raise Exception("%s is unreachable, please try again later." % self.ngc_auth)
-        return json.loads(response.text.encode('utf8'))["token"]
+        return json.loads(response.text.encode("utf8"))["token"]
 
     def _create_ngc_job(self, token, url, payload):
         logger.info("Creating NGC Job")
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {token}'
-        }
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
         try:
-            response = requests.post(
-                    self.ngc_api + url + "/jobs",
-                    headers=headers,
-                    json=payload)
+            response = requests.post(self.ngc_api + url + "/jobs", headers=headers, json=payload, timeout=30)
             result = response.json()
-            logger.info("NGC Job ID: %s, Job Status History: %s" % (result.get('job', {}).get('id'), result.get('jobStatusHistory')))
+            logger.info(
+                f"NGC Job ID: {result.get('job', {}).get('id')}, Job Status History: {result.get('jobStatusHistory')}"
+            )
 
         except HTTPError as http_err:
-            logger.error(f'HTTP error occurred: {http_err}')
+            logger.error(f"HTTP error occurred: {http_err}")
             raise Exception(f"HTTP Error {response.status_code}: {http_err}")
         except (requests.Timeout, ConnectionError) as err:
             logger.error(f"Failed to create NGC job - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
-        return json.loads(response.text.encode('utf8'))
+        return json.loads(response.text.encode("utf8"))
 
     def create(self):
         ngc_url = f"/{self.ngc_org}/team/{self.ngc_team}"
@@ -529,11 +521,8 @@ class NGCRunner:
             "jobOrder": 50,
             "jobPriority": "NORMAL",
             "resultContainerMountPoint": "/results",
-            "runPolicy": {
-                "preemptClass": "RUNONCE",
-                "totalRuntimeSeconds": 259200
-            }
+            "runPolicy": {"preemptClass": "RUNONCE", "totalRuntimeSeconds": 259200},
         }
 
-        ngc_token = self._user_authentication_ngc(self.ngc_org, self.ngc_team, self.ngc_api_key)
+        ngc_token = self._user_authentication_ngc()
         self._create_ngc_job(ngc_token, ngc_url, ngc_payload)
