@@ -1,0 +1,103 @@
+name: Bug Report
+description: 🐛 Submit a bug report to help us improve AutoTrain
+title: ""
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Before you proceed, please make sure you've checked the documentation and previous issues for similar problems.
+        Always remember to hide any sensitive information such as API keys, passwords and tokens.
+
+  - type: checkboxes
+    id: read-docs
+    attributes:
+      label: Prerequisites
+      description: Confirm before submitting the bug report.
+      options:
+        - label: I have read the documentation.
+          required: true
+        - label: I have checked other issues for similar problems.
+          required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      description: Which backend are you using?
+      options:
+        - Local
+        - Colab
+        - Hugging Face Space/Endpoints
+        - Other cloud providers
+    validations:
+      required: true
+
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface Used
+      description: Are you using the CLI or the UI?
+      options:
+        - CLI
+        - UI
+    validations:
+      required: true
+
+  - type: textarea
+    id: cli-command
+    attributes:
+      label: CLI Command
+      description: If you're using the CLI, please provide the full command you ran.
+    validations:
+      required: false
+    conditional:
+      - type: dropdown
+        id: interface
+        condition: CLI
+
+  - type: markdown
+    attributes:
+      value: |
+        If you're using the UI, please provide the following details:
+
+  - type: input
+    id: ui-screenshot
+    attributes:
+      label: Screenshot
+      description: Upload a screenshot of the UI at the time of the issue.
+    validations:
+      required: false
+    conditional:
+      - type: dropdown
+        id: interface
+        condition: UI
+
+  - type: textarea
+    id: ui-params
+    attributes:
+      label: UI Parameters
+      description: If using the UI, copy and paste the parameters you used here.
+    validations:
+      required: false
+    conditional:
+      - type: dropdown
+        id: interface
+        condition: UI
+
+  - type: textarea
+    id: stacktrace
+    attributes:
+      label: Error Logs
+      description: Please provide a stack trace or detailed error message, if available.
+      placeholder: Paste the stack trace here
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any additional information or context about the problem.
+    validations:
+      required: false
