@@ -120,6 +120,7 @@ def text_clf_munge_data(params, local):
             column_mapping={"text": params.text_column, "label": params.target_column},
             percent_valid=None,  # TODO: add to UI
             local=local,
+            convert_to_class_label=True,
         )
         dset.prepare()
         if local:

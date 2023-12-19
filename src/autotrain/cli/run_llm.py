@@ -450,20 +450,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             raise NotImplementedError("Deploy is not implemented yet")
         if self.args.inference:
             raise NotImplementedError("Inference is not implemented yet")
-        # if self.args.inference:
-        #     from autotrain.infer.text_generation import TextGenerationInference
-
-        #     tgi = TextGenerationInference(
-        #         self.args.project_name,
-        #         use_int4=self.args.use_int4,
-        #         use_int8=self.args.use_int8,
-        #     )
-        #     while True:
-        #         prompt = input("User: ")
-        #         if prompt == "exit()":
-        #             break
-        #         print(f"Bot: {tgi.chat(prompt)}")
-
         cuda_available = torch.cuda.is_available()
         mps_available = torch.backends.mps.is_available()
 
