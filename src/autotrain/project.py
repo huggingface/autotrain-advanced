@@ -2,7 +2,6 @@
 Copyright 2023 The HuggingFace Team
 """
 
-import json
 from dataclasses import dataclass
 from typing import List, Union
 
@@ -49,6 +48,7 @@ class AutoTrainProject:
         self.local = self.dataset.local
         if isinstance(self.dataset, AutoTrainDataset):
             self.col_mapping = self.dataset.column_mapping
+        # return from dset.prepare:
         if self.local:
             self.data_path = f"{self.project_name}/autotrain-data"
         else:
@@ -100,86 +100,6 @@ class AutoTrainProject:
 
         self.job_params_json = self.job_params.to_json(orient="records")
         logger.info(self.job_params_json)
-
-    def _munge_common_params(self, job_idx):
-        _params = json.loads(self.job_params_json)[job_idx]
-        _params["token"] = self.token
-        _params["project_name"] = f"{self.project_name}-{job_idx}"
-        _params["push_to_hub"] = True
-        _params["repo_id"] = f"{self.username}/{self.project_name}-{job_idx}"
-        _params["data_path"] = self.data_path
-        _params["username"] = self.username
-        return _params
-
-    def _munge_params_llm(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["text_column"] = self.col_map_text
-        _params["prompt_text_column"] = "autotrain_prompt"
-        _params["rejected_text_column"] = "autotrain_rejected_text"
-
-        if "trainer" in _params:
-            _params["trainer"] = _params["trainer"].lower()
-
-        return _params
-
-    def _munge_params_text_clf(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["text_column"] = self.col_map_text
-        _params["target_column"] = self.col_map_target
-        _params["valid_split"] = "validation"
-
-        return _params
-
-    def _munge_params_seq2seq(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["text_column"] = self.col_map_text
-        _params["target_column"] = self.col_map_target
-        _params["valid_split"] = "validation"
-
-        return _params
-
-    def _munge_params_img_clf(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["image_column"] = self.col_map_image
-        _params["target_column"] = self.col_map_target
-        _params["valid_split"] = "validation"
-
-        return _params
-
-    def _munge_params_tabular(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["id_column"] = self.col_map_id
-        _params["target_columns"] = self.col_map_target
-        _params["valid_split"] = "validation"
-
-        if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
-            _params["categorical_imputer"] = None
-        if len(_params["numerical_imputer"].strip()) == 0 or _params["numerical_imputer"].lower() == "none":
-            _params["numerical_imputer"] = None
-        if len(_params["numeric_scaler"].strip()) == 0 or _params["numeric_scaler"].lower() == "none":
-            _params["numeric_scaler"] = None
-
-        if "classification" in self.task:
-            _params["task"] = "classification"
-        else:
-            _params["task"] = "regression"
-
-        return _params
-
-    def _munge_params_dreambooth(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["image_path"] = self.data_path
-
-        if "weight_decay" in _params:
-            _params["adam_weight_decay"] = _params["weight_decay"]
-            _params.pop("weight_decay")
-
-        return _params
 
     def create_spaces(self):
         _created_spaces = []
