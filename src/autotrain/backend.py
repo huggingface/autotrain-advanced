@@ -11,7 +11,14 @@ from requests.exceptions import HTTPError
 
 from autotrain import logger
 from autotrain.app_utils import run_training
-from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
+from autotrain.dataset_utils import (
+    dreambooth_munge_data,
+    img_clf_munge_data,
+    llm_munge_data,
+    seq2seq_munge_data,
+    tabular_munge_data,
+    text_clf_munge_data,
+)
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
@@ -29,147 +36,6 @@ CMD autotrain api --port 7860 --host 0.0.0.0
 
 # format _DOCKERFILE
 _DOCKERFILE = _DOCKERFILE.replace("\n", " ").replace("  ", "\n").strip()
-
-
-def _tabular_munge_data(params, username):
-    if isinstance(params.target_columns, str):
-        col_map_label = [params.target_columns]
-    else:
-        col_map_label = params.target_columns
-    task = params.task
-    if task == "classification" and len(col_map_label) > 1:
-        task = "tabular_multi_label_classification"
-    elif task == "classification" and len(col_map_label) == 1:
-        task = "tabular_multi_class_classification"
-    elif task == "regression" and len(col_map_label) > 1:
-        task = "tabular_multi_column_regression"
-    elif task == "regression" and len(col_map_label) == 1:
-        task = "tabular_single_column_regression"
-    else:
-        raise Exception("Please select a valid task.")
-
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
-    else:
-        valid_data_path = None
-    if os.path.exists(train_data_path):
-        dset = AutoTrainDataset(
-            train_data=[train_data_path],
-            task=task,
-            token=params.token,
-            project_name=params.project_name,
-            username=username,
-            column_mapping={"id": params.col_map_id, "label": col_map_label},
-            valid_data=[valid_data_path] if valid_data_path is not None else None,
-            percent_valid=None,  # TODO: add to UI
-        )
-        dset.prepare()
-        return f"{username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
-
-
-def _llm_munge_data(params, username):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
-    else:
-        valid_data_path = None
-    if os.path.exists(train_data_path):
-        col_map = {"text": params.text_column}
-        if params.rejected_text_column is not None:
-            col_map["rejected_text"] = params.rejected_text_column
-        if params.prompt_column is not None:
-            col_map["prompt"] = params.prompt_column
-        dset = AutoTrainDataset(
-            train_data=[train_data_path],
-            task="lm_training",
-            token=params.token,
-            project_name=params.project_name,
-            username=username,
-            column_mapping=col_map,
-            valid_data=[valid_data_path] if valid_data_path is not None else None,
-            percent_valid=None,  # TODO: add to UI
-        )
-        dset.prepare()
-        return f"{username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
-
-
-def _seq2seq_munge_data(params, username):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
-    else:
-        valid_data_path = None
-    if os.path.exists(train_data_path):
-        dset = AutoTrainDataset(
-            train_data=[train_data_path],
-            task="seq2seq",
-            token=params.token,
-            project_name=params.project_name,
-            username=username,
-            column_mapping={"text": params.text_column, "label": params.target_column},
-            valid_data=[valid_data_path] if valid_data_path is not None else None,
-            percent_valid=None,  # TODO: add to UI
-        )
-        dset.prepare()
-        return f"{username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
-
-
-def _text_clf_munge_data(params, username):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
-    else:
-        valid_data_path = None
-    if os.path.exists(train_data_path):
-        dset = AutoTrainDataset(
-            train_data=[train_data_path],
-            valid_data=[valid_data_path] if valid_data_path is not None else None,
-            task="text_multi_class_classification",
-            token=params.token,
-            project_name=params.project_name,
-            username=username,
-            column_mapping={"text": params.text_column, "label": params.target_column},
-            percent_valid=None,  # TODO: add to UI
-        )
-        dset.prepare()
-        return f"{username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
-
-
-def _img_clf_munge_data(params, username):
-    train_data_path = f"{params.data_path}/{params.train_split}"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}"
-    else:
-        valid_data_path = None
-    if os.path.isdir(train_data_path) or os.path.isdir(valid_data_path):
-        raise Exception("Image classification is not yet supported for local datasets.")
-    return params.data_path
-
-
-def _dreambooth_munge_data(params, username):
-    # check if params.image_path is a directory
-    if os.path.isdir(params.image_path):
-        training_data = [os.path.join(params.image_path, f) for f in os.listdir(params.image_path)]
-        training_data = [io.BytesIO(open(f, "rb").read()) for f in training_data]
-        dset = AutoTrainDreamboothDataset(
-            concept_images=training_data,
-            concept_name=params.prompt,
-            token=params.token,
-            project_name=params.project_name,
-            username=username,
-        )
-        dset.prepare()
-        return f"{username}/autotrain-data-{params.project_name}"
-    return params.image_path
 
 
 @dataclass
@@ -241,21 +107,21 @@ class SpaceRunner:
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
             if self.backend != "local":
-                data_path = _llm_munge_data(self.params, self.username)
+                data_path = llm_munge_data(self.params, local=False)
                 self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TextClassificationParams):
             self.task_id = 2
             if self.backend != "local":
-                data_path = _text_clf_munge_data(self.params, self.username)
+                data_path = text_clf_munge_data(self.params, local=False)
                 self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TabularParams):
             self.task_id = 26
             if self.backend != "local":
-                data_path = _tabular_munge_data(self.params, self.username)
+                data_path = tabular_munge_data(self.params, local=False)
                 self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
@@ -266,21 +132,21 @@ class SpaceRunner:
         if isinstance(self.params, DreamBoothTrainingParams):
             self.task_id = 25
             if self.backend != "local":
-                data_path = _dreambooth_munge_data(self.params, self.username)
+                data_path = dreambooth_munge_data(self.params, local=False)
                 self.params.image_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
             if self.backend != "local":
-                data_path = _seq2seq_munge_data(self.params, self.username)
+                data_path = seq2seq_munge_data(self.params, local=False)
                 self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, ImageClassificationParams):
             self.task_id = 18
             if self.backend != "local":
-                data_path = _img_clf_munge_data(self.params, self.username)
+                data_path = img_clf_munge_data(self.params, local=False)
                 self.params.data_path = data_path
             space_id = self._create_space()
             return space_id

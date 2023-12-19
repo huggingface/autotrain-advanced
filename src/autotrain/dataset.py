@@ -53,7 +53,7 @@ class AutoTrainDreamboothDataset:
     concept_name: str
     token: str
     project_name: str
-    username: str
+    username: Optional[str] = None
     use_v2: bool = False
     local: bool = False
 
@@ -186,7 +186,7 @@ class AutoTrainDataset:
     task: str
     token: str
     project_name: str
-    username: str
+    username: Optional[str] = None
     column_mapping: Optional[Dict[str, str]] = None
     valid_data: Optional[List[str]] = None
     percent_valid: Optional[float] = None

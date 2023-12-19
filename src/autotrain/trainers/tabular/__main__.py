@@ -138,37 +138,27 @@ def train(config):
 
     train_data = None
     valid_data = None
-    train_path = f"{config.data_path}/{config.train_split}.csv"
-    if os.path.exists(train_path):
-        logger.info("loading dataset from csv")
-        train_data = pd.read_csv(train_path)
+    if config.data_path == f"{config.project_name}/autotrain-data":
+        logger.info("loading dataset from disk")
+        train_data = load_from_disk(config.data_path)[config.train_split]
     else:
-        if config.data_path.startswith("autotrain-data-"):
-            logger.info("loading dataset from disk")
-            train_data = load_from_disk(config.data_path)[config.train_split]
-        else:
-            train_data = load_dataset(
-                config.data_path,
-                split=config.train_split,
-                token=config.token,
-            )
-        train_data = train_data.to_pandas()
+        train_data = load_dataset(
+            config.data_path,
+            split=config.train_split,
+            token=config.token,
+        )
+    train_data = train_data.to_pandas()
 
     if config.valid_split is not None:
-        valid_path = f"{config.data_path}/{config.valid_split}.csv"
-        if os.path.exists(valid_path):
-            logger.info("loading dataset from csv")
-            valid_data = pd.read_csv(valid_path)
+        if config.data_path == f"{config.project_name}/autotrain-data":
+            logger.info("loading dataset from disk")
+            valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
-            if config.data_path.startswith("autotrain-data-"):
-                logger.info("loading dataset from disk")
-                valid_data = load_from_disk(config.data_path)[config.valid_split]
-            else:
-                valid_data = load_dataset(
-                    config.data_path,
-                    split=config.valid_split,
-                    token=config.token,
-                )
+            valid_data = load_dataset(
+                config.data_path,
+                split=config.valid_split,
+                token=config.token,
+            )
             valid_data = valid_data.to_pandas()
 
     if valid_data is None:

@@ -227,6 +227,7 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
         self.args.target_columns = [k.strip() for k in self.args.target_columns.split(",")]
 
     def run(self):
+        from autotrain.dataset_utils import tabular_munge_data
         from autotrain.trainers.tabular.__main__ import train as train_tabular
         from autotrain.trainers.tabular.params import TabularParams
 
@@ -265,5 +266,7 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
                 sys.exit(0)
 
+            # local training
+            params.data_path = tabular_munge_data(params, local=True)
             params.save(output_dir=self.args.project_name)
             train_tabular(params)

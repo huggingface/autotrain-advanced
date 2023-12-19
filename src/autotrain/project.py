@@ -34,7 +34,7 @@ class AutoTrainProject:
         if isinstance(self.dataset, AutoTrainDataset):
             self.col_mapping = self.dataset.column_mapping
         if self.local:
-            self.data_path = f"autotrain-data-{self.project_name}"
+            self.data_path = f"{self.project_name}/autotrain-data"
         else:
             self.data_path = f"{self.username}/autotrain-data-{self.project_name}"
 

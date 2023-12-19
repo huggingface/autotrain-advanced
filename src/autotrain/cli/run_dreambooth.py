@@ -7,6 +7,7 @@ from autotrain.cli import BaseAutoTrainCommand
 
 
 try:
+    from autotrain.dataset_utils import dreambooth_munge_data
     from autotrain.trainers.dreambooth.__main__ import train as train_dreambooth
     from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
     from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
@@ -471,4 +472,5 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
     def run(self):
         logger.info("Running DreamBooth Training")
         params = DreamBoothTrainingParams(**vars(self.args))
+        params.image_path = dreambooth_munge_data(params, local=True)
         train_dreambooth(params)

@@ -51,7 +51,7 @@ def train(config):
             repo_type="dataset",
         )
         config.image_path = "/tmp/model/concept1/"
-    if config.image_path.startswith("autotrain-data-"):
+    if config.image_path == f"{config.project_name}/autotrain-data":
         config.image_path = os.path.join(config.image_path, "concept1")
 
     accelerator_project_config = ProjectConfiguration(

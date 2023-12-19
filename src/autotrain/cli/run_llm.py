@@ -477,6 +477,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
 
     def run(self):
         from autotrain.backend import SpaceRunner
+        from autotrain.dataset_utils import llm_munge_data
         from autotrain.trainers.clm.__main__ import train as train_llm
         from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -542,6 +543,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 sys.exit(0)
 
             # local training
+            params.data_path = llm_munge_data(params, local=True)
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
                 train_llm(params)

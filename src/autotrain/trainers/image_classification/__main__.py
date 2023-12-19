@@ -36,7 +36,7 @@ def train(config):
         logger.info(f"Training config: {config}")
 
     valid_data = None
-    if config.data_path.startswith("autotrain-data-"):
+    if config.data_path == f"{config.project_name}/autotrain-data":
         train_data = load_from_disk(config.data_path)[config.train_split]
     else:
         train_data = load_dataset(
@@ -46,7 +46,7 @@ def train(config):
         )
 
     if config.valid_split is not None:
-        if config.data_path.startswith("autotrain-data-"):
+        if config.data_path == f"{config.project_name}/autotrain-data":
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
             valid_data = load_dataset(

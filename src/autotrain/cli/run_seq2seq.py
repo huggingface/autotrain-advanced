@@ -348,6 +348,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
             self.args.target_modules = self.args.target_modules.split(",")
 
     def run(self):
+        from autotrain.dataset_utils import seq2seq_munge_data
         from autotrain.trainers.seq2seq.__main__ import train as train_seq2seq
         from autotrain.trainers.seq2seq.params import Seq2SeqParams
 
@@ -400,6 +401,8 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
                 sys.exit(0)
 
+            # local training
+            params.data_path = seq2seq_munge_data(params, local=True)
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
                 train_seq2seq(params)

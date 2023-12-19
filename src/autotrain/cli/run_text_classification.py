@@ -301,6 +301,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             self.args.token = os.environ.get("HF_TOKEN", None)
 
     def run(self):
+        from autotrain.dataset_utils import text_clf_munge_data
         from autotrain.trainers.text_classification.__main__ import train as train_text_classification
         from autotrain.trainers.text_classification.params import TextClassificationParams
 
@@ -348,6 +349,8 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
                 sys.exit(0)
 
+            # local training
+            params.data_path = text_clf_munge_data(params, local=True)
             params.save(output_dir=self.args.project_name)
             if self.num_gpus == 1:
                 train_text_classification(params)
