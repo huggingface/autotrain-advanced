@@ -496,11 +496,7 @@ class NGCRunner:
                     headers=headers,
                     json=payload)
             result = response.json()
-            if 'jobStatusHistory' in result:
-                job_status_history = result['jobStatusHistory']
-                logger.info(f"Job Status History: {job_status_history}")
-            else:
-                logger.warning("Response does not contain 'jobStatusHistory' field.")
+            logger.info("NGC Job ID: %s, Job Status History: %s" % (result.get('job', {}).get('id'), result.get('jobStatusHistory')))
 
         except HTTPError as http_err:
             logger.error(f'HTTP error occurred: {http_err}')
