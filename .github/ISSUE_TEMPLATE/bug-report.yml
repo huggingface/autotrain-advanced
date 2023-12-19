@@ -15,7 +15,7 @@ body:
       label: Prerequisites
       description: Confirm before submitting the bug report.
       options:
-        - label: I have read the documentation.
+        - label: I have read the [documentation](https://hf.co/docs/autotrain).
           required: true
         - label: I have checked other issues for similar problems.
           required: true
@@ -52,24 +52,11 @@ body:
     validations:
       required: false
 
-  - type: markdown
-    attributes:
-      value: |
-        If you're using the UI, please provide the following details:
-
-  - type: input
-    id: ui-screenshot
-    attributes:
-      label: Screenshot
-      description: Upload a screenshot of the UI at the time of the issue.
-    validations:
-      required: false
-
   - type: textarea
     id: ui-params
     attributes:
-      label: UI Parameters
-      description: If using the UI, copy and paste the parameters you used here.
+      label: UI Screenshots & Parameters
+      description: If using the UI, add a screenshot of the UI & copy-paste the parameters you used.
     validations:
       required: false
 
@@ -77,7 +64,7 @@ body:
     id: stacktrace
     attributes:
       label: Error Logs
-      
+
       description: Please provide a stack trace or detailed error message, if available.
       placeholder: Paste the stack trace here
     validations:
