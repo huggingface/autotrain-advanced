@@ -4,9 +4,7 @@ Copyright 2023 The HuggingFace Team
 
 import json
 from dataclasses import dataclass
-from typing import Union
-
-import pandas as pd
+from typing import List, Union
 
 from autotrain import logger
 from autotrain.backend import SpaceRunner
@@ -23,7 +21,25 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 @dataclass
 class AutoTrainProject:
     dataset: Union[AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset]
-    job_params: pd.DataFrame
+    params: Union[
+        List[
+            Union[
+                LLMTrainingParams,
+                TextClassificationParams,
+                TabularParams,
+                DreamBoothTrainingParams,
+                Seq2SeqParams,
+                ImageClassificationParams,
+            ]
+        ],
+        LLMTrainingParams,
+        TextClassificationParams,
+        TabularParams,
+        DreamBoothTrainingParams,
+        Seq2SeqParams,
+        ImageClassificationParams,
+    ]
+    backend: str
 
     def __post_init__(self):
         self.token = self.dataset.token
