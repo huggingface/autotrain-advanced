@@ -1,6 +1,6 @@
 name: Feature Request
 description: 🚀 Submit a proposal/request for a new AutoTrain feature
-title: ""
+title: "[FEATURE REQUEST]"
 labels: ["feature request"]
 body:
   - type: markdown

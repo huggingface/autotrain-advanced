@@ -1,6 +1,6 @@
 name: Bug Report
 description: 🐛 Submit a bug report to help us improve AutoTrain
-title: ""
+title: "[BUG]"
 labels: ["bug"]
 body:
   - type: markdown
@@ -51,10 +51,6 @@ body:
       description: If you're using the CLI, please provide the full command you ran.
     validations:
       required: false
-    conditional:
-      - type: dropdown
-        id: interface
-        condition: CLI
 
   - type: markdown
     attributes:
@@ -68,10 +64,6 @@ body:
       description: Upload a screenshot of the UI at the time of the issue.
     validations:
       required: false
-    conditional:
-      - type: dropdown
-        id: interface
-        condition: UI
 
   - type: textarea
     id: ui-params
@@ -80,15 +72,12 @@ body:
       description: If using the UI, copy and paste the parameters you used here.
     validations:
       required: false
-    conditional:
-      - type: dropdown
-        id: interface
-        condition: UI
 
   - type: textarea
     id: stacktrace
     attributes:
       label: Error Logs
+      
       description: Please provide a stack trace or detailed error message, if available.
       placeholder: Paste the stack trace here
     validations:
