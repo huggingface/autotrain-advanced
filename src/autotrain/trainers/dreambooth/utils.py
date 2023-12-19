@@ -20,6 +20,7 @@ XL_MODELS = [
     "stabilityai/stable-diffusion-xl-base-1.0",
     "stabilityai/stable-diffusion-xl-base-0.9",
     "diffusers/stable-diffusion-xl-base-1.0",
+    "stabilityai/sdxl-turbo",
 ]
 
 

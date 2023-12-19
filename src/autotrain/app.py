@@ -105,6 +105,10 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
     fp16=True,
     batch_size=1,
     gradient_accumulation=4,
+    resolution=1024,
+    use_8bit_adam=False,
+    xformers=False,
+    train_text_encoder=False,
     lr=1e-4,
 ).model_dump()
 
