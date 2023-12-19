@@ -511,7 +511,6 @@ class NGCRunner:
         return json.loads(response.text.encode('utf8'))
 
     def create(self):
-
         ngc_url = f"/{self.ngc_org}/team/{self.ngc_team}"
         ngc_cmd = "set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0"
         ngc_payload = {
