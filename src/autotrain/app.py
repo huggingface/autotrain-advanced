@@ -386,7 +386,7 @@ async def handle_form(
                 raise NotImplementedError
         else:
             raise NotImplementedError
-        dset = AutoTrainDataset(
+        dset_args = dict(
             train_data=training_files,
             task=dset_task,
             token=HF_TOKEN,
@@ -397,6 +397,9 @@ async def handle_form(
             percent_valid=None,  # TODO: add to UI
             local=hardware.lower() == "local",
         )
+        if task == "text-classification":
+            dset_args["convert_to_class_label"] = True
+        dset = AutoTrainDataset(**dset_args)
     data_path = dset.prepare()
     app_params = AppParams(
         job_params_json=json.dumps(params),
