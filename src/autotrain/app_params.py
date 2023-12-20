@@ -1,5 +1,12 @@
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
+
+from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
+from autotrain.trainers.tabular.params import TabularParams
+from autotrain.trainers.text_classification.params import TextClassificationParams
 
 
 @dataclass
@@ -9,6 +16,24 @@ class AppParams:
     project_name: str
     username: str
     task: str
+    data_path: str
+    base_model: str
+
+    def munge(self):
+        if self.task == "text-classification":
+            return self._munge_params_text_clf()
+        elif self.task == "seq2seq":
+            return self._munge_params_seq2seq()
+        elif self.task == "image-classification":
+            return self._munge_params_img_clf()
+        elif self.task.startswith("tabular"):
+            return self._munge_params_tabular()
+        elif self.task == "dreambooth":
+            return self._munge_params_dreambooth()
+        elif self.task.startswith("llm"):
+            return self._munge_params_llm()
+        else:
+            raise ValueError(f"Unknown task: {self.task}")
 
     def _munge_common_params(self):
         _params = json.loads(self.job_params_json)
@@ -22,7 +47,7 @@ class AppParams:
 
     def _munge_params_llm(self):
         _params = self._munge_common_params()
-        _params["model"] = self.model_choice
+        _params["model"] = self.base_model
         _params["text_column"] = "autotrain_text"
         _params["prompt_text_column"] = "autotrain_prompt"
         _params["rejected_text_column"] = "autotrain_rejected_text"
@@ -30,39 +55,39 @@ class AppParams:
         if "trainer" in _params:
             _params["trainer"] = _params["trainer"].lower()
 
-        return _params
+        return LLMTrainingParams(**_params)
 
-    def _munge_params_text_clf(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["text_column"] = self.col_map_text
-        _params["target_column"] = self.col_map_target
+    def _munge_params_text_clf(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["text_column"] = "autotrain_text"
+        _params["target_column"] = "autotrain_label"
         _params["valid_split"] = "validation"
 
-        return _params
+        return TextClassificationParams(**_params)
 
-    def _munge_params_seq2seq(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["text_column"] = self.col_map_text
-        _params["target_column"] = self.col_map_target
+    def _munge_params_seq2seq(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["text_column"] = "autotrain_text"
+        _params["target_column"] = "autotrain_label"
         _params["valid_split"] = "validation"
 
-        return _params
+        return Seq2SeqParams(**_params)
 
-    def _munge_params_img_clf(self, job_idx):
-        _params = self._munge_common_params(job_idx)
-        _params["model"] = self.model_choice
-        _params["image_column"] = self.col_map_image
-        _params["target_column"] = self.col_map_target
+    def _munge_params_img_clf(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["image_column"] = "autotrain_image"
+        _params["target_column"] = "autotrain_label"
         _params["valid_split"] = "validation"
 
-        return _params
+        return ImageClassificationParams(**_params)
 
     def _munge_params_tabular(self):
         _params = self._munge_common_params()
-        _params["id_column"] = self.col_map_id
-        _params["target_columns"] = self.col_map_target
+        _params["id_column"] = "autotrain_id"
+        _params["target_columns"] = ["autotrain_label_0"]
         _params["valid_split"] = "validation"
 
         if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
@@ -77,15 +102,15 @@ class AppParams:
         else:
             _params["task"] = "regression"
 
-        return _params
+        return TabularParams(**_params)
 
     def _munge_params_dreambooth(self):
         _params = self._munge_common_params()
-        _params["model"] = self.model_choice
+        _params["model"] = self.base_model
         _params["image_path"] = self.data_path
 
         if "weight_decay" in _params:
             _params["adam_weight_decay"] = _params["weight_decay"]
             _params.pop("weight_decay")
 
-        return _params
+        return DreamBoothTrainingParams(**_params)

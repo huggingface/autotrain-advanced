@@ -12,3 +12,4 @@ op_*
 .git
 *.db
 autotrain-data*
+autotrain-*

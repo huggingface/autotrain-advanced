@@ -85,7 +85,7 @@ class TabularBinaryClassificationPreprocessor:
                     "validation": valid_df,
                 }
             )
-            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
         else:
             train_df.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
@@ -99,7 +99,9 @@ class TabularBinaryClassificationPreprocessor:
                 private=True,
                 token=self.token,
             )
-        return train_df, valid_df
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
 
 
 class TabularMultiClassClassificationPreprocessor(TabularBinaryClassificationPreprocessor):
@@ -204,7 +206,7 @@ class TabularMultiLabelClassificationPreprocessor:
                     "validation": valid_df,
                 }
             )
-            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
         else:
             train_df.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
@@ -218,7 +220,9 @@ class TabularMultiLabelClassificationPreprocessor:
                 private=True,
                 token=self.token,
             )
-        return train_df, valid_df
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
 
 
 class TabularMultiColumnRegressionPreprocessor(TabularMultiLabelClassificationPreprocessor):

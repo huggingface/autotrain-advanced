@@ -3,7 +3,6 @@ import json
 import os
 from typing import List
 
-import pandas as pd
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from huggingface_hub import ModelFilter, list_models
 
 from autotrain import app_utils, logger
+from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
 from autotrain.project import AutoTrainProject
@@ -304,6 +304,7 @@ async def handle_form(
     hardware: str = Form(...),
     params: str = Form(...),
     autotrain_user: str = Form(...),
+    column_mapping: str = Form('{"default": "value"}'),
     data_files_training: List[UploadFile] = File(...),
     data_files_valid: List[UploadFile] = File(...),
 ):
@@ -338,77 +339,12 @@ async def handle_form(
         return {"error": "HF_TOKEN not set"}
 
     params = json.loads(params)
+    column_mapping = json.loads(column_mapping)
+
     training_files = [f.file for f in data_files_training if f.filename != ""]
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
 
-    if task.startswith("llm"):
-        trainer = task.split(":")[1].lower()
-        col_map = {"text": "text"}
-        if trainer == "reward":
-            col_map["rejected_text"] = "rejected_text"
-        if trainer == "dpo":
-            col_map["prompt"] = "prompt"
-            col_map["rejected_text"] = "rejected_text"
-        dset = AutoTrainDataset(
-            train_data=training_files,
-            task="lm_training",
-            token=HF_TOKEN,
-            project_name=project_name,
-            username=autotrain_user,
-            column_mapping=col_map,
-            valid_data=validation_files,
-            percent_valid=None,  # TODO: add to UI
-            local=hardware.lower() == "local",
-        )
-        dset.prepare()
-    elif task == "text-classification":
-        dset = AutoTrainDataset(
-            train_data=training_files,
-            task="text_multi_class_classification",
-            token=HF_TOKEN,
-            project_name=project_name,
-            username=autotrain_user,
-            column_mapping={"text": "text", "label": "target"},
-            valid_data=validation_files,
-            percent_valid=None,  # TODO: add to UI
-            convert_to_class_label=True,
-            local=hardware.lower() == "local",
-        )
-        dset.prepare()
-    elif task == "seq2seq":
-        dset = AutoTrainDataset(
-            train_data=training_files,
-            task="seq2seq",
-            token=HF_TOKEN,
-            project_name=project_name,
-            username=autotrain_user,
-            column_mapping={"text": "text", "label": "target"},
-            valid_data=validation_files,
-            percent_valid=None,  # TODO: add to UI
-            local=hardware.lower() == "local",
-        )
-        dset.prepare()
-    elif task.startswith("tabular"):
-        trainer = task.split(":")[1].lower()
-        if trainer == "classification":
-            task = "tabular_multi_class_classification"
-        elif trainer == "regression":
-            task = "tabular_single_column_regression"
-        else:
-            return {"error": "Unknown subtask"}
-        dset = AutoTrainDataset(
-            train_data=training_files,
-            task=task,
-            token=HF_TOKEN,
-            project_name=project_name,
-            username=autotrain_user,
-            column_mapping={"id": "id", "label": ["target"]},
-            valid_data=validation_files,
-            percent_valid=None,  # TODO: add to UI
-            local=hardware.lower() == "local",
-        )
-        dset.prepare()
-    elif task == "image-classification":
+    if task == "image-classification":
         task = "image_multi_class_classification"
         dset = AutoTrainImageClassificationDataset(
             train_data=training_files[0],
@@ -419,7 +355,6 @@ async def handle_form(
             percent_valid=None,  # TODO: add to UI
             local=hardware.lower() == "local",
         )
-        dset.prepare()
     elif task == "dreambooth":
         dset = AutoTrainDreamboothDataset(
             concept_images=data_files_training,
@@ -427,27 +362,60 @@ async def handle_form(
             token=HF_TOKEN,
             project_name=project_name,
             username=autotrain_user,
-            use_v2=True,
             local=hardware.lower() == "local",
         )
-        dset.prepare()
+
     else:
-        return {"error": "Task not supported yet"}
-
-    params["model_choice"] = base_model
-    params["param_choice"] = "manual"
-    params["backend"] = hardware
-
-    jobs_df = pd.DataFrame([params])
-    project = AutoTrainProject(dataset=dset, job_params=jobs_df)
-    ids = project.create()
+        if task.startswith("llm"):
+            dset_task = "lm_training"
+        elif task == "text-classification":
+            dset_task = "text_multi_class_classification"
+        elif task == "seq2seq":
+            dset_task = "seq2seq"
+        elif task.startswith("tabular"):
+            subtask = task.split(":")[1].lower()
+            if len(column_mapping["label"]) > 1 and subtask == "classification":
+                dset_task = "tabular_multi_label_classification"
+            elif len(column_mapping["label"]) == 1 and subtask == "classification":
+                dset_task = "tabular_multi_class_classification"
+            elif len(column_mapping["label"]) > 1 and subtask == "regression":
+                dset_task = "tabular_multi_column_regression"
+            elif len(column_mapping["label"]) == 1 and subtask == "regression":
+                dset_task = "tabular_single_column_regression"
+            else:
+                raise NotImplementedError
+        else:
+            raise NotImplementedError
+        dset = AutoTrainDataset(
+            train_data=training_files,
+            task=dset_task,
+            token=HF_TOKEN,
+            project_name=project_name,
+            username=autotrain_user,
+            column_mapping=column_mapping,
+            valid_data=validation_files,
+            percent_valid=None,  # TODO: add to UI
+            local=hardware.lower() == "local",
+        )
+    data_path = dset.prepare()
+    app_params = AppParams(
+        job_params_json=json.dumps(params),
+        token=HF_TOKEN,
+        project_name=project_name,
+        username=autotrain_user,
+        task=task,
+        data_path=data_path,
+        base_model=base_model,
+    )
+    params = app_params.munge()
+    project = AutoTrainProject(params=params, backend=hardware)
+    job_id = project.create()
     monitor_url = ""
     if hardware == "Local":
-        for _id in ids:
-            DB.add_job(_id)
+        DB.add_job(job_id)
         monitor_url = "Monitor your job locally / in logs"
     elif hardware.startswith("EP"):
-        monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{ids[0]}"
+        monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{job_id}"
     else:
-        monitor_url = f"https://hf.co/spaces/{ids[0]}"
+        monitor_url = f"https://hf.co/spaces/{job_id}"
     return {"success": "true", "monitor_url": monitor_url}

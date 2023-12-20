@@ -1,13 +1,12 @@
 import os
-import subprocess
-import sys
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
-from autotrain.backend import SpaceRunner
-from autotrain.commands import launch_command
+from autotrain.cli.utils import text_clf_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.text_classification.params import TextClassificationParams
 
 from . import BaseAutoTrainCommand
 
@@ -227,7 +226,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
                 "required": False,
                 "type": str,
-                "default": "default",
+                "default": "local-cli",
             },
             {
                 "arg": "--username",
@@ -301,10 +300,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
             self.args.token = os.environ.get("HF_TOKEN", None)
 
     def run(self):
-        from autotrain.dataset_utils import text_clf_munge_data
-        from autotrain.trainers.text_classification.__main__ import train as train_text_classification
-        from autotrain.trainers.text_classification.params import TextClassificationParams
-
         logger.info("Running Text Classification")
         if self.args.train:
             params = TextClassificationParams(
@@ -339,24 +334,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 log=self.args.log,
             )
 
-            if self.args.backend.startswith("spaces"):
-                logger.info("Creating space...")
-                sr = SpaceRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                space_id = sr.prepare()
-                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            # local training
-            params.data_path = text_clf_munge_data(params, local=True)
-            params.save(output_dir=self.args.project_name)
-            if self.num_gpus == 1:
-                train_text_classification(params)
-            else:
-                cmd = launch_command(params)
-
-                env = os.environ.copy()
-                process = subprocess.Popen(cmd, env=env)
-                process.wait()
+            params = text_clf_munge_data(params, local=self.args.backend.startswith("local"))
+            project = AutoTrainProject(params=params, backend=self.args.backend)
+            _ = project.create()

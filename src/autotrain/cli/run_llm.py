@@ -1,12 +1,11 @@
-import os
-import subprocess
-import sys
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
-from autotrain.commands import launch_command
+from autotrain.cli.utils import llm_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.clm.params import LLMTrainingParams
 
 from . import BaseAutoTrainCommand
 
@@ -336,7 +335,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
                 "required": False,
                 "type": str,
-                "default": "default",
+                "default": "local-cli",
             },
             {
                 "arg": "--username",
@@ -462,11 +461,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             self.num_gpus = 1
 
     def run(self):
-        from autotrain.backend import SpaceRunner
-        from autotrain.dataset_utils import llm_munge_data
-        from autotrain.trainers.clm.__main__ import train as train_llm
-        from autotrain.trainers.clm.params import LLMTrainingParams
-
         logger.info("Running LLM")
         logger.info(f"Params: {self.args}")
         if self.args.train:
@@ -517,24 +511,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 prompt_text_column=self.args.prompt_text_column,
             )
 
-            # space training
-            if self.args.backend.startswith("spaces") or self.args.backend.startswith("dgx"):
-                logger.info("Creating space...")
-                sr = SpaceRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                space_id = sr.prepare()
-                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            # local training
-            params.data_path = llm_munge_data(params, local=True)
-            params.save(output_dir=self.args.project_name)
-            if self.num_gpus == 1:
-                train_llm(params)
-            else:
-                cmd = launch_command(params=params)
-                env = os.environ.copy()
-                process = subprocess.Popen(cmd, env=env)
-                process.wait()
+            params = llm_munge_data(params, local=self.args.backend.startswith("local"))
+            project = AutoTrainProject(params=params, backend=self.args.backend)
+            _ = project.create()

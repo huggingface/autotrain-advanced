@@ -38,12 +38,9 @@ def tabular_munge_data(params, local):
             percent_valid=None,  # TODO: add to UI
             local=local,
         )
-        dset.prepare()
-        if local:
-            return f"{params.project_name}/autotrain-data"
-        return f"{params.username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+    return params
 
 
 def llm_munge_data(params, local):
@@ -56,8 +53,8 @@ def llm_munge_data(params, local):
         col_map = {"text": params.text_column}
         if params.rejected_text_column is not None:
             col_map["rejected_text"] = params.rejected_text_column
-        if params.prompt_column is not None:
-            col_map["prompt"] = params.prompt_column
+        if params.prompt_text_column is not None:
+            col_map["prompt"] = params.prompt_text_column
         dset = AutoTrainDataset(
             train_data=[train_data_path],
             task="lm_training",
@@ -69,12 +66,9 @@ def llm_munge_data(params, local):
             percent_valid=None,  # TODO: add to UI
             local=local,
         )
-        dset.prepare()
-        if local:
-            return f"{params.project_name}/autotrain-data"
-        return f"{params.username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+    return params
 
 
 def seq2seq_munge_data(params, local):
@@ -95,12 +89,9 @@ def seq2seq_munge_data(params, local):
             percent_valid=None,  # TODO: add to UI
             local=local,
         )
-        dset.prepare()
-        if local:
-            return f"{params.project_name}/autotrain-data"
-        return f"{params.username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+    return params
 
 
 def text_clf_munge_data(params, local):
@@ -122,12 +113,9 @@ def text_clf_munge_data(params, local):
             local=local,
             convert_to_class_label=True,
         )
-        dset.prepare()
-        if local:
-            return f"{params.project_name}/autotrain-data"
-        return f"{params.username}/autotrain-data-{params.project_name}"
-
-    return params.data_path
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+    return params
 
 
 def img_clf_munge_data(params, local):
@@ -138,7 +126,7 @@ def img_clf_munge_data(params, local):
         valid_data_path = None
     if os.path.isdir(train_data_path) or os.path.isdir(valid_data_path):
         raise Exception("Image classification is not yet supported for local datasets using the CLI. Please use UI.")
-    return params.data_path
+    return params
 
 
 def dreambooth_munge_data(params, local):
@@ -154,8 +142,5 @@ def dreambooth_munge_data(params, local):
             username=params.username,
             local=local,
         )
-        dset.prepare()
-        if local:
-            return f"{params.project_name}/autotrain-data"
-        return f"{params.username}/autotrain-data-{params.project_name}"
-    return params.image_path
+        params.data_path = dset.prepare()
+    return params

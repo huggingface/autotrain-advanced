@@ -4,17 +4,10 @@ from argparse import ArgumentParser
 
 from autotrain import logger
 from autotrain.cli import BaseAutoTrainCommand
-
-
-try:
-    from autotrain.dataset_utils import dreambooth_munge_data
-    from autotrain.trainers.dreambooth.__main__ import train as train_dreambooth
-    from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
-    from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
-except ImportError:
-    logger.warning(
-        "❌ Some DreamBooth components are missing! Please run `autotrain setup` to install it. Ignore this warning if you are not using DreamBooth or running `autotrain setup` already."
-    )
+from autotrain.cli.utils import dreambooth_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
 
 
 def count_images(directory):
@@ -402,6 +395,13 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
+            {
+                "arg": "--backend",
+                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+                "required": False,
+                "type": str,
+                "default": "local-cli",
+            },
         ]
 
         run_dreambooth_parser = parser.add_parser("dreambooth", description="✨ Run AutoTrain DreamBooth Training")
@@ -469,8 +469,17 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
         if self.args.model in XL_MODELS:
             self.args.xl = True
 
+        if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
+            if not self.args.push_to_hub:
+                raise ValueError("Push to hub must be specified for spaces backend")
+            if self.args.username is None and self.args.repo_id is None:
+                raise ValueError("Repo id or username must be specified for spaces backend")
+            if self.args.token is None:
+                raise ValueError("Token must be specified for spaces backend")
+
     def run(self):
         logger.info("Running DreamBooth Training")
         params = DreamBoothTrainingParams(**vars(self.args))
-        params.image_path = dreambooth_munge_data(params, local=True)
-        train_dreambooth(params)
+        params = dreambooth_munge_data(params, local=self.args.backend.startswith("local"))
+        project = AutoTrainProject(params=params, backend=self.args.backend)
+        _ = project.create()

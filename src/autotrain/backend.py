@@ -11,14 +11,6 @@ from requests.exceptions import HTTPError
 
 from autotrain import logger
 from autotrain.app_utils import run_training
-from autotrain.dataset_utils import (
-    dreambooth_munge_data,
-    img_clf_munge_data,
-    llm_munge_data,
-    seq2seq_munge_data,
-    tabular_munge_data,
-    text_clf_munge_data,
-)
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
@@ -62,6 +54,7 @@ class SpaceRunner:
             "cpuf": "cpu-basic",
             "dgx-a100": "dgx-ngc",
             "local": "local",
+            "local-cli": "local-cli",
             "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
             "ep-aws-useast1-m": "aws_us-east-1_gpu_medium_g5.2xlarge",
             "ep-aws-useast1-l": "aws_us-east-1_gpu_large_g4dn.12xlarge",
@@ -71,7 +64,7 @@ class SpaceRunner:
             "ep-aws-useast1-8xl": "aws_us-east-1_gpu_8xlarge_p4de",
         }
 
-        if not isinstance(self.params, GenericParams):
+        if not isinstance(self.params, GenericParams) and self.backend != "local-cli":
             if self.params.repo_id is not None:
                 self.username = self.params.repo_id.split("/")[0]
             elif self.params.username is not None:
@@ -106,23 +99,14 @@ class SpaceRunner:
     def prepare(self):
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
-            if self.backend != "local":
-                data_path = llm_munge_data(self.params, local=False)
-                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TextClassificationParams):
             self.task_id = 2
-            if self.backend != "local":
-                data_path = text_clf_munge_data(self.params, local=False)
-                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, TabularParams):
             self.task_id = 26
-            if self.backend != "local":
-                data_path = tabular_munge_data(self.params, local=False)
-                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, GenericParams):
@@ -131,23 +115,14 @@ class SpaceRunner:
             return space_id
         if isinstance(self.params, DreamBoothTrainingParams):
             self.task_id = 25
-            if self.backend != "local":
-                data_path = dreambooth_munge_data(self.params, local=False)
-                self.params.image_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
-            if self.backend != "local":
-                data_path = seq2seq_munge_data(self.params, local=False)
-                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         if isinstance(self.params, ImageClassificationParams):
             self.task_id = 18
-            if self.backend != "local":
-                data_path = img_clf_munge_data(self.params, local=False)
-                self.params.data_path = data_path
             space_id = self._create_space()
             return space_id
         raise NotImplementedError
@@ -234,7 +209,7 @@ class SpaceRunner:
         return r.json()["name"]
 
     def _create_space(self):
-        if self.backend.startswith("dgx-") or self.backend == "local":
+        if self.backend.startswith("dgx-") or self.backend.startswith("local"):
             env_vars = {
                 "HF_TOKEN": self.params.token,
                 "AUTOTRAIN_USERNAME": self.username,
@@ -260,7 +235,7 @@ class SpaceRunner:
                 ngc_runner.create()
                 return
             else:
-                local_runner = LocalRunner(env_vars=env_vars)
+                local_runner = LocalRunner(env_vars=env_vars, wait=self.backend == "local-cli")
                 pid = local_runner.create()
                 return pid
 
@@ -299,12 +274,13 @@ class SpaceRunner:
 @dataclass
 class LocalRunner:
     env_vars: dict
+    wait: bool = False
 
     def create(self):
-        logger.info("Starting server")
+        logger.info("Starting local training...")
         params = self.env_vars["PARAMS"]
         task_id = int(self.env_vars["TASK_ID"])
-        training_pid = run_training(params, task_id, local=True)
+        training_pid = run_training(params, task_id, local=True, wait=self.wait)
         return training_pid
 
 
