@@ -159,7 +159,7 @@ def train(config):
                 split=config.valid_split,
                 token=config.token,
             )
-            valid_data = valid_data.to_pandas()
+        valid_data = valid_data.to_pandas()
 
     if valid_data is None:
         raise Exception("valid_data is None. Please provide a valid_split for tabular training.")

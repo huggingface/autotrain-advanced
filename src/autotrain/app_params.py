@@ -18,6 +18,7 @@ class AppParams:
     task: str
     data_path: str
     base_model: str
+    column_mapping: dict
 
     def munge(self):
         if self.task == "text-classification":
@@ -87,8 +88,11 @@ class AppParams:
     def _munge_params_tabular(self):
         _params = self._munge_common_params()
         _params["id_column"] = "autotrain_id"
-        _params["target_columns"] = ["autotrain_label_0"]
         _params["valid_split"] = "validation"
+        if len(self.column_mapping["label"]) == 1:
+            _params["target_columns"] = ["autotrain_label"]
+        else:
+            _params["target_columns"] = ["autotrain_label_" + str(i) for i in range(len(self.column_mapping["label"]))]
 
         if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
             _params["categorical_imputer"] = None

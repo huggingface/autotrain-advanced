@@ -373,7 +373,7 @@ async def handle_form(
         elif task == "seq2seq":
             dset_task = "seq2seq"
         elif task.startswith("tabular"):
-            subtask = task.split(":")[1].lower()
+            subtask = task.split(":")[-1].lower()
             if len(column_mapping["label"]) > 1 and subtask == "classification":
                 dset_task = "tabular_multi_label_classification"
             elif len(column_mapping["label"]) == 1 and subtask == "classification":
@@ -386,6 +386,8 @@ async def handle_form(
                 raise NotImplementedError
         else:
             raise NotImplementedError
+        logger.info(f"Task: {dset_task}")
+        logger.info(f"Column mapping: {column_mapping}")
         dset_args = dict(
             train_data=training_files,
             task=dset_task,
@@ -409,6 +411,7 @@ async def handle_form(
         task=task,
         data_path=data_path,
         base_model=base_model,
+        column_mapping=column_mapping,
     )
     params = app_params.munge()
     project = AutoTrainProject(params=params, backend=hardware)
