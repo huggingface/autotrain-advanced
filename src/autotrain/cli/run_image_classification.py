@@ -1,11 +1,11 @@
-import os
-import subprocess
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
-from autotrain.commands import launch_command
+from autotrain.cli.utils import img_clf_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.image_classification.params import ImageClassificationParams
 
 from . import BaseAutoTrainCommand
 
@@ -213,6 +213,13 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "type": str,
                 "default": "none",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+                "required": False,
+                "type": str,
+                "default": "local-cli",
+            },
         ]
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
@@ -263,51 +270,23 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
+        if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
+            if not self.args.push_to_hub:
+                raise ValueError("Push to hub must be specified for spaces backend")
+            if self.args.username is None and self.args.repo_id is None:
+                raise ValueError("Repo id or username must be specified for spaces backend")
+            if self.args.token is None:
+                raise ValueError("Token must be specified for spaces backend")
+
         if not torch.cuda.is_available():
             self.device = "cpu"
 
         self.num_gpus = torch.cuda.device_count()
 
     def run(self):
-        from autotrain.trainers.image_classification.__main__ import train as train_image_classification
-        from autotrain.trainers.image_classification.params import ImageClassificationParams
-
         logger.info("Running Text Classification")
         if self.args.train:
-            params = ImageClassificationParams(
-                data_path=self.args.data_path,
-                train_split=self.args.train_split,
-                valid_split=self.args.valid_split,
-                image_column=self.args.image_column,
-                target_column=self.args.target_column,
-                model=self.args.model,
-                lr=self.args.lr,
-                epochs=self.args.epochs,
-                batch_size=self.args.batch_size,
-                warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation=self.args.gradient_accumulation,
-                optimizer=self.args.optimizer,
-                scheduler=self.args.scheduler,
-                weight_decay=self.args.weight_decay,
-                max_grad_norm=self.args.max_grad_norm,
-                seed=self.args.seed,
-                logging_steps=self.args.logging_steps,
-                project_name=self.args.project_name,
-                evaluation_strategy=self.args.evaluation_strategy,
-                save_total_limit=self.args.save_total_limit,
-                save_strategy=self.args.save_strategy,
-                auto_find_batch_size=self.args.auto_find_batch_size,
-                mixed_precision=self.args.mixed_precision,
-                push_to_hub=self.args.push_to_hub,
-                repo_id=self.args.repo_id,
-                log=self.args.log,
-            )
-            params.save(output_dir=self.args.project_name)
-            if self.num_gpus == 1:
-                train_image_classification(params)
-            else:
-                cmd = launch_command(params)
-
-                env = os.environ.copy()
-                process = subprocess.Popen(cmd, env=env)
-                process.wait()
+            params = ImageClassificationParams(**vars(self.args))
+            params = img_clf_munge_data(params, local=self.args.backend.startswith("local"))
+            project = AutoTrainProject(params=params, backend=self.args.backend)
+            _ = project.create()

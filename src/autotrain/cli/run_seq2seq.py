@@ -1,13 +1,12 @@
 import os
-import subprocess
-import sys
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
-from autotrain.backend import SpaceRunner
-from autotrain.commands import launch_command
+from autotrain.cli.utils import seq2seq_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
 
 from . import BaseAutoTrainCommand
 
@@ -234,7 +233,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
                 "required": False,
                 "type": str,
-                "default": "default",
+                "default": "local-cli",
             },
             {
                 "arg": "--username",
@@ -348,9 +347,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
             self.args.target_modules = self.args.target_modules.split(",")
 
     def run(self):
-        from autotrain.trainers.seq2seq.__main__ import train as train_seq2seq
-        from autotrain.trainers.seq2seq.params import Seq2SeqParams
-
         logger.info("Running Seq2Seq Classification")
         if self.args.train:
             params = Seq2SeqParams(
@@ -390,21 +386,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 target_modules=self.args.target_modules,
             )
 
-            if self.args.backend.startswith("spaces"):
-                logger.info("Creating space...")
-                sr = SpaceRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                space_id = sr.prepare()
-                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            params.save(output_dir=self.args.project_name)
-            if self.num_gpus == 1:
-                train_seq2seq(params)
-            else:
-                cmd = launch_command(params)
-                env = os.environ.copy()
-                process = subprocess.Popen(cmd, env=env)
-                process.wait()
+            params = seq2seq_munge_data(params, local=self.args.backend.startswith("local"))
+            project = AutoTrainProject(params=params, backend=self.args.backend)
+            _ = project.create()

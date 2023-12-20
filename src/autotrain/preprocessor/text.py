@@ -95,7 +95,7 @@ class TextBinaryClassificationPreprocessor:
                     "validation": valid_df,
                 }
             )
-            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
         else:
             train_df.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
@@ -109,7 +109,10 @@ class TextBinaryClassificationPreprocessor:
                 private=True,
                 token=self.token,
             )
-        return train_df, valid_df
+
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
 
 
 class TextMultiClassClassificationPreprocessor(TextBinaryClassificationPreprocessor):
@@ -214,7 +217,7 @@ class LLMPreprocessor:
                     "validation": valid_df,
                 }
             )
-            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
         else:
             train_df.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
@@ -228,7 +231,9 @@ class LLMPreprocessor:
                 private=True,
                 token=self.token,
             )
-        return train_df, valid_df
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
 
 
 @dataclass
@@ -303,7 +308,7 @@ class Seq2SeqPreprocessor:
                     "validation": valid_df,
                 }
             )
-            dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
         else:
             train_df.push_to_hub(
                 f"{self.username}/autotrain-data-{self.project_name}",
@@ -317,4 +322,6 @@ class Seq2SeqPreprocessor:
                 private=True,
                 token=self.token,
             )
-        return train_df, valid_df
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"

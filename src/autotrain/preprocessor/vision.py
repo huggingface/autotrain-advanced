@@ -108,7 +108,7 @@ class ImageClassificationPreprocessor:
             dataset = load_dataset("imagefolder", data_dir=data_dir)
             dataset = dataset.rename_columns({"image": "autotrain_image", "label": "autotrain_label"})
             if self.local:
-                dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+                dataset.save_to_disk(f"{self.project_name}/autotrain-data")
             else:
                 dataset.push_to_hub(
                     f"{self.username}/autotrain-data-{self.project_name}",
@@ -148,10 +148,14 @@ class ImageClassificationPreprocessor:
             dataset = load_dataset("imagefolder", data_dir=data_dir)
             dataset = dataset.rename_columns({"image": "autotrain_image", "label": "autotrain_label"})
             if self.local:
-                dataset.save_to_disk(f"autotrain-data-{self.project_name}")
+                dataset.save_to_disk(f"{self.project_name}/autotrain-data")
             else:
                 dataset.push_to_hub(
                     f"{self.username}/autotrain-data-{self.project_name}",
                     private=True,
                     token=self.token,
                 )
+
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"

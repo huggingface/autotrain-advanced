@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from autotrain import logger
-from autotrain.preprocessor.dreambooth import DreamboothPreprocessor, DreamboothPreprocessorV2
+from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
     TabularMultiClassClassificationPreprocessor,
@@ -53,8 +53,7 @@ class AutoTrainDreamboothDataset:
     concept_name: str
     token: str
     project_name: str
-    username: str
-    use_v2: bool = False
+    username: Optional[str] = None
     local: bool = False
 
     def __str__(self) -> str:
@@ -70,24 +69,15 @@ class AutoTrainDreamboothDataset:
         return len(self.concept_images)
 
     def prepare(self):
-        if self.use_v2:
-            preprocessor = DreamboothPreprocessorV2(
-                concept_images=self.concept_images,
-                concept_name=self.concept_name,
-                token=self.token,
-                project_name=self.project_name,
-                username=self.username,
-                local=self.local,
-            )
-        else:
-            preprocessor = DreamboothPreprocessor(
-                concept_images=self.concept_images,
-                concept_name=self.concept_name,
-                token=self.token,
-                project_name=self.project_name,
-                username=self.username,
-            )
-        preprocessor.prepare()
+        preprocessor = DreamboothPreprocessor(
+            concept_images=self.concept_images,
+            concept_name=self.concept_name,
+            token=self.token,
+            project_name=self.project_name,
+            username=self.username,
+            local=self.local,
+        )
+        return preprocessor.prepare()
 
 
 @dataclass
@@ -177,7 +167,7 @@ class AutoTrainImageClassificationDataset:
             username=self.username,
             local=self.local,
         )
-        preprocessor.prepare()
+        return preprocessor.prepare()
 
 
 @dataclass
@@ -186,7 +176,7 @@ class AutoTrainDataset:
     task: str
     token: str
     project_name: str
-    username: str
+    username: Optional[str] = None
     column_mapping: Optional[Dict[str, str]] = None
     valid_data: Optional[List[str]] = None
     percent_valid: Optional[float] = None
@@ -201,6 +191,8 @@ class AutoTrainDataset:
         return info
 
     def __post_init__(self):
+        if self.valid_data is None:
+            self.valid_data = []
         if not self.valid_data and self.percent_valid is None:
             self.percent_valid = 0.2
         elif self.valid_data and self.percent_valid is not None:
@@ -258,7 +250,7 @@ class AutoTrainDataset:
                 convert_to_class_label=self.convert_to_class_label,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
 
         elif self.task == "text_multi_class_classification":
             text_column = self.column_mapping["text"]
@@ -276,7 +268,7 @@ class AutoTrainDataset:
                 convert_to_class_label=self.convert_to_class_label,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
 
         elif self.task == "text_single_column_regression":
             text_column = self.column_mapping["text"]
@@ -293,7 +285,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
 
         elif self.task == "seq2seq":
             text_column = self.column_mapping["text"]
@@ -310,7 +302,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
 
         elif self.task == "lm_training":
             text_column = self.column_mapping["text"]
@@ -329,7 +321,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
 
         elif self.task == "tabular_binary_classification":
             id_column = self.column_mapping["id"]
@@ -348,7 +340,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
         elif self.task == "tabular_multi_class_classification":
             id_column = self.column_mapping["id"]
             label_column = self.column_mapping["label"][0]
@@ -366,7 +358,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
         elif self.task == "tabular_single_column_regression":
             id_column = self.column_mapping["id"]
             label_column = self.column_mapping["label"][0]
@@ -384,7 +376,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
         elif self.task == "tabular_multi_column_regression":
             id_column = self.column_mapping["id"]
             label_column = self.column_mapping["label"]
@@ -402,7 +394,7 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
         elif self.task == "tabular_multi_label_classification":
             id_column = self.column_mapping["id"]
             label_column = self.column_mapping["label"]
@@ -420,6 +412,6 @@ class AutoTrainDataset:
                 seed=42,
                 local=self.local,
             )
-            preprocessor.prepare()
+            return preprocessor.prepare()
         else:
             raise ValueError(f"Task {self.task} not supported")

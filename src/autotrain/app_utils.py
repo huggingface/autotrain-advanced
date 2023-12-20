@@ -103,7 +103,7 @@ def user_validation():
     return user_token, valid_can_pay, who_is_training
 
 
-def run_training(params, task_id, local=False):
+def run_training(params, task_id, local=False, wait=False):
     params = json.loads(params)
     logger.info(params)
     if isinstance(params, str):
@@ -127,8 +127,6 @@ def run_training(params, task_id, local=False):
 
     if not local:
         params.project_name = "/tmp/model"
-    else:
-        params.project_name = os.path.join("output", params.project_name)
     params.save(output_dir=params.project_name)
     cmd = launch_command(params=params)
 
@@ -136,4 +134,6 @@ def run_training(params, task_id, local=False):
     logger.info(cmd)
     env = os.environ.copy()
     process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
+    if wait:
+        process.wait()
     return process.pid

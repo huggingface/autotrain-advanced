@@ -1,11 +1,12 @@
 import os
-import sys
 from argparse import ArgumentParser
 
 import torch
 
 from autotrain import logger
-from autotrain.backend import SpaceRunner
+from autotrain.cli.utils import tabular_munge_data
+from autotrain.project import AutoTrainProject
+from autotrain.trainers.tabular.params import TabularParams
 
 from . import BaseAutoTrainCommand
 
@@ -167,7 +168,7 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
                 "required": False,
                 "type": str,
-                "default": "default",
+                "default": "local-cli",
             },
         ]
         run_tabular_parser = parser.add_parser("tabular", description="✨ Run AutoTrain Tabular Data Training")
@@ -227,9 +228,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
         self.args.target_columns = [k.strip() for k in self.args.target_columns.split(",")]
 
     def run(self):
-        from autotrain.trainers.tabular.__main__ import train as train_tabular
-        from autotrain.trainers.tabular.params import TabularParams
-
         logger.info("Running Tabular Training...")
         if self.args.train:
             params = TabularParams(
@@ -255,15 +253,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 numeric_scaler=self.args.numeric_scaler,
             )
 
-            if self.args.backend.startswith("spaces"):
-                logger.info("Creating space...")
-                sr = SpaceRunner(
-                    params=params,
-                    backend=self.args.backend,
-                )
-                space_id = sr.prepare()
-                logger.info(f"Training Space created. Check progress at https://hf.co/spaces/{space_id}")
-                sys.exit(0)
-
-            params.save(output_dir=self.args.project_name)
-            train_tabular(params)
+            params = tabular_munge_data(params, local=self.args.backend.startswith("local"))
+            project = AutoTrainProject(params=params, backend=self.args.backend)
+            _ = project.create()
