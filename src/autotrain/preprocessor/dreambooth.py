@@ -60,11 +60,24 @@ class DreamboothPreprocessor:
 
     def _save_concept_images(self, file):
         logger.info("Saving concept images")
-        _file = file.file.read()
-        path = f"{self.project_name}/autotrain-data/concept1/{file.filename.split('/')[-1]}"
+        logger.info(file)
+        if isinstance(file, str):
+            _file = file
+            path = f"{self.project_name}/autotrain-data/concept1/{_file.split('/')[-1]}"
+
+        else:
+            _file = file.file.read()
+            path = f"{self.project_name}/autotrain-data/concept1/{file.filename.split('/')[-1]}"
+
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "wb") as f:
-            f.write(_file)
+        # if file is a string, copy the file to the new location
+        if isinstance(file, str):
+            with open(_file, "rb") as f:
+                with open(path, "wb") as f2:
+                    f2.write(f.read())
+        else:
+            with open(path, "wb") as f:
+                f.write(_file)
 
     def _save_concept_prompts(self):
         _prompts = {}

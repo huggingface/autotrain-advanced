@@ -274,6 +274,14 @@ async def fetch_params(task: str):
 
 @app.get("/model_choices/{task}", response_class=JSONResponse)
 async def fetch_model_choices(task: str):
+    resp = []
+    if os.environ.get("AUTOTRAIN_CUSTOM_MODELS", None) is not None:
+        custom_models = os.environ.get("AUTOTRAIN_CUSTOM_MODELS")
+        custom_models = custom_models.split(",")
+        for custom_model in custom_models:
+            custom_model = custom_model.strip()
+            resp.append({"id": custom_model, "name": custom_model})
+
     if task == "text-classification":
         hub_models = MODEL_CHOICE["text-classification"]
     elif task.startswith("llm"):
@@ -290,7 +298,7 @@ async def fetch_model_choices(task: str):
         hub_models = MODEL_CHOICE["tabular-regression"]
     else:
         raise NotImplementedError
-    resp = []
+
     for hub_model in hub_models:
         resp.append({"id": hub_model, "name": hub_model})
     return resp
