@@ -169,13 +169,18 @@ def tabular_munge_data(params, local):
             token=params.token,
             project_name=params.project_name,
             username=params.username,
-            column_mapping={"id": params.col_map_id, "label": col_map_label},
+            column_mapping={"id": params.id_column, "label": col_map_label},
             valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
             local=local,
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
+        params.id_column = "autotrain_id"
+        if len(col_map_label) == 1:
+            params.target_columns = ["autotrain_label"]
+        else:
+            params.target_columns = [f"autotrain_label_{i}" for i in range(len(col_map_label))]
     return params
 
 
@@ -204,6 +209,9 @@ def llm_munge_data(params, local):
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
+        params.text_column = "autotrain_text"
+        params.rejected_text_column = "autotrain_rejected_text"
+        params.prompt_text_column = "autotrain_prompt"
     return params
 
 
@@ -227,6 +235,8 @@ def seq2seq_munge_data(params, local):
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
+        params.text_column = "autotrain_text"
+        params.target_column = "autotrain_label"
     return params
 
 
@@ -251,6 +261,8 @@ def text_clf_munge_data(params, local):
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
+        params.text_column = "autotrain_text"
+        params.target_column = "autotrain_label"
     return params
 
 
