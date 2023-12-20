@@ -34,5 +34,6 @@ ngc:
 pip:
 	rm -rf build/
 	rm -rf dist/
+	make style && make quality
 	python setup.py sdist bdist_wheel
 	twine upload dist/* --verbose
