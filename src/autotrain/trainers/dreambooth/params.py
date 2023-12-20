@@ -32,7 +32,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     resume_from_checkpoint: Optional[str] = Field(None, title="Resume from checkpoint")
 
     gradient_accumulation: int = Field(1, title="Gradient accumulation steps")
-    gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
+    disable_gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
 
     lr: float = Field(5e-4, title="Learning rate")
     scale_lr: bool = Field(False, title="Scale learning rate")

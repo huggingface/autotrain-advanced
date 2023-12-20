@@ -1,10 +1,7 @@
-import os
 from argparse import ArgumentParser
 
-import torch
-
 from autotrain import logger
-from autotrain.cli.utils import tabular_munge_data
+from autotrain.cli.utils import common_args, tabular_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.tabular.params import TabularParams
 
@@ -20,97 +17,9 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
             {
-                "arg": "--train",
-                "help": "Train the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--deploy",
-                "help": "Deploy the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--inference",
-                "help": "Run inference",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--data-path",
-                "help": "Train dataset to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--model",
-                "help": "Model name",
-                "required": True,
-                "type": str,
-            },
-            {
-                "arg": "--username",
-                "help": "Hugging Face Username",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--seed",
-                "help": "Seed",
-                "required": False,
-                "type": int,
-                "default": 42,
-            },
-            {
-                "arg": "--train-split",
-                "help": "Train split",
-                "required": False,
-                "type": str,
-                "default": "train",
-            },
-            {
-                "arg": "--valid-split",
-                "help": "Validation split",
-                "required": False,
-                "type": str,
-                "default": "valid",
-            },
-            {
-                "arg": "--project-name",
-                "help": "Output directory",
-                "required": True,
-                "type": str,
-                "alias": ["--project"],
-            },
-            {
-                "arg": "--token",
-                "help": "Hub Token",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--push-to-hub",
-                "help": "Push to hub",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--id-column",
-                "help": "ID column",
-                "required": True,
-                "type": str,
-            },
-            {
                 "arg": "--target-columns",
                 "help": "Target column(s), separated by commas",
                 "required": True,
-                "type": str,
-            },
-            {
-                "arg": "--repo-id",
-                "help": "Repo ID",
-                "required": False,
                 "type": str,
             },
             {
@@ -123,6 +32,12 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 "arg": "--numerical-columns",
                 "help": "Numerical columns",
                 "required": False,
+                "type": str,
+            },
+            {
+                "arg": "--id-column",
+                "help": "ID column",
+                "required": True,
                 "type": str,
             },
             {
@@ -163,14 +78,8 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
             },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
         ]
+        arg_list.extend(common_args())
         run_tabular_parser = parser.add_parser("tabular", description="✨ Run AutoTrain Tabular Data Training")
         for arg in arg_list:
             if "action" in arg:
@@ -216,14 +125,6 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                     raise ValueError("Username must be specified for push to hub")
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
-
-        if not torch.cuda.is_available():
-            self.device = "cpu"
-
-        self.num_gpus = torch.cuda.device_count()
-
-        if len(str(self.args.token)) < 6:
-            self.args.token = os.environ.get("HF_TOKEN", None)
 
         self.args.target_columns = [k.strip() for k in self.args.target_columns.split(",")]
 

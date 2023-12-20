@@ -2,6 +2,7 @@ import os
 
 import torch
 
+from autotrain import logger
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
@@ -12,11 +13,23 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 
 
 def launch_command(params):
-    num_gpus = torch.cuda.device_count()
+    cuda_available = torch.cuda.is_available()
+    mps_available = torch.backends.mps.is_available()
+    if cuda_available:
+        num_gpus = torch.cuda.device_count()
+    elif mps_available:
+        num_gpus = 1
+    else:
+        num_gpus = 0
     if isinstance(params, LLMTrainingParams):
         if num_gpus == 0:
-            raise ValueError("No GPU found. Please use a GPU instance.")
-        if num_gpus == 1:
+            logger.warning("No GPU found. Forcing training on CPU. This will be super slow!")
+            cmd = [
+                "accelerate",
+                "launch",
+                "--cpu",
+            ]
+        elif num_gpus == 1:
             cmd = [
                 "accelerate",
                 "launch",
@@ -24,6 +37,16 @@ def launch_command(params):
                 "1",
                 "--num_processes",
                 "1",
+            ]
+        elif num_gpus == 2:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--multi_gpu",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                "2",
             ]
         else:
             if params.quantization in ("int8", "int4") and params.peft:
@@ -51,13 +74,14 @@ def launch_command(params):
                     "true",
                 ]
 
-        cmd.append("--mixed_precision")
-        if params.mixed_precision == "fp16":
-            cmd.append("fp16")
-        elif params.mixed_precision == "bf16":
-            cmd.append("bf16")
-        else:
-            cmd.append("no")
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
 
         cmd.extend(
             [
@@ -118,13 +142,14 @@ def launch_command(params):
                 str(num_gpus),
             ]
 
-        cmd.append("--mixed_precision")
-        if params.mixed_precision == "fp16":
-            cmd.append("fp16")
-        elif params.mixed_precision == "bf16":
-            cmd.append("bf16")
-        else:
-            cmd.append("no")
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
 
         cmd.extend(
             [
@@ -161,13 +186,14 @@ def launch_command(params):
                 str(num_gpus),
             ]
 
-        cmd.append("--mixed_precision")
-        if params.mixed_precision == "fp16":
-            cmd.append("fp16")
-        elif params.mixed_precision == "bf16":
-            cmd.append("bf16")
-        else:
-            cmd.append("no")
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
 
         cmd.extend(
             [
@@ -179,7 +205,12 @@ def launch_command(params):
         )
     elif isinstance(params, Seq2SeqParams):
         if num_gpus == 0:
-            raise ValueError("No GPU found. Please use a GPU instance.")
+            logger.warning("No GPU found. Forcing training on CPU. This will be super slow!")
+            cmd = [
+                "accelerate",
+                "launch",
+                "--cpu",
+            ]
         if num_gpus == 1:
             cmd = [
                 "accelerate",
@@ -188,6 +219,16 @@ def launch_command(params):
                 "1",
                 "--num_processes",
                 "1",
+            ]
+        elif num_gpus == 2:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--multi_gpu",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                "2",
             ]
         else:
             if params.quantization in ("int8", "int4") and params.peft:
@@ -214,13 +255,14 @@ def launch_command(params):
                     "--zero3_save_16bit_model",
                     "true",
                 ]
-        cmd.append("--mixed_precision")
-        if params.mixed_precision == "fp16":
-            cmd.append("fp16")
-        elif params.mixed_precision == "bf16":
-            cmd.append("bf16")
-        else:
-            cmd.append("no")
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
 
         cmd.extend(
             [

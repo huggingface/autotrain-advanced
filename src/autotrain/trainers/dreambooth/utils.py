@@ -294,7 +294,7 @@ def load_model_components(config, device, weight_dtype):
 
 
 def enable_gradient_checkpointing(unet, text_encoders, config):
-    if config.gradient_checkpointing:
+    if not config.disable_gradient_checkpointing:
         logger.info("Enabling gradient checkpointing.")
         unet.enable_gradient_checkpointing()
         if config.train_text_encoder:
