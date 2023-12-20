@@ -154,15 +154,9 @@ class LLMPreprocessor:
 
         # check if text_column and rejected_text_column are in train_data
         if self.prompt_column is not None and self.prompt_column not in self.train_data.columns:
-            raise ValueError(f"{self.prompt_column} not in train data")
+            self.prompt_column = None
         if self.rejected_text_column is not None and self.rejected_text_column not in self.train_data.columns:
-            raise ValueError(f"{self.rejected_text_column} not in train data")
-        # check if text_column and rejected_text_column are in valid_data
-        if self.valid_data is not None:
-            if self.prompt_column is not None and self.prompt_column not in self.valid_data.columns:
-                raise ValueError(f"{self.prompt_column} not in valid data")
-            if self.rejected_text_column is not None and self.rejected_text_column not in self.valid_data.columns:
-                raise ValueError(f"{self.rejected_text_column} not in valid data")
+            self.rejected_text_column = None
 
         # make sure no reserved columns are in train_data or valid_data
         for column in RESERVED_COLUMNS + LLM_RESERVED_COLUMNS:

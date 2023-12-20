@@ -13,6 +13,7 @@ from autotrain import app_utils, logger
 from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
+from autotrain.help import get_app_help
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -433,3 +434,14 @@ async def handle_form(
     else:
         monitor_url = f"https://hf.co/spaces/{job_id}"
     return {"success": "true", "monitor_url": monitor_url}
+
+
+@app.get("/help/{element_id}", response_class=JSONResponse)
+async def fetch_help(element_id: str):
+    """
+    This function is used to fetch the help text for a given element
+    :param element_id: str
+    :return: JSONResponse
+    """
+    msg = get_app_help(element_id)
+    return {"message": msg}
