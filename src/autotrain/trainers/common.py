@@ -52,12 +52,19 @@ def pause_space(params, is_failure=False):
             title = "Your training has finished successfully ✅"
 
         if not params.token.startswith("hf_oauth_"):
-            api.create_discussion(
-                repo_id=os.environ["SPACE_ID"],
-                title=title,
-                description=msg,
-                repo_type="space",
-            )
+            try:
+                api.create_discussion(
+                    repo_id=os.environ["SPACE_ID"],
+                    title=title,
+                    description=msg,
+                    repo_type="space",
+                )
+            except Exception as e:
+                logger.error(f"Failed to create discussion: {e}")
+                if is_failure:
+                    logger.info("Model failed to train and discussion was not created.")
+                else:
+                    logger.info("Model trained successfully but discussion was not created.")
 
         api.pause_space(repo_id=os.environ["SPACE_ID"])
     if "ENDPOINT_ID" in os.environ:
