@@ -5,7 +5,6 @@ Copyright 2023 The HuggingFace Team
 from dataclasses import dataclass
 from typing import List, Union
 
-from autotrain import logger
 from autotrain.backend import SpaceRunner
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -63,7 +62,6 @@ class AutoTrainProject:
     def create_spaces(self):
         sr = SpaceRunner(params=self.params, backend=self.spaces_backends[self.backend])
         space_id = sr.prepare()
-        logger.info(f"Space created with id: {space_id}")
         return space_id
 
     def create(self):

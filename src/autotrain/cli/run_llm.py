@@ -1,9 +1,7 @@
 from argparse import ArgumentParser
 
-import torch
-
 from autotrain import logger
-from autotrain.cli.utils import llm_munge_data
+from autotrain.cli.utils import common_args, llm_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -18,47 +16,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
-            {
-                "arg": "--train",
-                "help": "Train the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--deploy",
-                "help": "Deploy the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--inference",
-                "help": "Run inference",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--data_path",
-                "help": "Train dataset to use",
-                "required": False,
-                "type": str,
-                "alias": ["--data-path"],
-            },
-            {
-                "arg": "--train_split",
-                "help": "Train dataset split to use",
-                "required": False,
-                "type": str,
-                "default": "train",
-                "alias": ["--train-split"],
-            },
-            {
-                "arg": "--valid_split",
-                "help": "Validation dataset split to use",
-                "required": False,
-                "type": str,
-                "default": None,
-                "alias": ["--valid-split"],
-            },
             {
                 "arg": "--text_column",
                 "help": "Text column to use",
@@ -84,40 +41,10 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--prompt-text-column"],
             },
             {
-                "arg": "--model",
-                "help": "Model to use",
-                "required": False,
-                "type": str,
-            },
-            {
                 "arg": "--model-ref",
                 "help": "Reference model to use for DPO when not using PEFT",
                 "required": False,
                 "type": str,
-            },
-            {
-                "arg": "--learning_rate",
-                "help": "Learning rate to use",
-                "required": False,
-                "type": float,
-                "default": 3e-5,
-                "alias": ["--lr", "--learning-rate"],
-            },
-            {
-                "arg": "--num_train_epochs",
-                "help": "Number of training epochs to use",
-                "required": False,
-                "type": int,
-                "default": 1,
-                "alias": ["--epochs"],
-            },
-            {
-                "arg": "--train_batch_size",
-                "help": "Training batch size to use",
-                "required": False,
-                "type": int,
-                "default": 2,
-                "alias": ["--train-batch-size", "--batch-size"],
             },
             {
                 "arg": "--warmup_ratio",
@@ -126,14 +53,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "type": float,
                 "default": 0.1,
                 "alias": ["--warmup-ratio"],
-            },
-            {
-                "arg": "--gradient_accumulation_steps",
-                "help": "Gradient accumulation steps to use",
-                "required": False,
-                "type": int,
-                "default": 1,
-                "alias": ["--gradient-accumulation-steps", "--gradient-accumulation"],
             },
             {
                 "arg": "--optimizer",
@@ -164,13 +83,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "type": float,
                 "default": 1.0,
                 "alias": ["--max-grad-norm"],
-            },
-            {
-                "arg": "--seed",
-                "help": "Seed to use",
-                "required": False,
-                "type": int,
-                "default": 42,
             },
             {
                 "arg": "--add_eos_token",
@@ -227,13 +139,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--logging-steps"],
             },
             {
-                "arg": "--project_name",
-                "help": "Output directory",
-                "required": False,
-                "type": str,
-                "alias": ["--project-name"],
-            },
-            {
                 "arg": "--evaluation_strategy",
                 "help": "Evaluation strategy to use",
                 "required": False,
@@ -281,26 +186,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--quantization"],
             },
             {
-                "arg": "--push_to_hub",
-                "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
-                "required": False,
-                "action": "store_true",
-                "alias": ["--push-to-hub"],
-            },
-            {
                 "arg": "--model_max_length",
                 "help": "Model max length to use",
                 "required": False,
                 "type": int,
                 "default": 1024,
                 "alias": ["--max-len", "--max-length"],
-            },
-            {
-                "arg": "--repo_id",
-                "help": "Repo id for hugging face hub. Format is username/repo_name",
-                "required": False,
-                "type": str,
-                "alias": ["--repo-id"],
             },
             {
                 "arg": "--trainer",
@@ -325,44 +216,11 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--merge-adapter"],
             },
             {
-                "arg": "--token",
-                "help": "Hugingface token to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
-            {
-                "arg": "--username",
-                "help": "Huggingface username to use",
-                "required": False,
-                "type": str,
-            },
-            {
                 "arg": "--use_flash_attention_2",
                 "help": "Use flash attention 2",
                 "required": False,
                 "action": "store_true",
                 "alias": ["--use-flash-attention-2", "--use-fa2"],
-            },
-            {
-                "arg": "--log",
-                "help": "Use experiment tracking",
-                "required": False,
-                "type": str,
-                "default": "none",
-            },
-            {
-                "arg": "--disable_gradient_checkpointing",
-                "help": "Disable gradient checkpointing",
-                "required": False,
-                "action": "store_true",
-                "alias": ["--disable-gradient-checkpointing", "--disable-gc"],
             },
             {
                 "arg": "--dpo-beta",
@@ -373,6 +231,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--dpo-beta"],
             },
         ]
+        arg_list.extend(common_args())
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
             names = [arg["arg"]] + arg.get("alias", [])
@@ -449,16 +308,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             raise NotImplementedError("Deploy is not implemented yet")
         if self.args.inference:
             raise NotImplementedError("Inference is not implemented yet")
-        cuda_available = torch.cuda.is_available()
-        mps_available = torch.backends.mps.is_available()
-
-        if not cuda_available and not mps_available:
-            raise ValueError("No GPU/MPS device found. LLM training requires an accelerator")
-
-        if cuda_available:
-            self.num_gpus = torch.cuda.device_count()
-        elif mps_available:
-            self.num_gpus = 1
 
     def run(self):
         logger.info("Running LLM")
@@ -470,11 +319,11 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 train_split=self.args.train_split,
                 valid_split=self.args.valid_split,
                 text_column=self.args.text_column,
-                lr=self.args.learning_rate,
-                epochs=self.args.num_train_epochs,
-                batch_size=self.args.train_batch_size,
+                lr=self.args.lr,
+                epochs=self.args.epochs,
+                batch_size=self.args.batch_size,
                 warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation=self.args.gradient_accumulation_steps,
+                gradient_accumulation=self.args.gradient_accumulation,
                 optimizer=self.args.optimizer,
                 scheduler=self.args.scheduler,
                 weight_decay=self.args.weight_decay,

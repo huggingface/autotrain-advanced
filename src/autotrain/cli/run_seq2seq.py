@@ -1,10 +1,7 @@
-import os
 from argparse import ArgumentParser
 
-import torch
-
 from autotrain import logger
-from autotrain.cli.utils import seq2seq_munge_data
+from autotrain.cli.utils import common_args, seq2seq_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 
@@ -20,44 +17,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
             {
-                "arg": "--train",
-                "help": "Train the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--deploy",
-                "help": "Deploy the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--inference",
-                "help": "Run inference",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--data-path",
-                "help": "Train dataset to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--train-split",
-                "help": "Test dataset split to use",
-                "required": False,
-                "type": str,
-                "default": "train",
-            },
-            {
-                "arg": "--valid-split",
-                "help": "Validation dataset split to use",
-                "required": False,
-                "type": str,
-                "default": None,
-            },
-            {
                 "arg": "--text-column",
                 "help": "Text column to use",
                 "required": False,
@@ -70,26 +29,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "target",
-            },
-            {
-                "arg": "--model",
-                "help": "Model to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--lr",
-                "help": "Learning rate to use",
-                "required": False,
-                "type": float,
-                "default": 3e-5,
-            },
-            {
-                "arg": "--epochs",
-                "help": "Number of training epochs to use",
-                "required": False,
-                "type": int,
-                "default": 1,
             },
             {
                 "arg": "--max-seq-length",
@@ -106,25 +45,11 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "default": 128,
             },
             {
-                "arg": "--batch-size",
-                "help": "Training batch size to use",
-                "required": False,
-                "type": int,
-                "default": 2,
-            },
-            {
                 "arg": "--warmup-ratio",
                 "help": "Warmup proportion to use",
                 "required": False,
                 "type": float,
                 "default": 0.1,
-            },
-            {
-                "arg": "--gradient-accumulation",
-                "help": "Gradient accumulation steps to use",
-                "required": False,
-                "type": int,
-                "default": 1,
             },
             {
                 "arg": "--optimizer",
@@ -155,24 +80,11 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "default": 1.0,
             },
             {
-                "arg": "--seed",
-                "help": "Seed to use",
-                "required": False,
-                "type": int,
-                "default": 42,
-            },
-            {
                 "arg": "--logging-steps",
                 "help": "Logging steps to use",
                 "required": False,
                 "type": int,
                 "default": -1,
-            },
-            {
-                "arg": "--project-name",
-                "help": "Output directory",
-                "required": False,
-                "type": str,
             },
             {
                 "arg": "--evaluation-strategy",
@@ -208,38 +120,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "type": str,
                 "default": None,
                 "choices": ["fp16", "bf16", None],
-            },
-            {
-                "arg": "--token",
-                "help": "Hugging face token",
-                "required": False,
-                "type": str,
-                "default": "",
-            },
-            {
-                "arg": "--push-to-hub",
-                "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--repo-id",
-                "help": "Repo id for hugging face hub",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
-            {
-                "arg": "--username",
-                "help": "Huggingface username to use",
-                "required": False,
-                "type": str,
             },
             {
                 "arg": "--peft",
@@ -284,6 +164,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
                 "default": "",
             },
         ]
+        arg_list.extend(common_args())
         run_seq2seq_parser = parser.add_parser("seq2seq", description="✨ Run AutoTrain Seq2Seq")
         for arg in arg_list:
             if "action" in arg:
@@ -307,15 +188,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
     def __init__(self, args):
         self.args = args
 
-        store_true_arg_names = [
-            "train",
-            "deploy",
-            "inference",
-            "auto_find_batch_size",
-            "push_to_hub",
-            "use_peft",
-            "use_int8",
-        ]
+        store_true_arg_names = ["train", "deploy", "inference", "auto_find_batch_size", "push_to_hub", "peft"]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
                 setattr(self.args, arg_name, False)
@@ -333,14 +206,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
-        if not torch.cuda.is_available():
-            self.device = "cpu"
-
-        self.num_gpus = torch.cuda.device_count()
-
-        if len(str(self.args.token)) < 6:
-            self.args.token = os.environ.get("HF_TOKEN", None)
-
         if len(self.args.target_modules.strip()) == 0:
             self.args.target_modules = []
         else:
@@ -349,43 +214,7 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
     def run(self):
         logger.info("Running Seq2Seq Classification")
         if self.args.train:
-            params = Seq2SeqParams(
-                data_path=self.args.data_path,
-                train_split=self.args.train_split,
-                valid_split=self.args.valid_split,
-                text_column=self.args.text_column,
-                target_column=self.args.target_column,
-                model=self.args.model,
-                lr=self.args.lr,
-                epochs=self.args.epochs,
-                max_seq_length=self.args.max_seq_length,
-                max_target_length=self.args.max_target_length,
-                batch_size=self.args.batch_size,
-                warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation=self.args.gradient_accumulation,
-                optimizer=self.args.optimizer,
-                scheduler=self.args.scheduler,
-                weight_decay=self.args.weight_decay,
-                max_grad_norm=self.args.max_grad_norm,
-                seed=self.args.seed,
-                logging_steps=self.args.logging_steps,
-                project_name=self.args.project_name,
-                evaluation_strategy=self.args.evaluation_strategy,
-                save_total_limit=self.args.save_total_limit,
-                save_strategy=self.args.save_strategy,
-                auto_find_batch_size=self.args.auto_find_batch_size,
-                mixed_precision=self.args.mixed_precision,
-                push_to_hub=self.args.push_to_hub,
-                repo_id=self.args.repo_id,
-                token=self.args.token,
-                username=self.args.username,
-                peft=self.args.peft,
-                lora_r=self.args.lora_r,
-                lora_alpha=self.args.lora_alpha,
-                lora_dropout=self.args.lora_dropout,
-                target_modules=self.args.target_modules,
-            )
-
+            params = Seq2SeqParams(**vars(self.args))
             params = seq2seq_munge_data(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             _ = project.create()

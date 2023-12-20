@@ -1,10 +1,7 @@
-import os
 from argparse import ArgumentParser
 
-import torch
-
 from autotrain import logger
-from autotrain.cli.utils import text_clf_munge_data
+from autotrain.cli.utils import common_args, text_clf_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
@@ -20,44 +17,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
             {
-                "arg": "--train",
-                "help": "Train the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--deploy",
-                "help": "Deploy the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--inference",
-                "help": "Run inference",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--data-path",
-                "help": "Train dataset to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--train-split",
-                "help": "Test dataset split to use",
-                "required": False,
-                "type": str,
-                "default": "train",
-            },
-            {
-                "arg": "--valid-split",
-                "help": "Validation dataset split to use",
-                "required": False,
-                "type": str,
-                "default": None,
-            },
-            {
                 "arg": "--text-column",
                 "help": "Text column to use",
                 "required": False,
@@ -72,26 +31,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": "target",
             },
             {
-                "arg": "--model",
-                "help": "Model to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--lr",
-                "help": "Learning rate to use",
-                "required": False,
-                "type": float,
-                "default": 3e-5,
-            },
-            {
-                "arg": "--epochs",
-                "help": "Number of training epochs to use",
-                "required": False,
-                "type": int,
-                "default": 1,
-            },
-            {
                 "arg": "--max-seq-length",
                 "help": "Maximum number of tokens in a sequence to use",
                 "required": False,
@@ -99,25 +38,11 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": 128,
             },
             {
-                "arg": "--batch-size",
-                "help": "Training batch size to use",
-                "required": False,
-                "type": int,
-                "default": 2,
-            },
-            {
                 "arg": "--warmup-ratio",
                 "help": "Warmup proportion to use",
                 "required": False,
                 "type": float,
                 "default": 0.1,
-            },
-            {
-                "arg": "--gradient-accumulation",
-                "help": "Gradient accumulation steps to use",
-                "required": False,
-                "type": int,
-                "default": 1,
             },
             {
                 "arg": "--optimizer",
@@ -148,24 +73,11 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": 1.0,
             },
             {
-                "arg": "--seed",
-                "help": "Seed to use",
-                "required": False,
-                "type": int,
-                "default": 42,
-            },
-            {
                 "arg": "--logging-steps",
                 "help": "Logging steps to use",
                 "required": False,
                 "type": int,
                 "default": -1,
-            },
-            {
-                "arg": "--project-name",
-                "help": "Output directory",
-                "required": False,
-                "type": str,
             },
             {
                 "arg": "--evaluation-strategy",
@@ -202,46 +114,8 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": None,
                 "choices": ["fp16", "bf16", None],
             },
-            {
-                "arg": "--token",
-                "help": "Hugging face token",
-                "required": False,
-                "type": str,
-                "default": "",
-            },
-            {
-                "arg": "--push-to-hub",
-                "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--repo-id",
-                "help": "Repo id for hugging face hub",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
-            {
-                "arg": "--username",
-                "help": "Huggingface username to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--log",
-                "help": "Use experiment tracking",
-                "required": False,
-                "type": str,
-                "default": "none",
-            },
         ]
+        arg_list.extend(common_args())
         run_text_classification_parser = parser.add_parser(
             "text-classification", description="✨ Run AutoTrain Text Classification"
         )
@@ -290,14 +164,6 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                     raise ValueError("Repo id must be specified for push to hub")
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
-
-        if not torch.cuda.is_available():
-            self.device = "cpu"
-
-        self.num_gpus = torch.cuda.device_count()
-
-        if len(str(self.args.token)) < 6:
-            self.args.token = os.environ.get("HF_TOKEN", None)
 
     def run(self):
         logger.info("Running Text Classification")

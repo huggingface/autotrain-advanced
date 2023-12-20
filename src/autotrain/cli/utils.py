@@ -3,6 +3,143 @@ import os
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 
 
+def common_args():
+    args = [
+        {
+            "arg": "--train",
+            "help": "Train the model",
+            "required": False,
+            "action": "store_true",
+        },
+        {
+            "arg": "--deploy",
+            "help": "Deploy the model",
+            "required": False,
+            "action": "store_true",
+        },
+        {
+            "arg": "--inference",
+            "help": "Run inference",
+            "required": False,
+            "action": "store_true",
+        },
+        {
+            "arg": "--username",
+            "help": "Hugging Face Hub Username",
+            "required": False,
+            "type": str,
+        },
+        {
+            "arg": "--backend",
+            "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+            "required": False,
+            "type": str,
+            "default": "local-cli",
+        },
+        {
+            "arg": "--token",
+            "help": "Hub token",
+            "required": False,
+            "type": str,
+        },
+        {
+            "arg": "--repo-id",
+            "help": "Hub repo id",
+            "required": False,
+            "type": str,
+        },
+        {
+            "arg": "--push-to-hub",
+            "help": "Push to hub",
+            "required": False,
+            "action": "store_true",
+        },
+        {
+            "arg": "--model",
+            "help": "Model to use for training",
+            "required": True,
+            "type": str,
+        },
+        {
+            "arg": "--project-name",
+            "help": "Output directory or repo id",
+            "required": True,
+            "type": str,
+        },
+        {
+            "arg": "--seed",
+            "help": "Seed",
+            "required": False,
+            "default": 42,
+            "type": int,
+        },
+        {
+            "arg": "--epochs",
+            "help": "Number of training epochs",
+            "required": False,
+            "default": 1,
+            "type": int,
+        },
+        {
+            "arg": "--gradient-accumulation",
+            "help": "Gradient accumulation steps",
+            "required": False,
+            "default": 1,
+            "type": int,
+        },
+        {
+            "arg": "--disable_gradient_checkpointing",
+            "help": "Disable gradient checkpointing",
+            "required": False,
+            "action": "store_true",
+            "alias": ["--disable-gradient-checkpointing", "--disable-gc"],
+        },
+        {
+            "arg": "--lr",
+            "help": "Learning rate",
+            "required": False,
+            "default": 5e-4,
+            "type": float,
+        },
+        {
+            "arg": "--log",
+            "help": "Use experiment tracking",
+            "required": False,
+            "type": str,
+            "default": "none",
+        },
+        {
+            "arg": "--data-path",
+            "help": "Train dataset to use",
+            "required": False,
+            "type": str,
+        },
+        {
+            "arg": "--train-split",
+            "help": "Test dataset split to use",
+            "required": False,
+            "type": str,
+            "default": "train",
+        },
+        {
+            "arg": "--valid-split",
+            "help": "Validation dataset split to use",
+            "required": False,
+            "type": str,
+            "default": None,
+        },
+        {
+            "arg": "--batch-size",
+            "help": "Training batch size to use",
+            "required": False,
+            "type": int,
+            "default": 2,
+            "alias": ["--train-batch-size"],
+        },
+    ]
+    return args
+
+
 def tabular_munge_data(params, local):
     if isinstance(params.target_columns, str):
         col_map_label = [params.target_columns]

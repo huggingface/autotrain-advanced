@@ -1,9 +1,7 @@
 from argparse import ArgumentParser
 
-import torch
-
 from autotrain import logger
-from autotrain.cli.utils import img_clf_munge_data
+from autotrain.cli.utils import common_args, img_clf_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -19,44 +17,6 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
             {
-                "arg": "--train",
-                "help": "Train the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--deploy",
-                "help": "Deploy the model",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--inference",
-                "help": "Run inference",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--data-path",
-                "help": "Train dataset to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--train-split",
-                "help": "Test dataset split to use",
-                "required": False,
-                "type": str,
-                "default": "train",
-            },
-            {
-                "arg": "--valid-split",
-                "help": "Validation dataset split to use",
-                "required": False,
-                "type": str,
-                "default": None,
-            },
-            {
                 "arg": "--image-column",
                 "help": "Image column to use",
                 "required": False,
@@ -71,45 +31,11 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "default": "target",
             },
             {
-                "arg": "--model",
-                "help": "Model to use",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--lr",
-                "help": "Learning rate to use",
-                "required": False,
-                "type": float,
-                "default": 3e-5,
-            },
-            {
-                "arg": "--epochs",
-                "help": "Number of training epochs to use",
-                "required": False,
-                "type": int,
-                "default": 1,
-            },
-            {
-                "arg": "--batch-size",
-                "help": "Training batch size to use",
-                "required": False,
-                "type": int,
-                "default": 2,
-            },
-            {
                 "arg": "--warmup-ratio",
                 "help": "Warmup proportion to use",
                 "required": False,
                 "type": float,
                 "default": 0.1,
-            },
-            {
-                "arg": "--gradient-accumulation",
-                "help": "Gradient accumulation steps to use",
-                "required": False,
-                "type": int,
-                "default": 1,
             },
             {
                 "arg": "--optimizer",
@@ -140,24 +66,11 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "default": 1.0,
             },
             {
-                "arg": "--seed",
-                "help": "Seed to use",
-                "required": False,
-                "type": int,
-                "default": 42,
-            },
-            {
                 "arg": "--logging-steps",
                 "help": "Logging steps to use",
                 "required": False,
                 "type": int,
                 "default": -1,
-            },
-            {
-                "arg": "--project-name",
-                "help": "Output directory",
-                "required": False,
-                "type": str,
             },
             {
                 "arg": "--evaluation-strategy",
@@ -194,33 +107,8 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "default": None,
                 "choices": ["fp16", "bf16", None],
             },
-            {
-                "arg": "--push-to-hub",
-                "help": "Push to hub True/False. In case you want to push the trained model to huggingface hub",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--repo-id",
-                "help": "Repo id for hugging face hub",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--log",
-                "help": "Use experiment tracking",
-                "required": False,
-                "type": str,
-                "default": "none",
-            },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
         ]
+        arg_list.extend(common_args())
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
         )
@@ -277,11 +165,6 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 raise ValueError("Repo id or username must be specified for spaces backend")
             if self.args.token is None:
                 raise ValueError("Token must be specified for spaces backend")
-
-        if not torch.cuda.is_available():
-            self.device = "cpu"
-
-        self.num_gpus = torch.cuda.device_count()
 
     def run(self):
         logger.info("Running Text Classification")

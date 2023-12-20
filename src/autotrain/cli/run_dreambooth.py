@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 
 from autotrain import logger
 from autotrain.cli import BaseAutoTrainCommand
-from autotrain.cli.utils import dreambooth_munge_data
+from autotrain.cli.utils import common_args, dreambooth_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
@@ -25,12 +25,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         arg_list = [
-            {
-                "arg": "--model",
-                "help": "Model to use for training",
-                "required": True,
-                "type": str,
-            },
             {
                 "arg": "--revision",
                 "help": "Model revision to use for training",
@@ -94,19 +88,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "type": float,
             },
             {
-                "arg": "--project-name",
-                "help": "Output directory or repo id",
-                "required": True,
-                "type": str,
-            },
-            {
-                "arg": "--seed",
-                "help": "Seed",
-                "required": False,
-                "default": 42,
-                "type": int,
-            },
-            {
                 "arg": "--resolution",
                 "help": "Resolution",
                 "required": True,
@@ -125,24 +106,10 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--batch-size",
-                "help": "Train batch size",
-                "required": False,
-                "default": 4,
-                "type": int,
-            },
-            {
                 "arg": "--sample-batch-size",
                 "help": "Sample batch size",
                 "required": False,
                 "default": 4,
-                "type": int,
-            },
-            {
-                "arg": "--epochs",
-                "help": "Number of training epochs",
-                "required": False,
-                "default": 1,
                 "type": int,
             },
             {
@@ -163,26 +130,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "help": "Resume from checkpoint",
                 "required": False,
                 "type": str,
-            },
-            {
-                "arg": "--gradient-accumulation",
-                "help": "Gradient accumulation steps",
-                "required": False,
-                "default": 1,
-                "type": int,
-            },
-            {
-                "arg": "--gradient-checkpointing",
-                "help": "Gradient checkpointing",
-                "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--lr",
-                "help": "Learning rate",
-                "required": False,
-                "default": 5e-4,
-                "type": float,
             },
             {
                 "arg": "--scale-lr",
@@ -334,24 +281,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--token",
-                "help": "Hub token",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--repo-id",
-                "help": "Hub repo id",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--push-to-hub",
-                "help": "Push to hub",
-                "required": False,
-                "action": "store_true",
-            },
-            {
                 "arg": "--validation-prompt",
                 "help": "Validation prompt",
                 "required": False,
@@ -389,21 +318,9 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
-            {
-                "arg": "--username",
-                "help": "Hugging Face Hub Username",
-                "required": False,
-                "type": str,
-            },
-            {
-                "arg": "--backend",
-                "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
-                "required": False,
-                "type": str,
-                "default": "local-cli",
-            },
         ]
 
+        arg_list.extend(common_args())
         run_dreambooth_parser = parser.add_parser("dreambooth", description="✨ Run AutoTrain DreamBooth Training")
         for arg in arg_list:
             if "action" in arg:
@@ -431,7 +348,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
         store_true_arg_names = [
             "center_crop",
             "train_text_encoder",
-            "gradient_checkpointing",
+            "disable_gradient_checkpointing",
             "scale_lr",
             "use_8bit_adam",
             "allow_tf32",
