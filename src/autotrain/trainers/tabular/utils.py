@@ -140,7 +140,7 @@ class TabularMetrics:
                     metrics[metric_name] = metric_func(y_true, y_pred)
                 else:
                     metrics[metric_name] = metric_func(y_true, y_pred[:, 1] >= 0.5)
-            elif self.sub_task == "mul":
+            elif self.sub_task == "multi_class_classification":
                 if metric_name in (
                     "accuracy",
                     "f1_macro",

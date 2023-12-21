@@ -273,6 +273,8 @@ def train(config):
 
     eval_metric, direction = utils.get_metric_direction(sub_task)
 
+    logger.info(f"Sub task: {sub_task}")
+
     args = {
         "model_name": config.model,
         "xtrain": xtrain,
