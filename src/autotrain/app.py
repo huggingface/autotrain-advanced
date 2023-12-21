@@ -354,7 +354,6 @@ async def handle_form(
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
 
     if task == "image-classification":
-        task = "image_multi_class_classification"
         dset = AutoTrainImageClassificationDataset(
             train_data=training_files[0],
             token=HF_TOKEN,
