@@ -454,7 +454,7 @@ def train(config):
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
 
-    if config.use_peft:
+    if config.peft:
         if config.merge_adapter:
             logger.info("Merging adapter weights...")
             try:
