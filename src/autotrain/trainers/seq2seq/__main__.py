@@ -20,7 +20,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
 from autotrain.trainers.seq2seq import utils
 from autotrain.trainers.seq2seq.dataset import Seq2SeqDataset
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -213,6 +213,7 @@ def train(config):
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            remove_autotrain_data(config)
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)

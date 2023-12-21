@@ -17,7 +17,7 @@ from diffusers.models.attention_processor import (
 from diffusers.models.lora import LoRALinearLayer
 from huggingface_hub import snapshot_download
 
-from autotrain.trainers.common import monitor, pause_space
+from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data
 from autotrain.trainers.dreambooth import utils
 from autotrain.trainers.dreambooth.datasets import DreamBoothDataset, collate_fn
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -327,6 +327,7 @@ def train(config):
         f.write(config.prompt)
 
     if config.push_to_hub:
+        remove_autotrain_data(config)
         trainer.push_to_hub()
 
     pause_space(config)

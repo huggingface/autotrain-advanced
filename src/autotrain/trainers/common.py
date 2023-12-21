@@ -12,6 +12,10 @@ from pydantic import BaseModel
 from autotrain import logger
 
 
+def remove_autotrain_data(config):
+    os.system(f"rm -rf {config.project_name}/autotrain-data")
+
+
 def save_training_params(config):
     if os.path.exists(f"{config.project_name}/training_params.json"):
         training_params = json.load(open(f"{config.project_name}/training_params.json"))

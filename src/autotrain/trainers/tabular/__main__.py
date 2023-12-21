@@ -13,7 +13,7 @@ from sklearn import pipeline, preprocessing
 from sklearn.compose import ColumnTransformer
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space
+from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
 from autotrain.trainers.tabular import utils
 from autotrain.trainers.tabular.params import TabularParams
 
@@ -322,6 +322,8 @@ def train(config):
         f.write(model_card)
 
     if config.push_to_hub:
+        remove_autotrain_data(config)
+        save_training_params(config)
         logger.info("Pushing model to hub...")
         api = HfApi(token=config.token)
         api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)

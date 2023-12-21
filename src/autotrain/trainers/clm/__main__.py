@@ -26,7 +26,7 @@ from autotrain import logger
 from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.common import monitor, pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
 
 
 def parse_args():
@@ -476,6 +476,8 @@ def train(config):
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            # remove data folder
+            remove_autotrain_data(config)
             logger.info("Pushing model to hub...")
             save_training_params(config)
             api = HfApi(token=config.token)

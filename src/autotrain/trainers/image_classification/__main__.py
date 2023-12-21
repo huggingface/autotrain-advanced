@@ -14,7 +14,7 @@ from transformers import (
 )
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space, save_training_params
+from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -173,6 +173,7 @@ def train(config):
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
+            remove_autotrain_data(config)
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
