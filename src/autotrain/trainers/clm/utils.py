@@ -63,6 +63,45 @@ print(response)
 
 """
 
+PEFT_HANDLER = """
+from typing import  Dict, List, Any
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import torch
+from peft import PeftModel
+import json
+import os
+
+
+class EndpointHandler():
+    def __init__(self, path=""):
+        base_model_path = json.load(open(os.path.join(path, "training_params.json")))["model"]
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model_path,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+            trust_remote_code=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
+        model = PeftModel.from_pretrained(model, path)
+        model = model.merge_and_unload()
+        self.pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
+
+    def __call__(self, data: Any) -> List[List[Dict[str, float]]]:
+        inputs = data.pop("inputs", data)
+        parameters = data.pop("parameters", None)
+        if parameters is not None:
+            prediction = self.pipeline(inputs, **parameters)
+        else:
+            prediction = self.pipeline(inputs)
+        return prediction
+"""
+
+REQUIREMENTS_TXT = """
+peft==0.7.1
+transformers==4.36.1
+"""
+
 
 def preprocess_reward(examples, tokenizer):
     new_examples = {
@@ -180,3 +219,15 @@ def pause_endpoint(params):
     headers = {"Authorization": f"Bearer {params.token}"}
     r = requests.post(api_url, headers=headers)
     return r.json()
+
+
+def create_peft_handler(config):
+    txt = PEFT_HANDLER.strip()
+    with open(f"{config.project_name}/handler.py", "w") as f:
+        f.write(txt)
+
+
+def create_requirements_txt(config):
+    txt = REQUIREMENTS_TXT.strip()
+    with open(f"{config.project_name}/requirements.txt", "w") as f:
+        f.write(txt)
