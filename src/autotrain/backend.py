@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+import subprocess
 from dataclasses import dataclass
 from typing import Union
 
@@ -232,7 +233,10 @@ class SpaceRunner:
                     env_vars=env_vars,
                     backend=self.backend,
                 )
-                ngc_runner.create()
+                if int(os.environ.get("NGC_USE_CLI", 0)) == 1:
+                    ngc_runner.create_cli()
+                else:
+                    ngc_runner.create()
                 return
             else:
                 local_runner = LocalRunner(env_vars=env_vars, wait=self.backend == "local-cli")
@@ -371,3 +375,60 @@ class NGCRunner:
 
         ngc_token = self._user_authentication_ngc()
         self._create_ngc_job(ngc_token, ngc_url, ngc_payload)
+
+    def create_cli(self):
+        cmd = "ngc base-command job run --name {job_name}"
+        cmd += " --priority NORMAL --order 50 --preempt RUNONCE --min-timeslice 0s"
+        cmd += " --total-runtime 259200s --instance {instance}"
+        cmd += " --commandline 'set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0' -p 7860 --result /results"
+        cmd += " --image '{ngc_org}/autotrain-advanced:latest'"
+
+        cmd = cmd.format(
+            job_name=self.job_name,
+            ngc_ace=self.ngc_ace,
+            ngc_org=self.ngc_org,
+            instance=self.instance_map[self.backend],
+        )
+
+        for k, v in self.env_vars.items():
+            cmd += f" --env-var {k}:{v}"
+
+        ngc_config_cmd = "ngc config set"
+        ngc_config_cmd += " --team {ngc_team} --org {ngc_org} --ace {ngc_ace}"
+        ngc_config_cmd = ngc_config_cmd.format(
+            # ngc_api_key=self.ngc_api_key,
+            ngc_team=self.ngc_team,
+            ngc_org=self.ngc_org,
+            ngc_ace=self.ngc_ace,
+        )
+        logger.info("Setting NGC API key")
+        ngc_config_process = subprocess.Popen(ngc_config_cmd, shell=True)
+        ngc_config_process.wait()
+
+        if ngc_config_process.returncode == 0:
+            logger.info("NGC API key set successfully")
+        else:
+            logger.error("Failed to set NGC API key")
+            # print full output
+            logger.error(ngc_config_process.stdout.read())
+            logger.error(ngc_config_process.stderr.read())
+            raise Exception("Failed to set NGC API key")
+
+        if self.enable_diag:
+            ngc_diag_cmd = ["ngc", "diag", "all"]
+            process = subprocess.run(ngc_diag_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            output = process.stdout
+            error = process.stderr
+            if process.returncode != 0:
+                logger.info("NGC DIAG ALL Error occurred:")
+                logger.info(error)
+            else:
+                logger.info("NGC DIAG ALL output:")
+                logger.info(output)
+
+        logger.info("Creating NGC Job")
+        subprocess.run(
+            cmd,
+            shell=True,
+            check=True,
+        )

@@ -53,8 +53,9 @@ class AppParams:
         _params["prompt_text_column"] = "autotrain_prompt"
         _params["rejected_text_column"] = "autotrain_rejected_text"
 
-        if "trainer" in _params:
-            _params["trainer"] = _params["trainer"].lower()
+        trainer = self.task.split(":")[1]
+        if trainer != "generic":
+            _params["trainer"] = trainer.lower()
 
         return LLMTrainingParams(**_params)
 
