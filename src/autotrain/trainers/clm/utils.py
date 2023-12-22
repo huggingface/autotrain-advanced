@@ -10,6 +10,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from autotrain import logger
 
 
+DEFAULT_CHAT_TEMPLATE = "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
@@ -231,3 +233,54 @@ def create_requirements_txt(config):
     txt = REQUIREMENTS_TXT.strip()
     with open(f"{config.project_name}/requirements.txt", "w") as f:
         f.write(txt)
+
+
+def apply_chat_template(
+    example,
+    tokenizer,
+    config,
+):
+    # kudos to Hugging Face H4 Team for this snippet
+    if config.trainer == "sft":
+        messages = example[config.text_column]
+        # We add an empty system message if there is none
+        if messages[0]["role"] != "system":
+            messages.insert(0, {"role": "system", "content": ""})
+        example[config.text_column] = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=False
+        )
+
+    elif config.trainer == "reward":
+        if all(k in example.keys() for k in ("chosen", "rejected")):
+            chosen_messages = example["chosen"]
+            rejected_messages = example["rejected"]
+            # We add an empty system message if there is none
+            if chosen_messages[0]["role"] != "system":
+                chosen_messages.insert(0, {"role": "system", "content": ""})
+            if rejected_messages[0]["role"] != "system":
+                rejected_messages.insert(0, {"role": "system", "content": ""})
+            example["text_chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
+            example["text_rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
+        else:
+            raise ValueError(
+                f"Could not format example as dialogue for `rm` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
+            )
+    elif config.trainer == "dpo":
+        if all(k in example.keys() for k in ("chosen", "rejected")):
+            # For DPO, the inputs are triples of (prompt, chosen, rejected), where `chosen` and `rejected` are the final turn of a dialogue
+            # We therefore need to extract the N-1 turns to form the prompt
+            prompt_messages = example["chosen"][:-1]
+            # Prepend a system message if the first message is not a system message
+            if example["chosen"][0]["role"] != "system":
+                prompt_messages.insert(0, {"role": "system", "content": ""})
+            # Now we extract the final turn to define chosen/rejected responses
+            chosen_messages = example["chosen"][-1:]
+            rejected_messages = example["rejected"][-1:]
+            example["text_chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
+            example["text_rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
+            example["text_prompt"] = tokenizer.apply_chat_template(prompt_messages, tokenize=False)
+    else:
+        raise ValueError(
+            f"Could not format example as dialogue for `dpo` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
+        )
+    return example
