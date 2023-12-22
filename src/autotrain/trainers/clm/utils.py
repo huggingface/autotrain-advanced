@@ -1,3 +1,4 @@
+import ast
 import os
 from itertools import chain
 
@@ -243,9 +244,8 @@ def apply_chat_template(
     # kudos to Hugging Face H4 Team for this snippet
     if config.trainer == "sft":
         messages = example[config.text_column]
-        # We add an empty system message if there is none
-        if messages[0]["role"] != "system":
-            messages.insert(0, {"role": "system", "content": ""})
+        if isinstance(messages, str):
+            messages = ast.literal_eval(messages)
         example[config.text_column] = tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=False
         )
@@ -254,13 +254,12 @@ def apply_chat_template(
         if all(k in example.keys() for k in ("chosen", "rejected")):
             chosen_messages = example["chosen"]
             rejected_messages = example["rejected"]
-            # We add an empty system message if there is none
-            if chosen_messages[0]["role"] != "system":
-                chosen_messages.insert(0, {"role": "system", "content": ""})
-            if rejected_messages[0]["role"] != "system":
-                rejected_messages.insert(0, {"role": "system", "content": ""})
-            example["text_chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
-            example["text_rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
+            if isinstance(chosen_messages, str):
+                chosen_messages = ast.literal_eval(chosen_messages)
+            if isinstance(rejected_messages, str):
+                rejected_messages = ast.literal_eval(rejected_messages)
+            example["chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
+            example["rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
         else:
             raise ValueError(
                 f"Could not format example as dialogue for `rm` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
@@ -269,16 +268,16 @@ def apply_chat_template(
         if all(k in example.keys() for k in ("chosen", "rejected")):
             # For DPO, the inputs are triples of (prompt, chosen, rejected), where `chosen` and `rejected` are the final turn of a dialogue
             # We therefore need to extract the N-1 turns to form the prompt
+            if isinstance(example["chosen"], str):
+                example["chosen"] = ast.literal_eval(example["chosen"])
+            if isinstance(example["rejected"], str):
+                example["rejected"] = ast.literal_eval(example["rejected"])
             prompt_messages = example["chosen"][:-1]
-            # Prepend a system message if the first message is not a system message
-            if example["chosen"][0]["role"] != "system":
-                prompt_messages.insert(0, {"role": "system", "content": ""})
-            # Now we extract the final turn to define chosen/rejected responses
             chosen_messages = example["chosen"][-1:]
             rejected_messages = example["rejected"][-1:]
-            example["text_chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
-            example["text_rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
-            example["text_prompt"] = tokenizer.apply_chat_template(prompt_messages, tokenize=False)
+            example["chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
+            example["rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
+            example["prompt"] = tokenizer.apply_chat_template(prompt_messages, tokenize=False)
     else:
         raise ValueError(
             f"Could not format example as dialogue for `dpo` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
