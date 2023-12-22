@@ -90,14 +90,37 @@ def train(config):
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
 
+    if config.apply_chat_template and config.trainer == "default":
+        logger.warning("apply_chat_template is not supported for default trainer. Skipping...")
+        config.apply_chat_template = False
+
     is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
 
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
 
     train_data, valid_data = process_input_data(config)
-
     tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+
+    if config.apply_chat_template and config.trainer != "default":
+        train_data = train_data.map(
+            utils.apply_chat_template,
+            fn_kwargs={
+                "tokenizer": tokenizer,
+                "config": config,
+            },
+        )
+        if config.valid_split is not None:
+            valid_data = valid_data.map(
+                utils.apply_chat_template,
+                fn_kwargs={
+                    "tokenizer": tokenizer,
+                    "config": config,
+                },
+            )
+
+    if tokenizer.chat_template is None and config.trainer != "default":
+        tokenizer.chat_template = utils.DEFAULT_CHAT_TEMPLATE
 
     if tokenizer.model_max_length > 2048:
         tokenizer.model_max_length = config.model_max_length
