@@ -237,6 +237,14 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "action": "store_true",
                 "alias": ["--apply-chat-template"],
             },
+            {
+                "arg": "--padding",
+                "help": "Padding side",
+                "required": False,
+                "type": str,
+                "default": None,
+                "alias": ["--padding"],
+            },
         ]
         arg_list.extend(common_args())
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
@@ -367,6 +375,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 dpo_beta=self.args.dpo_beta,
                 prompt_text_column=self.args.prompt_text_column,
                 apply_chat_template=self.args.apply_chat_template,
+                padding=self.args.padding,
             )
 
             params = llm_munge_data(params, local=self.args.backend.startswith("local"))

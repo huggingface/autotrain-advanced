@@ -16,6 +16,7 @@ class LLMTrainingParams(AutoTrainParams):
     add_eos_token: bool = Field(True, title="Add EOS token")
     block_size: Union[int, List[int]] = Field(-1, title="Block size")
     model_max_length: int = Field(2048, title="Model max length")
+    padding: Optional[str] = Field(None, title="Padding side")
 
     # trainer params
     trainer: str = Field("default", title="Trainer type")

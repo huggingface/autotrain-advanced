@@ -90,6 +90,9 @@ def train(config):
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
 
+    if config.padding not in ("left", "right"):
+        config.padding = None
+
     if config.apply_chat_template and config.trainer == "default":
         logger.warning("apply_chat_template is not supported for default trainer. Skipping...")
         config.apply_chat_template = False
@@ -130,6 +133,9 @@ def train(config):
 
     if getattr(tokenizer, "pad_token_id", None) is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
+
+    if config.padding:
+        tokenizer.padding_side = config.padding
 
     if config.trainer == "default":
         train_data = utils.process_data(

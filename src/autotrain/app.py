@@ -83,6 +83,7 @@ PARAMS["llm"] = LLMTrainingParams(
     peft=True,
     block_size=1024,
     epochs=3,
+    padding="right",
 ).model_dump()
 
 PARAMS["text-classification"] = TextClassificationParams(
