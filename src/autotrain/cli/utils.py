@@ -208,7 +208,9 @@ def llm_munge_data(params, local):
             local=local,
         )
         params.data_path = dset.prepare()
-        params.valid_split = None
+        params.train_split = "train"
+        if params.valid_split:
+            params.valid_split = "validation"
         params.text_column = "autotrain_text"
         params.rejected_text_column = "autotrain_rejected_text"
         params.prompt_text_column = "autotrain_prompt"
