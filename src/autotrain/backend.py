@@ -57,6 +57,7 @@ class SpaceRunner:
             "cpu": "cpu-upgrade",
             "cpuf": "cpu-basic",
             "dgx-a100": "dgx-ngc",
+            "nvcf-a100": "nvcf-ngc",
             "local": "local",
             "local-cli": "local-cli",
             "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
@@ -213,7 +214,7 @@ class SpaceRunner:
         return r.json()["name"]
 
     def _create_space(self):
-        if self.backend.startswith("dgx-") or self.backend.startswith("local"):
+        if self.backend.startswith("dgx-") or self.backend.startswith("nvcf-") or self.backend.startswith("local"):
             env_vars = {
                 "HF_TOKEN": self.params.token,
                 "AUTOTRAIN_USERNAME": self.username,
@@ -241,6 +242,12 @@ class SpaceRunner:
                 else:
                     ngc_runner.create()
                 return
+            elif self.backend.startswith("nvcf-"):
+                nvcf_runner = NVCFRunner(
+                    job_name=self.params.repo_id.replace("/", "-"),
+                    env_vars=env_vars,
+                    backend=self.backend,
+                )
             else:
                 local_runner = LocalRunner(env_vars=env_vars, wait=self.backend == "local-cli")
                 pid = local_runner.create()
