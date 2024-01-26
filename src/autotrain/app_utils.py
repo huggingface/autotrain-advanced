@@ -18,6 +18,26 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
 
+def get_running_jobs(db):
+    running_jobs = db.get_running_jobs()
+    logger.info(f"Running jobs: {running_jobs}")
+    if running_jobs:
+        for _pid in running_jobs:
+            proc_status = get_process_status(_pid)
+            proc_status = proc_status.strip().lower()
+            if proc_status in ("completed", "error", "zombie"):
+                logger.info(f"Killing PID: {_pid}")
+                try:
+                    kill_process_by_pid(_pid)
+                except Exception as e:
+                    logger.info(f"Error while killing process: {e}")
+                    logger.info(f"Process {_pid} is already completed. Skipping...")
+                db.delete_job(_pid)
+
+    running_jobs = db.get_running_jobs()
+    return running_jobs
+
+
 def get_process_status(pid):
     try:
         process = psutil.Process(pid)
