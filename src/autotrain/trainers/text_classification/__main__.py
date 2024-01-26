@@ -156,9 +156,9 @@ def train(config):
         args=args,
         model=model,
         callbacks=callbacks_to_use,
-        compute_metrics=utils._binary_classification_metrics
-        if num_classes == 2
-        else utils._multi_class_classification_metrics,
+        compute_metrics=(
+            utils._binary_classification_metrics if num_classes == 2 else utils._multi_class_classification_metrics
+        ),
     )
 
     trainer = Trainer(
