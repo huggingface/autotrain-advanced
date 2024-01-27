@@ -248,6 +248,8 @@ class SpaceRunner:
                     env_vars=env_vars,
                     backend=self.backend,
                 )
+                nvcf_runner.create()
+                return
             else:
                 local_runner = LocalRunner(env_vars=env_vars, wait=self.backend == "local-cli")
                 pid = local_runner.create()
@@ -298,33 +300,6 @@ class LocalRunner:
         if not self.wait:
             logger.info(f"Training PID: {training_pid}")
         return training_pid
-
-@dataclass
-class NGC:
-    def __post_init__(self):
-        self.ngc_auth = os.environ.get("NGC_AUTH", "https://authn.nvidia.com")
-        self.ngc_api_key = os.environ.get("NGC_CLI_API_KEY")
-
-    def _user_authentication_ngc(self):
-        logger.info("Authenticating NGC user...")
-        scope = "group/ngc"
-
-        querystring = {"service": "ngc", "scope": scope}
-        auth = f"$oauthtoken:{self.ngc_api_key}"
-        headers = {
-            "Authorization": f"Basic {base64.b64encode(auth.encode('utf-8')).decode('utf-8')}",
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-        }
-        try:
-            response = requests.get(self.ngc_auth + "/token", headers=headers, params=querystring, timeout=30)
-        except HTTPError as http_err:
-            logger.error(f"HTTP error occurred: {http_err}")
-            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
-        except (requests.Timeout, ConnectionError) as err:
-            logger.error(f"Failed to request NGC token - {repr(err)}")
-            raise Exception("%s is unreachable, please try again later." % self.ngc_auth)
-        return json.loads(response.text.encode("utf8"))["token"]
 
 @dataclass
 class NGCRunner:
@@ -409,8 +384,7 @@ class NGCRunner:
             "runPolicy": {"preemptClass": "RUNONCE", "totalRuntimeSeconds": 259200},
         }
 
-        ngc_inst = NGC()
-        ngc_token = ngc_inst._user_authentication_ngc() #self._user_authentication_ngc()
+        ngc_token = self._user_authentication_ngc()
         self._create_ngc_job(ngc_token, ngc_url, ngc_payload)
 
     def create_cli(self):
@@ -481,21 +455,63 @@ class NVCFRunner:
         self.nvcf_api = os.environ.get("NVCF_API")
         self.nvcf_backend = os.environ.get("NVCF_BACKEND")
         self.nvcf_image = os.environ.get("NVCF_IMAGE")
+        self.nvcf_nca_id = os.environ.get("NVCF_NCA_ID")
+        self.nvcf_jwt_provider = os.environ.get("NVCF_JWT_PROVIDER")
+        self.nvcf_ssa_client_id = os.environ.get("NVCF_SSA_CLIENT_ID")
+        self.nvcf_ssa_client_secret = os.environ.get("NVCF_SSA_CLIENT_SECRET")
 
         self.instance_map = {
-            "nvcf-a100": "A100_80GB",
-            "nvcf-8a100": "A100_80GB_8GPU",
+            "nvcf-a100": {
+                "gpu": "A100_80GB",
+                "instanceType": "BM.GPU.A100-v2.8"
+            },
+            "nvcf-8a100": {
+                "gpu": "A100_80GB_8GPU",
+                "instanceType": "BM.GPU.A100-v2.8_8x"
+            }
         }
 
         logger.info("Starting NVCF training")
         logger.info(f"job_name: {self.job_name}")
         logger.info(f"backend: {self.backend}")
 
+    def _user_authentication_nvcf(self):
+        logger.info("Authenticating NVCF client...")
+        auth = base64.b64encode(f"{self.nvcf_ssa_client_id}:{self.nvcf_ssa_client_secret}".encode()).decode()
+        logger.info(f"{auth}")
+
+        headers = {
+            "Authorization": f"Basic {auth}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        body = {
+            'grant_type': 'client_credentials',
+            'scope': 'register_function update_function delete_function list_functions deploy_function invoke_function queue_details authorize_clients'
+        }
+        try:
+            logger.info(f"{body} -- {headers}")
+            response = requests.post(self.nvcf_jwt_provider + '/token', headers=headers, data=body, timeout=30)
+            logger.info(response.__dict__)
+
+            if response.status_code == 200:
+                resp_data = response.json()
+                bearer_token = resp_data.get('access_token')
+                return bearer_token
+            else:
+                raise Exception(f"Failed to get JWT token: {response.status_code} - {response.headers} - {response.text}")
+        except HTTPError as http_err:
+            logger.error(f"HTTP error occurred: {http_err}")
+            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
+        except (requests.Timeout, ConnectionError) as err:
+            logger.error(f"Failed to request NGC token - {repr(err)}")
+            raise Exception("%s is unreachable, please try again later." % self.ngc_auth)
+
     def _create_nvcf(self, token, nvcf_type, url, payload):
         logger.info(f"Configuring NVCF {nvcf_type}")
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=30)
+            logger.info(f"NVCF response: {response.__dict__}")
             result = response.json()
             type_data = result.get(nvcf_type, {})
             type_json_str = json.dumps(type_data, indent=4)  # Convert to JSON string for pretty printing
@@ -508,12 +524,15 @@ class NVCFRunner:
             logger.error(f"Failed to create NGC job - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
 
-    def _poll_nvcf_deploy(url, timeout=600, interval=10):
+    def _poll_nvcf_deploy(url, token, timeout=600, interval=10):
+        timeout = float(timeout)
+        interval = float(interval)
         start_time = time.time()
 
         while time.time() - start_time < timeout:
             try:
-                response = requests.get(url)
+                headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+                response = requests.get(url, headers=headers)
                 response.raise_for_status()
 
                 data = response.json()
@@ -523,9 +542,6 @@ class NVCFRunner:
                     return data
 
                 time.sleep(interval)  # Wait for a specified interval before the next poll
-
-            ### Add 401/token refresh handling
-            
             except requests.HTTPError as http_err:
                 raise Exception(f"HTTP error occurred: {http_err}")
             except requests.RequestException as err:
@@ -539,17 +555,18 @@ class NVCFRunner:
         nvcf_url = f'{self.nvcf_api}/v2/nvcf'
         nvcf_fr_payload = {           
             "name": self.job_name,
-            "inferenceUrl": "/",
+            "inferenceUrl": "health",
             "inferencePort": 7860,
-            "healthUri": "/health",
+            "healthUri": "health",
             "containerImage": self.nvcf_image,
-            "containerEnvironment": [ {"name": key, "value": value} for key, value in self.env_vars.items()],
+            "containerEnvironment": [ {"key": key, "value": value} for key, value in self.env_vars.items()],
             "apiBodyFormat": "CUSTOM"
         }
         nvcf_fd_payload = {
             "deploymentSpecifications": [
                 {
-                    "gpu": self.instance_map[self.backend],
+                    "gpu": self.instance_map[self.backend]["gpu"],
+                    "instanceType": self.instance_map[self.backend]["instanceType"],
                     "backend": self.nvcf_backend,
                     "maxInstances": 1,
                     "minInstances": 1
@@ -557,20 +574,26 @@ class NVCFRunner:
             ]
         }
 
-        ngc_inst = NGC()
-        ngc_token = ngc_inst._user_authentication_ngc()
-        nvcf_fn = self._create_nvcf(ngc_token,
+        nvcf_token = self._user_authentication_nvcf()
+
+        logger.info(f"{nvcf_token} -- {nvcf_url}/functions")
+        logger.info(nvcf_fr_payload)
+
+        nvcf_fn = self._create_nvcf(nvcf_token,
                                     'function',
                                     f"{nvcf_url}/functions", 
                                     nvcf_fr_payload)
         nvcf_fn_url = f"{nvcf_url}/deployments/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
-        nvcf_deploy = self._create_nvcf(ngc_token,
+        logger.info(f"Initializing deployment for: {nvcf_fn_url}")
+        logger.info(f"{nvcf_fd_payload}")
+        time.sleep(3)
+        nvcf_deploy = self._create_nvcf(nvcf_token,
                                     'deployment',
                                     nvcf_fn_url, 
                                     nvcf_fd_payload)
         
-        #### Wait til function state is ACTIVE by polling via GET
-        nvcf_deploy_stat = self._poll_nvcf_deploy(url=nvcf_fn_url)
+        time.sleep(3)
+        nvcf_deploy_stat = self._poll_nvcf_deploy(nvcf_fn_url, nvcf_token)
 
         #### Wait til reponse 200 from invocation test
 

@@ -49,6 +49,8 @@ class AutoTrainProject:
             "DGX 2xA100": "dgx-2a100",
             "DGX 4xA100": "dgx-4a100",
             "DGX 8xA100": "dgx-8a100",
+            "NVCF 1xA100": "nvcf-a100",
+            "NVCF 8xA100": "nvcf-8a100",
             "Local": "local",
             "EP US-East-1 1xA10g": "ep-aws-useast1-m",
             "EP US-East-1 1xA100": "ep-aws-useast1-xl",

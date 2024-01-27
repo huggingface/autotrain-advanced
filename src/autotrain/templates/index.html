@@ -131,11 +131,17 @@
                 <option value="EP US-East-1 8xA100">8xA100</option>
               </optgroup>
               {% if enable_ngc == 1 %}
-              <optgroup label="DGX Cloud">
+              <optgroup label="NVIDIA DGX Cloud">
                 <option value="DGX 1xA100">1xA100 DGX</option>
                 <option value="DGX 2xA100">2xA100 DGX</option>
                 <option value="DGX 4xA100">4xA100 DGX</option>
                 <option value="DGX 8xA100">8xA100 DGX</option>
+              </optgroup>
+              {% endif %}
+              {% if enable_nvcf == 1 %}
+              <optgroup label="NVIDIA Cloud Functions">
+                <option value="NVCF 1xA100">1xA100 NVCF</option>
+                <option value="NVCF 8xA100">8xA100 NVCF</option>
               </optgroup>
               {% endif %}
               {% endif %}
