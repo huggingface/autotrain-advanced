@@ -524,7 +524,7 @@ class NVCFRunner:
             logger.error(f"Failed to create NGC job - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
 
-    def _poll_nvcf_deploy(url, token, timeout=600, interval=10):
+    def _poll_nvcf_deploy(self, url, token, timeout=600, interval=10):
         timeout = float(timeout)
         interval = float(interval)
         start_time = time.time()
@@ -534,13 +534,14 @@ class NVCFRunner:
                 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
                 response = requests.get(url, headers=headers)
                 response.raise_for_status()
-
                 data = response.json()
                 function_status = data.get("deployment", {}).get("functionStatus", "")
-
                 if function_status == "ACTIVE":
-                    return data
-
+                    elapsed_time = time.time() - start_time
+                    logger.info(f"Function activated in {elapsed_time:.2f} seconds.")
+                    return function_status
+                else:
+                    logger.info(f"Waiting for active function...")
                 time.sleep(interval)  # Wait for a specified interval before the next poll
             except requests.HTTPError as http_err:
                 raise Exception(f"HTTP error occurred: {http_err}")
@@ -585,7 +586,7 @@ class NVCFRunner:
                                     nvcf_fr_payload)
         nvcf_fn_url = f"{nvcf_url}/deployments/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
         logger.info(f"Initializing deployment for: {nvcf_fn_url}")
-        logger.info(f"{nvcf_fd_payload}")
+        #logger.info(f"{nvcf_fd_payload}")
         time.sleep(3)
         nvcf_deploy = self._create_nvcf(nvcf_token,
                                     'deployment',
@@ -593,17 +594,13 @@ class NVCFRunner:
                                     nvcf_fd_payload)
         
         time.sleep(3)
-        nvcf_deploy_stat = self._poll_nvcf_deploy(nvcf_fn_url, nvcf_token)
+        nvcf_deploy_stat = self._poll_nvcf_deploy(url=nvcf_fn_url, token=nvcf_token)
 
+        # if nvcf_deploy_stat == "ACTIVE":
+        #     nvcf_wait = 
         #### Wait til reponse 200 from invocation test
 
         #### Wait for end condition (?)
- 
-        ## nvcf_deploy
-        ## fn register
-        ## fn deploy
-        ## fn deployment wait
-
         # fn watch [except 401, then ngc_token]
             # Testing deleting a function without deleting a deployment [for in-NVCF cleanup]
         # fn cleanup [ on_fail, on_success ]

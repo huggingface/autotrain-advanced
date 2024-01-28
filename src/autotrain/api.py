@@ -1,14 +1,18 @@
 import asyncio
+import json
 import os
 import signal
 from contextlib import asynccontextmanager
+from pydantic import BaseModel
+from types import SimpleNamespace
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from autotrain import logger
 from autotrain.app_utils import get_process_status, kill_process_by_pid, run_training
 from autotrain.db import AutoTrainDB
 
+log_file_path = "/tmp/app.log"
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
 AUTOTRAIN_USERNAME = os.environ.get("AUTOTRAIN_USERNAME")
@@ -21,8 +25,12 @@ OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 DB = AutoTrainDB("autotrain.db")
 
 
+class JobRequest(BaseModel):
+    check: str
+
 class BackgroundRunner:
     async def run_main(self):
+        params = json.loads(PARAMS, object_hook=lambda d: SimpleNamespace(**d))
         while True:
             running_jobs = DB.get_running_jobs()
             if running_jobs:
@@ -38,9 +46,11 @@ class BackgroundRunner:
                         DB.delete_job(_pid)
 
             running_jobs = DB.get_running_jobs()
-            if not running_jobs:
+            if not running_jobs and not params.backend.startswith("nvcf-"):
                 logger.info("No running jobs found. Shutting down the server.")
                 os.kill(os.getpid(), signal.SIGINT)
+            else:
+                logger.info("No running jobs found.")
             await asyncio.sleep(30)
 
 
@@ -73,3 +83,18 @@ async def root():
 @api.get("/health")
 async def health():
     return "OK"
+
+@api.post("/job")
+async def job(request: JobRequest):
+    try:
+        if request.check == "log":
+            with open(log_file_path, "r") as file:
+                log_content = file.read()
+            return {"log": log_content}
+        elif request.check == "status":
+            status = DB.get_running_jobs()
+            return {"status": status}
+        else:
+            raise ValueError("Invalid check value")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
