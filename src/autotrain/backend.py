@@ -1,17 +1,16 @@
-
 import base64
 import io
 import json
 import os
-import time
 import subprocess
+import time
 from dataclasses import dataclass
 from typing import Union
 
 import requests
+from attrdict import AttrDict
 from huggingface_hub import HfApi
 from requests.exceptions import HTTPError
-from attrdict import AttrDict
 
 from autotrain import logger
 from autotrain.app_utils import run_training

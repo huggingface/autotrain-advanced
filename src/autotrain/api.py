@@ -3,14 +3,15 @@ import json
 import os
 import signal
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
 from types import SimpleNamespace
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 from autotrain import logger
 from autotrain.app_utils import get_process_status, kill_process_by_pid, run_training
 from autotrain.db import AutoTrainDB
+
 
 log_file_path = "/tmp/app.log"
 

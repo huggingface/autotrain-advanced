@@ -3,6 +3,7 @@ import sys
 from accelerate.state import PartialState
 from loguru import logger
 
+
 log_file_path = "/tmp/app.log"
 
 emojis = {
