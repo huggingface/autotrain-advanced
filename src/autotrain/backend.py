@@ -300,6 +300,7 @@ class LocalRunner:
             logger.info(f"Training PID: {training_pid}")
         return training_pid
 
+
 @dataclass
 class NGCRunner:
     job_name: str
@@ -460,14 +461,8 @@ class NVCFRunner:
         self.nvcf_ssa_client_secret = os.environ.get("NVCF_SSA_CLIENT_SECRET")
 
         self.instance_map = {
-            "nvcf-a100": {
-                "gpu": "A100_80GB",
-                "instanceType": "BM.GPU.A100-v2.8"
-            },
-            "nvcf-8a100": {
-                "gpu": "A100_80GB_8GPU",
-                "instanceType": "BM.GPU.A100-v2.8_8x"
-            }
+            "nvcf-a100": {"gpu": "A100_80GB", "instanceType": "BM.GPU.A100-v2.8"},
+            "nvcf-8a100": {"gpu": "A100_80GB_8GPU", "instanceType": "BM.GPU.A100-v2.8_8x"},
         }
 
         logger.info("Starting NVCF training")
@@ -479,25 +474,24 @@ class NVCFRunner:
         auth = base64.b64encode(f"{self.nvcf_ssa_client_id}:{self.nvcf_ssa_client_secret}".encode()).decode()
         logger.info(f"{auth}")
 
-        headers = {
-            "Authorization": f"Basic {auth}",
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
+        headers = {"Authorization": f"Basic {auth}", "Content-Type": "application/x-www-form-urlencoded"}
         body = {
-            'grant_type': 'client_credentials',
-            'scope': 'register_function update_function delete_function list_functions deploy_function invoke_function queue_details authorize_clients'
+            "grant_type": "client_credentials",
+            "scope": "register_function update_function delete_function list_functions deploy_function invoke_function queue_details authorize_clients",
         }
         try:
             logger.info(f"{body} -- {headers}")
-            response = requests.post(self.nvcf_jwt_provider + '/token', headers=headers, data=body, timeout=30)
+            response = requests.post(self.nvcf_jwt_provider + "/token", headers=headers, data=body, timeout=30)
             logger.info(response.__dict__)
 
             if response.status_code == 200:
                 resp_data = response.json()
-                bearer_token = resp_data.get('access_token')
+                bearer_token = resp_data.get("access_token")
                 return bearer_token
             else:
-                raise Exception(f"Failed to get JWT token: {response.status_code} - {response.headers} - {response.text}")
+                raise Exception(
+                    f"Failed to get JWT token: {response.status_code} - {response.headers} - {response.text}"
+                )
         except HTTPError as http_err:
             logger.error(f"HTTP error occurred: {http_err}")
             raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
@@ -540,7 +534,7 @@ class NVCFRunner:
                     logger.info(f"Function activated in {elapsed_time:.2f} seconds.")
                     return function_status
                 else:
-                    logger.info(f"Waiting for active function...")
+                    logger.info("Waiting for active function...")
                 time.sleep(interval)  # Wait for a specified interval before the next poll
             except requests.HTTPError as http_err:
                 raise Exception(f"HTTP error occurred: {http_err}")
@@ -550,17 +544,17 @@ class NVCFRunner:
                 raise Exception("Error parsing JSON response")
 
         raise TimeoutError(f"Timeout reached: Function did not become ACTIVE within {timeout} seconds")
-    
+
     def create(self):
-        nvcf_url = f'{self.nvcf_api}/v2/nvcf'
-        nvcf_fr_payload = {           
+        nvcf_url = f"{self.nvcf_api}/v2/nvcf"
+        nvcf_fr_payload = {
             "name": self.job_name,
             "inferenceUrl": "health",
             "inferencePort": 7860,
             "healthUri": "health",
             "containerImage": self.nvcf_image,
-            "containerEnvironment": [ {"key": key, "value": value} for key, value in self.env_vars.items()],
-            "apiBodyFormat": "CUSTOM"
+            "containerEnvironment": [{"key": key, "value": value} for key, value in self.env_vars.items()],
+            "apiBodyFormat": "CUSTOM",
         }
         nvcf_fd_payload = {
             "deploymentSpecifications": [
@@ -569,7 +563,7 @@ class NVCFRunner:
                     "instanceType": self.instance_map[self.backend]["instanceType"],
                     "backend": self.nvcf_backend,
                     "maxInstances": 1,
-                    "minInstances": 1
+                    "minInstances": 1,
                 }
             ]
         }
@@ -579,27 +573,12 @@ class NVCFRunner:
         logger.info(f"{nvcf_token} -- {nvcf_url}/functions")
         logger.info(nvcf_fr_payload)
 
-        nvcf_fn = self._create_nvcf(nvcf_token,
-                                    'function',
-                                    f"{nvcf_url}/functions", 
-                                    nvcf_fr_payload)
+        nvcf_fn = self._create_nvcf(nvcf_token, "function", f"{nvcf_url}/functions", nvcf_fr_payload)
         nvcf_fn_url = f"{nvcf_url}/deployments/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
         logger.info(f"Initializing deployment for: {nvcf_fn_url}")
-        #logger.info(f"{nvcf_fd_payload}")
-        time.sleep(3)
-        nvcf_deploy = self._create_nvcf(nvcf_token,
-                                    'deployment',
-                                    nvcf_fn_url, 
-                                    nvcf_fd_payload)
-        
-        time.sleep(3)
-        nvcf_deploy_stat = self._poll_nvcf_deploy(url=nvcf_fn_url, token=nvcf_token)
+        # logger.info(f"{nvcf_fd_payload}")
+        time.sleep(2)
+        self._create_nvcf(nvcf_token, "deployment", nvcf_fn_url, nvcf_fd_payload)
 
-        # if nvcf_deploy_stat == "ACTIVE":
-        #     nvcf_wait = 
-        #### Wait til reponse 200 from invocation test
-
-        #### Wait for end condition (?)
-        # fn watch [except 401, then ngc_token]
-            # Testing deleting a function without deleting a deployment [for in-NVCF cleanup]
-        # fn cleanup [ on_fail, on_success ]
+        time.sleep(2)
+        self._poll_nvcf_deploy(url=nvcf_fn_url, token=nvcf_token)

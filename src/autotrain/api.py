@@ -29,6 +29,7 @@ DB = AutoTrainDB("autotrain.db")
 class JobRequest(BaseModel):
     check: str
 
+
 class BackgroundRunner:
     async def run_main(self):
         params = json.loads(PARAMS, object_hook=lambda d: SimpleNamespace(**d))
@@ -84,6 +85,7 @@ async def root():
 @api.get("/health")
 async def health():
     return "OK"
+
 
 @api.post("/job")
 async def job(request: JobRequest):
