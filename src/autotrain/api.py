@@ -1,9 +1,7 @@
 import asyncio
-import json
 import os
 import signal
 from contextlib import asynccontextmanager
-from types import SimpleNamespace
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -24,6 +22,7 @@ DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 DB = AutoTrainDB("autotrain.db")
+BACKEND = os.environ.get("BACKEND")
 
 
 class JobRequest(BaseModel):
@@ -32,7 +31,6 @@ class JobRequest(BaseModel):
 
 class BackgroundRunner:
     async def run_main(self):
-        params = json.loads(PARAMS, object_hook=lambda d: SimpleNamespace(**d))
         while True:
             running_jobs = DB.get_running_jobs()
             if running_jobs:
@@ -48,7 +46,7 @@ class BackgroundRunner:
                         DB.delete_job(_pid)
 
             running_jobs = DB.get_running_jobs()
-            if not running_jobs and not params.backend.startswith("nvcf-"):
+            if not running_jobs and (BACKEND is None or not BACKEND.startswith("nvcf-")):
                 logger.info("No running jobs found. Shutting down the server.")
                 os.kill(os.getpid(), signal.SIGINT)
             else:

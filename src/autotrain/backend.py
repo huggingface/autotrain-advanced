@@ -5,12 +5,12 @@ import os
 import subprocess
 import time
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Union
 
 import requests
 from huggingface_hub import HfApi
 from requests.exceptions import HTTPError
-from types import SimpleNamespace
 
 from autotrain import logger
 from autotrain.app_utils import run_training
@@ -312,6 +312,8 @@ class NGCRunner:
         self.ngc_api = os.environ.get("NGC_API", "https://api.ngc.nvidia.com/v2/org")
         self.ngc_auth = os.environ.get("NGC_AUTH", "https://authn.nvidia.com")
 
+        self.env_vars["BACKEND"] = self.backend
+
         self.ngc_ace = os.environ.get("NGC_ACE")
         self.ngc_org = os.environ.get("NGC_ORG")
         self.ngc_api_key = os.environ.get("NGC_CLI_API_KEY")
@@ -554,11 +556,39 @@ class NVCFRunner:
 
         raise TimeoutError(f"Timeout reached: Function did not become ACTIVE within {timeout} seconds")
 
+    def _poll_nvcf_train(self, url, token, timeout=86400, interval=30):
+        timeout = float(timeout)
+        interval = float(interval)
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            try:
+                headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                function_status = data.get("deployment", {}).get("functionStatus", "")
+                if function_status == "ACTIVE":
+                    elapsed_time = time.time() - start_time
+                    logger.info(f"Function activated in {elapsed_time:.2f} seconds.")
+                    return function_status
+                else:
+                    logger.info("Waiting for active function...")
+                time.sleep(interval)  # Wait for a specified interval before the next poll
+            except requests.HTTPError as http_err:
+                raise Exception(f"HTTP error occurred: {http_err}")
+            except requests.RequestException as err:
+                raise Exception(f"Error while requesting URL: {err}")
+            except ValueError:
+                raise Exception("Error parsing JSON response")
+
+        raise TimeoutError(f"Timeout reached: Function did not become ACTIVE within {timeout} seconds")
+
     def create(self):
         nvcf_url = f"{self.nvcf_api}/v2/nvcf"
         nvcf_fr_payload = {
             "name": self.job_name,
-            "inferenceUrl": "health",
+            "inferenceUrl": "job",
             "inferencePort": 7860,
             "healthUri": "health",
             "containerImage": self.nvcf_image,
