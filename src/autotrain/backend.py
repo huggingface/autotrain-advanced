@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from typing import Union
 
 import requests
-from attrdict import AttrDict
 from huggingface_hub import HfApi
 from requests.exceptions import HTTPError
+from types import SimpleNamespace
 
 from autotrain import logger
 from autotrain.app_utils import run_training
@@ -469,6 +469,16 @@ class NVCFRunner:
         logger.info(f"job_name: {self.job_name}")
         logger.info(f"backend: {self.backend}")
 
+    def _convert_dict_to_object(self, dictionary):
+        if isinstance(dictionary, dict):
+            for key, value in dictionary.items():
+                dictionary[key] = self._convert_dict_to_object(value)
+            return SimpleNamespace(**dictionary)
+        elif isinstance(dictionary, list):
+            return [self._convert_dict_to_object(item) for item in dictionary]
+        else:
+            return dictionary
+
     def _user_authentication_nvcf(self):
         logger.info("Authenticating NVCF client...")
         auth = base64.b64encode(f"{self.nvcf_ssa_client_id}:{self.nvcf_ssa_client_secret}".encode()).decode()
@@ -506,10 +516,9 @@ class NVCFRunner:
             response = requests.post(url, headers=headers, json=payload, timeout=30)
             logger.info(f"NVCF response: {response.__dict__}")
             result = response.json()
-            type_data = result.get(nvcf_type, {})
-            type_json_str = json.dumps(type_data, indent=4)  # Convert to JSON string for pretty printing
-            logger.info(f"NVCF {nvcf_type}: {type_json_str}")
-            return AttrDict(result)
+            result_obj = self._convert_dict_to_object(result)
+            logger.info(f"NVCF {nvcf_type}: {result_obj}")
+            return result_obj
         except HTTPError as http_err:
             logger.error(f"HTTP error occurred: {http_err}")
             raise Exception(f"HTTP Error {response.status_code}: {http_err}")
