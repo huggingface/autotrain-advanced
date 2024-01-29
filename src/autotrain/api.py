@@ -95,6 +95,11 @@ async def job(request: JobRequest):
         elif request.check == "status":
             status = DB.get_running_jobs()
             return {"status": status}
+        elif request.check == "all":
+            with open(log_file_path, "r") as file:
+                log_content = file.read()
+            status = DB.get_running_jobs()
+            return {"status": status, "log": log_content}
         else:
             raise ValueError("Invalid check value")
     except Exception as e:
