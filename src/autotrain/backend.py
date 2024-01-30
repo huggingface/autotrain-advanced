@@ -3,6 +3,7 @@ import io
 import json
 import os
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -565,18 +566,21 @@ class NVCFRunner:
                 if success_check(data):
                     elapsed_time = time.time() - start_time
                     logger.info(f"NVCF function met {op} success condition in {elapsed_time:.2f} seconds.")
+                    if op == "train":
+                        self._conf_nvcf(
+                            token=token, nvcf_type="deployment", url=self.nvcf_fn_deploy_url, method="DELETE"
+                        )
+                        self._conf_nvcf(token=token, nvcf_type="function", url=self.nvcf_fn_reg_url, method="DELETE")
                     return data
 
                 logger.info(f"Waiting for NVCF function {op}")
 
-                # Conditionally retrieve logs if payload matches the specified check
                 if payload == {"requestBody": {"check": "status"}}:
                     log_response = requests.post(url, headers=headers, json=log_payload)
                     log_response.raise_for_status()
                     log_data = log_response.json()
                     current_log_content = log_data.get("response", {}).get("log", "")
 
-                    # Ensure current_log_content is a string
                     if isinstance(current_log_content, str):
                         new_log_content = current_log_content.replace(previous_log_content, "")
                         if new_log_content.strip():
@@ -628,20 +632,24 @@ class NVCFRunner:
         nvcf_fn = self._conf_nvcf(
             token=nvcf_token, nvcf_type="function", url=f"{nvcf_url}/functions", method="POST", payload=nvcf_fr_payload
         )
-        nvcf_fn_reg_url = f"{nvcf_url}/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
-        nvcf_fn_deploy_url = (
+        self.nvcf_fn_reg_url = f"{nvcf_url}/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
+        self.nvcf_fn_deploy_url = (
             f"{nvcf_url}/deployments/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
         )
-        logger.info(f"Initializing deployment for: {nvcf_fn_deploy_url}")
+        logger.info(f"Initializing deployment for: {self.nvcf_fn_deploy_url}")
 
         time.sleep(2)
         self._conf_nvcf(
-            token=nvcf_token, nvcf_type="deployment", url=nvcf_fn_deploy_url, method="POST", payload=nvcf_fd_payload
+            token=nvcf_token,
+            nvcf_type="deployment",
+            url=self.nvcf_fn_deploy_url,
+            method="POST",
+            payload=nvcf_fd_payload,
         )
 
         time.sleep(2)
         self._poll_nvcf(
-            url=nvcf_fn_deploy_url,
+            url=self.nvcf_fn_deploy_url,
             token=nvcf_token,
             success_check=lambda data: data.get("deployment", {}).get("functionStatus", "") == "ACTIVE",
             method="get",
@@ -651,19 +659,17 @@ class NVCFRunner:
         )
 
         nvcf_inv_url = f"{nvcf_url}/exec/functions/{nvcf_fn.function.id}"
-        nvcf_inv_status_data = self._poll_nvcf(
-            url=nvcf_inv_url,
-            token=nvcf_token,
-            success_check=lambda data: not data.get("response", {}).get("status")
-            and data.get("status") == "fulfilled",
-            method="post",
-            payload=nvcf_poll_status_payload,
-            timeout=86400,
-            interval=45,
-            op="train",
+        thread = threading.Thread(
+            target=self._poll_nvcf,
+            kwargs={
+                "url": nvcf_inv_url,
+                "token": nvcf_token,
+                "success_check": lambda data: not data.get("response", {}).get("status"),
+                "method": "post",
+                "payload": nvcf_poll_status_payload,
+                "timeout": 86400,
+                "interval": 45,
+                "op": "train",
+            },
         )
-
-        logger.info(f"Final response: {nvcf_inv_status_data}")
-
-        self._conf_nvcf(token=nvcf_token, nvcf_type="deployment", url=nvcf_fn_deploy_url, method="DELETE")
-        self._conf_nvcf(token=nvcf_token, nvcf_type="function", url=nvcf_fn_reg_url, method="DELETE")
+        thread.start()
