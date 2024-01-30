@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from autotrain import logger
-from autotrain.app_utils import get_process_status, kill_process_by_pid, run_training
+from autotrain.app_utils import get_running_jobs, run_training
 from autotrain.db import AutoTrainDB
 
 
@@ -32,21 +32,8 @@ class JobRequest(BaseModel):
 class BackgroundRunner:
     async def run_main(self):
         while True:
-            running_jobs = DB.get_running_jobs()
-            if running_jobs:
-                for _pid in running_jobs:
-                    proc_status = get_process_status(_pid)
-                    proc_status = proc_status.strip().lower()
-                    if proc_status in ("completed", "error", "zombie"):
-                        logger.info(f"Process {_pid} is already completed. Skipping...")
-                        try:
-                            kill_process_by_pid(_pid)
-                        except Exception as e:
-                            logger.info(f"Error while killing process: {e}")
-                        DB.delete_job(_pid)
-
-            running_jobs = DB.get_running_jobs()
-            if not running_jobs and (BACKEND is None or not BACKEND.startswith("nvcf-")):
+            running_jobs = get_running_jobs(DB)
+            if not running_jobs:
                 logger.info("No running jobs found. Shutting down the server.")
                 os.kill(os.getpid(), signal.SIGINT)
             else:

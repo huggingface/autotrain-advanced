@@ -48,6 +48,53 @@
           document.getElementById('error-message').textContent = 'Invalid parameters: ' + e.message;
         }
       }
+      function pollAccelerators() {
+        // Send a request to the /accelerators endpoint
+        fetch('/accelerators')
+          .then(response => response.json()) // Assuming the response is in JSON format
+          .then(data => {
+            // Update the paragraph with the number of accelerators
+            document.getElementById('num_accelerators').innerText = `Accelerators: ${data.accelerators}`;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            // Update the paragraph to show an error message
+            document.getElementById('num_accelerators').innerText = 'Accelerators: Error fetching data';
+          });
+      }
+      function pollModelTrainingStatus() {
+        // Send a request to the /is_model_training endpoint
+        fetch('/is_model_training')
+          .then(response => response.json()) // Assuming the response is in JSON format
+          .then(data => {
+            // Construct the message to display
+            let message = data.model_training ? 'Running jobs: ' + data.pids.join(', ') : 'No running jobs';
+
+            // Update the paragraph with the status of model training
+            let statusParagraph = document.getElementById('is_model_training');
+            statusParagraph.innerText = message;
+
+            // Change the text color based on the model training status
+            if (data.model_training) {
+              // Set text color to red if jobs are running
+              statusParagraph.style.color = 'red';
+            } else {
+              // Set text color to green if no jobs are running
+              statusParagraph.style.color = 'green';
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            // Update the paragraph to show an error message
+            let statusParagraph = document.getElementById('is_model_training');
+            statusParagraph.innerText = 'Error fetching training status';
+            statusParagraph.style.color = 'red'; // Set error message color to red
+          });
+      }
+
+
+      setInterval(pollAccelerators, 10000);
+      setInterval(pollModelTrainingStatus, 5000);
 
       // Event listener for dropdown changes
       document.getElementById('task').addEventListener('change', fetchDataAndUpdateTextarea);
@@ -59,6 +106,8 @@
       // Initial call to populate the textarea when the page loads
       fetchDataAndUpdateTextarea();
       fetchDataAndUpdateModels();
+      pollAccelerators();
+      pollModelTrainingStatus();
     });
   </script>
 </head>
@@ -254,6 +303,9 @@
             class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
             Training</button>
         </div>
+        <div class="mt-5">
+          <p class="mb-2 text-sm text-gray-700" id="num_accelerators">Accelerators: Fetching...</p>
+        </div>
       </div>
       <div>
         <div class="form-group">
@@ -265,6 +317,10 @@
           </label>
           <textarea id="params" name="params" rows="25" class="p-2.5 w-full text-sm text-gray-900"
             placeholder="Loading..."></textarea>
+        </div>
+        <div class="mt-5">
+          <p class="mb-2 text-sm text-gray-700 text-right font-bold" id="is_model_training">Fetching training status...
+          </p>
         </div>
       </div>
     </form>

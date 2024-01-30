@@ -3,6 +3,7 @@ import json
 import os
 from typing import List
 
+import torch
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,7 +29,7 @@ _, _, USERS = app_utils.user_validation()
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
-AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 0))
+AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 HIDDEN_PARAMS = [
@@ -325,22 +326,7 @@ async def handle_form(
     """
     logger.info(f"hardware: {hardware}")
     if hardware == "Local":
-        running_jobs = DB.get_running_jobs()
-        logger.info(f"Running jobs: {running_jobs}")
-        if running_jobs:
-            for _pid in running_jobs:
-                proc_status = app_utils.get_process_status(_pid)
-                proc_status = proc_status.strip().lower()
-                if proc_status in ("completed", "error", "zombie"):
-                    logger.info(f"Killing PID: {_pid}")
-                    try:
-                        app_utils.kill_process_by_pid(_pid)
-                    except Exception as e:
-                        logger.info(f"Error while killing process: {e}")
-                        logger.info(f"Process {_pid} is already completed. Skipping...")
-                    DB.delete_job(_pid)
-
-        running_jobs = DB.get_running_jobs()
+        running_jobs = app_utils.get_running_jobs(DB)
         if running_jobs:
             logger.info(f"Running jobs: {running_jobs}")
             raise HTTPException(
@@ -447,3 +433,32 @@ async def fetch_help(element_id: str):
     """
     msg = get_app_help(element_id)
     return {"message": msg}
+
+
+@app.get("/accelerators", response_class=JSONResponse)
+async def available_accelerators():
+    """
+    This function is used to fetch the number of available accelerators
+    :return: JSONResponse
+    """
+    cuda_available = torch.cuda.is_available()
+    mps_available = torch.backends.mps.is_available()
+    if cuda_available:
+        num_gpus = torch.cuda.device_count()
+    elif mps_available:
+        num_gpus = 1
+    else:
+        num_gpus = 0
+    return {"accelerators": num_gpus}
+
+
+@app.get("/is_model_training", response_class=JSONResponse)
+async def is_model_training():
+    """
+    This function is used to fetch the number of running jobs
+    :return: JSONResponse
+    """
+    running_jobs = app_utils.get_running_jobs(DB)
+    if running_jobs:
+        return {"model_training": True, "pids": running_jobs}
+    return {"model_training": False, "pids": []}
