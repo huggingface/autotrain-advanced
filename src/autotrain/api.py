@@ -33,7 +33,7 @@ class BackgroundRunner:
     async def run_main(self):
         while True:
             running_jobs = get_running_jobs(DB)
-            if not running_jobs:
+            if not running_jobs and (BACKEND is None or not BACKEND.startswith("nvcf-")):
                 logger.info("No running jobs found. Shutting down the server.")
                 os.kill(os.getpid(), signal.SIGINT)
             else:
