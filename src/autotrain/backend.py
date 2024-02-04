@@ -548,9 +548,7 @@ class NVCFRunner:
             raise Exception(f"HTTP Error {response.status_code}: {http_err}")
 
         except (requests.Timeout, ConnectionError) as err:
-            logger.error(
-                f"{self.job_name}:  Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}"
-            )
+            logger.error(f"{self.job_name}:  Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
 
     def _poll_nvcf(
