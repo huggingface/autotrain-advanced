@@ -578,7 +578,6 @@ class NVCFRunner:
                     logger.info(f"{self.job_name}:  Waiting for NVCF function {op}")
 
                     if payload and payload.get("requestBody", {}).get("check") == "status":
-                        logger.info(f"{self.job_name}:  Executing status and log check logic")
                         log_response = requests.post(url, headers=headers, json=log_payload)
                         log_response.raise_for_status()
                         log_data = log_response.json()
