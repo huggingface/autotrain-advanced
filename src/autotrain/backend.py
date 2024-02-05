@@ -457,7 +457,6 @@ class NVCFRunner:
         self.token = None
         self.nvcf_api = os.environ.get("NVCF_API")
         self.nvcf_image = os.environ.get("NVCF_IMAGE")
-        self.nvcf_nca_id = os.environ.get("NVCF_NCA_ID")
         self.nvcf_jwt_provider = os.environ.get("NVCF_JWT_PROVIDER")
         self.nvcf_ssa_client_id = os.environ.get("NVCF_SSA_CLIENT_ID")
         self.nvcf_ssa_client_secret = os.environ.get("NVCF_SSA_CLIENT_SECRET")
@@ -694,7 +693,7 @@ class NVCFRunner:
                 "token": nvcf_token,
                 "success_check": lambda data: data.get("deployment", {}).get("functionStatus", "") == "ACTIVE",
                 "method": "get",
-                "timeout": 720,
+                "timeout": 1200,
                 "interval": 20,
                 "op": "deploy",
             },
