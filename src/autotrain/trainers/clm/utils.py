@@ -197,12 +197,13 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
         trust_remote_code=True,
     )
 
-    model = PeftModel.from_pretrained(model, adapter_path)
-
     tokenizer = AutoTokenizer.from_pretrained(
-        base_model_path,
+        target_model_path,
         trust_remote_code=True,
     )
+    model.resize_token_embeddings(len(tokenizer))
+
+    model = PeftModel.from_pretrained(model, adapter_path)
     model = model.merge_and_unload()
 
     logger.info("Saving target model...")
