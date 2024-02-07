@@ -67,12 +67,11 @@ def train(config):
 
     label_list = train_data.features[config.tags_column].feature.names
     num_classes = len(label_list)
-    label2id = {i: i for i in range(len(label_list))}
 
     model_config = AutoConfig.from_pretrained(config.model, num_labels=num_classes)
-    model_config._num_labels = len(label2id)
-    model_config.label2id = label2id
-    model_config.id2label = {v: k for k, v in label2id.items()}
+    model_config._num_labels = num_classes
+    model_config.label2id = {l: i for i, l in enumerate(label_list)}
+    model_config.id2label = dict(enumerate(label_list))
 
     try:
         model = AutoModelForTokenClassification.from_pretrained(
