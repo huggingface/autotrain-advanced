@@ -8,10 +8,10 @@ class TokenClassificationDataset:
         return len(self.data)
 
     def __getitem__(self, item):
-        text = self.data[item]["tokens"]
-        tags = self.data[item]["tags"]
+        text = self.data[item][self.config.tokens_column]
+        tags = self.data[item][self.config.tags_column]
 
-        label_list = self.data.features["tags"].feature.names
+        label_list = self.data.features[self.config.tags_column].feature.names
         label_to_id = {i: i for i in range(len(label_list))}
 
         tokenized_text = self.tokenizer(

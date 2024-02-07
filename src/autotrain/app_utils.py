@@ -16,6 +16,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 def get_running_jobs(db):
@@ -142,6 +143,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = DreamBoothTrainingParams(**params)
     elif task_id == 18:
         params = ImageClassificationParams(**params)
+    elif task_id == 4:
+        params = TokenClassificationParams(**params)
     else:
         raise NotImplementedError
 

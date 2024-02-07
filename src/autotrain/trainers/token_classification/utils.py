@@ -47,10 +47,10 @@ def token_classification_metrics(pred, label_list):
     return results
 
 
-def create_model_card(config, trainer, num_classes):
+def create_model_card(config, trainer):
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
-        valid_metrics = ["precision", "recall", "f1", "accuracy"]
+        valid_metrics = ["eval_loss", "eval_precision", "eval_recall", "eval_f1", "eval_accuracy"]
         eval_scores = [f"{k[len('eval_'):]}: {v}" for k, v in eval_scores.items() if k in valid_metrics]
         eval_scores = "\n\n".join(eval_scores)
     else:

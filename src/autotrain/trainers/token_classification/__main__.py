@@ -65,7 +65,7 @@ def train(config):
                 token=config.token,
             )
 
-    label_list = train_data.features["tags"].feature.names
+    label_list = train_data.features[config.tags_column].feature.names
     num_classes = len(label_list)
     label2id = {i: i for i in range(len(label_list))}
 
@@ -167,7 +167,7 @@ def train(config):
     trainer.save_model(config.project_name)
     tokenizer.save_pretrained(config.project_name)
 
-    model_card = utils.create_model_card(config, trainer, num_classes)
+    model_card = utils.create_model_card(config, trainer)
 
     # save model card to output directory as README.md
     with open(f"{config.project_name}/README.md", "w", encoding="utf-8") as f:
