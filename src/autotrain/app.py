@@ -22,6 +22,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
@@ -114,6 +115,9 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
     train_text_encoder=False,
     lr=1e-4,
 ).model_dump()
+PARAMS["token-classification"] = TokenClassificationParams(
+    mixed_precision="fp16",
+).model_dump()
 
 
 def get_sorted_models(hub_models):
@@ -152,6 +156,12 @@ def fetch_models():
     )
     hub_models = get_sorted_models(hub_models)
     _mc["seq2seq"] = hub_models
+
+    hub_models = list(
+        list_models(filter="token-classification", sort="downloads", direction=-1, limit=100, full=False)
+    )
+    hub_models = get_sorted_models(hub_models)
+    _mc["token-classification"] = hub_models
 
     _mc["tabular-classification"] = [
         "xgboost",
@@ -299,6 +309,8 @@ async def fetch_model_choices(task: str):
         hub_models = MODEL_CHOICE["tabular-classification"]
     elif task == "tabular:regression":
         hub_models = MODEL_CHOICE["tabular-regression"]
+    elif task == "token-classification":
+        hub_models = MODEL_CHOICE["token-classification"]
     else:
         raise NotImplementedError
 
@@ -379,6 +391,8 @@ async def handle_form(
                 dset_task = "tabular_single_column_regression"
             else:
                 raise NotImplementedError
+        elif task == "token-classification":
+            dset_task = "text_token_classification"
         else:
             raise NotImplementedError
         logger.info(f"Task: {dset_task}")
@@ -394,7 +408,7 @@ async def handle_form(
             percent_valid=None,  # TODO: add to UI
             local=hardware.lower() == "local",
         )
-        if task == "text-classification":
+        if task in ("text-classification", "token-classification"):
             dset_args["convert_to_class_label"] = True
         dset = AutoTrainDataset(**dset_args)
     data_path = dset.prepare()

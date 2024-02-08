@@ -19,6 +19,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 _DOCKERFILE = """
@@ -41,6 +42,7 @@ class SpaceRunner:
         TabularParams,
         DreamBoothTrainingParams,
         Seq2SeqParams,
+        TokenClassificationParams,
     ]
     backend: str
 
@@ -94,6 +96,8 @@ class SpaceRunner:
             self.task_id = 28
         elif isinstance(self.params, ImageClassificationParams):
             self.task_id = 18
+        elif isinstance(self.params, TokenClassificationParams):
+            self.task_id = 4
         else:
             raise NotImplementedError
 
@@ -124,6 +128,10 @@ class SpaceRunner:
             return space_id
         if isinstance(self.params, ImageClassificationParams):
             self.task_id = 18
+            space_id = self._create_space()
+            return space_id
+        if isinstance(self.params, TokenClassificationParams):
+            self.task_id = 4
             space_id = self._create_space()
             return space_id
         raise NotImplementedError

@@ -85,7 +85,8 @@ class EndpointHandler():
             trust_remote_code=True,
             device_map="auto",
         )
-        tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True)
+        model.resize_token_embeddings(len(tokenizer))
         model = PeftModel.from_pretrained(model, path)
         model = model.merge_and_unload()
         self.pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
@@ -101,8 +102,8 @@ class EndpointHandler():
 """
 
 REQUIREMENTS_TXT = """
-peft==0.7.1
-transformers==4.36.1
+peft==0.8.2
+transformers==4.37.0
 """
 
 
