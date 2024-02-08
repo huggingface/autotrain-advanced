@@ -157,9 +157,11 @@ def fetch_models():
     hub_models = get_sorted_models(hub_models)
     _mc["seq2seq"] = hub_models
 
-    hub_models = list(
+    hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100, full=False)
+    hub_models2 = list(
         list_models(filter="token-classification", sort="downloads", direction=-1, limit=100, full=False)
     )
+    hub_models = list(hub_models1) + list(hub_models2)
     hub_models = get_sorted_models(hub_models)
     _mc["token-classification"] = hub_models
 
