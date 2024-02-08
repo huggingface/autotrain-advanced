@@ -19,6 +19,8 @@
     title: DreamBooth
   - local: seq2seq
     title: Seq2Seq
+  - local: token_classification
+    title: Token Classification
   - local: tabular
     title: Tabular
   title: Data Formats
