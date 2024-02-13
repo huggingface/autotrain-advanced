@@ -1,7 +1,7 @@
 import json
 import os
+import shlex
 import signal
-import socket
 import subprocess
 
 import psutil
@@ -49,28 +49,9 @@ def get_process_status(pid):
         return "Completed"
 
 
-def find_pid_by_port(port):
-    """Find PID by port number."""
-    try:
-        result = subprocess.run(["lsof", "-i", f":{port}", "-t"], capture_output=True, text=True, check=True)
-        pids = result.stdout.strip().split("\n")
-        return [int(pid) for pid in pids if pid.isdigit()]
-    except subprocess.CalledProcessError:
-        return []
-
-
 def kill_process_by_pid(pid):
     """Kill process by PID."""
     os.kill(pid, signal.SIGTERM)
-
-
-def is_port_in_use(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("localhost", port)) == 0
-
-
-def kill_process_on_port(port):
-    os.system(f"fuser -k {port}/tcp")
 
 
 def user_authentication(token):
@@ -156,7 +137,8 @@ def run_training(params, task_id, local=False, wait=False):
     cmd = [str(c) for c in cmd]
     logger.info(cmd)
     env = os.environ.copy()
-    process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
+    cmd = shlex.split(" ".join(cmd))
+    process = subprocess.Popen(cmd, env=env)
     if wait:
         process.wait()
     return process.pid

@@ -38,13 +38,13 @@ def uninstall_requirements(params):
     if os.path.exists(f"{params.project_name}/requirements.txt"):
         # read the requirements.txt
         uninstall_list = []
-        with open(f"{params.project_name}/requirements.txt", "r") as f:
+        with open(f"{params.project_name}/requirements.txt", "r", encoding="utf-8") as f:
             for line in f:
                 if line.startswith("-"):
                     uninstall_list.append(line[1:])
 
         # create an uninstall.txt
-        with open(f"{params.project_name}/uninstall.txt", "w") as f:
+        with open(f"{params.project_name}/uninstall.txt", "w", encoding="utf-8") as f:
             for line in uninstall_list:
                 f.write(line)
 
@@ -69,12 +69,12 @@ def install_requirements(params):
         # install the requirements using subprocess, wait for it to finish
         install_list = []
 
-        with open(f"{params.project_name}/requirements.txt", "r") as f:
+        with open(f"{params.project_name}/requirements.txt", "r", encoding="utf-8") as f:
             for line in f:
                 if not line.startswith("-"):
                     install_list.append(line)
 
-        with open(f"{params.project_name}/requirements.txt", "w") as f:
+        with open(f"{params.project_name}/requirements.txt", "w", encoding="utf-8") as f:
             for line in install_list:
                 f.write(line)
 
@@ -115,5 +115,5 @@ def pause_endpoint(params):
     project_name = endpoint_id.split("/")[1]
     api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{username}/{project_name}/pause"
     headers = {"Authorization": f"Bearer {params.token}"}
-    r = requests.post(api_url, headers=headers)
+    r = requests.post(api_url, headers=headers, timeout=120)
     return r.json()

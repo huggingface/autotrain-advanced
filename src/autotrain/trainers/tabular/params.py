@@ -12,7 +12,7 @@ class TabularParams(AutoTrainParams):
     seed: int = Field(42, title="Seed")
     train_split: str = Field("train", title="Train split")
     valid_split: Optional[str] = Field(None, title="Validation split")
-    project_name: str = Field("Project Name", title="Output directory")
+    project_name: str = Field("project-name", title="Output directory")
     token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
     id_column: str = Field("id", title="ID column")

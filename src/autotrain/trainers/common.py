@@ -127,6 +127,15 @@ class AutoTrainParams(BaseModel):
         """
         super().__init__(**data)
 
+        if len(self.project_name) > 0:
+            # make sure project_name is always alphanumeric but can have hyphens. if not, raise ValueError
+            if not self.project_name.replace("-", "").isalnum():
+                raise ValueError("project_name must be alphanumeric but can contain hyphens")
+
+        # project name cannot be more than 50 characters
+        if len(self.project_name) > 50:
+            raise ValueError("project_name cannot be more than 50 characters")
+
         # Parameters not supplied by the user
         defaults = set(self.model_fields.keys())
         supplied = set(data.keys())
