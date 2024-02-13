@@ -1,4 +1,5 @@
 import os
+import shlex
 
 import torch
 
@@ -14,6 +15,7 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 
 
 def launch_command(params):
+    params.project_name = shlex.split(params.project_name)[0]
     cuda_available = torch.cuda.is_available()
     mps_available = torch.backends.mps.is_available()
     if cuda_available:

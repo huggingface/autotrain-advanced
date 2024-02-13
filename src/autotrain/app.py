@@ -28,6 +28,7 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 _, _, USERS = app_utils.user_validation()
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
+ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -235,6 +236,7 @@ async def read_form(request: Request):
         "request": request,
         "valid_users": USERS,
         "enable_ngc": ENABLE_NGC,
+        "enable_nvcf": ENABLE_NVCF,
         "enable_local": AUTOTRAIN_LOCAL,
     }
     return templates.TemplateResponse("index.html", context)
