@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import signal
 import subprocess
 
@@ -136,7 +137,8 @@ def run_training(params, task_id, local=False, wait=False):
     cmd = [str(c) for c in cmd]
     logger.info(cmd)
     env = os.environ.copy()
-    process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
+    cmd = shlex.split(" ".join(cmd))
+    process = subprocess.Popen(cmd, env=env)
     if wait:
         process.wait()
     return process.pid
