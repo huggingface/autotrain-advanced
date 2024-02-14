@@ -97,12 +97,10 @@ def _add_oauth_routes(app: fastapi.FastAPI) -> None:
 
 def _add_mocked_oauth_routes(app: fastapi.FastAPI) -> None:
     """Add fake oauth routes if Gradio is run locally and OAuth is enabled.
-
-    Clicking on a gr.LoginButton will have the same behavior as in a Space (i.e. gets redirected in a new tab) but
-    instead of authenticating with HF, a mocked user profile is added to the session.
+    Instead of authenticating with HF, a mocked user profile is added to the session.
     """
     warnings.warn(
-        "Gradio does not support OAuth features outside of a Space environment. To help"
+        "AutoTrain does not support OAuth features outside of a Space environment. To help"
         " you debug your app locally, the login and logout buttons are mocked with your"
         " profile. To make it work, your machine must be logged in to Huggingface."
     )
