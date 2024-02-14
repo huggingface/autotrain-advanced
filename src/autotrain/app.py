@@ -9,7 +9,6 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import ModelFilter, list_models
-from starlette.responses import RedirectResponse
 
 from autotrain import app_utils, logger
 from autotrain.app_params import AppParams
@@ -232,13 +231,16 @@ async def read_form(request: Request):
     :param request:
     :return:
     """
-    logger.info(request.session.get("oauth_info"))
+    if os.environ.get("SPACE_ID") == "autotrain-projects/autotrain-advanced":
+        return templates.TemplateResponse("duplicate.html", {"request": request})
+
     if HF_TOKEN is None:
         if os.environ.get("SPACE_ID") is None:
             return templates.TemplateResponse("error.html", {"request": request})
 
-        # redirect to /login/huggingface
-        return RedirectResponse("/login/huggingface")
+        # TODO: redirect to /login/huggingface for oauth when available
+        # return RedirectResponse("/login/huggingface")
+        return templates.TemplateResponse("error.html", {"request": request})
 
     _, _, USERS = app_utils.user_validation()
     context = {
