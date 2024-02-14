@@ -1,7 +1,7 @@
 NLP_TASKS = {
     "text_binary_classification": 1,
     "text_multi_class_classification": 2,
-    "text_entity_extraction": 4,
+    "text_token_classification": 4,
     "text_extractive_question_answering": 5,
     "text_summarization": 8,
     "text_single_column_regression": 10,
@@ -36,7 +36,7 @@ TASKS = {
 COLUMN_MAPPING = {
     "text_binary_classification": ("text", "label"),
     "text_multi_class_classification": ("text", "label"),
-    "text_entity_extraction": ("text", "tokens"),
+    "text_token_classification": ("tokens", "tags"),
     "text_extractive_question_answering": ("text", "context", "question", "answer"),
     "text_summarization": ("text", "summary"),
     "text_single_column_regression": ("text", "label"),
@@ -56,7 +56,7 @@ COLUMN_MAPPING = {
 TASK_TYPE_MAPPING = {
     "text_binary_classification": "Natural Language Processing",
     "text_multi_class_classification": "Natural Language Processing",
-    "text_entity_extraction": "Natural Language Processing",
+    "text_token_classification": "Natural Language Processing",
     "text_extractive_question_answering": "Natural Language Processing",
     "text_summarization": "Natural Language Processing",
     "text_single_column_regression": "Natural Language Processing",

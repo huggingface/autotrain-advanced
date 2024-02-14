@@ -24,7 +24,7 @@ class TextClassificationParams(AutoTrainParams):
     text_column: str = Field("text", title="Text column")
     target_column: str = Field("target", title="Target column")
     logging_steps: int = Field(-1, title="Logging steps")
-    project_name: str = Field("Project Name", title="Output directory")
+    project_name: str = Field("project-name", title="Output directory")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     save_total_limit: int = Field(1, title="Save total limit")

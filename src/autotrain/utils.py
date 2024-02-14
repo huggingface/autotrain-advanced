@@ -1,15 +1,12 @@
 import glob
 import json
 import os
-import re
 import shutil
-import subprocess
 import traceback
 from typing import Dict, Optional
 
 import requests
-from huggingface_hub import HfApi, HfFolder
-from huggingface_hub.repository import Repository
+from huggingface_hub import HfFolder
 from transformers import AutoConfig
 
 from autotrain import config, logger
@@ -153,53 +150,6 @@ def app_error_handler(func):
                 ValueError(f"An error has occurred: {err}")
 
     return wrapper
-
-
-def clone_hf_repo(repo_url: str, local_dir: str, token: str) -> Repository:
-    os.makedirs(local_dir, exist_ok=True)
-    repo_url = re.sub(r"(https?://)", rf"\1user:{token}@", repo_url)
-    subprocess.run(
-        "git lfs install".split(),
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        check=True,
-        encoding="utf-8",
-        cwd=local_dir,
-    )
-
-    subprocess.run(
-        f"git lfs clone {repo_url} .".split(),
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        check=True,
-        encoding="utf-8",
-        cwd=local_dir,
-    )
-
-    data_repo = Repository(local_dir=local_dir, token=token)
-    return data_repo
-
-
-def create_repo(project_name, autotrain_user, huggingface_token, model_path):
-    repo_name = f"autotrain-{project_name}"
-    repo_url = HfApi().create_repo(
-        repo_id=f"{autotrain_user}/{repo_name}",
-        token=huggingface_token,
-        exist_ok=False,
-        private=True,
-    )
-    if len(repo_url.strip()) == 0:
-        repo_url = f"https://huggingface.co/{autotrain_user}/{repo_name}"
-
-    logger.info(f"Created repo: {repo_url}")
-
-    model_repo = clone_hf_repo(
-        local_dir=model_path,
-        repo_url=repo_url,
-        token=huggingface_token,
-    )
-    model_repo.lfs_track(patterns=LFS_PATTERNS)
-    return model_repo
 
 
 def save_model(torch_model, model_path):

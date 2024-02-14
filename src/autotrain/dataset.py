@@ -22,6 +22,7 @@ from autotrain.preprocessor.text import (
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
+    TextTokenClassificationPreprocessor,
 )
 from autotrain.preprocessor.vision import ImageClassificationPreprocessor
 
@@ -266,6 +267,23 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 convert_to_class_label=self.convert_to_class_label,
+                local=self.local,
+            )
+            return preprocessor.prepare()
+
+        elif self.task == "text_token_classification":
+            text_column = self.column_mapping["text"]
+            label_column = self.column_mapping["label"]
+            preprocessor = TextTokenClassificationPreprocessor(
+                train_data=self.train_df,
+                text_column=text_column,
+                label_column=label_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
                 local=self.local,
             )
             return preprocessor.prepare()

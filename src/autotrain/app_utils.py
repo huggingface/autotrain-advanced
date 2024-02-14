@@ -1,7 +1,6 @@
 import json
 import os
 import signal
-import socket
 import subprocess
 
 import psutil
@@ -16,6 +15,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 def get_running_jobs(db):
@@ -48,28 +48,9 @@ def get_process_status(pid):
         return "Completed"
 
 
-def find_pid_by_port(port):
-    """Find PID by port number."""
-    try:
-        result = subprocess.run(["lsof", "-i", f":{port}", "-t"], capture_output=True, text=True, check=True)
-        pids = result.stdout.strip().split("\n")
-        return [int(pid) for pid in pids if pid.isdigit()]
-    except subprocess.CalledProcessError:
-        return []
-
-
 def kill_process_by_pid(pid):
     """Kill process by PID."""
     os.kill(pid, signal.SIGTERM)
-
-
-def is_port_in_use(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("localhost", port)) == 0
-
-
-def kill_process_on_port(port):
-    os.system(f"fuser -k {port}/tcp")
 
 
 def user_authentication(token):
@@ -113,12 +94,12 @@ def user_validation():
     user_token = os.environ.get("HF_TOKEN", None)
 
     if user_token is None:
-        raise ValueError("Please login with a write token.")
+        raise Exception("Please login with a write token.")
 
     user_token, valid_can_pay, who_is_training = _login_user(user_token)
 
     if user_token is None or len(user_token) == 0:
-        raise ValueError("Please login with a write token.")
+        raise Exception("Invalid token. Please login with a write token.")
 
     return user_token, valid_can_pay, who_is_training
 
@@ -142,6 +123,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = DreamBoothTrainingParams(**params)
     elif task_id == 18:
         params = ImageClassificationParams(**params)
+    elif task_id == 4:
+        params = TokenClassificationParams(**params)
     else:
         raise NotImplementedError
 
@@ -153,7 +136,7 @@ def run_training(params, task_id, local=False, wait=False):
     cmd = [str(c) for c in cmd]
     logger.info(cmd)
     env = os.environ.copy()
-    process = subprocess.Popen(" ".join(cmd), shell=True, env=env)
+    process = subprocess.Popen(cmd, env=env)
     if wait:
         process.wait()
     return process.pid

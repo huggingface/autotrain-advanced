@@ -266,6 +266,32 @@ def text_clf_munge_data(params, local):
     return params
 
 
+def token_clf_munge_data(params, local):
+    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            task="text_token_classification",
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping={"text": params.tokens_column, "label": params.tags_column},
+            percent_valid=None,  # TODO: add to UI
+            local=local,
+            convert_to_class_label=True,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.text_column = "autotrain_text"
+        params.target_column = "autotrain_label"
+    return params
+
+
 def img_clf_munge_data(params, local):
     train_data_path = f"{params.data_path}/{params.train_split}"
     if params.valid_split is not None:

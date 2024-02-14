@@ -7,7 +7,7 @@ from autotrain.trainers.common import AutoTrainParams
 
 class LLMTrainingParams(AutoTrainParams):
     model: str = Field("gpt2", title="Model name")
-    project_name: str = Field("Project Name", title="Output directory")
+    project_name: str = Field("project-name", title="Output directory")
 
     # data params
     data_path: str = Field("data", title="Data path")

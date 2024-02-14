@@ -1,4 +1,5 @@
 import os
+import shlex
 
 import torch
 
@@ -10,9 +11,11 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 def launch_command(params):
+    params.project_name = shlex.split(params.project_name)[0]
     cuda_available = torch.cuda.is_available()
     mps_available = torch.backends.mps.is_available()
     if cuda_available:
@@ -155,6 +158,50 @@ def launch_command(params):
             [
                 "-m",
                 "autotrain.trainers.text_classification",
+                "--training_config",
+                os.path.join(params.project_name, "training_params.json"),
+            ]
+        )
+    elif isinstance(params, TokenClassificationParams):
+        if num_gpus == 0:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--cpu",
+            ]
+        elif num_gpus == 1:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                "1",
+            ]
+        else:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--multi_gpu",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                str(num_gpus),
+            ]
+
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
+
+        cmd.extend(
+            [
+                "-m",
+                "autotrain.trainers.token_classification",
                 "--training_config",
                 os.path.join(params.project_name, "training_params.json"),
             ]
