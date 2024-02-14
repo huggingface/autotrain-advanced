@@ -15,6 +15,7 @@ from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
 from autotrain.help import get_app_help
+from autotrain.oauth import attach_oauth
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -194,6 +195,7 @@ def fetch_models():
 MODEL_CHOICE = fetch_models()
 
 app = FastAPI()
+attach_oauth(app)
 static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")

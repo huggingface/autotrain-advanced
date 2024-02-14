@@ -94,12 +94,14 @@ def user_validation():
     user_token = os.environ.get("HF_TOKEN", None)
 
     if user_token is None:
-        raise ValueError("Please login with a write token.")
+        logger.error("Please login with a write token.")
+        return None, None, None
 
     user_token, valid_can_pay, who_is_training = _login_user(user_token)
 
     if user_token is None or len(user_token) == 0:
-        raise ValueError("Please login with a write token.")
+        logger.error("Please login with a write token.")
+        return None, None, None
 
     return user_token, valid_can_pay, who_is_training
 
