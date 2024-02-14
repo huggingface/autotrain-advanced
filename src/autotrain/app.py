@@ -27,7 +27,6 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
-_, _, USERS = app_utils.user_validation()
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
@@ -234,6 +233,8 @@ async def read_form(request: Request):
     """
     if HF_TOKEN is None:
         return templates.TemplateResponse("error.html", {"request": request})
+
+    _, _, USERS = app_utils.user_validation()
     context = {
         "request": request,
         "valid_users": USERS,
