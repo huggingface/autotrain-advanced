@@ -4,6 +4,8 @@ from accelerate.state import PartialState
 from loguru import logger
 
 
+log_file_path = "/tmp/app.log"
+
 emojis = {
     "TRACE": "🔍",
     "DEBUG": "🐛",
@@ -35,6 +37,7 @@ log_format = (
 logger.remove()
 if not hasattr(logger, "_is_customized") or not logger._is_customized:
     logger.add(sys.stderr, format=log_format, filter=lambda x: should_log(x) and emoji_filter(x))
+    logger.add(log_file_path, format=log_format, filter=lambda x: should_log(x) and emoji_filter(x), rotation="10 MB")
     logger._is_customized = True
 
 custom_logger = logger
