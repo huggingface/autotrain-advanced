@@ -194,7 +194,8 @@ def fetch_models():
 MODEL_CHOICE = fetch_models()
 
 app = FastAPI()
-attach_oauth(app)
+if os.environ.get("SPACE_ID") != "autotrain-projects/autotrain-advanced":
+    attach_oauth(app)
 static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
