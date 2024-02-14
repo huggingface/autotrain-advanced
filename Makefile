@@ -31,6 +31,11 @@ ngc:
 	docker tag autotrain-advanced:latest nvcr.io/ycymhzotssoi/autotrain-advanced:latest
 	docker push nvcr.io/ycymhzotssoi/autotrain-advanced:latest
 
+nvcf:
+	docker build -t autotrain-advanced:latest .
+	docker tag autotrain-advanced:latest nvcr.io/qtfpt1h0bieu/c-rg8zrqf9dx6gjoyqu/autotrain-advanced:latest
+	docker push nvcr.io/qtfpt1h0bieu/c-rg8zrqf9dx6gjoyqu/autotrain-advanced:latest
+
 pip:
 	rm -rf build/
 	rm -rf dist/

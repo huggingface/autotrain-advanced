@@ -1,0 +1,28 @@
+name: NVCF Build & Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  dockerhub:
+    name: NVCF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to NVCF
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: nvcr.io
+          username: ${{ secrets.NVCF_USERNAME }}
+          password: ${{ secrets.NVCF_PASSWORD }}
+
+      - name: Build and Push NVCF Image
+        run: make nvcf
+        
