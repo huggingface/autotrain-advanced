@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import ModelFilter, list_models
+from starlette.responses import RedirectResponse
 
 from autotrain import app_utils, logger
 from autotrain.app_params import AppParams
@@ -231,8 +232,13 @@ async def read_form(request: Request):
     :param request:
     :return:
     """
+    logger.info(request.session.get("oauth_info"))
     if HF_TOKEN is None:
-        return templates.TemplateResponse("error.html", {"request": request})
+        if os.environ.get("SPACE_ID") is None:
+            return templates.TemplateResponse("error.html", {"request": request})
+
+        # redirect to /login/huggingface
+        return RedirectResponse("/login/huggingface")
 
     _, _, USERS = app_utils.user_validation()
     context = {
@@ -243,6 +249,21 @@ async def read_form(request: Request):
         "enable_local": AUTOTRAIN_LOCAL,
     }
     return templates.TemplateResponse("index.html", context)
+
+
+@app.post("/set_token", response_class=JSONResponse)
+async def set_token(request: Request, token: str):
+    """
+    This function is used to set the token
+    :param request:
+    :param token: str
+    :return: JSONResponse
+    """
+    if token.startswith("hf_"):
+        global HF_TOKEN
+        os.environ["HF_TOKEN"] = token
+        HF_TOKEN = token
+    return {"error": "Invalid token"}
 
 
 @app.get("/params/{task}", response_class=JSONResponse)
