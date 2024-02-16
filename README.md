@@ -16,7 +16,7 @@ Documentation is available [here](https://hf.co/docs/autotrain/).
 You can Install AutoTrain-Advanced python package via PIP. Please note you will need python >= 3.8 for AutoTrain Advanced to work properly.
 
     pip install autotrain-advanced
-    
+
 Please make sure that you have git lfs installed. Check out the instructions here: https://github.com/git-lfs/git-lfs/wiki/Installation
 
 
