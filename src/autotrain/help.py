@@ -25,9 +25,12 @@ base_model_info = """
 <p>For a list of available models, please see <a href="https://huggingface.co/models" target="_blank">HuggingFace Model Hub</a>.</p>
 <p>Note: not all models listed here are going to be compatible with
 your data and parameters. You should select a model that is compatible with your task, data and parameters.</p>
+Dont see your favorite model? You can also use a custom model by providing the model name in an environment variable: AUTOTRAIN_CUSTOM_MODELS.
+For example, go to settings and add a new environment variable with the key AUTOTRAIN_CUSTOM_MODELS and value as the model name (e.g. google/gemma-7b)
 """
 
 hardware_info = """
+
 <p>Hardware is the machine that will be used for training.</p>
 <p>Please choose a hardware that is compatible with your task, data and parameters.</p>
 """
