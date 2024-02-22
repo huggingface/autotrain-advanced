@@ -79,7 +79,7 @@ HIDDEN_PARAMS = [
 
 PARAMS = {}
 PARAMS["llm"] = LLMTrainingParams(
-    target_modules="",
+    target_modules="all-linear",
     log="tensorboard",
     mixed_precision="fp16",
     quantization="int4",
@@ -94,6 +94,7 @@ PARAMS["text-classification"] = TextClassificationParams(
 ).model_dump()
 PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
+    target_modules="all-linear",
 ).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",

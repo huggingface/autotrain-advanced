@@ -7,6 +7,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 @dataclass
@@ -33,6 +34,8 @@ class AppParams:
             return self._munge_params_dreambooth()
         elif self.task.startswith("llm"):
             return self._munge_params_llm()
+        elif self.task == "token-classification":
+            return self._munge_params_token_clf()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -68,6 +71,15 @@ class AppParams:
         _params["valid_split"] = "validation"
 
         return TextClassificationParams(**_params)
+
+    def _munge_params_token_clf(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["text_column"] = "autotrain_text"
+        _params["target_column"] = "autotrain_label"
+        _params["valid_split"] = "validation"
+
+        return TokenClassificationParams(**_params)
 
     def _munge_params_seq2seq(self):
         _params = self._munge_common_params()

@@ -43,7 +43,7 @@ class LLMTrainingParams(AutoTrainParams):
 
     # peft
     quantization: Optional[str] = Field(None, title="int4, int8, or None")
-    target_modules: Optional[str] = Field(None, title="Target modules")
+    target_modules: Optional[str] = Field("all-linear", title="Target modules")
     merge_adapter: bool = Field(False, title="Merge adapter")
     peft: bool = Field(False, title="Use PEFT")
     lora_r: int = Field(16, title="Lora r")
