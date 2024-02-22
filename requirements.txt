@@ -43,3 +43,4 @@ hf-transfer
 pyngrok==7.0.3
 authlib==1.3.0
 itsdangerous==2.1.2
+seqeval==1.2.2

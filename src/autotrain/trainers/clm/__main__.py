@@ -149,6 +149,7 @@ def train(config):
         tokenizer.chat_template = chat_template
     else:
         tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+        tokenizer.chat_template = utils.DEFAULT_CHAT_TEMPLATE
 
     if config.chat_template in ("chatml", "zephyr", "tokenizer"):
         train_data = train_data.map(
@@ -166,9 +167,6 @@ def train(config):
                     "config": config,
                 },
             )
-
-    if tokenizer.chat_template is None and config.trainer != "default":
-        tokenizer.chat_template = utils.DEFAULT_CHAT_TEMPLATE
 
     if tokenizer.model_max_length > 2048:
         tokenizer.model_max_length = config.model_max_length
