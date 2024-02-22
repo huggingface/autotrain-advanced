@@ -11,7 +11,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from autotrain import logger
 
 
-DEFAULT_CHAT_TEMPLATE = "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+CHATML_CHAT_TEMPLATE = "{% for message in messages %}\n{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% if loop.last and add_generation_prompt %}{{'<|im_start|>assistant\n' }}{% endif %}{% endfor %}"
+ZEPHYR_CHAT_TEMPLATE = "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}"
+
 
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
@@ -131,6 +133,8 @@ def get_target_modules(config):
         return TARGET_MODULES.get(config.model)
     if config.target_modules.strip() == "":
         return TARGET_MODULES.get(config.model)
+    if config.target_modules.strip().lower() == "all-linear":
+        return "all-linear"
     return config.target_modules.split(",")
 
 
@@ -222,19 +226,19 @@ def pause_endpoint(params):
     project_name = endpoint_id.split("/")[1]
     api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{username}/{project_name}/pause"
     headers = {"Authorization": f"Bearer {params.token}"}
-    r = requests.post(api_url, headers=headers)
+    r = requests.post(api_url, headers=headers, timeout=30)
     return r.json()
 
 
 def create_peft_handler(config):
     txt = PEFT_HANDLER.strip()
-    with open(f"{config.project_name}/handler.py", "w") as f:
+    with open(f"{config.project_name}/handler.py", "w", encoding="utf-8") as f:
         f.write(txt)
 
 
 def create_requirements_txt(config):
     txt = REQUIREMENTS_TXT.strip()
-    with open(f"{config.project_name}/requirements.txt", "w") as f:
+    with open(f"{config.project_name}/requirements.txt", "w", encoding="utf-8") as f:
         f.write(txt)
 
 
@@ -244,7 +248,7 @@ def apply_chat_template(
     config,
 ):
     # kudos to Hugging Face H4 Team for this snippet
-    if config.trainer == "sft":
+    if config.trainer in ("default", "sft"):
         messages = example[config.text_column]
         if isinstance(messages, str):
             messages = ast.literal_eval(messages)

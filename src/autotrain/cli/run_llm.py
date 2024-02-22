@@ -231,11 +231,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--dpo-beta"],
             },
             {
-                "arg": "--apply_chat_template",
+                "arg": "--chat_template",
                 "help": "Apply chat template",
                 "required": False,
-                "action": "store_true",
-                "alias": ["--apply-chat-template"],
+                "default": None,
+                "alias": ["--chat-template"],
+                "choices": ["tokenizer", "chatml", "zephyr"],
             },
             {
                 "arg": "--padding",
@@ -284,7 +285,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "merge_adapter",
             "use_flash_attention_2",
             "disable_gradient_checkpointing",
-            "apply_chat_template",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
@@ -374,7 +374,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 model_ref=self.args.model_ref,
                 dpo_beta=self.args.dpo_beta,
                 prompt_text_column=self.args.prompt_text_column,
-                apply_chat_template=self.args.apply_chat_template,
+                chat_template=self.args.chat_template,
                 padding=self.args.padding,
             )
 

@@ -39,7 +39,7 @@ class LLMTrainingParams(AutoTrainParams):
     weight_decay: float = Field(0.0, title="Weight decay")
     max_grad_norm: float = Field(1.0, title="Max gradient norm")
     seed: int = Field(42, title="Seed")
-    apply_chat_template: bool = Field(False, title="Apply chat template")
+    chat_template: Optional[str] = Field(None, title="Chat template, one of: None, zephyr, chatml or tokenizer")
 
     # peft
     quantization: Optional[str] = Field(None, title="int4, int8, or None")

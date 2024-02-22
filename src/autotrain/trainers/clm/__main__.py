@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+from enum import Enum
 from functools import partial
 
 import torch
@@ -27,6 +28,32 @@ from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
+
+
+class ZephyrSpecialTokens(str, Enum):
+    USER = "<|user|>"
+    ASSISTANT = "<|assistant|>"
+    SYSTEM = "<|system|>"
+    EOS_TOKEN = "</s>"
+    BOS_TOKEN = "<s>"
+    PAD_TOKEN = "<pad>"
+
+    @classmethod
+    def list(cls):
+        return [c.value for c in cls]
+
+
+class ChatmlSpecialTokens(str, Enum):
+    USER = "<|im_start|>user"
+    ASSISTANT = "<|im_start|>assistant"
+    SYSTEM = "<|im_start|>system"
+    EOS_TOKEN = "<|im_end|>"
+    BOS_TOKEN = "<s>"
+    PAD_TOKEN = "<pad>"
+
+    @classmethod
+    def list(cls):
+        return [c.value for c in cls]
 
 
 def parse_args():
@@ -93,19 +120,37 @@ def train(config):
     if config.padding not in ("left", "right"):
         config.padding = None
 
-    if config.apply_chat_template and config.trainer == "default":
-        logger.warning("apply_chat_template is not supported for default trainer. Skipping...")
-        config.apply_chat_template = False
-
     is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
 
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
 
     train_data, valid_data = process_input_data(config)
-    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
 
-    if config.apply_chat_template and config.trainer != "default":
+    special_tokens = None
+    chat_template = None
+    if config.chat_template == "chatml":
+        special_tokens = ChatmlSpecialTokens
+        chat_template = utils.CHATML_CHAT_TEMPLATE
+    elif config.chat_template == "zephyr":
+        special_tokens = ZephyrSpecialTokens
+        chat_template = utils.ZEPHYR_CHAT_TEMPLATE
+
+    if special_tokens is not None:
+        tokenizer = AutoTokenizer.from_pretrained(
+            config.model,
+            pad_token=special_tokens.PAD_TOKEN.value,
+            bos_token=special_tokens.BOS_TOKEN.value,
+            eos_token=special_tokens.EOS_TOKEN.value,
+            additional_special_tokens=special_tokens.list(),
+            token=config.token,
+            trust_remote_code=True,
+        )
+        tokenizer.chat_template = chat_template
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+
+    if config.chat_template in ("chatml", "zephyr", "tokenizer"):
         train_data = train_data.map(
             utils.apply_chat_template,
             fn_kwargs={
