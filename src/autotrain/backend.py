@@ -27,7 +27,7 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 _DOCKERFILE = """
 FROM huggingface/autotrain-advanced:latest
 
-CMD autotrain api --port 7860 --host 0.0.0.0
+CMD pip uninstall -y autotrain-advanced && pip install -U autotrain-advanced && autotrain api --port 7860 --host 0.0.0.0
 """
 
 # format _DOCKERFILE
