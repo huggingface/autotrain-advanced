@@ -159,7 +159,7 @@ class TabularMetrics:
             else:
                 if metric_name == "rmsle":
                     temp_pred = copy.deepcopy(y_pred)
-                    temp_pred = np.clip(y_pred, 0, None)
+                    temp_pred = np.clip(temp_pred, 0, None)
                     metrics[metric_name] = metric_func(y_true, temp_pred)
                 else:
                     metrics[metric_name] = metric_func(y_true, y_pred)
