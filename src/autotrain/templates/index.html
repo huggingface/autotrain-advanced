@@ -136,7 +136,7 @@
               </button>
             </label>
             <select name="autotrain_user" , id="autotrain_user"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+              class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               {% for user in valid_users %}
               <option value="{{ user }}">{{ user }}</option>
               {% endfor %}
@@ -147,85 +147,7 @@
               </button>
             </label>
             <input type="text" name="project_name" id="project_name"
-              class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="eg: imdb-sentiment-analysis">
-          </div>
-        </div>
-        <div class="columns-2 mb-2">
-          <div class="form-group">
-            <label for="hardware" class="text-sm font-medium text-gray-700">Hardware
-              <button type="button" id="hardware_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <select id="hardware" name="hardware"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              {% if enable_local == 1 %}
-              <option value="Local">Local</option>
-              {% else %}
-              <optgroup label="Hugging Face Spaces">
-                <option value="A10G Large">A10G Large</option>
-                <option value="A100 Large">A100 Large</option>
-                <option value="A10G Small">A10G Small</option>
-                <option value="T4 Medium">T4 Medium</option>
-                <option value="T4 Small">T4 Small</option>
-                <option value="CPU Upgrade">CPU Upgrade</option>
-                <option value="CPU (Free)">CPU (Free)</option>
-              </optgroup>
-              <optgroup label="Hugging Face Endpoints">
-                <option value="EP US-East-1 1xA10g">1xA10G</option>
-                <option value="EP US-East-1 1xA100">1xA100</option>
-                <option value="EP US-East-1 2xA100">2xA100</option>
-                <option value="EP US-East-1 4xA100">4xA100</option>
-                <option value="EP US-East-1 8xA100">8xA100</option>
-              </optgroup>
-              {% if enable_ngc == 1 %}
-              <optgroup label="NVIDIA DGX Cloud">
-                <option value="DGX 1xA100">1xA100 DGX</option>
-                <option value="DGX 2xA100">2xA100 DGX</option>
-                <option value="DGX 4xA100">4xA100 DGX</option>
-                <option value="DGX 8xA100">8xA100 DGX</option>
-              </optgroup>
-              {% endif %}
-              {% if enable_nvcf == 1 %}
-              <optgroup label="NVIDIA Cloud Functions">
-                <option value="NVCF 1xA10G">1xA10G</option>
-                <option value="NVCF 1xL40">1xL40</option>
-                <option value="NVCF 1xL40G">1xL40G</option>
-                <option value="NVCF 1xT10">1xT10</option>
-              </optgroup>
-              {% endif %}
-              {% endif %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="task" class="text-sm font-medium text-gray-700">Task
-              <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <select id="task" name="task"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <optgroup label="LLM Finetuning">
-                <option value="llm:sft">LLM SFT</option>
-                <option value="llm:generic">LLM Generic</option>
-                <option value="llm:dpo">LLM DPO</option>
-                <option value="llm:reward">LLM Reward</option>
-              </optgroup>
-              <optgroup label="Other Text Tasks">
-                <option value="text-classification">Text Classification</option>
-                <option value="seq2seq">Sequence To Sequence</option>
-                <option value="token-classification">Token Classification</option>
-              </optgroup>
-              <optgroup label="Image Tasks">
-                <option value="dreambooth">DreamBooth LoRA</option>
-                <option value="image-classification">Image Classification</option>
-              </optgroup>
-              <optgroup label="Tabular Tasks">
-                <option value="tabular:classification">Tabular Classification</option>
-                <option value="tabular:regression">Tabular Regression</option>
-              </optgroup>
-            </select>
+              class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
           </div>
         </div>
         <div class="form-group mb-2">
@@ -238,25 +160,64 @@
             class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
           </select>
         </div>
-        <div class="form-group mb-2">
-          <div class="mb-4">
-            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
-              data-tabs-toggle="#default-tab-content" role="tablist">
-              <li class="me-2" role="presentation">
-                <button class="inline-block p-4 border-b-2 rounded-t-lg" id="training-data-tab"
-                  data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
-                  aria-selected="false">Training Data</button>
-              </li>
-              <li class="me-2" role="presentation">
-                <button class="inline-block p-4 border-b-2 rounded-t-lg" id="valid-data-tab"
-                  data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
-                  aria-selected="false">Validation Data
-                  (optional)</button>
-              </li>
-            </ul>
+        <div class="mb-2">
+          <label class="text-sm font-medium text-gray-700">Dataset
+            <button type="button" id="dataset_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
+          <div class="flex items-center ps-4 border border-gray-300 rounded">
+            <input checked id="upload-dataset-radio" type="radio" value="" name="dataset-radio"
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+            <label for="upload-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Upload
+              Dataset</label>
+            <input id="hub-dataset-radio" type="radio" value="" name="dataset-radio"
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+            <label for="hub-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Hub
+              Dataset</label>
           </div>
-          <div id="default-tab-content">
-            <div class="hidden p-4 rounded-lg" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
+        </div>
+        <div id="form-group">
+          <div id="hub-data-tab-content">
+            <div class="form-group">
+              <label for="hub_dataset" class="text-sm font-medium text-gray-700">Hub Dataset
+              </label>
+              <input type="text" name="hub_dataset" id="hub_dataset"
+                class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="columns-2 mb-2 mt-2">
+              <div class="form-group">
+                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
+                </label>
+                <input type="text" name="train_split" id="train_split"
+                  class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split (optional)
+                </label>
+                <input type="text" name="valid_split" id="valid_split"
+                  class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="upload-data-tabs">
+          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
+            data-tabs-toggle="#upload-data-tab-content" role="tablist">
+            <li class="me-2" role="presentation">
+              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="training-data-tab"
+                data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
+                aria-selected="false">Training Data</button>
+            </li>
+            <li class="me-2" role="presentation">
+              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="valid-data-tab"
+                data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
+                aria-selected="false">Validation Data
+                (optional)</button>
+            </li>
+          </ul>
+        </div>
+        <div id="form-group">
+          <div id="upload-data-tab-content">
+            <div class="hidden p-4" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
               <div class="flex items-center justify-center w-full h-20">
                 <label for="data_files_training"
                   class="flex flex-col items-center justify-center w-full h-40cursor-pointer">
@@ -266,14 +227,14 @@
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                     </svg>
-                    <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
+                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
                         <p class="text-xs text-gray-700" id="file-container-training"></p>
                   </div>
                   <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
                 </label>
               </div>
             </div>
-            <div class="hidden p-4 rounded-lg" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
+            <div class="hidden p-4" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
               <div class="flex items-center justify-center w-full h-20">
                 <label for="data_files_valid"
                   class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
@@ -283,7 +244,7 @@
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                     </svg>
-                    <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
+                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
                         <p class="text-xs text-gray-700" id="file-container-valid"></p>
                   </div>
                   <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
@@ -299,30 +260,61 @@
             </button>
           </label>
           <input type="text" name="column_mapping" id="column_mapping"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            class="mt-2 mb-4 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
         </div>
-        <div class="form-actions mt-6">
-          <button type="submit"
-            class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
-            Training</button>
-        </div>
-        <div class="mt-5">
-          <p class="mb-2 text-sm text-gray-700" id="num_accelerators">Accelerators: Fetching...</p>
-        </div>
+
       </div>
       <div>
         <div class="form-group">
+          <label for="task" class="text-sm font-medium text-gray-700">Task
+            <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </label>
+          <select id="task" name="task"
+            class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <optgroup label="LLM Finetuning">
+              <option value="llm:sft">LLM SFT</option>
+              <option value="llm:generic">LLM Generic</option>
+              <option value="llm:dpo">LLM DPO</option>
+              <option value="llm:reward">LLM Reward</option>
+            </optgroup>
+            <optgroup label="Other Text Tasks">
+              <option value="text-classification">Text Classification</option>
+              <option value="seq2seq">Sequence To Sequence</option>
+              <option value="token-classification">Token Classification</option>
+            </optgroup>
+            <optgroup label="Image Tasks">
+              <option value="dreambooth">DreamBooth LoRA</option>
+              <option value="image-classification">Image Classification</option>
+            </optgroup>
+            <optgroup label="Tabular Tasks">
+              <option value="tabular:classification">Tabular Classification</option>
+              <option value="tabular:regression">Tabular Regression</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group mt-2">
           <label for="params" class="text-sm font-medium text-gray-700">Training Parameters (find params to
             copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)
             <button type="button" id="params_info" class="text-gray-500 hover:text-gray-700">
               <i class="fas fa-info-circle"></i>
             </button>
           </label>
-          <textarea id="params" name="params" rows="25" class="p-2.5 w-full text-sm text-gray-900"
+          <textarea id="params" name="params" rows="20" class="p-2.5 w-full text-sm text-gray-900"
             placeholder="Loading..."></textarea>
         </div>
-        <div class="mt-5">
-          <p class="mb-2 text-sm text-gray-700 text-right font-bold" id="is_model_training">Fetching training status...
+      </div>
+      <div class="col-span-2">
+        <div class="form-actions mt-6">
+          <button type="submit"
+            class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
+          </button>
+        </div>
+        <div class="columns-2 mb-2 mt-2">
+          <p class="text-sm text-gray-700" id="num_accelerators">Accelerators: Fetching...</p>
+          <p class="text-sm text-gray-700 text-right font-bold" id="is_model_training">Fetching training
+            status...
           </p>
         </div>
       </div>
@@ -383,7 +375,7 @@
         <div class="relative bg-white rounded-lg shadow-2xl">
           <br>
           <button type="button"
-            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
             data-modal-hide="help-modal">
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -400,6 +392,38 @@
   </div>
   </div>
 </body>
+
+<script>
+  window.addEventListener("load", function () {
+    // Get references to the radio buttons and the tab content elements
+    const hubDatasetRadio = document.getElementById("hub-dataset-radio");
+    const uploadDatasetRadio = document.getElementById("upload-dataset-radio");
+    const uploadDataTabContent = document.getElementById("upload-data-tab-content");
+    const hubDataTabContent = document.getElementById("hub-data-tab-content");
+    const uploadDataTabs = document.getElementById("upload-data-tabs");
+
+    // Function to handle radio button click events
+    function handleRadioButtonClick() {
+      if (hubDatasetRadio.checked) {
+        uploadDataTabContent.style.display = "none";
+        uploadDataTabs.style.display = "none";
+        hubDataTabContent.style.display = "block";
+      } else if (uploadDatasetRadio.checked) {
+        uploadDataTabContent.style.display = "block";
+        uploadDataTabs.style.display = "block";
+        hubDataTabContent.style.display = "none";
+      }
+    }
+
+    // Attach event listeners to radio buttons
+    hubDatasetRadio.addEventListener("click", handleRadioButtonClick);
+    uploadDatasetRadio.addEventListener("click", handleRadioButtonClick);
+
+    // Trigger initial click event to ensure correct display on page load
+    uploadDatasetRadio.click();
+  });
+</script>
+
 
 <script>
   async function openHelpModal(contentId) {
@@ -427,10 +451,6 @@
 
   document.getElementById('project_name_info').addEventListener('click', function () {
     openHelpModal('project_name_info');
-  });
-
-  document.getElementById('hardware_info').addEventListener('click', function () {
-    openHelpModal('hardware_info');
   });
 
   document.getElementById('task_info').addEventListener('click', function () {
@@ -546,14 +566,14 @@
 <script>
   // Function to hide all tab contents
   function hideAllTabContents() {
-    document.querySelectorAll('#default-tab-content > div').forEach(function (tabContent) {
+    document.querySelectorAll('#upload-data-tab-content > div').forEach(function (tabContent) {
       tabContent.classList.add('hidden');
     });
   }
 
   // Function to deactivate all tabs
   function deactivateAllTabs() {
-    document.querySelectorAll('#default-tab > li > button').forEach(function (tabButton) {
+    document.querySelectorAll('#upload-data-tab > li > button').forEach(function (tabButton) {
       tabButton.classList.remove('border-b-2', 'rounded-t-lg');
       tabButton.setAttribute('aria-selected', 'false');
     });
