@@ -177,7 +177,7 @@ def train(config):
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model")
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
             api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
 
     if PartialState().process_index == 0:
