@@ -96,7 +96,7 @@ class DreamBoothDatasetXL(Dataset):
 class DreamBoothDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
-    It pre-processes the images and the tokenizes prompts.
+    It pre-processes the images and tokenizes prompts.
     """
 
     def __init__(self, config, tokenizers, encoder_hidden_states, instance_prompt_encoder_hidden_states):
