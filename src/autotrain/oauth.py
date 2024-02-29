@@ -24,10 +24,7 @@ RANDOM_STRING = "".join(random.choices(string.ascii_letters + string.digits, k=2
 
 
 def attach_oauth(app: fastapi.FastAPI):
-    if os.environ.get("SPACE_ID") is not None and int(os.environ.get("USE_OAUTH", 0)) == 1:
-        _add_oauth_routes(app)
-    else:
-        return
+    _add_oauth_routes(app)
     # Session Middleware requires a secret key to sign the cookies. Let's use a hash
     # of the OAuth secret key to make it unique to the Space + updated in case OAuth
     # config gets updated.
