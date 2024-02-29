@@ -11,7 +11,6 @@ import string
 import urllib.parse
 
 import fastapi
-from authlib.integrations.base_client.errors import MismatchingStateError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -82,12 +81,7 @@ def _add_oauth_routes(app: fastapi.FastAPI) -> None:
     @app.get("/auth")
     async def auth(request: fastapi.Request) -> RedirectResponse:
         """Endpoint that handles the OAuth callback."""
-        # oauth_info = await oauth.huggingface.authorize_access_token(request)  # type: ignore
-        try:
-            oauth_info = await oauth.huggingface.authorize_access_token(request)  # type: ignore
-        except MismatchingStateError:
-            print("Session dict:", dict(request.session))
-            raise
+        oauth_info = await oauth.huggingface.authorize_access_token(request)  # type: ignore
         request.session["oauth_info"] = oauth_info
         return _redirect_to_target(request)
 

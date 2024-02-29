@@ -76,6 +76,7 @@ setup(
                 "src/autotrain/templates/index.html",
                 "src/autotrain/templates/error.html",
                 "src/autotrain/templates/duplicate.html",
+                "src/autotrain/templates/login.html",
             ],
         ),
     ],

@@ -34,6 +34,9 @@ AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USE_OAUTH = int(os.environ.get("USE_OAUTH", "0"))
 
+if "SPACE_ID" not in os.environ:
+    USE_OAUTH = 0
+
 HIDDEN_PARAMS = [
     "token",
     "project_name",
@@ -241,8 +244,8 @@ async def read_form(request: Request):
     if HF_TOKEN is None and USE_OAUTH == 0:
         return templates.TemplateResponse("error.html", {"request": request})
 
-    if USE_OAUTH == 1 and HF_TOKEN is None:
-        return RedirectResponse("/login/huggingface")
+    if USE_OAUTH == 1 and HF_TOKEN is None and "oauth_info" not in request.session:
+        return templates.TemplateResponse("login.html", {"request": request})
 
     if HF_TOKEN is None:
         if os.environ.get("SPACE_ID") is None:
@@ -255,10 +258,12 @@ async def read_form(request: Request):
     if USE_OAUTH == 1:
         logger.info(request.session["oauth_info"])
 
-    _, _, USERS = app_utils.user_validation()
+    token = HF_TOKEN if USE_OAUTH == 0 else request.session["oauth_info"]["access_token"]
+
+    _users = app_utils.user_validation(user_token=token)
     context = {
         "request": request,
-        "valid_users": USERS,
+        "valid_users": _users,
         "enable_ngc": ENABLE_NGC,
         "enable_nvcf": ENABLE_NVCF,
         "enable_local": AUTOTRAIN_LOCAL,
@@ -266,19 +271,10 @@ async def read_form(request: Request):
     return templates.TemplateResponse("index.html", context)
 
 
-@app.post("/set_token", response_class=JSONResponse)
-async def set_token(request: Request, token: str):
-    """
-    This function is used to set the token
-    :param request:
-    :param token: str
-    :return: JSONResponse
-    """
-    if token.startswith("hf_"):
-        global HF_TOKEN
-        os.environ["HF_TOKEN"] = token
-        HF_TOKEN = token
-    return {"error": "Invalid token"}
+@app.get("/logout", response_class=HTMLResponse)
+async def oauth_logout(request: Request):
+    request.session.pop("oauth_info", None)
+    return RedirectResponse("/")
 
 
 @app.get("/params/{task}", response_class=JSONResponse)
@@ -364,6 +360,7 @@ async def fetch_model_choices(task: str):
 
 @app.post("/create_project", response_class=JSONResponse)
 async def handle_form(
+    request: Request,
     project_name: str = Form(...),
     task: str = Form(...),
     base_model: str = Form(...),
@@ -386,8 +383,13 @@ async def handle_form(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
 
-    if HF_TOKEN is None:
+    if HF_TOKEN is None and USE_OAUTH == 0:
         return {"error": "HF_TOKEN not set"}
+
+    if USE_OAUTH == 1 and HF_TOKEN is None:
+        token = request.session["oauth_info"]["access_token"]
+    else:
+        token = HF_TOKEN
 
     params = json.loads(params)
     column_mapping = json.loads(column_mapping)
@@ -398,7 +400,7 @@ async def handle_form(
     if task == "image-classification":
         dset = AutoTrainImageClassificationDataset(
             train_data=training_files[0],
-            token=HF_TOKEN,
+            token=token,
             project_name=project_name,
             username=autotrain_user,
             valid_data=validation_files[0] if validation_files else None,
@@ -409,7 +411,7 @@ async def handle_form(
         dset = AutoTrainDreamboothDataset(
             concept_images=data_files_training,
             concept_name=params["prompt"],
-            token=HF_TOKEN,
+            token=token,
             project_name=project_name,
             username=autotrain_user,
             local=hardware.lower() == "local",
@@ -443,7 +445,7 @@ async def handle_form(
         dset_args = dict(
             train_data=training_files,
             task=dset_task,
-            token=HF_TOKEN,
+            token=token,
             project_name=project_name,
             username=autotrain_user,
             column_mapping=column_mapping,
@@ -457,7 +459,7 @@ async def handle_form(
     data_path = dset.prepare()
     app_params = AppParams(
         job_params_json=json.dumps(params),
-        token=HF_TOKEN,
+        token=token,
         project_name=project_name,
         username=autotrain_user,
         task=task,
