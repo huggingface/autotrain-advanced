@@ -244,19 +244,8 @@ async def read_form(request: Request):
     if HF_TOKEN is None and USE_OAUTH == 0:
         return templates.TemplateResponse("error.html", {"request": request})
 
-    if USE_OAUTH == 1 and HF_TOKEN is None and "oauth_info" not in request.session:
+    if USE_OAUTH == 1 and "oauth_info" not in request.session:
         return templates.TemplateResponse("login.html", {"request": request})
-
-    if HF_TOKEN is None:
-        if os.environ.get("SPACE_ID") is None:
-            return templates.TemplateResponse("error.html", {"request": request})
-
-        # TODO: redirect to /login/huggingface for oauth when available
-        # return RedirectResponse("/login/huggingface")
-        return templates.TemplateResponse("error.html", {"request": request})
-
-    if USE_OAUTH == 1:
-        logger.info(request.session["oauth_info"])
 
     token = HF_TOKEN if USE_OAUTH == 0 else request.session["oauth_info"]["access_token"]
 
