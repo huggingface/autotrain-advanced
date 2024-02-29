@@ -5,7 +5,7 @@ from typing import List
 
 import torch
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import ModelFilter, list_models
@@ -32,6 +32,7 @@ ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+USE_OAUTH = int(os.environ.get("USE_OAUTH", "0"))
 
 HIDDEN_PARAMS = [
     "token",
@@ -196,7 +197,7 @@ def fetch_models():
 MODEL_CHOICE = fetch_models()
 
 app = FastAPI()
-if os.environ.get("SPACE_ID") != "autotrain-projects/autotrain-advanced":
+if USE_OAUTH == 1:
     attach_oauth(app)
 static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
@@ -237,6 +238,12 @@ async def read_form(request: Request):
     if os.environ.get("SPACE_ID") == "autotrain-projects/autotrain-advanced":
         return templates.TemplateResponse("duplicate.html", {"request": request})
 
+    if HF_TOKEN is None and USE_OAUTH == 0:
+        return templates.TemplateResponse("error.html", {"request": request})
+
+    if USE_OAUTH == 1 and HF_TOKEN is None:
+        return RedirectResponse("/login/huggingface")
+
     if HF_TOKEN is None:
         if os.environ.get("SPACE_ID") is None:
             return templates.TemplateResponse("error.html", {"request": request})
@@ -244,6 +251,9 @@ async def read_form(request: Request):
         # TODO: redirect to /login/huggingface for oauth when available
         # return RedirectResponse("/login/huggingface")
         return templates.TemplateResponse("error.html", {"request": request})
+
+    if USE_OAUTH == 1:
+        logger.info(request.session["oauth_info"])
 
     _, _, USERS = app_utils.user_validation()
     context = {
