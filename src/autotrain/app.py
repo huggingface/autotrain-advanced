@@ -32,7 +32,7 @@ ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-USE_OAUTH = int(os.environ.get("USE_OAUTH", "0"))
+USE_OAUTH = int(os.environ.get("USE_OAUTH", "1"))
 
 if "SPACE_ID" not in os.environ:
     USE_OAUTH = 0
