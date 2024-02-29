@@ -32,10 +32,10 @@ ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-USE_OAUTH = int(os.environ.get("USE_OAUTH", "1"))
 
-if "SPACE_ID" not in os.environ:
-    USE_OAUTH = 0
+if HF_TOKEN is None and "SPACE_ID" not in os.environ:
+    logger.error("HF_TOKEN not set")
+    raise ValueError("HF_TOKEN environment variable is not set")
 
 HIDDEN_PARAMS = [
     "token",
@@ -200,8 +200,9 @@ def fetch_models():
 MODEL_CHOICE = fetch_models()
 
 app = FastAPI()
-if USE_OAUTH == 1:
+if HF_TOKEN is None:
     attach_oauth(app)
+
 static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
@@ -241,13 +242,20 @@ async def read_form(request: Request):
     if os.environ.get("SPACE_ID") == "autotrain-projects/autotrain-advanced":
         return templates.TemplateResponse("duplicate.html", {"request": request})
 
-    if HF_TOKEN is None and USE_OAUTH == 0:
-        return templates.TemplateResponse("error.html", {"request": request})
+    # if HF_TOKEN is None and USE_OAUTH == 0:
+    #     return templates.TemplateResponse("error.html", {"request": request})
 
-    if USE_OAUTH == 1 and "oauth_info" not in request.session:
-        return templates.TemplateResponse("login.html", {"request": request})
+    if HF_TOKEN is None:
+        try:
+            if "oauth_info" not in request.session:
+                return templates.TemplateResponse("login.html", {"request": request})
+        except AssertionError:
+            return templates.TemplateResponse("login.html", {"request": request})
 
-    token = HF_TOKEN if USE_OAUTH == 0 else request.session["oauth_info"]["access_token"]
+    if HF_TOKEN is None:
+        token = request.session["oauth_info"]["access_token"]
+    else:
+        token = HF_TOKEN
 
     _users = app_utils.user_validation(user_token=token)
     context = {
@@ -372,10 +380,7 @@ async def handle_form(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
 
-    if HF_TOKEN is None and USE_OAUTH == 0:
-        return {"error": "HF_TOKEN not set"}
-
-    if USE_OAUTH == 1 and HF_TOKEN is None:
+    if HF_TOKEN is None:
         token = request.session["oauth_info"]["access_token"]
     else:
         token = HF_TOKEN
