@@ -30,4 +30,4 @@ from autotrain.logging import custom_logger as logger  # noqa: F401
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 
-__version__ = "0.7.4"
+__version__ = "0.7.5.dev0"
