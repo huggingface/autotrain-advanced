@@ -105,8 +105,8 @@ class EndpointHandler():
 """
 
 REQUIREMENTS_TXT = """
-peft==0.8.2
-transformers==4.37.0
+peft==0.9.0
+transformers==4.38.1
 """
 
 
