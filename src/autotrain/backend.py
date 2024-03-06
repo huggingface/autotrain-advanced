@@ -404,7 +404,8 @@ class NVCFRunner:
         self.nvcf_token = os.environ.get("NVCF_API_TOKEN")
 
         self.instance_map = {
-            "nvcf-l40": {"backend": "GFN", "id": "67bb8939-c932-429a-a446-8ae898311856"},
+            "nvcf-l40": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
+            "nvcf-h100x1": {"id": "848348f8-a4e2-4242-bce9-6baa1bd70a66"},
         }
 
         logger.info("Starting NVCF training")
@@ -422,7 +423,7 @@ class NVCFRunner:
             return dictionary
 
     def _conf_nvcf(self, token, nvcf_type, url, method="POST", payload=None):
-        logger.info(f"{self.job_name}:  {method} - Configuring NVCF {nvcf_type}.")
+        logger.info(f"{self.job_name}: {method} - Configuring NVCF {nvcf_type}.")
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
         try:
@@ -472,7 +473,7 @@ class NVCFRunner:
         while time.time() - start_time < timeout:
             try:
                 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-                if method == "get":
+                if method.upper() == "GET":
                     response = requests.get(url, headers=headers)
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
@@ -527,4 +528,4 @@ class NVCFRunner:
 
         nvcf_url_reqpoll = f"{self.nvcf_api}/v2/nvcf/pexec/status/{nvcf_fn_req}"
         logger.info(f"{self.job_name}: Polling : {nvcf_url_reqpoll}")
-        self._poll_nvcf(url=nvcf_url_reqpoll, token=self.nvcf_token, method="GET", timeout=1200, interval=20)
+        self._poll_nvcf(url=nvcf_url_reqpoll, token=self.nvcf_token, method="GET", timeout=172800, interval=20)
