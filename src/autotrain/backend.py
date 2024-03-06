@@ -521,7 +521,6 @@ class NVCFRunner:
             "env": {key: value for key, value in self.env_vars.items()},
         }
 
-
         nvcf_fn_req = self._conf_nvcf(
             token=self.nvcf_token, nvcf_type="job_submit", url=nvcf_url_submit, method="POST", payload=nvcf_fr_payload
         )
