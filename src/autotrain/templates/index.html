@@ -23,8 +23,17 @@
       function fetchDataAndUpdateModels() {
         const taskValue = document.getElementById('task').value;
         const baseModelSelect = document.getElementById('base_model');
+        const queryParams = new URLSearchParams(window.location.search);
+        const customModelsValue = queryParams.get('custom_models');
+        console.log(customModelsValue);
+
+        let fetchURL = `/model_choices/${taskValue}`;
+        if (customModelsValue) {
+          fetchURL += `?custom_models=${customModelsValue}`;
+        }
+
         baseModelSelect.innerHTML = 'Fetching models...';
-        fetch(`/model_choices/${taskValue}`)
+        fetch(fetchURL)
           .then(response => response.json())
           .then(data => {
             const baseModelSelect = document.getElementById('base_model');
