@@ -1,4 +1,8 @@
 # Local stuff
+data/
+startup.sh
+main.py
+collect_env*
 .DS_Store
 .vscode/
 test/

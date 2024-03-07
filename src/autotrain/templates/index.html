@@ -23,17 +23,8 @@
       function fetchDataAndUpdateModels() {
         const taskValue = document.getElementById('task').value;
         const baseModelSelect = document.getElementById('base_model');
-        const queryParams = new URLSearchParams(window.location.search);
-        const customModelsValue = queryParams.get('custom_models');
-        console.log(customModelsValue);
-
-        let fetchURL = `/model_choices/${taskValue}`;
-        if (customModelsValue) {
-          fetchURL += `?custom_models=${customModelsValue}`;
-        }
-
         baseModelSelect.innerHTML = 'Fetching models...';
-        fetch(fetchURL)
+        fetch(`/model_choices/${taskValue}`)
           .then(response => response.json())
           .then(data => {
             const baseModelSelect = document.getElementById('base_model');
@@ -198,10 +189,8 @@
               {% endif %}
               {% if enable_nvcf == 1 %}
               <optgroup label="NVIDIA Cloud Functions">
-                <option value="NVCF 1xA10G">1xA10G</option>
                 <option value="NVCF 1xL40">1xL40</option>
-                <option value="NVCF 1xL40G">1xL40G</option>
-                <option value="NVCF 1xT10">1xT10</option>
+                <option value="NVCF 1xH100">1xH100</option>
               </optgroup>
               {% endif %}
               {% endif %}

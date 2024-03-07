@@ -26,10 +26,10 @@ packaging==23.1
 tensorboard
 peft==0.9.0
 trl==0.7.11
-tiktoken==0.5.1
-transformers==4.38.1
-accelerate==0.27.0
-diffusers==0.21.4
+tiktoken==0.6.0
+transformers==4.38.2
+accelerate==0.27.2
+diffusers==0.26.3
 bitsandbytes==0.42.0
 # extras
 rouge_score==0.1.2
@@ -44,3 +44,6 @@ pyngrok==7.0.3
 authlib==1.3.0
 itsdangerous==2.1.2
 seqeval==1.2.2
+nvidia-pytriton==0.5.2
+numpy==1.26.3
+requests==2.31.0
