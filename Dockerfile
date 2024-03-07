@@ -74,5 +74,4 @@ RUN pip install -e . && \
     autotrain setup && \
     pip install flash-attn && \
     pip install deepspeed && \
-    pip install git+https://github.com/NVIDIA/nv-cloud-function-helpers.git && \
     pip cache purge
