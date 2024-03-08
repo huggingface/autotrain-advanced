@@ -2,7 +2,6 @@ import base64
 import io
 import json
 import os
-import threading
 import time
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -247,7 +246,6 @@ class SpaceRunner:
                 ngc_runner.create()
                 return
             elif self.backend.startswith("nvcf-"):
-                env_vars["BACKEND"] = self.backend
                 nvcf_runner = NVCFRunner(
                     job_name=self.params.repo_id.replace("/", "-"),
                     env_vars=env_vars,
@@ -401,21 +399,11 @@ class NVCFRunner:
     backend: str
 
     def __post_init__(self):
-        self.token = None
         self.nvcf_api = os.environ.get("NVCF_API")
-        self.nvcf_image = os.environ.get("NVCF_IMAGE")
-        self.nvcf_jwt_provider = os.environ.get("NVCF_JWT_PROVIDER")
-        self.nvcf_ssa_client_id = os.environ.get("NVCF_SSA_CLIENT_ID")
-        self.nvcf_ssa_client_secret = os.environ.get("NVCF_SSA_CLIENT_SECRET")
-        self.deployment_successful = False
-
+        self.hf_token = self.env_vars["HF_TOKEN"]
         self.instance_map = {
-            "nvcf-a100": {"backend": "OCI", "gpu": "A100_80GB", "instanceType": "BM.GPU.A100-v2.8"},
-            "nvcf-8a100": {"backend": "OCI", "gpu": "A100_80GB_8GPU", "instanceType": "BM.GPU.A100-v2.8_8x"},
-            "nvcf-a10g": {"backend": "GFN", "gpu": "A10G", "instanceType": "ga10g_1.br20_2xlarge"},
-            "nvcf-l40": {"backend": "GFN", "gpu": "L40", "instanceType": "gl40_1.br20_2xlarge"},
-            "nvcf-l40g": {"backend": "GFN", "gpu": "L40G", "instanceType": "gl40g_1.br20_2xlarge"},
-            "nvcf-t10": {"backend": "GFN", "gpu": "T10", "instanceType": "g6.full"},
+            "nvcf-l40": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
+            "nvcf-h100x1": {"id": "848348f8-a4e2-4242-bce9-6baa1bd70a66"},
         }
 
         logger.info("Starting NVCF training")
@@ -432,234 +420,111 @@ class NVCFRunner:
         else:
             return dictionary
 
-    def _user_authentication_nvcf(self):
-        logger.info(f"{self.job_name}:  Authenticating NVCF client...")
-        auth = base64.b64encode(f"{self.nvcf_ssa_client_id}:{self.nvcf_ssa_client_secret}".encode()).decode()
-
-        headers = {"Authorization": f"Basic {auth}", "Content-Type": "application/x-www-form-urlencoded"}
-        body = {
-            "grant_type": "client_credentials",
-            "scope": "register_function update_function delete_function list_functions deploy_function invoke_function queue_details authorize_clients",
-        }
-        try:
-            response = requests.post(self.nvcf_jwt_provider + "/token", headers=headers, data=body, timeout=30)
-
-            if response.status_code == 200:
-                resp_data = response.json()
-                bearer_token = resp_data.get("access_token")
-                logger.info(f"{self.job_name}:  Successfully obtained bearer token.")
-                self.token = bearer_token
-                return bearer_token
-            else:
-                raise Exception(
-                    f"Failed to get JWT token: {response.status_code} - {response.headers} - {response.text}"
-                )
-        except HTTPError as http_err:
-            logger.error(f"{self.job_name}:  HTTP error occurred: {http_err}")
-            raise Exception("HTTP Error %d: from '%s'" % (response.status_code, self.ngc_auth))
-        except (requests.Timeout, ConnectionError) as err:
-            logger.error(f"{self.job_name}:  Failed to request NGC token - {repr(err)}")
-            raise Exception("%s is unreachable, please try again later." % self.ngc_auth)
-
     def _conf_nvcf(self, token, nvcf_type, url, method="POST", payload=None):
-        logger.info(f"{self.job_name}:  {method} - Configuring NVCF {nvcf_type}.")
+        logger.info(f"{self.job_name}: {method} - Configuring NVCF {nvcf_type}.")
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
         try:
             if method.upper() == "POST":
                 response = requests.post(url, headers=headers, json=payload, timeout=30)
-            elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=30)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
             response.raise_for_status()
 
-            if response.status_code == 204:
+            if response.status_code == 202:
                 logger.info(
-                    f"{self.job_name}:  {method} - Successfully processed NVCF {nvcf_type}. No content in response."
+                    f"{self.job_name}: {method} - Successfully submitted NVCF job. Polling reqId for completion"
                 )
-                return None
+                response_data = response.json()
+                nvcf_reqid = response_data.get("nvcfRequestId")
+                if nvcf_reqid:
+                    logger.info(f"{self.job_name}: nvcfRequestId: {nvcf_reqid}")
+                    return nvcf_reqid
+                else:
+                    logger.warning(f"{self.job_name}: nvcfRequestId key is missing in the response body")
+                    return None
 
             result = response.json()
             result_obj = self._convert_dict_to_object(result)
-
-            logger.info(f"{self.job_name}:  {method} - Successfully processed NVCF {nvcf_type}.")
+            logger.info(f"{self.job_name}: {method} - Successfully processed NVCF {nvcf_type}.")
             return result_obj
 
-        except HTTPError as http_err:
+        except requests.HTTPError as http_err:
+            # Log the response body for more context
+            error_message = http_err.response.text if http_err.response else "No additional error information."
             logger.error(
-                f"{self.job_name}:  HTTP error occurred processing NVCF {nvcf_type} with {method} request: {http_err}"
+                f"{self.job_name}: HTTP error occurred processing NVCF {nvcf_type} with {method} request: {http_err}. "
+                f"Error details: {error_message}"
             )
-            raise Exception(f"HTTP Error {response.status_code}: {http_err}")
+            raise Exception(f"HTTP Error {http_err.response.status_code}: {http_err}. Details: {error_message}")
 
         except (requests.Timeout, ConnectionError) as err:
-            logger.error(f"{self.job_name}:  Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}")
+            logger.error(f"{self.job_name}: Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
 
-    def _poll_nvcf(
-        self, url, token, success_check, method="get", payload=None, timeout=86400, interval=30, op="deploy"
-    ):
+    def _poll_nvcf(self, url, token, method="get", timeout=86400, interval=30, op="poll"):
         timeout = float(timeout)
         interval = float(interval)
         start_time = time.time()
-        log_payload = {"requestBody": {"check": "log"}}
-        previous_log_content = ""
         success = False
 
-        try:
-            while time.time() - start_time < timeout:
-                try:
-                    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-                    if method == "get":
-                        response = requests.get(url, headers=headers)
-                    elif method == "post":
-                        response = requests.post(url, headers=headers, json=payload)
-                    else:
-                        raise ValueError(f"Unsupported HTTP method: {method}")
+        while time.time() - start_time < timeout:
+            try:
+                headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+                if method.upper() == "GET":
+                    response = requests.get(url, headers=headers)
+                else:
+                    raise ValueError(f"Unsupported HTTP method: {method}")
 
-                    response.raise_for_status()
+                response.raise_for_status()
+
+                if response.status_code == 202:
+                    logger.info(f"{self.job_name}: {method} - {response.status_code} - Polling reqId for completion")
+                elif response.status_code == 200:
+                    logger.info(f"{self.job_name}: {method} - {response.status_code} - Polling completed")
                     data = response.json()
+                    if "log" in data:
+                        log_data = data["log"]
+                        for line in log_data.split("\n"):
+                            logger.info(line)
+                    success = True
+                    break
 
-                    logger.info(f"{self.job_name}:  Waiting for NVCF function {op}")
+            except requests.HTTPError as http_err:
+                logger.error(f"HTTP error occurred: {http_err}")
+            except (ConnectionError, ValueError) as err:
+                logger.error(f"Error while handling request: {err}")
 
-                    if payload and payload.get("requestBody", {}).get("check") == "status":
-                        log_response = requests.post(url, headers=headers, json=log_payload)
-                        log_response.raise_for_status()
-                        log_data = log_response.json()
-                        current_log_content = log_data.get("response", {}).get("log", "")
+            time.sleep(interval)
 
-                        if isinstance(current_log_content, str):
-                            new_log_content = current_log_content.replace(previous_log_content, "")
-                            if new_log_content.strip():
-                                logger.info(f"\n{new_log_content}")
-                            previous_log_content = current_log_content
-
-                    if success_check(data):
-                        success = True
-                        elapsed_time = time.time() - start_time
-                        logger.info(
-                            f"{self.job_name}:  NVCF function met {op} success condition in {elapsed_time:.2f} seconds."
-                        )
-                        if op == "train":
-                            self._conf_nvcf(
-                                token=token, nvcf_type="deployment", url=self.nvcf_fn_deploy_url, method="DELETE"
-                            )
-                            self._conf_nvcf(
-                                token=token, nvcf_type="function", url=self.nvcf_fn_reg_url, method="DELETE"
-                            )
-                        return data
-
-                    time.sleep(interval)
-
-                except requests.HTTPError as http_err:
-                    if http_err.response.status_code == 401:
-                        logger.info(f"{self.job_name}:  401 encountered - re-authenticating")
-                        self._user_authentication_nvcf()
-                        token = self.token
-                        continue
-                    elif http_err.response.status_code == 404 and op == "train":
-                        if time.time() - start_time > (20 * 60):
-                            self._conf_nvcf(
-                                token=token, nvcf_type="deployment", url=self.nvcf_fn_deploy_url, method="DELETE"
-                            )
-                            self._conf_nvcf(
-                                token=token, nvcf_type="function", url=self.nvcf_fn_reg_url, method="DELETE"
-                            )
-                            raise Exception(
-                                f"{self.job_name}:  Exceeded 20 minutes wait time on 404 error during {op} operation"
-                            )
-                        else:
-                            logger.info(
-                                f"{self.job_name}:  Waiting for NVCF function in {op} operation. Resource may not be available yet. {url} -- {method}"
-                            )
-                            time.sleep(interval * 2)
-                    else:
-                        raise Exception(f"HTTP error occurred: {http_err}")
-
-                except (ConnectionError, ValueError) as err:
-                    raise Exception(f"Error while handling request: {err}")
-
-        finally:
-            if not success:
-                if op == "deploy":
-                    self.deployment_successful = False
-                    self._conf_nvcf(token=token, nvcf_type="deployment", url=self.nvcf_fn_deploy_url, method="DELETE")
-                    self._conf_nvcf(token=token, nvcf_type="function", url=self.nvcf_fn_reg_url, method="DELETE")
-                raise TimeoutError(
-                    f"{self.job_name}:  NVCF function did not meet success condition within {int(time.time() - start_time)} seconds"
-                )
+        if not success:
+            raise TimeoutError(f"Operation '{op}' did not complete successfully within the timeout period.")
 
     def create(self):
-        nvcf_url = f"{self.nvcf_api}/v2/nvcf"
+        nvcf_url_submit = f"{self.nvcf_api}/invoke/{self.instance_map[self.backend]['id']}"
         nvcf_fr_payload = {
-            "name": f"at-{self.job_name}",
-            "inferenceUrl": "job",
-            "inferencePort": 7860,
-            "healthUri": "health",
-            "containerImage": self.nvcf_image,
-            "containerEnvironment": [{"key": key, "value": value} for key, value in self.env_vars.items()],
-            "apiBodyFormat": "CUSTOM",
-        }
-        nvcf_fd_payload = {
-            "deploymentSpecifications": [
-                {
-                    "gpu": self.instance_map[self.backend]["gpu"],
-                    "instanceType": self.instance_map[self.backend]["instanceType"],
-                    "backend": self.instance_map[self.backend]["backend"],
-                    "maxInstances": 1,
-                    "minInstances": 1,
-                }
-            ]
+            "cmd": [
+                "conda",
+                "run",
+                "-p",
+                "/app/env",
+                "python",
+                "-m",
+                "uvicorn",
+                "autotrain.api:api",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "7860",
+            ],
+            "env": {key: value for key, value in self.env_vars.items()},
         }
 
-        nvcf_token = self._user_authentication_nvcf()
+        nvcf_fn_req = self._conf_nvcf(
+            token=self.hf_token, nvcf_type="job_submit", url=nvcf_url_submit, method="POST", payload=nvcf_fr_payload
+        )
 
-        nvcf_fn = self._conf_nvcf(
-            token=nvcf_token, nvcf_type="function", url=f"{nvcf_url}/functions", method="POST", payload=nvcf_fr_payload
-        )
-        self.nvcf_fn_reg_url = f"{nvcf_url}/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
-        self.nvcf_fn_deploy_url = (
-            f"{nvcf_url}/deployments/functions/{nvcf_fn.function.id}/versions/{nvcf_fn.function.versionId}"
-        )
-        logger.info(f"{self.job_name}:  Initializing deployment for: {self.nvcf_fn_deploy_url}")
-
-        time.sleep(2)
-        self._conf_nvcf(
-            token=nvcf_token,
-            nvcf_type="deployment",
-            url=self.nvcf_fn_deploy_url,
-            method="POST",
-            payload=nvcf_fd_payload,
-        )
-        # Deployment thread
-        deploy_thread = threading.Thread(
-            target=self._poll_nvcf,
-            kwargs={
-                "url": self.nvcf_fn_deploy_url,
-                "token": nvcf_token,
-                "success_check": lambda data: data.get("deployment", {}).get("functionStatus", "") == "ACTIVE",
-                "method": "get",
-                "timeout": 1200,
-                "interval": 20,
-                "op": "deploy",
-            },
-        )
-        deploy_thread.start()
-
-        # Train thread
-        nvcf_inv_url = f"{nvcf_url}/exec/functions/{nvcf_fn.function.id}"
-        train_thread = threading.Thread(
-            target=self._poll_nvcf,
-            kwargs={
-                "url": nvcf_inv_url,
-                "token": nvcf_token,
-                "success_check": lambda data: not data.get("response", {}).get("status"),
-                "method": "post",
-                "payload": {"requestBody": {"check": "status"}},
-                "timeout": 86400,
-                "interval": 60,
-                "op": "train",
-            },
-        )
-        train_thread.start()
+        nvcf_url_reqpoll = f"{self.nvcf_api}/status/{nvcf_fn_req}"
+        logger.info(f"{self.job_name}: Polling : {nvcf_url_reqpoll}")
+        self._poll_nvcf(url=nvcf_url_reqpoll, token=self.hf_token, method="GET", timeout=172800, interval=20)
