@@ -48,7 +48,7 @@ datasets:
 
 - Problem type: Image Classification
 
-## Validation Metricsg
+## Validation Metrics
 {validation_metrics}
 """
 
