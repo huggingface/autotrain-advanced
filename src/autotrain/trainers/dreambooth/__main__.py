@@ -181,7 +181,7 @@ def train(config):
 
     def save_model_hook(models, weights, output_dir):
         # there are only two options here. Either are just the unet attn processor layers
-        # or there are the unet and text encoder atten layers
+        # or there are the unet and text encoder attn layers
         unet_lora_layers_to_save = None
         text_encoder_lora_layers_to_save = []
 
