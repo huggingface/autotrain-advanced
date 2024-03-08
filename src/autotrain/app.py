@@ -4,7 +4,7 @@ import os
 from typing import List
 
 import torch
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -322,7 +322,7 @@ async def fetch_params(task: str):
 
 
 @app.get("/model_choices/{task}", response_class=JSONResponse)
-async def fetch_model_choices(task: str):
+async def fetch_model_choices(task: str, custom_models: str = Query(None)):
     resp = []
     if os.environ.get("AUTOTRAIN_CUSTOM_MODELS", None) is not None:
         custom_models = os.environ.get("AUTOTRAIN_CUSTOM_MODELS")
