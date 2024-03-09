@@ -324,7 +324,7 @@ async def fetch_params(task: str):
 @app.get("/model_choices/{task}", response_class=JSONResponse)
 async def fetch_model_choices(task: str, custom_models: str = Query(None)):
     resp = []
-    
+
     if custom_models is not None:
         custom_models = custom_models.split(",")
         for custom_model in custom_models:
