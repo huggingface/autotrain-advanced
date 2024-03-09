@@ -53,7 +53,6 @@ ENV PYTHONPATH=$HOME/app \
 
 
 COPY --chown=1000:1000 . /app/
-RUN pip uninstall nltk
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     autotrain setup && \
