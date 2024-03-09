@@ -31,7 +31,6 @@
         if (customModelsValue) {
           fetchURL += `?custom_models=${customModelsValue}`;
         }
-
         baseModelSelect.innerHTML = 'Fetching models...';
         fetch(fetchURL)
           .then(response => response.json())

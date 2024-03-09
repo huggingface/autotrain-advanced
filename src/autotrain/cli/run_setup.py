@@ -35,7 +35,7 @@ class RunSetupCommand(BaseAutoTrainCommand):
 
     def run(self):
         if self.colab:
-            cmd = "pip install -U xformers==0.0.22"
+            cmd = "pip install -U xformers==0.0.24"
         else:
             cmd = "pip uninstall -U xformers"
         cmd = cmd.split()
@@ -45,7 +45,7 @@ class RunSetupCommand(BaseAutoTrainCommand):
         logger.info("Successfully installed latest xformers")
 
         if self.update_torch:
-            cmd = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+            cmd = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121"
             cmd = cmd.split()
             pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             logger.info("Installing latest PyTorch")
