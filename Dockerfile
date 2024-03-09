@@ -59,6 +59,3 @@ RUN pip install -e . && \
     autotrain setup && \
     pip install flash-attn && \
     pip install deepspeed
-
-COPY startup.sh startup.sh
-#ENTRYPOINT ["./startup.sh"]
