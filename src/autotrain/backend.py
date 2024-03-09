@@ -505,6 +505,10 @@ class NVCFRunner:
 
     def create(self):
         nvcf_url_submit = f"{self.nvcf_api}/invoke/{self.instance_map[self.backend]['id']}"
+        org_name = os.environ.get("SPACE_ID")
+        if org_name is None:
+            raise ValueError("SPACE_ID environment variable is not set")
+        org_name = org_name.split("/")[0]
         nvcf_fr_payload = {
             "cmd": [
                 "conda",
@@ -521,6 +525,7 @@ class NVCFRunner:
                 "7860",
             ],
             "env": {key: value for key, value in self.env_vars.items()},
+            "ORG_NAME": org_name,
         }
 
         nvcf_fn_req = self._conf_nvcf(
