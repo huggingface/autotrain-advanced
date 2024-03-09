@@ -373,7 +373,7 @@ class NGCRunner:
 
     def create(self):
         ngc_url = f"/{self.ngc_org}/team/{self.ngc_team}"
-        ngc_cmd = "set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0"
+        ngc_cmd = "set -x; autotrain api --port 7860 --host 0.0.0.0"
         ngc_payload = {
             "name": self.job_name,
             "aceName": self.ngc_ace,
@@ -505,10 +505,6 @@ class NVCFRunner:
         nvcf_url_submit = f"{self.nvcf_api}/invoke/{self.instance_map[self.backend]['id']}"
         nvcf_fr_payload = {
             "cmd": [
-                "conda",
-                "run",
-                "-p",
-                "/app/env",
                 "python",
                 "-m",
                 "uvicorn",
