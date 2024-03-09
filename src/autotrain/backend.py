@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+import threading
 import time
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -527,4 +528,14 @@ class NVCFRunner:
 
         nvcf_url_reqpoll = f"{self.nvcf_api}/status/{nvcf_fn_req}"
         logger.info(f"{self.job_name}: Polling : {nvcf_url_reqpoll}")
-        self._poll_nvcf(url=nvcf_url_reqpoll, token=self.hf_token, method="GET", timeout=172800, interval=20)
+        poll_thread = threading.Thread(
+            target=self._poll_nvcf,
+            kwargs={
+                "url": nvcf_url_reqpoll,
+                "token": self.hf_token,
+                "method": "GET",
+                "timeout": 172800,
+                "interval": 20,
+            },
+        )
+        poll_thread.start()
