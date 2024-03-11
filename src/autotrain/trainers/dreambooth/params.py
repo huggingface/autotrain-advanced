@@ -7,6 +7,7 @@ from autotrain.trainers.common import AutoTrainParams
 
 class DreamBoothTrainingParams(AutoTrainParams):
     model: str = Field(None, title="Model name")
+    vae_model: Optional[str] = Field(None, title="VAE model name")
     revision: Optional[str] = Field(None, title="Revision")
     tokenizer: Optional[str] = Field(None, title="Tokenizer, if different from model")
     image_path: str = Field(None, title="Image path")
@@ -60,8 +61,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     rank: int = Field(4, title="Rank")
     xl: bool = Field(False, title="XL")
 
-    fp16: bool = Field(False, title="FP16")
-    bf16: bool = Field(False, title="BF16")
+    mixed_precision: Optional[str] = Field(None, title="Mixed precision")
 
     token: Optional[str] = Field(None, title="Hub token")
     repo_id: Optional[str] = Field(None, title="Hub model id")
