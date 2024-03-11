@@ -111,9 +111,10 @@ PARAMS["tabular"] = TabularParams(
 ).model_dump()
 PARAMS["dreambooth"] = DreamBoothTrainingParams(
     prompt="<enter your prompt here>",
+    vae_model="",
     num_steps=500,
     disable_gradient_checkpointing=False,
-    fp16=True,
+    mixed_precision="fp16",
     batch_size=1,
     gradient_accumulation=4,
     resolution=1024,

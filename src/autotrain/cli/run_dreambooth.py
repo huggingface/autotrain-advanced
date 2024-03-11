@@ -269,16 +269,11 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                 "action": "store_true",
             },
             {
-                "arg": "--fp16",
-                "help": "FP16",
+                "arg": "--mixed-precision",
+                "help": "mixed precision, fp16, bf16, none",
                 "required": False,
-                "action": "store_true",
-            },
-            {
-                "arg": "--bf16",
-                "help": "BF16",
-                "required": False,
-                "action": "store_true",
+                "type": str,
+                "default": "none",
             },
             {
                 "arg": "--validation-prompt",
@@ -356,8 +351,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
             "pre_compute_text_embeddings",
             "text_encoder_use_attention_mask",
             "xl",
-            "fp16",
-            "bf16",
             "push_to_hub",
             "logging",
             "prior_preservation",
@@ -366,9 +359,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
                 setattr(self.args, arg_name, False)
-
-        if self.args.fp16 and self.args.bf16:
-            raise ValueError("❌ Please choose either FP16 or BF16")
 
         # check if self.args.image_path is a directory with images
         if not os.path.isdir(self.args.image_path):
