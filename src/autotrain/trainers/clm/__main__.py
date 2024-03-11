@@ -29,6 +29,7 @@ from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeft
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
 
+from autotrain.nvcf import NVCFCallback
 
 class ZephyrSpecialTokens(str, Enum):
     USER = "<|user|>"
@@ -434,6 +435,10 @@ def train(config):
         callbacks.append(SavePeftModelCallback)
         if config.valid_split is not None:
             callbacks.append(LoadBestPeftModelCallback)
+    
+    if os.getenv("NVCF-REQID"):
+        # Running on NVIDIA Cloud
+        callbacks.append(NVCFCallback)
 
     # if config.peft and is_deepspeed_enabled:
     #     callbacks.append(SaveDeepSpeedPeftModelCallback)

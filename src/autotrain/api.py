@@ -21,6 +21,7 @@ DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 DB = AutoTrainDB("autotrain.db")
+NV_REQID = os.environ.get("NVCF-REQID")
 
 
 class BackgroundRunner:
