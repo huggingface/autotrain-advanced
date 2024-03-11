@@ -47,7 +47,6 @@ def train(config):
         from autotrain.trainers.dreambooth.train_xl import main
 
         class Args:
-            output_dir = config.project_name
             pretrained_model_name_or_path = config.model
             pretrained_vae_model_name_or_path = config.vae_model
             revision = config.revision
@@ -66,8 +65,8 @@ def train(config):
             num_validation_images = 4
             validation_epochs = 50
             with_prior_preservation = config.prior_preservation
-            prior_loss_weight = config.prior_loss_weight
             num_class_images = config.num_class_images
+            output_dir = config.project_name
             seed = config.seed
             resolution = config.resolution
             crops_coords_top_left_h = 0
@@ -79,19 +78,32 @@ def train(config):
             num_train_epochs = config.epochs
             max_train_steps = config.num_steps
             checkpointing_steps = config.checkpointing_steps
+            checkpoints_total_limit = None
             resume_from_checkpoint = config.resume_from_checkpoint
-            max_grad_norm = config.max_grad_norm
+            gradient_accumulation_steps = config.gradient_accumulation
+            gradient_checkpointing = not config.disable_gradient_checkpointing
             learning_rate = config.lr
+            text_encoder_lr = 5e-6
             scale_lr = config.scale_lr
             lr_scheduler = config.scheduler
+            snr_gamma = None
             lr_warmup_steps = config.warmup_steps
             lr_num_cycles = config.num_cycles
             lr_power = config.lr_power
             dataloader_num_workers = config.dataloader_num_workers
-            optimizer = "adamw"
+            optimizer = "AdamW"
             use_8bit_adam = config.use_8bit_adam
             adam_beta1 = config.adam_beta1
             adam_beta2 = config.adam_beta2
+            prodigy_beta3 = None
+            prodigy_decouple = True
+            adam_weight_decay = config.adam_weight_decay
+            adam_weight_decay_text_encoder = 1e-3
+            adam_epsilon = config.adam_epsilon
+            prodigy_use_bias_correction = True
+            prodigy_safeguard_warmup = True
+            max_grad_norm = config.max_grad_norm
+            push_to_hub = config.push_to_hub
             hub_token = config.token
             hub_model_id = config.repo_id
             logging_dir = os.path.join(config.project_name, "logs")
@@ -102,20 +114,6 @@ def train(config):
             local_rank = config.local_rank
             enable_xformers_memory_efficient_attention = config.xformers
             rank = config.rank
-            validation_images = None
-            tokenizer_max_length = config.tokenizer_max_length
-            text_encoder_use_attention_mask = config.text_encoder_use_attention_mask
-            gradient_accumulation_steps = config.gradient_accumulation
-            gradient_checkpointing = not config.disable_gradient_checkpointing
-            adam_weight_decay_text_encoder = 1e-3
-            adam_weight_decay = 1e-4
-            adam_epsilon = 1e-8
-            prodigy_beta3 = None
-            prodigy_decouple = True
-            prodigy_use_bias_correction = True
-            prodigy_safeguard_warmup = True
-            snr_gamma = None
-            text_encoder_lr = 5e-6
 
         _args = Args()
         main(_args)
@@ -136,21 +134,19 @@ def train(config):
             num_validation_images = 4
             validation_epochs = 50
             with_prior_preservation = config.prior_preservation
-            prior_loss_weight = config.prior_loss_weight
             num_class_images = config.num_class_images
             output_dir = config.project_name
-            seed = config.seed
             resolution = config.resolution
             center_crop = config.center_crop
             train_text_encoder = config.train_text_encoder
             train_batch_size = config.batch_size
             sample_batch_size = config.sample_batch_size
-            num_train_epochs = config.epochs
             max_train_steps = config.num_steps
             checkpointing_steps = config.checkpointing_steps
+            checkpoints_total_limit = None
             resume_from_checkpoint = config.resume_from_checkpoint
             gradient_accumulation_steps = config.gradient_accumulation
-            gradient_checkpointing = config.disable_gradient_checkpointing
+            gradient_checkpointing = not config.disable_gradient_checkpointing
             learning_rate = config.lr
             scale_lr = config.scale_lr
             lr_scheduler = config.scheduler
@@ -164,23 +160,22 @@ def train(config):
             adam_weight_decay = config.adam_weight_decay
             adam_epsilon = config.adam_epsilon
             max_grad_norm = config.max_grad_norm
+            push_to_hub = config.push_to_hub
+            hub_token = config.token
+            hub_model_id = config.repo_id
+            logging_dir = os.path.join(config.project_name, "logs")
             allow_tf32 = config.allow_tf32
+            report_to = "tensorboard" if config.logging else None
+            mixed_precision = config.mixed_precision
             prior_generation_precision = config.prior_generation_precision
             local_rank = config.local_rank
             enable_xformers_memory_efficient_attention = config.xformers
             pre_compute_text_embeddings = config.pre_compute_text_embeddings
             tokenizer_max_length = config.tokenizer_max_length
             text_encoder_use_attention_mask = config.text_encoder_use_attention_mask
-            rank = config.rank
-            mixed_precision = config.mixed_precision
-            token = config.token
-            repo_id = config.repo_id
-            push_to_hub = config.push_to_hub
-            username = config.username
-            report_to = "tensorboard" if config.logging else None
-            logging_dir = os.path.join(config.project_name, "logs")
             validation_images = None
-            class_labels_conditioning = None
+            class_labels_conditioning = config.class_labels_conditioning
+            rank = config.rank
 
         _args = Args()
         main(_args)
