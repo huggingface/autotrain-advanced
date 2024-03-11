@@ -136,6 +136,7 @@ def train(config):
             with_prior_preservation = config.prior_preservation
             num_class_images = config.num_class_images
             output_dir = config.project_name
+            seed = config.seed
             resolution = config.resolution
             center_crop = config.center_crop
             train_text_encoder = config.train_text_encoder
