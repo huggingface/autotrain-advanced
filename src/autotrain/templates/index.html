@@ -7,6 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <script>
+    var autotrain_local_value = {{ enable_local }};
+  </script>
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('json-error-message').textContent = '';
       // Function to fetch data and update the textarea
@@ -58,6 +61,11 @@
         }
       }
       function pollAccelerators() {
+        if (autotrain_local_value === 0) {
+          let statusParagraph = document.getElementById('num_accelerators');
+          statusParagraph.innerText = '';
+          return;
+        }
         // Send a request to the /accelerators endpoint
         fetch('/accelerators')
           .then(response => response.json()) // Assuming the response is in JSON format
@@ -73,6 +81,12 @@
       }
       function pollModelTrainingStatus() {
         // Send a request to the /is_model_training endpoint
+
+        if (autotrain_local_value === 0) {
+          let statusParagraph = document.getElementById('is_model_training');
+          statusParagraph.innerText = '';
+          return;
+        }
         fetch('/is_model_training')
           .then(response => response.json()) // Assuming the response is in JSON format
           .then(data => {
@@ -128,13 +142,6 @@
     </div>
   </header>
   <div class="form-container max-w-5xl mx-auto mt-3 p-6 shadow-2xl">
-    <div class="block text-sm font-normal text-gray-700">AutoTrain Advanced is a no-code solution that
-      allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct
-      format for project to be created.
-      For help regarding proper data format and pricing, click <a href="https://hf.co/docs/autotrain" target="_blank"
-        class="text-blue-700">here</a>.
-    </div>
-    <hr class="h-px my-4 bg-gray-200 border-b-2 dark:bg-gray-700">
     <form action="#" method="post" class="grid grid-cols-2 gap-2" enctype="multipart/form-data">
       <div>
         <div class="columns-2 mb-2">
@@ -171,7 +178,8 @@
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               {% if enable_local == 1 %}
               <option value="Local">Local/Space</option>
-              {% else %}
+              {% endif %}
+              {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
               <optgroup label="Hugging Face Spaces">
                 <option value="A10G Large">A10G Large</option>
                 <option value="A100 Large">A100 Large</option>
@@ -188,6 +196,7 @@
                 <option value="EP US-East-1 4xA100">4xA100</option>
                 <option value="EP US-East-1 8xA100">8xA100</option>
               </optgroup>
+              {% endif %}
               {% if enable_ngc == 1 %}
               <optgroup label="NVIDIA DGX Cloud">
                 <option value="DGX 1xA100">1xA100 DGX</option>
@@ -201,7 +210,6 @@
                 <option value="NVCF 1xL40">1xL40</option>
                 <option value="NVCF 1xH100">1xH100</option>
               </optgroup>
-              {% endif %}
               {% endif %}
             </select>
           </div>
@@ -403,6 +411,10 @@
           </div>
         </div>
       </div>
+    </div>
+    <hr class="h-px my-4 bg-gray-200 border-b-2 dark:bg-gray-700">
+    <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
+        target="_blank" class="text-blue-700">Powered by 🤗 Hugging Face</a>.
     </div>
   </div>
   </div>
