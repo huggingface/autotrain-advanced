@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# taken from: https://github.com/huggingface/diffusers/blob/v0.26.3-patch/examples/dreambooth/train_dreambooth_lora_sdxl.py
 # coding=utf-8
 # Copyright 2023 The HuggingFace Inc. team. All rights reserved.
 #
