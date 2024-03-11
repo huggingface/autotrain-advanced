@@ -424,8 +424,6 @@ class NVCFRunner:
     def _conf_nvcf(self, token, nvcf_type, url, method="POST", payload=None):
         logger.info(f"{self.job_name}: {method} - Configuring NVCF {nvcf_type}.")
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-        logger.info(f"Headers: {headers}")
-        logger.info(f"Payload: {payload}")
         try:
             if method.upper() == "POST":
                 response = requests.post(url, headers=headers, json=payload, timeout=30)
