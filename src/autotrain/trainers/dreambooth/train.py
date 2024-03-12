@@ -388,6 +388,7 @@ def main(args):
         if not class_images_dir.exists():
             class_images_dir.mkdir(parents=True)
         cur_class_images = len(list(class_images_dir.iterdir()))
+        logger.info(f"Current class images {cur_class_images}")
 
         if cur_class_images < args.num_class_images:
             torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
@@ -428,6 +429,8 @@ def main(args):
             del pipeline
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+        else:
+            logger.error(f"Current class images is lower than num-class-images param")
 
     # Handle the repository creation
     if accelerator.is_main_process:
