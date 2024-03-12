@@ -157,9 +157,17 @@ def tabular_munge_data(params, local):
     else:
         raise Exception("Please select a valid task.")
 
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
     if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
@@ -173,6 +181,7 @@ def tabular_munge_data(params, local):
             valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
             local=local,
+            ext=ext_to_use,
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
@@ -185,9 +194,17 @@ def tabular_munge_data(params, local):
 
 
 def llm_munge_data(params, local):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
     if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
@@ -206,6 +223,7 @@ def llm_munge_data(params, local):
             valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
             local=local,
+            ext=ext_to_use,
         )
         params.data_path = dset.prepare()
         params.valid_split = None
@@ -216,9 +234,17 @@ def llm_munge_data(params, local):
 
 
 def seq2seq_munge_data(params, local):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
     if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
@@ -232,6 +258,7 @@ def seq2seq_munge_data(params, local):
             valid_data=[valid_data_path] if valid_data_path is not None else None,
             percent_valid=None,  # TODO: add to UI
             local=local,
+            ext=ext_to_use,
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
@@ -241,9 +268,17 @@ def seq2seq_munge_data(params, local):
 
 
 def text_clf_munge_data(params, local):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
     if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
@@ -258,6 +293,7 @@ def text_clf_munge_data(params, local):
             percent_valid=None,  # TODO: add to UI
             local=local,
             convert_to_class_label=True,
+            ext=ext_to_use,
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
@@ -267,9 +303,17 @@ def text_clf_munge_data(params, local):
 
 
 def token_clf_munge_data(params, local):
-    train_data_path = f"{params.data_path}/{params.train_split}.csv"
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
     if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}.csv"
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
     else:
         valid_data_path = None
     if os.path.exists(train_data_path):
@@ -284,6 +328,7 @@ def token_clf_munge_data(params, local):
             percent_valid=None,  # TODO: add to UI
             local=local,
             convert_to_class_label=True,
+            ext=ext_to_use,
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"

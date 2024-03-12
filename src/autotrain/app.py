@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import ModelFilter, list_models
 
-from autotrain import app_utils, logger
+from autotrain import __version__, app_utils, logger
 from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
@@ -265,6 +265,7 @@ async def read_form(request: Request):
         "enable_ngc": ENABLE_NGC,
         "enable_nvcf": ENABLE_NVCF,
         "enable_local": AUTOTRAIN_LOCAL,
+        "version": __version__,
     }
     return templates.TemplateResponse("index.html", context)
 
@@ -399,6 +400,9 @@ async def handle_form(
     training_files = [f.file for f in data_files_training if f.filename != ""]
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
 
+    file_extension = os.path.splitext(data_files_training[0].filename)[1]
+    file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
+
     if task == "image-classification":
         dset = AutoTrainImageClassificationDataset(
             train_data=training_files[0],
@@ -454,6 +458,7 @@ async def handle_form(
             valid_data=validation_files,
             percent_valid=None,  # TODO: add to UI
             local=hardware.lower() == "local",
+            ext=file_extension,
         )
         if task in ("text-classification", "token-classification"):
             dset_args["convert_to_class_label"] = True

@@ -20,6 +20,7 @@ import os
 
 os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 import warnings

@@ -183,6 +183,7 @@ class AutoTrainDataset:
     percent_valid: Optional[float] = None
     convert_to_class_label: Optional[bool] = False
     local: bool = False
+    ext: Optional[str] = "csv"
 
     def __str__(self) -> str:
         info = f"Dataset: {self.project_name} ({self.task})\n"
@@ -210,7 +211,10 @@ class AutoTrainDataset:
             if isinstance(file, pd.DataFrame):
                 train_df.append(file)
             else:
-                train_df.append(pd.read_csv(file))
+                if self.ext == "jsonl":
+                    train_df.append(pd.read_json(file, lines=True))
+                else:
+                    train_df.append(pd.read_csv(file))
         if len(train_df) > 1:
             train_df = pd.concat(train_df)
         else:
@@ -223,7 +227,10 @@ class AutoTrainDataset:
                 if isinstance(file, pd.DataFrame):
                     valid_df.append(file)
                 else:
-                    valid_df.append(pd.read_csv(file))
+                    if self.ext == "jsonl":
+                        valid_df.append(pd.read_json(file, lines=True))
+                    else:
+                        valid_df.append(pd.read_csv(file))
             if len(valid_df) > 1:
                 valid_df = pd.concat(valid_df)
             else:

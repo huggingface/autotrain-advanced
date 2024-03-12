@@ -102,11 +102,12 @@ class EndpointHandler():
         else:
             prediction = self.pipeline(inputs)
         return prediction
+
 """
 
 REQUIREMENTS_TXT = """
 peft==0.9.0
-transformers==4.38.1
+transformers==4.38.2
 """
 
 
