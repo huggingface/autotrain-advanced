@@ -1,5 +1,6 @@
 import os
 
+from autotrain import logger
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 
 
@@ -307,6 +308,7 @@ def dreambooth_munge_data(params, local):
     # check if params.image_path is a directory
     if os.path.isdir(params.image_path):
         training_data = [os.path.join(params.image_path, f) for f in os.listdir(params.image_path)]
+        logger.info(f'Total training images {len(training_data)}')
         dset = AutoTrainDreamboothDataset(
             concept_images=training_data,
             concept_name=params.prompt,

@@ -387,6 +387,8 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
     def run(self):
         logger.info("Running DreamBooth Training")
         params = DreamBoothTrainingParams(**vars(self.args))
+        logger.info("Args")
+        logger.info(str(self.args))
         params = dreambooth_munge_data(params, local=self.args.backend.startswith("local"))
         project = AutoTrainProject(params=params, backend=self.args.backend)
         _ = project.create()
