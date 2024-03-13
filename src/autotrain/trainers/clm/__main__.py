@@ -194,6 +194,7 @@ def train(config):
                 config=config,
             )
 
+    logger.info("loading model config...")
     model_config = AutoConfig.from_pretrained(
         config.model,
         token=config.token,
@@ -204,6 +205,7 @@ def train(config):
         model_config.pad_token_id = tokenizer.pad_token_id
         model_config.pad_token = tokenizer.pad_token
 
+    logger.info("loading model...")
     if config.peft:
         if config.quantization == "int4":
             bnb_config = BitsAndBytesConfig(
@@ -266,8 +268,8 @@ def train(config):
     model.resize_token_embeddings(len(tokenizer))
     if model_ref is not None:
         model_ref.resize_token_embeddings(len(tokenizer))
-
     if config.peft:
+        logger.info("preparing peft model...")
         if config.quantization is not None:
             model = prepare_model_for_kbit_training(
                 model,

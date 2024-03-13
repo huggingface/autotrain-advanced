@@ -158,8 +158,9 @@ class UploadLogs(TrainerCallback):
         self.api = None
 
         if self.config.push_to_hub:
-            self.api = HfApi(token=config.token)
-            self.api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+            if PartialState().process_index == 0:
+                self.api = HfApi(token=config.token)
+                self.api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
 
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
 
