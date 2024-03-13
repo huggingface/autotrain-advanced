@@ -7,8 +7,10 @@ import os
 import traceback
 
 import requests
+from accelerate import PartialState
 from huggingface_hub import HfApi
 from pydantic import BaseModel
+from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 
 from autotrain import logger
 
@@ -148,3 +150,31 @@ class AutoTrainParams(BaseModel):
         unused = supplied - set(self.model_fields)
         if unused:
             logger.warning(f"Parameters supplied but not used: {', '.join(unused)}")
+
+
+class UploadLogs(TrainerCallback):
+    def __init__(self, config):
+        self.config = config
+        self.api = None
+
+        if self.config.push_to_hub:
+            self.api = HfApi(token=config.token)
+            self.api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+
+    def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+
+        if self.config.push_to_hub is False:
+            return control
+
+        if not os.path.exists(os.path.join(self.config.project_name, "runs")):
+            return control
+
+        if (state.global_step + 1) % self.config.logging_steps == 0 and self.config.log == "tensorboard":
+            logger.info(f"Uploading logs to {self.config.repo_id}...")
+            if PartialState().process_index == 0:
+                self.api.upload_folder(
+                    folder_path=os.path.join(self.config.project_name, "runs"),
+                    repo_id=self.config.repo_id,
+                    path_in_repo="runs",
+                )
+        return control

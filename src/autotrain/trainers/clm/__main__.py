@@ -27,7 +27,7 @@ from autotrain import logger
 from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
+from autotrain.trainers.common import UploadLogs, monitor, pause_space, remove_autotrain_data, save_training_params
 
 
 class ZephyrSpecialTokens(str, Enum):
@@ -389,9 +389,11 @@ def train(config):
             logging_steps = int(0.2 * len(train_data) / config.batch_size)
         if logging_steps == 0:
             logging_steps = 1
-
+        config.logging_steps = logging_steps
     else:
         logging_steps = config.logging_steps
+
+    logger.info(f"Logging steps: {logging_steps}")
 
     training_args = dict(
         output_dir=config.project_name,
@@ -429,7 +431,7 @@ def train(config):
     else:
         args = TrainingArguments(**training_args)
 
-    callbacks = []
+    callbacks = [UploadLogs(config=config)]
     if config.peft and not is_deepspeed_enabled:
         callbacks.append(SavePeftModelCallback)
         if config.valid_split is not None:
@@ -441,6 +443,7 @@ def train(config):
     trainer_args = dict(
         args=args,
         model=model,
+        callbacks=callbacks,
     )
 
     if config.trainer == "default":
@@ -450,7 +453,6 @@ def train(config):
             eval_dataset=valid_data if config.valid_split is not None else None,
             tokenizer=tokenizer,
             data_collator=default_data_collator,
-            callbacks=callbacks,
         )
     elif config.trainer == "sft":
         trainer = SFTTrainer(
@@ -554,7 +556,7 @@ def train(config):
             logger.info("Pushing model to hub...")
             save_training_params(config)
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True, exist_ok=True)
             api.upload_folder(
                 folder_path=config.project_name,
                 repo_id=config.repo_id,
