@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFi
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from huggingface_hub import ModelFilter, list_models
+from huggingface_hub import ModelFilter, list_models, repo_exists
 
 from autotrain import __version__, app_utils, logger
 from autotrain.app_params import AppParams
@@ -394,6 +394,12 @@ async def handle_form(
     else:
         token = HF_TOKEN
 
+    if repo_exists(f"{autotrain_user}/{project_name}", token=token):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Project {project_name} already exists. Please choose a different name.",
+        )
+
     params = json.loads(params)
     column_mapping = json.loads(column_mapping)
 
@@ -485,6 +491,10 @@ async def handle_form(
         monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{job_id}"
     else:
         monitor_url = f"https://hf.co/spaces/{job_id}"
+
+    if job_id is None:
+        monitor_url = "Success! Monitor your job in logs"
+
     return {"success": "true", "monitor_url": monitor_url}
 
 
