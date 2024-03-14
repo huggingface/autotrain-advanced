@@ -23,16 +23,21 @@ jobs:
           username: ${{ secrets.NVCR_USERNAME }}
           password: ${{ secrets.NVCR_PASSWORD }}
 
-      - name: GitHub SHA
-        run: echo "GitHub SHA: $GITHUB_SHA"
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          sha=$(git rev-parse --short ${{ github.sha }})
+          echo "SHA=$sha" >> $GITHUB_ENV
+
+      - name: SHA
+        run: echo ${{ env.SHA }}
+
 
       - name: Build and Push NGC Image
         run: |
-          SHA=$(echo $GITHUB_SHA | cut -c1-7)
           docker build -t autotrain-advanced:latest .
           docker tag autotrain-advanced:latest nvcr.io/ycymhzotssoi/autotrain-advanced:latest
-          docker tag autotrain-advanced:latest nvcr.io/ycymhzotssoi/autotrain-advanced:$SHA
+          docker tag autotrain-advanced:latest nvcr.io/ycymhzotssoi/autotrain-advanced:${{ env.SHA }}
           docker push nvcr.io/ycymhzotssoi/autotrain-advanced:latest
-
-          docker push nvcr.io/ycymhzotssoi/autotrain-advanced:$SHA
+          docker push nvcr.io/ycymhzotssoi/autotrain-advanced:${{ env.SHA }}
         
