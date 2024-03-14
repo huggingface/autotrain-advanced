@@ -405,6 +405,9 @@ class NVCFRunner:
         self.instance_map = {
             "nvcf-l40": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
             "nvcf-h100x1": {"id": "848348f8-a4e2-4242-bce9-6baa1bd70a66"},
+            "nvcf-h100x2": {"id": "fb006a89-451e-4d9c-82b5-33eff257e0bf"},
+            "nvcf-h100x4": {"id": "21bae5af-87e5-4132-8fc0-bf3084e59a57"},
+            "nvcf-h100x8": {"id": "6e0c2af6-5368-47e0-b15e-c070c2c92018"},
         }
 
         logger.info("Starting NVCF training")
