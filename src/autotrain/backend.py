@@ -497,8 +497,8 @@ class NVCFRunner:
                         f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}"
                     )
 
-                    if "response" in data and "log" in data["response"]:
-                        current_full_log = data["response"]["log"]
+                    if "log" in data:
+                        current_full_log = data["log"]
                         if current_full_log != last_full_log:
                             new_log_content = current_full_log[len(last_full_log) :]
                             for line in new_log_content.split("\n"):
