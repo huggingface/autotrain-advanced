@@ -50,7 +50,7 @@ class AutoTrainProject:
             "DGX 4xA100": "dgx-4a100",
             "DGX 8xA100": "dgx-8a100",
             "NVCF 1xH100": "nvcf-h100x1",
-            "NVCF 1xL40": "nvcf-l40",
+            "NVCF 1xL40S": "nvcf-l40sx1",
             "NVCF 2xH100": "nvcf-h100x2",
             "NVCF 4xH100": "nvcf-h100x4",
             "NVCF 8xH100": "nvcf-h100x8",
