@@ -403,6 +403,8 @@ def train(config):
             logging_steps = int(0.2 * len(train_data) / config.batch_size)
         if logging_steps == 0:
             logging_steps = 1
+        if logging_steps > 25:
+            logging_steps = 25
         config.logging_steps = logging_steps
     else:
         logging_steps = config.logging_steps
