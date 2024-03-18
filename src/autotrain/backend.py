@@ -471,6 +471,7 @@ class NVCFRunner:
         interval = float(interval)
         start_time = time.time()
         success = False
+        last_full_log = ''
 
         while time.time() - start_time < timeout:
             try:
@@ -480,23 +481,36 @@ class NVCFRunner:
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
 
-                response.raise_for_status()
-
-                if response.status_code == 202:
-                    logger.info(f"{self.job_name}: {method} - {response.status_code} - Polling reqId for completion")
-                elif response.status_code == 200:
-                    logger.info(f"{self.job_name}: {method} - {response.status_code} - Polling completed")
-                    data = response.json()
-                    if "log" in data:
-                        log_data = data["log"]
-                        for line in log_data.split("\n"):
-                            logger.info(line)
-                    success = True
+                if response.status_code == 404 and success:
                     break
 
+                response.raise_for_status()
+
+                try:
+                    data = response.json()
+                except ValueError:
+                    logger.error("Failed to parse JSON from response")
+                    continue
+
+                if response.status_code in [200, 202]:
+                    logger.info(f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}")
+                    
+                    if 'response' in data and 'log' in data['response']:
+                        current_full_log = data['response']['log']
+                        if current_full_log != last_full_log:
+                            new_log_content = current_full_log[len(last_full_log):]
+                            for line in new_log_content.split("\n"):
+                                if line.strip():
+                                    print(line)
+                            last_full_log = current_full_log
+                    
+                    if response.status_code == 200:
+                        success = True
+
             except requests.HTTPError as http_err:
-                logger.error(f"HTTP error occurred: {http_err}")
-            except (ConnectionError, ValueError) as err:
+                if not (http_err.response.status_code == 404 and success):
+                    logger.error(f"HTTP error occurred: {http_err}")
+            except (requests.ConnectionError, ValueError) as err:
                 logger.error(f"Error while handling request: {err}")
 
             time.sleep(interval)
@@ -514,9 +528,11 @@ class NVCFRunner:
             "cmd": [
                 "conda",
                 "run",
+                "--no-capture-output",
                 "-p",
                 "/app/env",
                 "python",
+                "-u",
                 "-m",
                 "uvicorn",
                 "autotrain.api:api",
