@@ -471,7 +471,7 @@ class NVCFRunner:
         interval = float(interval)
         start_time = time.time()
         success = False
-        last_full_log = ''
+        last_full_log = ""
 
         while time.time() - start_time < timeout:
             try:
@@ -493,17 +493,19 @@ class NVCFRunner:
                     continue
 
                 if response.status_code in [200, 202]:
-                    logger.info(f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}")
-                    
-                    if 'response' in data and 'log' in data['response']:
-                        current_full_log = data['response']['log']
+                    logger.info(
+                        f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}"
+                    )
+
+                    if "response" in data and "log" in data["response"]:
+                        current_full_log = data["response"]["log"]
                         if current_full_log != last_full_log:
-                            new_log_content = current_full_log[len(last_full_log):]
+                            new_log_content = current_full_log[len(last_full_log) :]
                             for line in new_log_content.split("\n"):
                                 if line.strip():
                                     print(line)
                             last_full_log = current_full_log
-                    
+
                     if response.status_code == 200:
                         success = True
 
