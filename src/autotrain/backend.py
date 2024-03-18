@@ -403,7 +403,7 @@ class NVCFRunner:
         self.nvcf_api = os.environ.get("NVCF_API")
         self.hf_token = self.env_vars["HF_TOKEN"]
         self.instance_map = {
-            "nvcf-l40": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
+            "nvcf-l40sx1": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
             "nvcf-h100x1": {"id": "848348f8-a4e2-4242-bce9-6baa1bd70a66"},
             "nvcf-h100x2": {"id": "fb006a89-451e-4d9c-82b5-33eff257e0bf"},
             "nvcf-h100x4": {"id": "21bae5af-87e5-4132-8fc0-bf3084e59a57"},
