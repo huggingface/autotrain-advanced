@@ -239,12 +239,18 @@ def train(config):
             )
             model_ref = None
     else:
+        torch_dtype = "auto"
+        if config.mixed_precision == "bf16":
+            torch_dtype = torch.bfloat16
+        if config.mixed_precision == "fp16":
+            torch_dtype = torch.float16
         if config.trainer == "reward":
             model = AutoModelForSequenceClassification.from_pretrained(
                 config.model,
                 trust_remote_code=True,
                 num_labels=1,
                 use_flash_attention_2=config.use_flash_attention_2,
+                torch_dtype=torch_dtype,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
@@ -253,6 +259,7 @@ def train(config):
                 token=config.token,
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
+                torch_dtype=torch_dtype,
             )
             if config.model_ref is not None:
                 model_ref = AutoModelForCausalLM.from_pretrained(
@@ -261,9 +268,14 @@ def train(config):
                     token=config.token,
                     trust_remote_code=True,
                     use_flash_attention_2=config.use_flash_attention_2,
+                    torch_dtype=torch_dtype,
                 )
             else:
                 model_ref = None
+
+    logger.info(f"model dtype: {model.dtype}")
+    if config.model_ref is not None:
+        logger.info(f"model_ref dtype: {model_ref.dtype}")
 
     model.resize_token_embeddings(len(tokenizer))
     if model_ref is not None:

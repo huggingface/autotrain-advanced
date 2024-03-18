@@ -52,18 +52,7 @@ def launch_command(params):
                 "2",
             ]
         else:
-            device_name = torch.cuda.get_device_name(0)
             if params.quantization in ("int8", "int4") and params.peft:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                    str(num_gpus),
-                ]
-            elif "H 100" in device_name or "H100" in device_name:
                 cmd = [
                     "accelerate",
                     "launch",
@@ -289,18 +278,7 @@ def launch_command(params):
                 "2",
             ]
         else:
-            device_name = torch.cuda.get_device_name(0)
             if params.quantization in ("int8", "int4") and params.peft:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                    str(num_gpus),
-                ]
-            elif "H 100" in device_name or "H100" in device_name:
                 cmd = [
                     "accelerate",
                     "launch",
