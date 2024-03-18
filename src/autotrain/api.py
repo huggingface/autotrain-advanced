@@ -30,8 +30,6 @@ class BackgroundRunner:
             if not running_jobs:
                 logger.info("No running jobs found. Shutting down the server.")
                 os.kill(os.getpid(), signal.SIGINT)
-            else:
-                logger.info("No running jobs found.")
             await asyncio.sleep(30)
 
 
