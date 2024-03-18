@@ -436,6 +436,9 @@ def train(config):
         remove_unused_columns=False,
     )
 
+    if not config.disable_gradient_checkpointing:
+        training_args["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
+
     if config.mixed_precision == "fp16":
         training_args["fp16"] = True
     if config.mixed_precision == "bf16":
