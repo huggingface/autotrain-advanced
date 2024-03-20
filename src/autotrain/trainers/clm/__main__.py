@@ -251,7 +251,6 @@ def train(config):
                 num_labels=1,
                 use_flash_attention_2=config.use_flash_attention_2,
                 torch_dtype=torch_dtype,
-                use_cache=config.disable_gradient_checkpointing,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
@@ -261,7 +260,6 @@ def train(config):
                 trust_remote_code=True,
                 use_flash_attention_2=config.use_flash_attention_2,
                 torch_dtype=torch_dtype,
-                use_cache=config.disable_gradient_checkpointing,
             )
             if config.model_ref is not None:
                 model_ref = AutoModelForCausalLM.from_pretrained(
@@ -271,7 +269,6 @@ def train(config):
                     trust_remote_code=True,
                     use_flash_attention_2=config.use_flash_attention_2,
                     torch_dtype=torch_dtype,
-                    use_cache=config.disable_gradient_checkpointing,
                 )
             else:
                 model_ref = None
