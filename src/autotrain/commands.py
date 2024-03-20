@@ -75,6 +75,8 @@ def launch_command(params):
                     "none",
                     "--zero3_save_16bit_model",
                     "true",
+                    "--zero3_init_flag",
+                    "true",
                 ]
 
         if num_gpus > 0:
@@ -300,6 +302,8 @@ def launch_command(params):
                     "--offload_param_device",
                     "none",
                     "--zero3_save_16bit_model",
+                    "true",
+                    "--zero3_init_flag",
                     "true",
                 ]
         if num_gpus > 0:
