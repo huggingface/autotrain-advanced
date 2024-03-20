@@ -239,11 +239,11 @@ def train(config):
             )
             model_ref = None
     else:
-        torch_dtype = (
-            model_config.torch_dtype
-            if model_config.torch_dtype in ["auto", None]
-            else getattr(torch, model_config.torch_dtype)
-        )
+        torch_dtype = "auto"
+        if config.mixed_precision == "bf16":
+            torch_dtype = torch.bfloat16
+        if config.mixed_precision == "fp16":
+            torch_dtype = torch.float16
         if config.trainer == "reward":
             model = AutoModelForSequenceClassification.from_pretrained(
                 config.model,
