@@ -548,25 +548,21 @@ def train(config):
     with open(f"{config.project_name}/README.md", "w") as f:
         f.write(model_card)
 
-    if config.peft:
-        if config.merge_adapter:
-            logger.info("Merging adapter weights...")
-            try:
-                utils.merge_adapter(
-                    base_model_path=config.model,
-                    target_model_path=config.project_name,
-                    adapter_path=config.project_name,
-                )
-                # remove adapter weights: adapter_*
-                for file in os.listdir(config.project_name):
-                    if file.startswith("adapter_"):
-                        os.remove(f"{config.project_name}/{file}")
-            except Exception as e:
-                logger.warning(f"Failed to merge adapter weights: {e}")
-                logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
-        else:
-            utils.create_peft_handler(config)
-            utils.create_requirements_txt(config)
+    if config.peft and config.merge_adapter:
+        logger.info("Merging adapter weights...")
+        try:
+            utils.merge_adapter(
+                base_model_path=config.model,
+                target_model_path=config.project_name,
+                adapter_path=config.project_name,
+            )
+            # remove adapter weights: adapter_*
+            for file in os.listdir(config.project_name):
+                if file.startswith("adapter_"):
+                    os.remove(f"{config.project_name}/{file}")
+        except Exception as e:
+            logger.warning(f"Failed to merge adapter weights: {e}")
+            logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
 
     if config.push_to_hub:
         if PartialState().process_index == 0:
