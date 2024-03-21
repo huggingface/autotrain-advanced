@@ -29,7 +29,7 @@ MODEL_CARD = """
 ---
 tags:
 - autotrain
-- text-generation
+- text-generation{peft}
 library_name: transformers
 widget:
   - messages:
@@ -59,7 +59,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 # Prompt content: "hi"
 messages = [
-    {"role": "user", "content": "hi"}
+    {{"role": "user", "content": "hi"}}
 ]
 
 input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
@@ -160,8 +160,12 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
     tokenizer.save_pretrained(target_model_path)
 
 
-def create_model_card():
-    return MODEL_CARD.strip()
+def create_model_card(config):
+    if config.peft:
+        peft = "\n- peft"
+    else:
+        peft = ""
+    return MODEL_CARD.format(peft=peft).strip()
 
 
 def pause_endpoint(params):
