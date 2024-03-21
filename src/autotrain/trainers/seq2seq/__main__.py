@@ -110,10 +110,13 @@ def train(config):
         model.resize_token_embeddings(len(tokenizer))
 
     if config.peft:
+        target_modules = config.target_modules.split(",") if config.target_modules is not None else None
+        if target_modules:
+            target_modules = [module.strip() for module in target_modules]
         lora_config = LoraConfig(
             r=config.lora_r,
             lora_alpha=config.lora_alpha,
-            target_modules=None if len(config.target_modules) == 0 else config.target_modules,
+            target_modules=target_modules,
             lora_dropout=config.lora_dropout,
             bias="none",
             task_type=TaskType.SEQ_2_SEQ_LM,

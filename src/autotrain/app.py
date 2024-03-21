@@ -79,6 +79,8 @@ HIDDEN_PARAMS = [
     "target_column",
     "id_column",
     "target_columns",
+    "tokens_column",
+    "tags_column",
 ]
 
 PARAMS = {}
@@ -99,10 +101,10 @@ PARAMS["text-classification"] = TextClassificationParams(
 ).model_dump()
 PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
-    target_modules="all-linear",
 ).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
+    target_modules="all-linear",
 ).model_dump()
 PARAMS["tabular"] = TabularParams(
     categorical_imputer="most_frequent",
@@ -276,8 +278,8 @@ async def oauth_logout(request: Request):
     return RedirectResponse("/")
 
 
-@app.get("/params/{task}", response_class=JSONResponse)
-async def fetch_params(task: str):
+@app.get("/params/{task}/{param_type}", response_class=JSONResponse)
+async def fetch_params(task: str, param_type: str):
     """
     This function is used to fetch the parameters for a given task
     :param task: str
@@ -311,6 +313,85 @@ async def fetch_params(task: str):
                 more_hidden_params = [
                     "add_eos_token",
                 ]
+            if param_type == "basic":
+                more_hidden_params.extend(
+                    [
+                        "padding",
+                        "use_flash_attention_2",
+                        "disable_gradient_checkpointing",
+                        "logging_steps",
+                        "evaluation_strategy",
+                        "save_total_limit",
+                        "save_strategy",
+                        "auto_find_batch_size",
+                        "warmup_ratio",
+                        "weight_decay",
+                        "max_grad_norm",
+                        "seed",
+                        "quantization",
+                        "merge_adapter",
+                        "lora_r",
+                        "lora_alpha",
+                        "lora_dropout",
+                    ]
+                )
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "text-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "image-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "seq2seq" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+                "quantization",
+                "lora_r",
+                "lora_alpha",
+                "lora_dropout",
+                "target_modules",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "token-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "dreambooth":
             more_hidden_params = [
@@ -318,6 +399,28 @@ async def fetch_params(task: str):
                 "logging",
                 "bf16",
             ]
+            if param_type == "basic":
+                more_hidden_params.extend(
+                    [
+                        "prior_preservation",
+                        "prior_loss_weight",
+                        "seed",
+                        "center_crop",
+                        "train_text_encoder",
+                        "disable_gradient_checkpointing",
+                        "scale_lr",
+                        "warmup_steps",
+                        "num_cycles",
+                        "lr_power",
+                        "adam_beta1",
+                        "adam_beta2",
+                        "adam_weight_decay",
+                        "adam_epsilon",
+                        "max_grad_norm",
+                        "pre_compute_text_embeddings",
+                        "text_encoder_use_attention_mask",
+                    ]
+                )
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         return task_params
     return {"error": "Task not found"}
@@ -376,15 +479,26 @@ async def handle_form(
     column_mapping: str = Form('{"default": "value"}'),
     data_files_training: List[UploadFile] = File(...),
     data_files_valid: List[UploadFile] = File(...),
+    hub_dataset: str = Form(""),
+    train_split: str = Form(""),
+    valid_split: str = Form(""),
 ):
     """
     This function is used to handle the form submission
     """
+    train_split = train_split.strip()
+    if len(train_split) == 0:
+        train_split = None
+
+    valid_split = valid_split.strip()
+    if len(valid_split) == 0:
+        valid_split = None
+
     logger.info(f"hardware: {hardware}")
     if hardware == "Local":
         running_jobs = app_utils.get_running_jobs(DB)
         if running_jobs:
-            logger.info(f"Running jobs: {running_jobs}")
+            logger.info(f"Running jobs PIDs: {running_jobs}")
             raise HTTPException(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
@@ -403,73 +517,93 @@ async def handle_form(
     params = json.loads(params)
     column_mapping = json.loads(column_mapping)
 
-    training_files = [f.file for f in data_files_training if f.filename != ""]
+    training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
+
+    if len(training_files) > 0 and len(hub_dataset) > 0:
+        raise HTTPException(
+            status_code=400, detail="Please either upload a dataset or choose a dataset from the Hugging Face Hub."
+        )
+
+    if len(training_files) == 0 and len(hub_dataset) == 0:
+        raise HTTPException(
+            status_code=400, detail="Please upload a dataset or choose a dataset from the Hugging Face Hub."
+        )
+
+    if len(hub_dataset) > 0 and task == "dreambooth":
+        raise HTTPException(status_code=400, detail="Dreambooth does not support Hugging Face Hub datasets.")
+
+    if len(hub_dataset) > 0:
+        if not train_split:
+            raise HTTPException(status_code=400, detail="Please enter a training split.")
 
     file_extension = os.path.splitext(data_files_training[0].filename)[1]
     file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
 
-    if task == "image-classification":
-        dset = AutoTrainImageClassificationDataset(
-            train_data=training_files[0],
-            token=token,
-            project_name=project_name,
-            username=autotrain_user,
-            valid_data=validation_files[0] if validation_files else None,
-            percent_valid=None,  # TODO: add to UI
-            local=hardware.lower() == "local",
-        )
-    elif task == "dreambooth":
-        dset = AutoTrainDreamboothDataset(
-            concept_images=data_files_training,
-            concept_name=params["prompt"],
-            token=token,
-            project_name=project_name,
-            username=autotrain_user,
-            local=hardware.lower() == "local",
-        )
+    if len(hub_dataset) == 0:
+        if task == "image-classification":
+            dset = AutoTrainImageClassificationDataset(
+                train_data=training_files[0],
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                valid_data=validation_files[0] if validation_files else None,
+                percent_valid=None,  # TODO: add to UI
+                local=hardware.lower() == "local",
+            )
+        elif task == "dreambooth":
+            dset = AutoTrainDreamboothDataset(
+                concept_images=data_files_training,
+                concept_name=params["prompt"],
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                local=hardware.lower() == "local",
+            )
 
-    else:
-        if task.startswith("llm"):
-            dset_task = "lm_training"
-        elif task == "text-classification":
-            dset_task = "text_multi_class_classification"
-        elif task == "seq2seq":
-            dset_task = "seq2seq"
-        elif task.startswith("tabular"):
-            subtask = task.split(":")[-1].lower()
-            if len(column_mapping["label"]) > 1 and subtask == "classification":
-                dset_task = "tabular_multi_label_classification"
-            elif len(column_mapping["label"]) == 1 and subtask == "classification":
-                dset_task = "tabular_multi_class_classification"
-            elif len(column_mapping["label"]) > 1 and subtask == "regression":
-                dset_task = "tabular_multi_column_regression"
-            elif len(column_mapping["label"]) == 1 and subtask == "regression":
-                dset_task = "tabular_single_column_regression"
+        else:
+            if task.startswith("llm"):
+                dset_task = "lm_training"
+            elif task == "text-classification":
+                dset_task = "text_multi_class_classification"
+            elif task == "seq2seq":
+                dset_task = "seq2seq"
+            elif task.startswith("tabular"):
+                subtask = task.split(":")[-1].lower()
+                if len(column_mapping["label"]) > 1 and subtask == "classification":
+                    dset_task = "tabular_multi_label_classification"
+                elif len(column_mapping["label"]) == 1 and subtask == "classification":
+                    dset_task = "tabular_multi_class_classification"
+                elif len(column_mapping["label"]) > 1 and subtask == "regression":
+                    dset_task = "tabular_multi_column_regression"
+                elif len(column_mapping["label"]) == 1 and subtask == "regression":
+                    dset_task = "tabular_single_column_regression"
+                else:
+                    raise NotImplementedError
+            elif task == "token-classification":
+                dset_task = "text_token_classification"
             else:
                 raise NotImplementedError
-        elif task == "token-classification":
-            dset_task = "text_token_classification"
-        else:
-            raise NotImplementedError
-        logger.info(f"Task: {dset_task}")
-        logger.info(f"Column mapping: {column_mapping}")
-        dset_args = dict(
-            train_data=training_files,
-            task=dset_task,
-            token=token,
-            project_name=project_name,
-            username=autotrain_user,
-            column_mapping=column_mapping,
-            valid_data=validation_files,
-            percent_valid=None,  # TODO: add to UI
-            local=hardware.lower() == "local",
-            ext=file_extension,
-        )
-        if task in ("text-classification", "token-classification"):
-            dset_args["convert_to_class_label"] = True
-        dset = AutoTrainDataset(**dset_args)
-    data_path = dset.prepare()
+            logger.info(f"Task: {dset_task}")
+            logger.info(f"Column mapping: {column_mapping}")
+            dset_args = dict(
+                train_data=training_files,
+                task=dset_task,
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                column_mapping=column_mapping,
+                valid_data=validation_files,
+                percent_valid=None,  # TODO: add to UI
+                local=hardware.lower() == "local",
+                ext=file_extension,
+            )
+            if task in ("text-classification", "token-classification"):
+                dset_args["convert_to_class_label"] = True
+            dset = AutoTrainDataset(**dset_args)
+        data_path = dset.prepare()
+    else:
+        data_path = hub_dataset
     app_params = AppParams(
         job_params_json=json.dumps(params),
         token=token,
@@ -479,6 +613,9 @@ async def handle_form(
         data_path=data_path,
         base_model=base_model,
         column_mapping=column_mapping,
+        using_hub_dataset=len(hub_dataset) > 0,
+        train_split=None if len(hub_dataset) == 0 else train_split,
+        valid_split=None if len(hub_dataset) == 0 else valid_split,
     )
     params = app_params.munge()
     project = AutoTrainProject(params=params, backend=hardware)

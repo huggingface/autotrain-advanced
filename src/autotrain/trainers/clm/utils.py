@@ -29,9 +29,12 @@ MODEL_CARD = """
 ---
 tags:
 - autotrain
-- text-generation
+- text-generation{peft}
+library_name: transformers
 widget:
-- text: "I love AutoTrain because "
+  - messages:
+      - role: user
+        content: What is your favorite condiment?
 license: other
 ---
 
@@ -56,7 +59,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 # Prompt content: "hi"
 messages = [
-    {"role": "user", "content": "hi"}
+    {{"role": "user", "content": "hi"}}
 ]
 
 input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
@@ -67,47 +70,6 @@ response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tok
 print(response)
 ```
 
-"""
-
-PEFT_HANDLER = """
-from typing import  Dict, List, Any
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-import torch
-from peft import PeftModel
-import json
-import os
-
-
-class EndpointHandler():
-    def __init__(self, path=""):
-        base_model_path = json.load(open(os.path.join(path, "training_params.json")))["model"]
-        model = AutoModelForCausalLM.from_pretrained(
-            base_model_path,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-            trust_remote_code=True,
-            device_map="auto",
-        )
-        tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-        model.resize_token_embeddings(len(tokenizer))
-        model = PeftModel.from_pretrained(model, path)
-        model = model.merge_and_unload()
-        self.pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
-
-    def __call__(self, data: Any) -> List[List[Dict[str, float]]]:
-        inputs = data.pop("inputs", data)
-        parameters = data.pop("parameters", None)
-        if parameters is not None:
-            prediction = self.pipeline(inputs, **parameters)
-        else:
-            prediction = self.pipeline(inputs)
-        return prediction
-
-"""
-
-REQUIREMENTS_TXT = """
-peft==0.9.0
-transformers==4.38.2
 """
 
 
@@ -175,26 +137,6 @@ def tokenize(examples, tokenizer, config):
     return output
 
 
-def _tokenize(prompt, tokenizer, config):
-    result = tokenizer(
-        prompt,
-        truncation=True,
-        max_length=tokenizer.model_max_length,
-        padding=False,
-        return_tensors=None,
-    )
-    if result["input_ids"][-1] != tokenizer.eos_token_id and config.add_eos_token:
-        if len(result["input_ids"]) >= tokenizer.model_max_length:
-            result["input_ids"] = result["input_ids"][:-1]
-            result["attention_mask"] = result["attention_mask"][:-1]
-        result["input_ids"].append(tokenizer.eos_token_id)
-        result["attention_mask"].append(1)
-
-    result["labels"] = result["input_ids"].copy()
-
-    return result
-
-
 def merge_adapter(base_model_path, target_model_path, adapter_path):
     logger.info("Loading adapter...")
     model = AutoModelForCausalLM.from_pretrained(
@@ -218,8 +160,12 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
     tokenizer.save_pretrained(target_model_path)
 
 
-def create_model_card():
-    return MODEL_CARD.strip()
+def create_model_card(config):
+    if config.peft:
+        peft = "\n- peft"
+    else:
+        peft = ""
+    return MODEL_CARD.format(peft=peft).strip()
 
 
 def pause_endpoint(params):
@@ -230,18 +176,6 @@ def pause_endpoint(params):
     headers = {"Authorization": f"Bearer {params.token}"}
     r = requests.post(api_url, headers=headers, timeout=30)
     return r.json()
-
-
-def create_peft_handler(config):
-    txt = PEFT_HANDLER.strip()
-    with open(f"{config.project_name}/handler.py", "w", encoding="utf-8") as f:
-        f.write(txt)
-
-
-def create_requirements_txt(config):
-    txt = REQUIREMENTS_TXT.strip()
-    with open(f"{config.project_name}/requirements.txt", "w", encoding="utf-8") as f:
-        f.write(txt)
 
 
 def apply_chat_template(
