@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -42,4 +42,4 @@ class Seq2SeqParams(AutoTrainParams):
     lora_r: int = Field(16, title="LoRA-R")
     lora_alpha: int = Field(32, title="LoRA-Alpha")
     lora_dropout: float = Field(0.05, title="LoRA-Dropout")
-    target_modules: List[str] = Field(["all-linear"], title="Target modules for PEFT")
+    target_modules: str = Field("all-linear", title="Target modules for PEFT")

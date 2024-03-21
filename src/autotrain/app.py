@@ -79,6 +79,8 @@ HIDDEN_PARAMS = [
     "target_column",
     "id_column",
     "target_columns",
+    "tokens_column",
+    "tags_column",
 ]
 
 PARAMS = {}
@@ -99,10 +101,10 @@ PARAMS["text-classification"] = TextClassificationParams(
 ).model_dump()
 PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
-    target_modules="all-linear",
 ).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
+    target_modules="all-linear",
 ).model_dump()
 PARAMS["tabular"] = TabularParams(
     categorical_imputer="most_frequent",
@@ -276,8 +278,8 @@ async def oauth_logout(request: Request):
     return RedirectResponse("/")
 
 
-@app.get("/params/{task}", response_class=JSONResponse)
-async def fetch_params(task: str):
+@app.get("/params/{task}/{param_type}", response_class=JSONResponse)
+async def fetch_params(task: str, param_type: str):
     """
     This function is used to fetch the parameters for a given task
     :param task: str
@@ -311,6 +313,86 @@ async def fetch_params(task: str):
                 more_hidden_params = [
                     "add_eos_token",
                 ]
+            if param_type == "basic":
+                more_hidden_params.extend(
+                    [
+                        "padding",
+                        "use_flash_attention_2",
+                        "disable_gradient_checkpointing",
+                        "logging_steps",
+                        "evaluation_strategy",
+                        "save_total_limit",
+                        "save_strategy",
+                        "auto_find_batch_size",
+                        "warmup_ratio",
+                        "weight_decay",
+                        "max_grad_norm",
+                        "seed",
+                        "quantization",
+                        "merge_adapter",
+                        "lora_r",
+                        "lora_alpha",
+                        "lora_dropout",
+                    ]
+                )
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "text-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "image-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "seq2seq" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+                "peft",
+                "quantization",
+                "lora_r",
+                "lora_alpha",
+                "lora_dropout",
+                "target_modules",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "token-classification" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "save_strategy",
+                "evaluation_strategy",
+            ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "dreambooth":
             more_hidden_params = [
@@ -318,6 +400,28 @@ async def fetch_params(task: str):
                 "logging",
                 "bf16",
             ]
+            if param_type == "basic":
+                more_hidden_params.extend(
+                    [
+                        "prior_preservation",
+                        "prior_loss_weight",
+                        "seed",
+                        "center_crop",
+                        "train_text_encoder",
+                        "disable_gradient_checkpointing",
+                        "scale_lr",
+                        "warmup_steps",
+                        "num_cycles",
+                        "lr_power",
+                        "adam_beta1",
+                        "adam_beta2",
+                        "adam_weight_decay",
+                        "adam_epsilon",
+                        "max_grad_norm",
+                        "pre_compute_text_embeddings",
+                        "text_encoder_use_attention_mask",
+                    ]
+                )
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         return task_params
     return {"error": "Task not found"}
