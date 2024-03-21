@@ -90,7 +90,7 @@
           .then(response => response.json()) // Assuming the response is in JSON format
           .then(data => {
             // Construct the message to display
-            let message = data.model_training ? 'Running jobs: ' + data.pids.join(', ') : 'No running jobs';
+            let message = data.model_training ? 'Running job PID(s): ' + data.pids.join(', ') : 'No running jobs';
 
             // Update the paragraph with the status of model training
             let statusParagraph = document.getElementById('is_model_training');

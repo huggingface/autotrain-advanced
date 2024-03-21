@@ -498,7 +498,7 @@ async def handle_form(
     if hardware == "Local":
         running_jobs = app_utils.get_running_jobs(DB)
         if running_jobs:
-            logger.info(f"Running jobs: {running_jobs}")
+            logger.info(f"Running jobs PIDs: {running_jobs}")
             raise HTTPException(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
