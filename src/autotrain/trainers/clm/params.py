@@ -16,7 +16,7 @@ class LLMTrainingParams(AutoTrainParams):
     add_eos_token: bool = Field(True, title="Add EOS token")
     block_size: Union[int, List[int]] = Field(-1, title="Block size")
     model_max_length: int = Field(2048, title="Model max length")
-    padding: Optional[str] = Field(None, title="Padding side")
+    padding: Optional[str] = Field("right", title="Padding side")
 
     # trainer params
     trainer: str = Field("default", title="Trainer type")
@@ -31,9 +31,9 @@ class LLMTrainingParams(AutoTrainParams):
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     lr: float = Field(3e-5, title="Learning rate")
     epochs: int = Field(1, title="Number of training epochs")
-    batch_size: int = Field(2, title="Training batch size")
+    batch_size: int = Field(1, title="Training batch size")
     warmup_ratio: float = Field(0.1, title="Warmup proportion")
-    gradient_accumulation: int = Field(1, title="Gradient accumulation steps")
+    gradient_accumulation: int = Field(4, title="Gradient accumulation steps")
     optimizer: str = Field("adamw_torch", title="Optimizer")
     scheduler: str = Field("linear", title="Scheduler")
     weight_decay: float = Field(0.0, title="Weight decay")
@@ -42,7 +42,7 @@ class LLMTrainingParams(AutoTrainParams):
     chat_template: Optional[str] = Field(None, title="Chat template, one of: None, zephyr, chatml or tokenizer")
 
     # peft
-    quantization: Optional[str] = Field(None, title="int4, int8, or None")
+    quantization: Optional[str] = Field("int4", title="int4, int8, or None")
     target_modules: Optional[str] = Field("all-linear", title="Target modules")
     merge_adapter: bool = Field(False, title="Merge adapter")
     peft: bool = Field(False, title="Use PEFT")

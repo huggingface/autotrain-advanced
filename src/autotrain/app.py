@@ -373,7 +373,6 @@ async def fetch_params(task: str, param_type: str):
                 "save_total_limit",
                 "save_strategy",
                 "evaluation_strategy",
-                "peft",
                 "quantization",
                 "lora_r",
                 "lora_alpha",
