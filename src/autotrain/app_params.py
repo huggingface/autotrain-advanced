@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from typing import Optional
 
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -20,6 +21,13 @@ class AppParams:
     data_path: str
     base_model: str
     column_mapping: dict
+    train_split: Optional[str] = None
+    valid_split: Optional[str] = None
+    using_hub_dataset: Optional[bool] = False
+
+    def __post_init__(self):
+        if self.using_hub_dataset and not self.train_split:
+            raise ValueError("train_split is required when using a hub dataset")
 
     def munge(self):
         if self.task == "text-classification":
@@ -52,9 +60,15 @@ class AppParams:
     def _munge_params_llm(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["text_column"] = "autotrain_text"
-        _params["prompt_text_column"] = "autotrain_prompt"
-        _params["rejected_text_column"] = "autotrain_rejected_text"
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["prompt_text_column"] = "autotrain_prompt"
+            _params["rejected_text_column"] = "autotrain_rejected_text"
+        else:
+            _params["text_column"] = self.column_mapping.get("text", "text")
+            _params["prompt_text_column"] = self.column_mapping.get("prompt", "prompt")
+            _params["rejected_text_column"] = self.column_mapping.get("rejected_text", "rejected_text")
+            _params["train_split"] = self.train_split
         _params["log"] = "tensorboard"
 
         trainer = self.task.split(":")[1]
@@ -66,47 +80,78 @@ class AppParams:
     def _munge_params_text_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["text_column"] = "autotrain_text"
-        _params["target_column"] = "autotrain_label"
-        _params["valid_split"] = "validation"
-
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text", "text")
+            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
         return TextClassificationParams(**_params)
 
     def _munge_params_token_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["text_column"] = "autotrain_text"
-        _params["target_column"] = "autotrain_label"
-        _params["valid_split"] = "validation"
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text", "text")
+            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
 
         return TokenClassificationParams(**_params)
 
     def _munge_params_seq2seq(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["text_column"] = "autotrain_text"
-        _params["target_column"] = "autotrain_label"
-        _params["valid_split"] = "validation"
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text", "text")
+            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
 
         return Seq2SeqParams(**_params)
 
     def _munge_params_img_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["image_column"] = "autotrain_image"
-        _params["target_column"] = "autotrain_label"
-        _params["valid_split"] = "validation"
+        if not self.using_hub_dataset:
+            _params["image_column"] = "autotrain_image"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["image_column"] = self.column_mapping.get("image", "image")
+            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
 
         return ImageClassificationParams(**_params)
 
     def _munge_params_tabular(self):
         _params = self._munge_common_params()
-        _params["id_column"] = "autotrain_id"
-        _params["valid_split"] = "validation"
-        if len(self.column_mapping["label"]) == 1:
-            _params["target_columns"] = ["autotrain_label"]
+        if not self.using_hub_dataset:
+            _params["id_column"] = "autotrain_id"
+            _params["valid_split"] = "validation"
+            if len(self.column_mapping["label"]) == 1:
+                _params["target_columns"] = ["autotrain_label"]
+            else:
+                _params["target_columns"] = [
+                    "autotrain_label_" + str(i) for i in range(len(self.column_mapping["label"]))
+                ]
         else:
-            _params["target_columns"] = ["autotrain_label_" + str(i) for i in range(len(self.column_mapping["label"]))]
+            _params["id_column"] = self.column_mapping.get("id", "id")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+            _params["target_columns"] = self.column_mapping.get("label", "label")
 
         if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
             _params["categorical_imputer"] = None

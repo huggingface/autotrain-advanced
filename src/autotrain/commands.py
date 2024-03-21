@@ -75,6 +75,10 @@ def launch_command(params):
                     "none",
                     "--zero3_save_16bit_model",
                     "true",
+                    "--zero3_init_flag",
+                    "true",
+                    "--gradient_accumulation_steps",
+                    str(params.gradient_accumulation),
                 ]
 
         if num_gpus > 0:
@@ -301,6 +305,10 @@ def launch_command(params):
                     "none",
                     "--zero3_save_16bit_model",
                     "true",
+                    "--zero3_init_flag",
+                    "true",
+                    "--gradient_accumulation_steps",
+                    str(params.gradient_accumulation),
                 ]
         if num_gpus > 0:
             cmd.append("--mixed_precision")

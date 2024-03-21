@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# taken from: https://github.com/huggingface/diffusers/blob/v0.26.3-patch/examples/dreambooth/train_dreambooth_lora.py
 # coding=utf-8
+# taken from: https://github.com/huggingface/diffusers/blob/v0.27.2-patch/
 # Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,10 +57,6 @@ from transformers import AutoTokenizer, PretrainedConfig
 from autotrain import logger
 
 
-if is_wandb_available():
-    import wandb
-
-
 def log_validation(
     pipeline,
     args,
@@ -111,14 +107,6 @@ def log_validation(
         if tracker.name == "tensorboard":
             np_images = np.stack([np.asarray(img) for img in images])
             tracker.writer.add_images(phase_name, np_images, epoch, dataformats="NHWC")
-        if tracker.name == "wandb":
-            tracker.log(
-                {
-                    phase_name: [
-                        wandb.Image(image, caption=f"{i}: {args.validation_prompt}") for i, image in enumerate(images)
-                    ]
-                }
-            )
 
     del pipeline
     torch.cuda.empty_cache()

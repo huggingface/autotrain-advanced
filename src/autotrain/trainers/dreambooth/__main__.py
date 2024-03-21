@@ -69,8 +69,6 @@ def train(config):
             output_dir = config.project_name
             seed = config.seed
             resolution = config.resolution
-            crops_coords_top_left_h = 0
-            crops_coords_top_left_w = 0
             center_crop = config.center_crop
             train_text_encoder = config.train_text_encoder
             train_batch_size = config.batch_size
@@ -114,6 +112,9 @@ def train(config):
             local_rank = config.local_rank
             enable_xformers_memory_efficient_attention = config.xformers
             rank = config.rank
+            do_edm_style_training = False
+            random_flip = False
+            use_dora = False
 
         _args = Args()
         main(_args)
