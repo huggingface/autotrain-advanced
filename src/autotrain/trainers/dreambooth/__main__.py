@@ -2,8 +2,11 @@ import argparse
 import json
 import os
 
+from diffusers.utils import convert_all_state_dict_to_peft, convert_state_dict_to_kohya
 from huggingface_hub import create_repo, snapshot_download, upload_folder
+from safetensors.torch import load_file, save_file
 
+from autotrain import logger
 from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data
 from autotrain.trainers.dreambooth import utils
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
@@ -194,6 +197,16 @@ def train(config):
     # add config.prompt as a text file in the output directory
     with open(f"{config.project_name}/prompt.txt", "w") as f:
         f.write(config.prompt)
+
+    try:
+        logger.info("Converting model to Kohya format...")
+        lora_state_dict = load_file(f"{config.project_name}/pytorch_lora_weights.safetensors")
+        peft_state_dict = convert_all_state_dict_to_peft(lora_state_dict)
+        kohya_state_dict = convert_state_dict_to_kohya(peft_state_dict)
+        save_file(kohya_state_dict, f"{config.project_name}/pytorch_lora_weights_kohya.safetensors")
+    except Exception as e:
+        logger.warning(e)
+        logger.warning("Failed to convert model to Kohya format, skipping...")
 
     if config.push_to_hub:
         remove_autotrain_data(config)
