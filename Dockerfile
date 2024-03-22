@@ -39,12 +39,12 @@ RUN apt-get update &&  \
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
     git lfs install
 
-WORKDIR /app
+WORKDIR /app/code
 RUN mkdir -p /app/.cache
 ENV HF_HOME="/app/.cache"
 RUN chown -R 1000:1000 /app
 USER 1000
-ENV HOME=/app
+ENV HOME=/app/code
 
 ENV PYTHONPATH=$HOME/app \
     PYTHONUNBUFFERED=1 \
@@ -68,11 +68,15 @@ RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c
     conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya
 # conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit && conda clean -ya
 
-COPY --chown=1000:1000 . /app/
+COPY --chown=1000:1000 . /app/code
 
-RUN pip install -e . && \
-    python -m nltk.downloader punkt && \
-    autotrain setup && \
-    pip install flash-attn && \
-    pip install deepspeed && \
-    pip cache purge
+RUN conda run -p /app/env/ /app/env/bin/pip install accelerate
+
+RUN conda run -p /app/env/ /app/env/bin/pip install -e /app/code && \
+    conda run -p /app/env/ /app/env/bin/python -m nltk.downloader punkt && \
+    conda run -p /app/env/ /app/env/bin/autotrain setup && \
+    conda run -p /app/env/ /app/env/bin/pip install flash-attn && \
+    conda run -p /app/env/ /app/env/bin/pip install deepspeed && \
+    conda run -p /app/env/ /app/env/bin/pip cache purge
+
+CMD ["conda", "run", "--no-capture-output", "-p", "/app/env", "/app/env/bin/autotrain", "app", "--port", "8080", "--host", "0.0.0.0"]

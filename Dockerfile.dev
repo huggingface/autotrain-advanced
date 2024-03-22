@@ -39,15 +39,25 @@ RUN apt-get update && \
 # Activate the environment and install AutoTrain-Advanced and dependencies
 RUN echo ".  activate /app/env" > ~/.bashrc && \
     . ~/.bashrc && \
-    pip install autotrain-advanced && \
     conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && \
     conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc && \
     conda clean -ya
 
+
 WORKDIR /app/code
+
 
 # Copy your application code (ensure you have a .dockerignore file)
 COPY . /app/code
 
+RUN conda run -p /app/env/ /app/env/bin/pip install accelerate
+
+RUN conda run -p /app/env/ /app/env/bin/pip install -e /app/code && \
+    conda run -p /app/env/ /app/env/bin/python -m nltk.downloader punkt && \
+    conda run -p /app/env/ /app/env/bin/autotrain setup && \
+    conda run -p /app/env/ /app/env/bin/pip install flash-attn && \
+    conda run -p /app/env/ /app/env/bin/pip install deepspeed && \
+    conda run -p /app/env/ /app/env/bin/pip cache purge
+
 # Set the default command to run your application
-CMD ["conda", "run", "-p", "/app/env", "autotrain", "app", "--port", "8080", "--host", "0.0.0.0"]
+CMD ["conda", "run", "--no-capture-output", "-p", "/app/env", "/app/env/bin/autotrain", "app", "--port", "8080", "--host", "0.0.0.0"]
