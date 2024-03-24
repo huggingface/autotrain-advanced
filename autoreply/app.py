@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
@@ -22,8 +23,6 @@ class ModelManager:
         return self.models[model_path], self.tokenizers[model_path]
 
 model_manager = ModelManager()
-
-
 
 app = FastAPI()
 
@@ -47,6 +46,23 @@ async def generate_text(request: PredictionRequest):
         # Generate response
         output_ids = model.generate(input_ids.to('cuda'), max_new_tokens=80)
         response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
+
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/meme/")
+async def generate_text(model_path: str, content: str):
+    # Load the model and tokenizer or get them if already loaded
+    model, tokenizer = model_manager.load_model(model_path)
+    
+    try:
+        # Assuming a simplified handling where you directly tokenize the input content
+        input_ids = tokenizer.encode(content, return_tensors="pt")
+        
+        # Generate response
+        output_ids = model.generate(input_ids.to('cuda'), max_new_tokens=80)
+        response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
         return {"response": response}
     except Exception as e:
