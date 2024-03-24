@@ -67,15 +67,15 @@ RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c
     conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya
 # conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit && conda clean -ya
 
-COPY --chown=1000:1000 . /app/code
+COPY . /app/code
 
 RUN conda run -p /app/env/ /app/env/bin/pip install accelerate
 
-RUN conda run -p /app/env/ /app/env/bin/pip install -e /app/code && \
-    conda run -p /app/env/ /app/env/bin/python -m nltk.downloader punkt && \
-    conda run -p /app/env/ /app/env/bin/autotrain setup && \
-    conda run -p /app/env/ /app/env/bin/pip install flash-attn && \
-    conda run -p /app/env/ /app/env/bin/pip install deepspeed 
+RUN conda run -p /app/env/ /app/env/bin/pip install -e /app/code
+RUN conda run -p /app/env/ /app/env/bin/python -m nltk.downloader punkt
+RUN conda run -p /app/env/ /app/env/bin/autotrain setup
+RUN conda run -p /app/env/ /app/env/bin/pip install flash-attn
+RUN conda run -p /app/env/ /app/env/bin/pip install deepspeed 
 
 RUN conda run -p /app/env/ /app/env/bin/pip install fastapi
 
