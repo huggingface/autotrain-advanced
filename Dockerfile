@@ -42,8 +42,7 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
 WORKDIR /app/code
 RUN mkdir -p /app/.cache
 ENV HF_HOME="/app/.cache"
-RUN chown -R 1000:1000 /app
-USER 1000
+
 ENV HOME=/app/code
 
 ENV PYTHONPATH=$HOME/app \
@@ -76,7 +75,10 @@ RUN conda run -p /app/env/ /app/env/bin/pip install -e /app/code && \
     conda run -p /app/env/ /app/env/bin/python -m nltk.downloader punkt && \
     conda run -p /app/env/ /app/env/bin/autotrain setup && \
     conda run -p /app/env/ /app/env/bin/pip install flash-attn && \
-    conda run -p /app/env/ /app/env/bin/pip install deepspeed && \
-    conda run -p /app/env/ /app/env/bin/pip cache purge
+    conda run -p /app/env/ /app/env/bin/pip install deepspeed 
+
+RUN conda run -p /app/env/ /app/env/bin/pip install fastapi
+
+#RUN conda run -p /app/env/ /app/env/bin/pip cache purge
 
 CMD ["conda", "run", "--no-capture-output", "-p", "/app/env", "/app/env/bin/autotrain", "app", "--port", "8080", "--host", "0.0.0.0"]
