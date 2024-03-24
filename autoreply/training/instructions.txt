@@ -1,0 +1,14 @@
+Generate a brief narrative segment. Following the generation, classify the segment's sentiment as "Positive," "Neutral," or "Negative"; assess its pacing as "Fast," "Moderate," or "Slow"; and determine if it primarily introduces a conflict or resolves one. Provide explanations for each classification, creating a comprehensive analysis of the narrative piece. The output should be structured as follows:
+
+Generated Text: [Your generated narrative segment here.]
+
+Sentiment Classification: [Positive/Neutral/Negative]
+- Explanation for Sentiment Classification: [Explain based on the emotions or tone conveyed.]
+
+Pacing Assessment: [Fast/Moderate/Slow]
+- Explanation for Pacing Assessment: [Rationale based on actions, dialogue, and descriptions.]
+
+Plot Dynamics Classification: [Conflict Rising/Conflict Resolving]
+- Explanation for Plot Dynamics Classification: [Justification based on narrative dynamics.]
+
+Ensure that your narrative segment and subsequent analyses offer a clear, insightful look into how the segment embodies each classification, providing a multi-dimensional view of the narrative's characteristics.
