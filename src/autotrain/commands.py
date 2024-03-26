@@ -77,6 +77,8 @@ def launch_command(params):
                     "true",
                     "--zero3_init_flag",
                     "true",
+                    "--deepspeed_multinode_launcher",
+                    "standard",
                     "--gradient_accumulation_steps",
                     str(params.gradient_accumulation),
                 ]
@@ -307,6 +309,8 @@ def launch_command(params):
                     "true",
                     "--zero3_init_flag",
                     "true",
+                    "--deepspeed_multinode_launcher",
+                    "standard",
                     "--gradient_accumulation_steps",
                     str(params.gradient_accumulation),
                 ]

@@ -194,11 +194,68 @@ def train(config):
                 config=config,
             )
 
+    # creating training arguments
+    logger.info("creating training arguments...")
+    if config.logging_steps == -1:
+        if config.valid_split is not None:
+            logging_steps = int(0.2 * len(valid_data) / config.batch_size)
+        else:
+            logging_steps = int(0.2 * len(train_data) / config.batch_size)
+        if logging_steps == 0:
+            logging_steps = 1
+        if logging_steps > 25:
+            logging_steps = 25
+        config.logging_steps = logging_steps
+    else:
+        logging_steps = config.logging_steps
+
+    logger.info(f"Logging steps: {logging_steps}")
+
+    training_args = dict(
+        output_dir=config.project_name,
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        learning_rate=config.lr,
+        num_train_epochs=config.epochs,
+        evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
+        logging_steps=logging_steps,
+        save_total_limit=config.save_total_limit,
+        save_strategy=config.save_strategy,
+        gradient_accumulation_steps=config.gradient_accumulation,
+        report_to=config.log,
+        auto_find_batch_size=config.auto_find_batch_size,
+        lr_scheduler_type=config.scheduler,
+        optim=config.optimizer,
+        warmup_ratio=config.warmup_ratio,
+        weight_decay=config.weight_decay,
+        max_grad_norm=config.max_grad_norm,
+        push_to_hub=False,
+        load_best_model_at_end=True if config.valid_split is not None else False,
+        ddp_find_unused_parameters=False,
+        gradient_checkpointing=not config.disable_gradient_checkpointing,
+        remove_unused_columns=False,
+    )
+
+    if not config.disable_gradient_checkpointing:
+        training_args["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
+
+    if config.mixed_precision == "fp16":
+        training_args["fp16"] = True
+    if config.mixed_precision == "bf16":
+        training_args["bf16"] = True
+
+    if config.trainer == "reward":
+        training_args["max_length"] = config.block_size
+        args = RewardConfig(**training_args)
+    else:
+        args = TrainingArguments(**training_args)
+
     logger.info("loading model config...")
     model_config = AutoConfig.from_pretrained(
         config.model,
         token=config.token,
         trust_remote_code=True,
+        use_cache=config.disable_gradient_checkpointing,
     )
     if config.trainer == "reward":
         model_config.num_labels = 1
@@ -277,9 +334,9 @@ def train(config):
     if config.model_ref is not None:
         logger.info(f"model_ref dtype: {model_ref.dtype}")
 
-    model.resize_token_embeddings(len(tokenizer))
+    model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
     if model_ref is not None:
-        model_ref.resize_token_embeddings(len(tokenizer))
+        model_ref.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
     if config.peft:
         logger.info("preparing peft model...")
         if config.quantization is not None:
@@ -396,59 +453,6 @@ def train(config):
 
     logger.info("creating trainer")
     # trainer specific
-    if config.logging_steps == -1:
-        if config.valid_split is not None:
-            logging_steps = int(0.2 * len(valid_data) / config.batch_size)
-        else:
-            logging_steps = int(0.2 * len(train_data) / config.batch_size)
-        if logging_steps == 0:
-            logging_steps = 1
-        if logging_steps > 25:
-            logging_steps = 25
-        config.logging_steps = logging_steps
-    else:
-        logging_steps = config.logging_steps
-
-    logger.info(f"Logging steps: {logging_steps}")
-
-    training_args = dict(
-        output_dir=config.project_name,
-        per_device_train_batch_size=config.batch_size,
-        per_device_eval_batch_size=config.batch_size,
-        learning_rate=config.lr,
-        num_train_epochs=config.epochs,
-        evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
-        logging_steps=logging_steps,
-        save_total_limit=config.save_total_limit,
-        save_strategy=config.save_strategy,
-        gradient_accumulation_steps=config.gradient_accumulation,
-        report_to=config.log,
-        auto_find_batch_size=config.auto_find_batch_size,
-        lr_scheduler_type=config.scheduler,
-        optim=config.optimizer,
-        warmup_ratio=config.warmup_ratio,
-        weight_decay=config.weight_decay,
-        max_grad_norm=config.max_grad_norm,
-        push_to_hub=False,
-        load_best_model_at_end=True if config.valid_split is not None else False,
-        ddp_find_unused_parameters=False,
-        gradient_checkpointing=not config.disable_gradient_checkpointing,
-        remove_unused_columns=False,
-    )
-
-    if not config.disable_gradient_checkpointing:
-        training_args["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
-
-    if config.mixed_precision == "fp16":
-        training_args["fp16"] = True
-    if config.mixed_precision == "bf16":
-        training_args["bf16"] = True
-
-    if config.trainer == "reward":
-        training_args["max_length"] = config.block_size
-        args = RewardConfig(**training_args)
-    else:
-        args = TrainingArguments(**training_args)
 
     callbacks = [UploadLogs(config=config)]
     if config.peft and not is_deepspeed_enabled:
@@ -458,6 +462,9 @@ def train(config):
 
     # if config.peft and is_deepspeed_enabled:
     #     callbacks.append(SaveDeepSpeedPeftModelCallback)
+
+    if torch.__version__ >= "2" and sys.platform != "win32":
+        model = torch.compile(model)
 
     trainer_args = dict(
         args=args,
@@ -521,10 +528,6 @@ def train(config):
         )
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")
-    model.config.use_cache = False
-
-    if torch.__version__ >= "2" and sys.platform != "win32":
-        model = torch.compile(model)
 
     for name, module in trainer.model.named_modules():
         if isinstance(module, LoraLayer):
@@ -540,12 +543,13 @@ def train(config):
     trainer.train()
 
     logger.info("Finished training, saving model...")
+    trainer.model.config.use_cache = True
     trainer.save_model(config.project_name)
 
     model_card = utils.create_model_card(config)
 
     # save model card to output directory as README.md
-    with open(f"{config.project_name}/README.md", "w") as f:
+    with open(f"{config.project_name}/README.md", "w", encoding="utf-8") as f:
         f.write(model_card)
 
     if config.peft and config.merge_adapter:
