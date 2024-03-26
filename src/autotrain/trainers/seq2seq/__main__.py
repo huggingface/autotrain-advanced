@@ -70,61 +70,7 @@ def train(config):
                 token=config.token,
             )
 
-    model_config = AutoConfig.from_pretrained(config.model, token=config.token, trust_remote_code=True)
-
-    if config.peft:
-        if config.quantization == "int4":
-            raise NotImplementedError("int4 quantization is not supported")
-        # if config.use_int4:
-        #     bnb_config = BitsAndBytesConfig(
-        #         load_in_4bit=config.use_int4,
-        #         bnb_4bit_quant_type="nf4",
-        #         bnb_4bit_compute_dtype=torch.float16,
-        #         bnb_4bit_use_double_quant=False,
-        #     )
-        #     config.fp16 = True
-        if config.quantization == "int8":
-            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        else:
-            bnb_config = None
-
-        model = AutoModelForSeq2SeqLM.from_pretrained(
-            config.model,
-            config=model_config,
-            token=config.token,
-            quantization_config=bnb_config,
-            trust_remote_code=True,
-        )
-    else:
-        model = AutoModelForSeq2SeqLM.from_pretrained(
-            config.model,
-            config=model_config,
-            token=config.token,
-            trust_remote_code=True,
-        )
-
     tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
-
-    embedding_size = model.get_input_embeddings().weight.shape[0]
-    if len(tokenizer) > embedding_size:
-        model.resize_token_embeddings(len(tokenizer))
-
-    if config.peft:
-        target_modules = config.target_modules.split(",") if config.target_modules is not None else None
-        if target_modules:
-            target_modules = [module.strip() for module in target_modules]
-        lora_config = LoraConfig(
-            r=config.lora_r,
-            lora_alpha=config.lora_alpha,
-            target_modules=target_modules,
-            lora_dropout=config.lora_dropout,
-            bias="none",
-            task_type=TaskType.SEQ_2_SEQ_LM,
-        )
-        if config.quantization is not None:
-            model = prepare_model_for_kbit_training(model)
-
-        model = get_peft_model(model, lora_config)
 
     train_data = Seq2SeqDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
@@ -178,6 +124,61 @@ def train(config):
         callbacks_to_use = []
 
     args = Seq2SeqTrainingArguments(**training_args)
+
+    model_config = AutoConfig.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+
+    if config.peft:
+        if config.quantization == "int4":
+            raise NotImplementedError("int4 quantization is not supported")
+        # if config.use_int4:
+        #     bnb_config = BitsAndBytesConfig(
+        #         load_in_4bit=config.use_int4,
+        #         bnb_4bit_quant_type="nf4",
+        #         bnb_4bit_compute_dtype=torch.float16,
+        #         bnb_4bit_use_double_quant=False,
+        #     )
+        #     config.fp16 = True
+        if config.quantization == "int8":
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            bnb_config = None
+
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            config.model,
+            config=model_config,
+            token=config.token,
+            quantization_config=bnb_config,
+            trust_remote_code=True,
+        )
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            config.model,
+            config=model_config,
+            token=config.token,
+            trust_remote_code=True,
+        )
+
+    embedding_size = model.get_input_embeddings().weight.shape[0]
+    if len(tokenizer) > embedding_size:
+        model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
+
+    if config.peft:
+        target_modules = config.target_modules.split(",") if config.target_modules is not None else None
+        if target_modules:
+            target_modules = [module.strip() for module in target_modules]
+        lora_config = LoraConfig(
+            r=config.lora_r,
+            lora_alpha=config.lora_alpha,
+            target_modules=target_modules,
+            lora_dropout=config.lora_dropout,
+            bias="none",
+            task_type=TaskType.SEQ_2_SEQ_LM,
+        )
+        if config.quantization is not None:
+            model = prepare_model_for_kbit_training(model)
+
+        model = get_peft_model(model, lora_config)
+
     _s2s_metrics = partial(utils._seq2seq_metrics, tokenizer=tokenizer)
     trainer_args = dict(
         args=args,
@@ -211,7 +212,7 @@ def train(config):
     model_card = utils.create_model_card(config, trainer)
 
     # save model card to output directory as README.md
-    with open(f"{config.project_name}/README.md", "w") as f:
+    with open(f"{config.project_name}/README.md", "w", encoding="utf-8") as f:
         f.write(model_card)
 
     if config.push_to_hub:
