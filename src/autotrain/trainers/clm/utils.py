@@ -29,6 +29,7 @@ MODEL_CARD = """
 ---
 tags:
 - autotrain
+- text-generation-inference
 - text-generation{peft}
 library_name: transformers
 widget:
