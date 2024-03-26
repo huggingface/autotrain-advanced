@@ -463,6 +463,9 @@ def train(config):
     # if config.peft and is_deepspeed_enabled:
     #     callbacks.append(SaveDeepSpeedPeftModelCallback)
 
+    if torch.__version__ >= "2" and sys.platform != "win32":
+        model = torch.compile(model)
+
     trainer_args = dict(
         args=args,
         model=model,
@@ -525,10 +528,6 @@ def train(config):
         )
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")
-    model.config.use_cache = False
-
-    if torch.__version__ >= "2" and sys.platform != "win32":
-        model = torch.compile(model)
 
     for name, module in trainer.model.named_modules():
         if isinstance(module, LoraLayer):
@@ -544,6 +543,7 @@ def train(config):
     trainer.train()
 
     logger.info("Finished training, saving model...")
+    trainer.model.config.use_cache = True
     trainer.save_model(config.project_name)
 
     model_card = utils.create_model_card(config)

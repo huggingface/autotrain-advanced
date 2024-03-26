@@ -125,7 +125,12 @@ def train(config):
 
     args = Seq2SeqTrainingArguments(**training_args)
 
-    model_config = AutoConfig.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+    model_config = AutoConfig.from_pretrained(
+        config.model,
+        token=config.token,
+        trust_remote_code=True,
+        use_cache=False,
+    )
 
     if config.peft:
         if config.quantization == "int4":
@@ -180,6 +185,10 @@ def train(config):
         model = get_peft_model(model, lora_config)
 
     _s2s_metrics = partial(utils._seq2seq_metrics, tokenizer=tokenizer)
+
+    if torch.__version__ >= "2" and sys.platform != "win32":
+        model = torch.compile(model)
+
     trainer_args = dict(
         args=args,
         model=model,
@@ -195,19 +204,14 @@ def train(config):
         tokenizer=tokenizer,
     )
 
-    model.config.use_cache = False
-
-    if torch.__version__ >= "2" and sys.platform != "win32":
-        model = torch.compile(model)
-
     for name, module in trainer.model.named_modules():
         if "norm" in name:
             module = module.to(torch.float32)
     trainer.train()
 
     logger.info("Finished training, saving model...")
+    trainer.model.config.use_cache = True
     trainer.save_model(config.project_name)
-    tokenizer.save_pretrained(config.project_name)
 
     model_card = utils.create_model_card(config, trainer)
 
@@ -233,7 +237,7 @@ def train(config):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    training_config = json.load(open(args.training_config))
+    _args = parse_args()
+    training_config = json.load(open(_args.training_config))
     config = Seq2SeqParams(**training_config)
     train(config)
