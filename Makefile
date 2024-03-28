@@ -36,4 +36,4 @@ pip:
 	rm -rf dist/
 	make style && make quality
 	python setup.py sdist bdist_wheel
-	twine upload dist/* --verbose
+	twine upload dist/* --verbose --repository autotrain-advanced

@@ -25,8 +25,12 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import warnings
 
+import torch._dynamo
+
 from autotrain.logging import custom_logger as logger  # noqa: F401
 
+
+torch._dynamo.config.suppress_errors = True
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
