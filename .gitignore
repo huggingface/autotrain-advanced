@@ -15,6 +15,10 @@ __pycache__/
 *$py.class
 autotrain-data*
 autotrain-*
+.triton
+temp/tmp*
+.bash_history
+.python_history
 
 # C extensions
 *.so
