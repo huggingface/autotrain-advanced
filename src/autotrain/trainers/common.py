@@ -17,6 +17,15 @@ from autotrain import logger
 
 def remove_autotrain_data(config):
     os.system(f"rm -rf {config.project_name}/autotrain-data")
+    folders = [f for f in os.listdir(config.project_name) if os.path.isdir(os.path.join(config.project_name, f))]
+    for folder in folders:
+        if folder.startswith("global_step"):
+            folder_path = os.path.join(config.project_name, folder)
+            try:
+                os.system(f"rm -rf {folder_path}")  # Using shell command to remove recursively
+                logger.info(f"Folder '{folder}' and its contents removed successfully.")
+            except Exception as e:
+                logger.warning(f"Error occurred while removing folder '{folder}': {str(e)}")
 
 
 def save_training_params(config):

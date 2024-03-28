@@ -187,7 +187,11 @@ def train(config):
     _s2s_metrics = partial(utils._seq2seq_metrics, tokenizer=tokenizer)
 
     if torch.__version__ >= "2" and sys.platform != "win32":
-        model = torch.compile(model)
+        try:
+            model = torch.compile(model)
+        except Exception as e:
+            logger.warning(f"Failed to compile model: {e}")
+            logger.warning("Skipping model compilation")
 
     trainer_args = dict(
         args=args,
