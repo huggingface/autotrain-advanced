@@ -463,7 +463,7 @@ def train(config):
     # if config.peft and is_deepspeed_enabled:
     #     callbacks.append(SaveDeepSpeedPeftModelCallback)
 
-    if torch.__version__ >= "2" and sys.platform != "win32":
+    if torch.__version__ >= "2" and sys.platform != "win32" and not is_deepspeed_enabled:
         try:
             model = torch.compile(model)
         except Exception as e:

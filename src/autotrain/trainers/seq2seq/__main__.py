@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from functools import partial
 
@@ -186,7 +187,8 @@ def train(config):
 
     _s2s_metrics = partial(utils._seq2seq_metrics, tokenizer=tokenizer)
 
-    if torch.__version__ >= "2" and sys.platform != "win32":
+    is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
+    if torch.__version__ >= "2" and sys.platform != "win32" and not is_deepspeed_enabled:
         try:
             model = torch.compile(model)
         except Exception as e:

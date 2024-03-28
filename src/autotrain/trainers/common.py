@@ -16,6 +16,17 @@ from transformers import TrainerCallback, TrainerControl, TrainerState, Training
 from autotrain import logger
 
 
+def get_file_sizes(directory):
+    file_sizes = {}
+    for root, _, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_size = os.path.getsize(file_path)
+            file_size_gb = file_size / (1024**3)  # Convert bytes to GB
+            file_sizes[file_path] = file_size_gb
+    return file_sizes
+
+
 def remove_global_step(directory):
     for root, dirs, _ in os.walk(directory, topdown=False):
         for name in dirs:
