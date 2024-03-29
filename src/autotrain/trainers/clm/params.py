@@ -26,7 +26,7 @@ class LLMTrainingParams(AutoTrainParams):
     logging_steps: int = Field(-1, title="Logging steps")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     save_total_limit: int = Field(1, title="Save total limit")
-    save_strategy: str = Field("epoch", title="Save strategy")
+    save_strategy: str = Field("no", title="Save strategy")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     lr: float = Field(3e-5, title="Learning rate")

@@ -94,6 +94,7 @@ PARAMS["llm"] = LLMTrainingParams(
     epochs=3,
     padding="right",
     chat_template="none",
+    save_strategy="no",
 ).model_dump()
 
 PARAMS["text-classification"] = TextClassificationParams(
@@ -105,6 +106,7 @@ PARAMS["image-classification"] = ImageClassificationParams(
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
     target_modules="all-linear",
+    save_strategy="no",
 ).model_dump()
 PARAMS["tabular"] = TabularParams(
     categorical_imputer="most_frequent",
