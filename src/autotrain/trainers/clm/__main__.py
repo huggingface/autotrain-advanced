@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import sys
 from enum import Enum
 from functools import partial
 
@@ -462,13 +461,6 @@ def train(config):
 
     # if config.peft and is_deepspeed_enabled:
     #     callbacks.append(SaveDeepSpeedPeftModelCallback)
-
-    if torch.__version__ >= "2" and sys.platform != "win32" and not is_deepspeed_enabled:
-        try:
-            model = torch.compile(model)
-        except Exception as e:
-            logger.warning(f"Failed to compile model: {e}")
-            logger.warning("Skipping model compilation")
 
     trainer_args = dict(
         args=args,

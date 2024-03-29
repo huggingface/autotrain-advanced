@@ -1,7 +1,5 @@
 import argparse
 import json
-import os
-import sys
 from functools import partial
 
 import torch
@@ -186,14 +184,6 @@ def train(config):
         model = get_peft_model(model, lora_config)
 
     _s2s_metrics = partial(utils._seq2seq_metrics, tokenizer=tokenizer)
-
-    is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
-    if torch.__version__ >= "2" and sys.platform != "win32" and not is_deepspeed_enabled:
-        try:
-            model = torch.compile(model)
-        except Exception as e:
-            logger.warning(f"Failed to compile model: {e}")
-            logger.warning("Skipping model compilation")
 
     trainer_args = dict(
         args=args,
