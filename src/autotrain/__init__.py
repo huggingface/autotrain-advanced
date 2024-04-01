@@ -35,4 +35,4 @@ torch._dynamo.config.suppress_errors = True
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 
-__version__ = "0.7.42.dev0"
+__version__ = "0.7.43.dev0"

@@ -31,7 +31,7 @@ class LLMTrainingParams(AutoTrainParams):
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     lr: float = Field(3e-5, title="Learning rate")
     epochs: int = Field(1, title="Number of training epochs")
-    batch_size: int = Field(1, title="Training batch size")
+    batch_size: int = Field(2, title="Training batch size")
     warmup_ratio: float = Field(0.1, title="Warmup proportion")
     gradient_accumulation: int = Field(4, title="Gradient accumulation steps")
     optimizer: str = Field("adamw_torch", title="Optimizer")

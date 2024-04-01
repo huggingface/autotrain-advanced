@@ -22,7 +22,7 @@ class Seq2SeqParams(AutoTrainParams):
     epochs: int = Field(3, title="Number of training epochs")
     max_seq_length: int = Field(128, title="Max sequence length")
     max_target_length: int = Field(128, title="Max target sequence length")
-    batch_size: int = Field(8, title="Training batch size")
+    batch_size: int = Field(2, title="Training batch size")
     warmup_ratio: float = Field(0.1, title="Warmup proportion")
     gradient_accumulation: int = Field(1, title="Gradient accumulation steps")
     optimizer: str = Field("adamw_torch", title="Optimizer")
