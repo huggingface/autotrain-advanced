@@ -338,7 +338,6 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
 
     def __init__(self, args):
         self.args = args
-        logger.info(self.args)
 
         store_true_arg_names = [
             "center_crop",

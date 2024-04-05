@@ -8,6 +8,7 @@ output2/
 logs/
 op_*/
 autotrain.db
+autotrain.log
 *.db
 # Byte-compiled / optimized / DLL files
 __pycache__/

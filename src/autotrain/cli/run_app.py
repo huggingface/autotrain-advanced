@@ -50,6 +50,8 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
 
         from autotrain.app import app
 
+        uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"] = "ERROR"
+
         if self.share:
             os.system(f"fuser -n tcp -k {self.port}")
             authtoken = os.environ.get("NGROK_AUTH_TOKEN", "")
@@ -65,6 +67,5 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             url = ngrok.connect(addr=self.port, bind_tls=True)
             logger.info(f"AutoTrain Public URL: {url}")
             logger.info("Please wait for the app to load...")
-            logger.info("***")
 
         uvicorn.run(app, host=self.host, port=self.port)

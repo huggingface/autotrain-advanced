@@ -1,43 +1,46 @@
 import sys
+from dataclasses import dataclass
 
 from accelerate.state import PartialState
 from loguru import logger
 
 
-log_file_path = "/tmp/app.log"
+@dataclass
+class Logger:
+    log_file_path: str = "/tmp/app.log"
 
-emojis = {
-    "TRACE": "🔍",
-    "DEBUG": "🐛",
-    "INFO": "🚀",
-    "SUCCESS": "✅",
-    "WARNING": "⚠️",
-    "ERROR": "❌",
-    "CRITICAL": "🚨",
-}
+    def __post_init__(self):
+        self.log_format = (
+            "<level>{level: <8}</level> | "
+            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+            "<level>{message}</level>"
+        )
+        self.logger = logger
+        self.setup_logger()
 
+    def _should_log(self, record):
+        return PartialState().is_main_process
 
-def should_log(record):
-    return PartialState().is_main_process
+    def setup_logger(self):
+        self.logger.remove()
+        self.logger.add(
+            sys.stdout,
+            format=self.log_format,
+            filter=lambda x: self._should_log(x),
+        )
+        self.logger.add(
+            self.log_file_path,
+            format=self.log_format,
+            filter=lambda x: self._should_log(x),
+            rotation="10 MB",
+        )
+        self.logger.add(
+            "autotrain.log",
+            format=self.log_format,
+            filter=lambda x: self._should_log(x),
+            rotation="50 MB",
+        )
 
-
-def emoji_filter(record):
-    level = record["level"].name
-    record["level_emoji"] = emojis.get(level, "") + " " + level
-    return True
-
-
-log_format = (
-    "<level>{level_emoji: <8}</level> | "
-    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-    "<level>{message}</level>"
-)
-
-logger.remove()
-if not hasattr(logger, "_is_customized") or not logger._is_customized:
-    logger.add(sys.stderr, format=log_format, filter=lambda x: should_log(x) and emoji_filter(x))
-    logger.add(log_file_path, format=log_format, filter=lambda x: should_log(x) and emoji_filter(x), rotation="10 MB")
-    logger._is_customized = True
-
-custom_logger = logger
+    def get_logger(self):
+        return self.logger

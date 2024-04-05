@@ -335,4 +335,6 @@ def launch_command(params):
     else:
         raise ValueError("Unsupported params type")
 
+    logger.info(cmd)
+    logger.info(params)
     return cmd

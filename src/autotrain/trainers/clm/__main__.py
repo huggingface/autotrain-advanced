@@ -20,13 +20,21 @@ from transformers import (
     TrainingArguments,
     default_data_collator,
 )
+from transformers.trainer_callback import PrinterCallback
 from trl import DPOTrainer, RewardConfig, RewardTrainer, SFTTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.common import UploadLogs, monitor, pause_space, remove_autotrain_data, save_training_params
+from autotrain.trainers.common import (
+    LossLoggingCallback,
+    UploadLogs,
+    monitor,
+    pause_space,
+    remove_autotrain_data,
+    save_training_params,
+)
 
 
 class ZephyrSpecialTokens(str, Enum):
@@ -453,7 +461,7 @@ def train(config):
     logger.info("creating trainer")
     # trainer specific
 
-    callbacks = [UploadLogs(config=config)]
+    callbacks = [UploadLogs(config=config), LossLoggingCallback()]
     if config.peft and not is_deepspeed_enabled:
         callbacks.append(SavePeftModelCallback)
         if config.valid_split is not None:
@@ -536,6 +544,7 @@ def train(config):
                 if config.mixed_precision == "bf16" and module.weight.dtype == torch.float32:
                     module = module.to(torch.bfloat16)
 
+    trainer.remove_callback(PrinterCallback)
     trainer.train()
 
     logger.info("Finished training, saving model...")

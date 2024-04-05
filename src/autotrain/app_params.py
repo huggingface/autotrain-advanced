@@ -80,6 +80,7 @@ class AppParams:
     def _munge_params_text_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -94,6 +95,7 @@ class AppParams:
     def _munge_params_token_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -109,6 +111,7 @@ class AppParams:
     def _munge_params_seq2seq(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -124,6 +127,7 @@ class AppParams:
     def _munge_params_img_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["image_column"] = "autotrain_image"
             _params["target_column"] = "autotrain_label"

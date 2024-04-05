@@ -8,8 +8,6 @@ import pandas as pd
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 
-from autotrain import logger
-
 
 ALLOWED_EXTENSIONS = ("jpeg", "png", "jpg", "JPG", "JPEG", "PNG")
 
@@ -33,7 +31,6 @@ class ImageClassificationPreprocessor:
         # Check if train data path contains at least 2 folders
         subfolders = [f.path for f in os.scandir(self.train_data) if f.is_dir()]
         # list subfolders
-        logger.info(f"🚀 Subfolders: {subfolders}")
         if len(subfolders) < 2:
             raise ValueError(f"{self.train_data} should contain at least 2 subfolders.")
 

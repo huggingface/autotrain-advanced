@@ -327,57 +327,8 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
 
     def run(self):
         logger.info("Running LLM")
-        logger.info(f"Params: {self.args}")
         if self.args.train:
-            params = LLMTrainingParams(
-                model=self.args.model,
-                data_path=self.args.data_path,
-                train_split=self.args.train_split,
-                valid_split=self.args.valid_split,
-                text_column=self.args.text_column,
-                lr=self.args.lr,
-                epochs=self.args.epochs,
-                batch_size=self.args.batch_size,
-                warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation=self.args.gradient_accumulation,
-                optimizer=self.args.optimizer,
-                scheduler=self.args.scheduler,
-                weight_decay=self.args.weight_decay,
-                max_grad_norm=self.args.max_grad_norm,
-                seed=self.args.seed,
-                add_eos_token=self.args.add_eos_token,
-                block_size=self.args.block_size,
-                peft=self.args.peft,
-                lora_r=self.args.lora_r,
-                lora_alpha=self.args.lora_alpha,
-                lora_dropout=self.args.lora_dropout,
-                logging_steps=self.args.logging_steps,
-                project_name=self.args.project_name,
-                evaluation_strategy=self.args.evaluation_strategy,
-                save_total_limit=self.args.save_total_limit,
-                save_strategy=self.args.save_strategy,
-                auto_find_batch_size=self.args.auto_find_batch_size,
-                mixed_precision=self.args.mixed_precision,
-                push_to_hub=self.args.push_to_hub,
-                model_max_length=self.args.model_max_length,
-                repo_id=self.args.repo_id,
-                quantization=self.args.quantization,
-                trainer=self.args.trainer,
-                target_modules=self.args.target_modules,
-                token=self.args.token,
-                merge_adapter=self.args.merge_adapter,
-                username=self.args.username,
-                use_flash_attention_2=self.args.use_flash_attention_2,
-                log=self.args.log,
-                rejected_text_column=self.args.rejected_text_column,
-                disable_gradient_checkpointing=self.args.disable_gradient_checkpointing,
-                model_ref=self.args.model_ref,
-                dpo_beta=self.args.dpo_beta,
-                prompt_text_column=self.args.prompt_text_column,
-                chat_template=self.args.chat_template,
-                padding=self.args.padding,
-            )
-
+            params = LLMTrainingParams(**vars(self.args))
             params = llm_munge_data(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             _ = project.create()

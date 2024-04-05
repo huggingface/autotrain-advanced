@@ -17,9 +17,17 @@ from transformers import (
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
 )
+from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
+from autotrain.trainers.common import (
+    LossLoggingCallback,
+    UploadLogs,
+    monitor,
+    pause_space,
+    remove_autotrain_data,
+    save_training_params,
+)
 from autotrain.trainers.seq2seq import utils
 from autotrain.trainers.seq2seq.dataset import Seq2SeqDataset
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -39,10 +47,6 @@ def train(config):
 
     if config.repo_id is None and config.username is not None:
         config.repo_id = f"{config.username}/{config.project_name}"
-
-    if PartialState().process_index == 0:
-        logger.info("Starting training...")
-        logger.info(f"Training config: {config}")
 
     train_data = None
     valid_data = None
@@ -82,9 +86,13 @@ def train(config):
             logging_steps = int(0.2 * len(train_data) / config.batch_size)
         if logging_steps == 0:
             logging_steps = 1
-
+        if logging_steps > 25:
+            logging_steps = 25
+        config.logging_steps = logging_steps
     else:
         logging_steps = config.logging_steps
+
+    logger.info(f"Logging steps: {logging_steps}")
 
     training_args = dict(
         output_dir=config.project_name,
@@ -97,7 +105,7 @@ def train(config):
         save_total_limit=config.save_total_limit,
         save_strategy=config.save_strategy,
         gradient_accumulation_steps=config.gradient_accumulation,
-        report_to="tensorboard",
+        report_to=config.log,
         auto_find_batch_size=config.auto_find_batch_size,
         lr_scheduler_type=config.scheduler,
         optim=config.optimizer,
@@ -121,6 +129,8 @@ def train(config):
         callbacks_to_use = [early_stop]
     else:
         callbacks_to_use = []
+
+    callbacks_to_use.extend([UploadLogs(config=config), LossLoggingCallback()])
 
     args = Seq2SeqTrainingArguments(**training_args)
 
@@ -203,6 +213,8 @@ def train(config):
     for name, module in trainer.model.named_modules():
         if "norm" in name:
             module = module.to(torch.float32)
+
+    trainer.remove_callback(PrinterCallback)
     trainer.train()
 
     logger.info("Finished training, saving model...")
@@ -221,7 +233,7 @@ def train(config):
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True, exist_ok=True)
             api.upload_folder(
                 folder_path=config.project_name,
                 repo_id=config.repo_id,
