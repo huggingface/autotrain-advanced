@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from autotrain import logger
 from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
@@ -63,7 +62,6 @@ class AutoTrainDreamboothDataset:
 
     def __post_init__(self):
         self.task = "dreambooth"
-        logger.info(self.__str__())
 
     @property
     def num_samples(self):
@@ -105,7 +103,6 @@ class AutoTrainImageClassificationDataset:
             raise ValueError("You can only specify one of valid_data or percent_valid")
         elif self.valid_data:
             self.percent_valid = 0.0
-        logger.info(self.__str__())
 
         self.num_files = self._count_files()
 
@@ -203,7 +200,6 @@ class AutoTrainDataset:
             self.percent_valid = 0.0
 
         self.train_df, self.valid_df = self._preprocess_data()
-        logger.info(self.__str__())
 
     def _preprocess_data(self):
         train_df = []

@@ -168,38 +168,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
     def run(self):
         logger.info("Running Text Classification")
         if self.args.train:
-            params = TextClassificationParams(
-                data_path=self.args.data_path,
-                train_split=self.args.train_split,
-                valid_split=self.args.valid_split,
-                text_column=self.args.text_column,
-                target_column=self.args.target_column,
-                model=self.args.model,
-                lr=self.args.lr,
-                epochs=self.args.epochs,
-                max_seq_length=self.args.max_seq_length,
-                batch_size=self.args.batch_size,
-                warmup_ratio=self.args.warmup_ratio,
-                gradient_accumulation=self.args.gradient_accumulation,
-                optimizer=self.args.optimizer,
-                scheduler=self.args.scheduler,
-                weight_decay=self.args.weight_decay,
-                max_grad_norm=self.args.max_grad_norm,
-                seed=self.args.seed,
-                logging_steps=self.args.logging_steps,
-                project_name=self.args.project_name,
-                evaluation_strategy=self.args.evaluation_strategy,
-                save_total_limit=self.args.save_total_limit,
-                save_strategy=self.args.save_strategy,
-                auto_find_batch_size=self.args.auto_find_batch_size,
-                mixed_precision=self.args.mixed_precision,
-                push_to_hub=self.args.push_to_hub,
-                repo_id=self.args.repo_id,
-                token=self.args.token,
-                username=self.args.username,
-                log=self.args.log,
-            )
-
+            params = TextClassificationParams(**vars(self.args))
             params = text_clf_munge_data(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             _ = project.create()

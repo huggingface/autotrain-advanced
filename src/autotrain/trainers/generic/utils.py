@@ -3,7 +3,8 @@ import subprocess
 
 import requests
 from huggingface_hub import HfApi, snapshot_download
-from loguru import logger
+
+from autotrain import logger
 
 
 def create_dataset_repo(username, project_name, script_path, token):

@@ -12,9 +12,17 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
+from autotrain.trainers.common import (
+    LossLoggingCallback,
+    UploadLogs,
+    monitor,
+    pause_space,
+    remove_autotrain_data,
+    save_training_params,
+)
 from autotrain.trainers.image_classification import utils
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 
@@ -30,10 +38,6 @@ def parse_args():
 def train(config):
     if isinstance(config, dict):
         config = ImageClassificationParams(**config)
-
-    if PartialState().process_index == 0:
-        logger.info("Starting training...")
-        logger.info(f"Training config: {config}")
 
     valid_data = None
     if config.data_path == f"{config.project_name}/autotrain-data":
@@ -106,9 +110,13 @@ def train(config):
             logging_steps = int(0.2 * len(train_data) / config.batch_size)
         if logging_steps == 0:
             logging_steps = 1
-
+        if logging_steps > 25:
+            logging_steps = 25
+        config.logging_steps = logging_steps
     else:
         logging_steps = config.logging_steps
+
+    logger.info(f"Logging steps: {logging_steps}")
 
     training_args = dict(
         output_dir=config.project_name,
@@ -144,6 +152,8 @@ def train(config):
     else:
         callbacks_to_use = []
 
+    callbacks_to_use.extend([UploadLogs(config=config), LossLoggingCallback()])
+
     args = TrainingArguments(**training_args)
     trainer_args = dict(
         args=args,
@@ -159,6 +169,7 @@ def train(config):
         train_dataset=train_data,
         eval_dataset=valid_data,
     )
+    trainer.remove_callback(PrinterCallback)
     trainer.train()
 
     logger.info("Finished training, saving model...")
@@ -177,7 +188,7 @@ def train(config):
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True, exist_ok=True)
             api.upload_folder(folder_path=config.project_name, repo_id=config.repo_id, repo_type="model")
 
     if PartialState().process_index == 0:

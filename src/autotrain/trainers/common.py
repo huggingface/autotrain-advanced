@@ -201,3 +201,10 @@ class UploadLogs(TrainerCallback):
                     path_in_repo="runs",
                 )
         return control
+
+
+class LossLoggingCallback(TrainerCallback):
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            logger.info(logs)

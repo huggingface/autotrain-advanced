@@ -27,12 +27,17 @@ import warnings
 
 import torch._dynamo
 
-from autotrain.logging import custom_logger as logger  # noqa: F401
+from autotrain.logging import Logger
 
 
 torch._dynamo.config.suppress_errors = True
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
+warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
+warnings.filterwarnings("ignore", category=UserWarning, module="peft")
+warnings.filterwarnings("ignore", category=UserWarning, module="accelerate")
+warnings.filterwarnings("ignore", category=UserWarning, module="datasets")
+warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
 
-
+logger = Logger().get_logger()
 __version__ = "0.7.43.dev0"

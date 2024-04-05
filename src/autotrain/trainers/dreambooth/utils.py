@@ -1,12 +1,20 @@
 import os
 
+from huggingface_hub import list_models
+
 
 VALID_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
 XL_MODELS = [
-    "stabilityai/stable-diffusion-xl-base-1.0",
-    "stabilityai/stable-diffusion-xl-base-0.9",
-    "diffusers/stable-diffusion-xl-base-1.0",
-    "stabilityai/sdxl-turbo",
+    m.id
+    for m in list(
+        list_models(
+            task="text-to-image",
+            sort="downloads",
+            limit=200,
+            direction=-1,
+            filter=["diffusers:StableDiffusionXLPipeline"],
+        )
+    )
 ]
 
 

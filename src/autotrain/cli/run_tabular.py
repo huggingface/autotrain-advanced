@@ -129,31 +129,9 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
         self.args.target_columns = [k.strip() for k in self.args.target_columns.split(",")]
 
     def run(self):
-        logger.info("Running Tabular Training...")
+        logger.info("Running Tabular Training")
         if self.args.train:
-            params = TabularParams(
-                data_path=self.args.data_path,
-                model=self.args.model,
-                username=self.args.username,
-                seed=self.args.seed,
-                train_split=self.args.train_split,
-                valid_split=self.args.valid_split,
-                project_name=self.args.project_name,
-                token=self.args.token,
-                push_to_hub=self.args.push_to_hub,
-                id_column=self.args.id_column,
-                target_columns=self.args.target_columns,
-                repo_id=self.args.repo_id,
-                categorical_columns=self.args.categorical_columns,
-                numerical_columns=self.args.numerical_columns,
-                task=self.args.task,
-                num_trials=self.args.num_trials,
-                time_limit=self.args.time_limit,
-                categorical_imputer=self.args.categorical_imputer,
-                numerical_imputer=self.args.numerical_imputer,
-                numeric_scaler=self.args.numeric_scaler,
-            )
-
+            params = TabularParams(**vars(self.args))
             params = tabular_munge_data(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             _ = project.create()

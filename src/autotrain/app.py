@@ -1,4 +1,3 @@
-import collections
 import json
 import os
 from typing import List
@@ -8,13 +7,14 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFi
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from huggingface_hub import ModelFilter, list_models, repo_exists
+from huggingface_hub import repo_exists
 
 from autotrain import __version__, app_utils, logger
 from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
 from autotrain.help import get_app_help
+from autotrain.models import fetch_models
 from autotrain.oauth import attach_oauth
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
@@ -29,9 +29,9 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
-DB = AutoTrainDB("autotrain.db")
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB = AutoTrainDB("autotrain.db")
 
 if HF_TOKEN is None and "SPACE_ID" not in os.environ:
     logger.error("HF_TOKEN not set")
@@ -99,14 +99,17 @@ PARAMS["llm"] = LLMTrainingParams(
 
 PARAMS["text-classification"] = TextClassificationParams(
     mixed_precision="fp16",
+    log="tensorboard",
 ).model_dump()
 PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
+    log="tensorboard",
 ).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
     target_modules="all-linear",
     save_strategy="no",
+    log="tensorboard",
 ).model_dump()
 PARAMS["tabular"] = TabularParams(
     categorical_imputer="most_frequent",
@@ -129,77 +132,8 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
 ).model_dump()
 PARAMS["token-classification"] = TokenClassificationParams(
     mixed_precision="fp16",
+    log="tensorboard",
 ).model_dump()
-
-
-def get_sorted_models(hub_models):
-    hub_models = [{"id": m.modelId, "downloads": m.downloads} for m in hub_models if m.private is False]
-    hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
-    hub_models = [m["id"] for m in hub_models]
-    return hub_models
-
-
-def fetch_models():
-    _mc = collections.defaultdict(list)
-    hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100, full=False)
-    hub_models2 = list_models(filter="text-classification", sort="downloads", direction=-1, limit=100, full=False)
-    hub_models = list(hub_models1) + list(hub_models2)
-    hub_models = get_sorted_models(hub_models)
-    _mc["text-classification"] = hub_models
-
-    hub_models = list(list_models(filter="text-generation", sort="downloads", direction=-1, limit=100, full=False))
-    hub_models = get_sorted_models(hub_models)
-    _mc["llm"] = hub_models
-
-    _filter = ModelFilter(
-        task="image-classification",
-        library="transformers",
-    )
-    hub_models = list(list_models(filter=_filter, sort="downloads", direction=-1, limit=100, full=False))
-    hub_models = get_sorted_models(hub_models)
-    _mc["image-classification"] = hub_models
-
-    hub_models = list(list_models(filter="text-to-image", sort="downloads", direction=-1, limit=100, full=False))
-    hub_models = get_sorted_models(hub_models)
-    _mc["dreambooth"] = hub_models
-
-    hub_models = list(
-        list_models(filter="text2text-generation", sort="downloads", direction=-1, limit=100, full=False)
-    )
-    hub_models = get_sorted_models(hub_models)
-    _mc["seq2seq"] = hub_models
-
-    hub_models1 = list_models(filter="fill-mask", sort="downloads", direction=-1, limit=100, full=False)
-    hub_models2 = list(
-        list_models(filter="token-classification", sort="downloads", direction=-1, limit=100, full=False)
-    )
-    hub_models = list(hub_models1) + list(hub_models2)
-    hub_models = get_sorted_models(hub_models)
-    _mc["token-classification"] = hub_models
-
-    _mc["tabular-classification"] = [
-        "xgboost",
-        "random_forest",
-        "ridge",
-        "logistic_regression",
-        "svm",
-        "extra_trees",
-        "adaboost",
-        "decision_tree",
-        "knn",
-    ]
-
-    _mc["tabular-regression"] = [
-        "xgboost",
-        "random_forest",
-        "ridge",
-        "svm",
-        "extra_trees",
-        "adaboost",
-        "decision_tree",
-        "knn",
-    ]
-    return _mc
 
 
 MODEL_CHOICE = fetch_models()
@@ -214,41 +148,14 @@ templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
 
 
-async def get_request_data(request: Request):
-    # Request headers
-    headers = dict(request.headers)
-
-    # Request method
-    method = request.method
-
-    # Request URL
-    url = str(request.url)
-
-    # Client host information
-    client_host = request.client.host
-
-    # Request body
-    body = await request.body()
-    try:
-        body = body.decode("utf-8")
-    except UnicodeDecodeError:
-        body = str(body)
-
-    return {"headers": headers, "method": method, "url": url, "client_host": client_host, "body": body}
-
-
 @app.get("/", response_class=HTMLResponse)
-async def read_form(request: Request):
+async def load_index(request: Request):
     """
-    This function is used to render the HTML file
-    :param request:
-    :return:
+    This function is used to load the index page
+    :return: HTMLResponse
     """
     if os.environ.get("SPACE_ID") == "autotrain-projects/autotrain-advanced":
         return templates.TemplateResponse("duplicate.html", {"request": request})
-
-    # if HF_TOKEN is None and USE_OAUTH == 0:
-    #     return templates.TemplateResponse("error.html", {"request": request})
 
     if HF_TOKEN is None:
         try:
@@ -276,6 +183,10 @@ async def read_form(request: Request):
 
 @app.get("/logout", response_class=HTMLResponse)
 async def oauth_logout(request: Request):
+    """
+    This function is used to logout the oauth user
+    :return: HTMLResponse
+    """
     request.session.pop("oauth_info", None)
     return RedirectResponse("/")
 
@@ -285,6 +196,7 @@ async def fetch_params(task: str, param_type: str):
     """
     This function is used to fetch the parameters for a given task
     :param task: str
+    :param param_type: str (basic, full)
     :return: JSONResponse
     """
     logger.info(f"Task: {task}")
@@ -430,6 +342,12 @@ async def fetch_params(task: str, param_type: str):
 
 @app.get("/model_choices/{task}", response_class=JSONResponse)
 async def fetch_model_choices(task: str, custom_models: str = Query(None)):
+    """
+    This function is used to fetch the model choices for a given task
+    :param task: str
+    :param custom_models: str (optional, comma separated list of custom models, query parameter)
+    :return: JSONResponse
+    """
     resp = []
 
     if custom_models is not None:
@@ -486,7 +404,21 @@ async def handle_form(
     valid_split: str = Form(""),
 ):
     """
-    This function is used to handle the form submission
+    This function is used to create a new project
+    :param request: Request
+    :param project_name: str
+    :param task: str
+    :param base_model: str
+    :param hardware: str
+    :param params: str
+    :param autotrain_user: str
+    :param column_mapping: str
+    :param data_files_training: List[UploadFile]
+    :param data_files_valid: List[UploadFile]
+    :param hub_dataset: str
+    :param train_split: str
+    :param valid_split: str
+    :return: JSONResponse
     """
     train_split = train_split.strip()
     if len(train_split) == 0:
