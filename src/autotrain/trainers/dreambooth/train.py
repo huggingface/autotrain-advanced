@@ -970,26 +970,4 @@ def main(args):
             text_encoder_lora_layers=text_encoder_state_dict,
         )
 
-        # Final inference
-        # Load previous pipeline
-        pipeline = DiffusionPipeline.from_pretrained(
-            args.pretrained_model_name_or_path, revision=args.revision, variant=args.variant, torch_dtype=weight_dtype
-        )
-
-        # load attention processors
-        pipeline.load_lora_weights(args.output_dir, weight_name="pytorch_lora_weights.safetensors")
-
-        # run inference
-        images = []
-        if args.validation_prompt and args.num_validation_images > 0:
-            pipeline_args = {"prompt": args.validation_prompt, "num_inference_steps": 25}
-            images = log_validation(
-                pipeline,
-                args,
-                accelerator,
-                pipeline_args,
-                epoch,
-                is_final_validation=True,
-            )
-
     accelerator.end_training()

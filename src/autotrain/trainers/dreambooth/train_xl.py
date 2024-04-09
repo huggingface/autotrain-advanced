@@ -1302,37 +1302,4 @@ def main(args):
             text_encoder_2_lora_layers=text_encoder_2_lora_layers,
         )
 
-        # Final inference
-        # Load previous pipeline
-        vae = AutoencoderKL.from_pretrained(
-            vae_path,
-            subfolder="vae" if args.pretrained_vae_model_name_or_path is None else None,
-            revision=args.revision,
-            variant=args.variant,
-            torch_dtype=weight_dtype,
-        )
-        pipeline = StableDiffusionXLPipeline.from_pretrained(
-            args.pretrained_model_name_or_path,
-            vae=vae,
-            revision=args.revision,
-            variant=args.variant,
-            torch_dtype=weight_dtype,
-        )
-
-        # load attention processors
-        pipeline.load_lora_weights(args.output_dir)
-
-        # run inference
-        images = []
-        if args.validation_prompt and args.num_validation_images > 0:
-            pipeline_args = {"prompt": args.validation_prompt, "num_inference_steps": 25}
-            images = log_validation(
-                pipeline,
-                args,
-                accelerator,
-                pipeline_args,
-                epoch,
-                is_final_validation=True,
-            )
-
     accelerator.end_training()

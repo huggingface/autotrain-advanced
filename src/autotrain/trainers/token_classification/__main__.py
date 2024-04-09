@@ -18,6 +18,7 @@ from transformers.trainer_callback import PrinterCallback
 from autotrain import logger
 from autotrain.trainers.common import (
     LossLoggingCallback,
+    TrainStartCallback,
     UploadLogs,
     monitor,
     pause_space,
@@ -155,7 +156,7 @@ def train(config):
     else:
         callbacks_to_use = []
 
-    callbacks_to_use.extend([UploadLogs(config=config), LossLoggingCallback()])
+    callbacks_to_use.extend([UploadLogs(config=config), LossLoggingCallback(), TrainStartCallback()])
 
     args = TrainingArguments(**training_args)
     trainer_args = dict(

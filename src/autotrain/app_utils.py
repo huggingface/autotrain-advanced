@@ -21,7 +21,6 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 def get_running_jobs(db):
     running_jobs = db.get_running_jobs()
     if running_jobs:
-        logger.info(f"Running jobs: {running_jobs}")
         for _pid in running_jobs:
             proc_status = get_process_status(_pid)
             proc_status = proc_status.strip().lower()

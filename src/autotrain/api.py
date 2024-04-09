@@ -10,8 +10,6 @@ from autotrain.app_utils import get_running_jobs, run_training
 from autotrain.db import AutoTrainDB
 
 
-log_file_path = "/tmp/app.log"
-
 HF_TOKEN = os.environ.get("HF_TOKEN")
 AUTOTRAIN_USERNAME = os.environ.get("AUTOTRAIN_USERNAME")
 PROJECT_NAME = os.environ.get("PROJECT_NAME")

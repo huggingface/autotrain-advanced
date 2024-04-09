@@ -1,4 +1,8 @@
 import os
+import signal
+import subprocess
+import sys
+import threading
 from argparse import ArgumentParser
 
 from autotrain import logger
@@ -6,8 +10,19 @@ from autotrain import logger
 from . import BaseAutoTrainCommand
 
 
+def handle_output(stream, log_file):
+    while True:
+        line = stream.readline()
+        if not line:
+            break
+        sys.stdout.write(line)
+        sys.stdout.flush()
+        log_file.write(line)
+        log_file.flush()
+
+
 def run_app_command_factory(args):
-    return RunAutoTrainAppCommand(args.port, args.host, args.share)
+    return RunAutoTrainAppCommand(args.port, args.host, args.share, args.workers)
 
 
 class RunAutoTrainAppCommand(BaseAutoTrainCommand):
@@ -32,6 +47,13 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             required=False,
         )
         run_app_parser.add_argument(
+            "--workers",
+            type=int,
+            default=1,
+            help="Number of workers to run the app with",
+            required=False,
+        )
+        run_app_parser.add_argument(
             "--share",
             action="store_true",
             help="Share the app on ngrok",
@@ -39,18 +61,14 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
-    def __init__(self, port, host, share):
+    def __init__(self, port, host, share, workers):
         self.port = port
         self.host = host
         self.share = share
+        self.workers = workers
 
     def run(self):
-        import uvicorn
         from pyngrok import ngrok
-
-        from autotrain.app import app
-
-        uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"] = "ERROR"
 
         if self.share:
             os.system(f"fuser -n tcp -k {self.port}")
@@ -68,4 +86,29 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             logger.info(f"AutoTrain Public URL: {url}")
             logger.info("Please wait for the app to load...")
 
-        uvicorn.run(app, host=self.host, port=self.port)
+        command = f"uvicorn autotrain.app:app --host {self.host} --port {self.port}"
+        command += f" --workers {self.workers} --log-level error"
+
+        with open("autotrain.log", "w", encoding="utf-8") as log_file:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True,
+                text=True,
+                bufsize=1,
+                preexec_fn=os.setsid,
+            )
+
+            output_thread = threading.Thread(target=handle_output, args=(process.stdout, log_file))
+            output_thread.start()
+
+            try:
+                process.wait()
+                output_thread.join()
+            except KeyboardInterrupt:
+                logger.warning("Attempting to terminate the process...")
+                # If user cancels (Ctrl+C), terminate the subprocess
+                # Use os.killpg to send SIGTERM to the process group, ensuring all child processes are killed
+                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                logger.info("Process terminated by user")
