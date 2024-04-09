@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
+from nvitop import Device
 
 from autotrain import __version__, app_utils, logger
 from autotrain.app_params import AppParams
@@ -26,6 +27,7 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
+logger.info("Starting AutoTrain...")
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
@@ -146,6 +148,8 @@ static_path = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
+
+logger.info("AutoTrain started successfully")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -432,7 +436,6 @@ async def handle_form(
     if hardware == "Local":
         running_jobs = app_utils.get_running_jobs(DB)
         if running_jobs:
-            logger.info(f"Running jobs PIDs: {running_jobs}")
             raise HTTPException(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
@@ -607,3 +610,48 @@ async def is_model_training():
     if running_jobs:
         return {"model_training": True, "pids": running_jobs}
     return {"model_training": False, "pids": []}
+
+
+@app.get("/logs", response_class=JSONResponse)
+async def fetch_logs():
+    """
+    This function is used to fetch the logs
+    :return: JSONResponse
+    """
+    if not AUTOTRAIN_LOCAL:
+        return {"logs": "Logs are only available in local mode."}
+    log_file = "autotrain.log"
+    with open(log_file, "r", encoding="utf-8") as f:
+        logs = f.read()
+    if len(str(logs).strip()) == 0:
+        logs = "No logs available."
+
+    logs = logs.split("\n")
+    logs = logs[::-1]
+
+    devices = Device.all()
+    device_logs = []
+    for device in devices:
+        device_logs.append(
+            f"Device {device.index}: {device.name()} - {device.memory_used_human()}/{device.memory_total_human()}"
+        )
+    device_logs.append("-----------------")
+    logs = device_logs + logs
+    return {"logs": logs}
+
+
+@app.get("/stop_training", response_class=JSONResponse)
+async def stop_training():
+    """
+    This function is used to stop the training
+    :return: JSONResponse
+    """
+    running_jobs = app_utils.get_running_jobs(DB)
+    if running_jobs:
+        for _pid in running_jobs:
+            try:
+                app_utils.kill_process_by_pid(_pid)
+            except Exception:
+                logger.info(f"Process {_pid} is already completed. Skipping...")
+        return {"success": True}
+    return {"success": False}

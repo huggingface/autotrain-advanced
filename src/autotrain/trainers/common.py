@@ -193,7 +193,6 @@ class UploadLogs(TrainerCallback):
             return control
 
         if (state.global_step + 1) % self.config.logging_steps == 0 and self.config.log == "tensorboard":
-            logger.info(f"Uploading logs to {self.config.repo_id}...")
             if PartialState().process_index == 0:
                 self.api.upload_folder(
                     folder_path=os.path.join(self.config.project_name, "runs"),
@@ -208,3 +207,8 @@ class LossLoggingCallback(TrainerCallback):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
             logger.info(logs)
+
+
+class TrainStartCallback(TrainerCallback):
+    def on_train_begin(self, args, state, control, **kwargs):
+        logger.info("Starting to train...")

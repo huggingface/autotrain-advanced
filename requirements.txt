@@ -22,6 +22,7 @@ requests==2.31.0
 einops==0.6.1
 invisible-watermark==0.2.0
 packaging==23.1
+cryptography==42.0.5
 # latest versions
 tensorboard
 peft==0.10.0

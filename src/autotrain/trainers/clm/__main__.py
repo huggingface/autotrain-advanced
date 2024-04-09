@@ -29,6 +29,7 @@ from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeft
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.common import (
     LossLoggingCallback,
+    TrainStartCallback,
     UploadLogs,
     monitor,
     pause_space,
@@ -241,6 +242,7 @@ def train(config):
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
         remove_unused_columns=False,
+        disable_tqdm=True,
     )
 
     if not config.disable_gradient_checkpointing:
@@ -461,7 +463,7 @@ def train(config):
     logger.info("creating trainer")
     # trainer specific
 
-    callbacks = [UploadLogs(config=config), LossLoggingCallback()]
+    callbacks = [UploadLogs(config=config), LossLoggingCallback(), TrainStartCallback()]
     if config.peft and not is_deepspeed_enabled:
         callbacks.append(SavePeftModelCallback)
         if config.valid_split is not None:
