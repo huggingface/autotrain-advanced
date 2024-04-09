@@ -1,8 +1,5 @@
 FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
-RUN useradd -m -u 1000 user
-USER user
-
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
     HF_HUB_ENABLE_HF_TRANSFER=1
@@ -45,7 +42,9 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
 WORKDIR /app
 RUN mkdir -p /app/.cache
 ENV HF_HOME="/app/.cache"
+RUN useradd -m -u 1000 user
 RUN chown -R user:user /app
+USER user
 ENV HOME=/app
 
 ENV PYTHONPATH=$HOME/app \
