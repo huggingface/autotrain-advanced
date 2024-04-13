@@ -618,6 +618,31 @@
 
 
 <script>
+  window.addEventListener('load', function () {
+    const stopTrainingButton = document.getElementById('stop-training-button');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    stopTrainingButton.addEventListener('click', function () {
+      loadingSpinner.classList.remove('hidden');
+
+      fetch('/stop_training', {
+        method: 'GET'
+      })
+        .then(response => response.text())
+        .then(data => {
+          console.log(data);
+          loadingSpinner.classList.add('hidden');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          loadingSpinner.classList.add('hidden');
+        });
+    });
+  });
+</script>
+
+
+<script>
   async function openHelpModal(contentId) {
     const modal = document.getElementById('help-modal');
     var helpModalContent = document.querySelector('#help-modal .text-center');

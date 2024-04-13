@@ -40,4 +40,4 @@ warnings.filterwarnings("ignore", category=UserWarning, module="datasets")
 warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
 
 logger = Logger().get_logger()
-__version__ = "0.7.49.dev0"
+__version__ = "0.7.50.dev0"
