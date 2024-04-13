@@ -5,6 +5,7 @@ Common classes and functions for all trainers.
 import json
 import os
 import shutil
+import time
 import traceback
 
 import requests
@@ -178,6 +179,7 @@ class UploadLogs(TrainerCallback):
     def __init__(self, config):
         self.config = config
         self.api = None
+        self.last_upload_time = 0
 
         if self.config.push_to_hub:
             if PartialState().process_index == 0:
@@ -194,11 +196,14 @@ class UploadLogs(TrainerCallback):
 
         if (state.global_step + 1) % self.config.logging_steps == 0 and self.config.log == "tensorboard":
             if PartialState().process_index == 0:
-                self.api.upload_folder(
-                    folder_path=os.path.join(self.config.project_name, "runs"),
-                    repo_id=self.config.repo_id,
-                    path_in_repo="runs",
-                )
+                current_time = time.time()
+                if current_time - self.last_upload_time >= 600:
+                    self.api.upload_folder(
+                        folder_path=os.path.join(self.config.project_name, "runs"),
+                        repo_id=self.config.repo_id,
+                        path_in_repo="runs",
+                    )
+                    self.last_upload_time = current_time
         return control
 
 
