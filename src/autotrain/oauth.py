@@ -6,11 +6,10 @@ from __future__ import annotations
 
 import hashlib
 import os
-import random
-import string
 import urllib.parse
 
 import fastapi
+from authlib.integrations.base_client.errors import MismatchingStateError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -20,7 +19,6 @@ OAUTH_CLIENT_ID = os.environ.get("OAUTH_CLIENT_ID")
 OAUTH_CLIENT_SECRET = os.environ.get("OAUTH_CLIENT_SECRET")
 OAUTH_SCOPES = os.environ.get("OAUTH_SCOPES")
 OPENID_PROVIDER_URL = os.environ.get("OPENID_PROVIDER_URL")
-RANDOM_STRING = "".join(random.choices(string.ascii_letters + string.digits, k=20))
 
 
 def attach_oauth(app: fastapi.FastAPI):
@@ -28,7 +26,7 @@ def attach_oauth(app: fastapi.FastAPI):
     # Session Middleware requires a secret key to sign the cookies. Let's use a hash
     # of the OAuth secret key to make it unique to the Space + updated in case OAuth
     # config gets updated.
-    session_secret = OAUTH_CLIENT_SECRET + RANDOM_STRING
+    session_secret = OAUTH_CLIENT_SECRET + "-autotrain-v1"
     # ^ if we change the session cookie format in the future, we can bump the version of the session secret to make
     #   sure cookies are invalidated. Otherwise some users with an old cookie format might get a HTTP 500 error.
     app.add_middleware(
@@ -78,7 +76,27 @@ def _add_oauth_routes(app: fastapi.FastAPI) -> None:
     @app.get("/auth")
     async def auth(request: fastapi.Request) -> RedirectResponse:
         """Endpoint that handles the OAuth callback."""
-        oauth_info = await oauth.huggingface.authorize_access_token(request)  # type: ignore
+        try:
+            oauth_info = await oauth.huggingface.authorize_access_token(request)  # type: ignore
+        except MismatchingStateError:
+            # If the state mismatch, it is very likely that the cookie is corrupted.
+            # There is a bug reported in authlib that causes the token to grow indefinitely if the user tries to login
+            # repeatedly. Since cookies cannot get bigger than 4kb, the token will be truncated at some point - hence
+            # losing the state. A workaround is to delete the cookie and redirect the user to the login page again.
+            # See https://github.com/lepture/authlib/issues/622 for more details.
+            login_uri = "/login/huggingface"
+            if "_target_url" in request.query_params:
+                login_uri += "?" + urllib.parse.urlencode(  # Keep same _target_url as before
+                    {"_target_url": request.query_params["_target_url"]}
+                )
+            for key in list(request.session.keys()):
+                # Delete all keys that are related to the OAuth state
+                if key.startswith("_state_huggingface"):
+                    request.session.pop(key)
+            return RedirectResponse(login_uri)
+
+        request.session["oauth_info"] = oauth_info
+        return _redirect_to_target(request)
         request.session["oauth_info"] = oauth_info
         return _redirect_to_target(request)
 
