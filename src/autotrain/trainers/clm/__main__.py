@@ -246,7 +246,7 @@ def train(config):
     )
 
     if not config.disable_gradient_checkpointing:
-        if config.peft:
+        if config.peft and config.quantization in ("int4", "int8"):
             training_args["gradient_checkpointing_kwargs"] = {"use_reentrant": True}
         else:
             training_args["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
@@ -354,7 +354,10 @@ def train(config):
         if config.quantization is not None:
             gradient_checkpointing_kwargs = {}
             if not config.disable_gradient_checkpointing:
-                gradient_checkpointing_kwargs = {"use_reentrant": True}
+                if config.quantization in ("int4", "int8"):
+                    gradient_checkpointing_kwargs = {"use_reentrant": True}
+                else:
+                    gradient_checkpointing_kwargs = {"use_reentrant": False}
             model = prepare_model_for_kbit_training(
                 model,
                 use_gradient_checkpointing=not config.disable_gradient_checkpointing,
