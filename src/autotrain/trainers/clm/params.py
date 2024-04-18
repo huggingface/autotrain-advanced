@@ -24,7 +24,7 @@ class LLMTrainingParams(AutoTrainParams):
     log: str = Field("none", title="Logging using experiment tracking")
     disable_gradient_checkpointing: bool = Field(False, title="Gradient checkpointing")
     logging_steps: int = Field(-1, title="Logging steps")
-    evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
+    eval_strategy: str = Field("epoch", title="Evaluation strategy")
     save_total_limit: int = Field(1, title="Save total limit")
     save_strategy: str = Field("no", title="Save strategy")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")

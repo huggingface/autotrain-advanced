@@ -139,7 +139,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--logging-steps"],
             },
             {
-                "arg": "--evaluation_strategy",
+                "arg": "--eval_strategy",
                 "help": "Evaluation strategy to use",
                 "required": False,
                 "type": str,

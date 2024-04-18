@@ -238,7 +238,7 @@ async def fetch_params(task: str, param_type: str):
                         "use_flash_attention_2",
                         "disable_gradient_checkpointing",
                         "logging_steps",
-                        "evaluation_strategy",
+                        "eval_strategy",
                         "save_total_limit",
                         "save_strategy",
                         "auto_find_batch_size",
@@ -264,7 +264,7 @@ async def fetch_params(task: str, param_type: str):
                 "auto_find_batch_size",
                 "save_total_limit",
                 "save_strategy",
-                "evaluation_strategy",
+                "eval_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "image-classification" and param_type == "basic":
@@ -277,7 +277,7 @@ async def fetch_params(task: str, param_type: str):
                 "auto_find_batch_size",
                 "save_total_limit",
                 "save_strategy",
-                "evaluation_strategy",
+                "eval_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "seq2seq" and param_type == "basic":
@@ -290,7 +290,7 @@ async def fetch_params(task: str, param_type: str):
                 "auto_find_batch_size",
                 "save_total_limit",
                 "save_strategy",
-                "evaluation_strategy",
+                "eval_strategy",
                 "quantization",
                 "lora_r",
                 "lora_alpha",
@@ -308,7 +308,7 @@ async def fetch_params(task: str, param_type: str):
                 "auto_find_batch_size",
                 "save_total_limit",
                 "save_strategy",
-                "evaluation_strategy",
+                "eval_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "dreambooth":
