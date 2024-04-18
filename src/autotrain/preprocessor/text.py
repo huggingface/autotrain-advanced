@@ -80,6 +80,9 @@ class TextBinaryClassificationPreprocessor:
         train_df, valid_df = self.split()
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
 
+        train_df[:, "autotrain_label"] = train_df["autotrain_label"].astype(str)
+        valid_df[:, "autotrain_label"] = valid_df["autotrain_label"].astype(str)
+
         label_names = sorted(set(train_df["autotrain_label"].unique().tolist()))
 
         train_df = Dataset.from_pandas(train_df)
