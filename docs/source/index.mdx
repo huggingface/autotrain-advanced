@@ -1,22 +1,12 @@
-# AutoTrain
+![autotrain-homepage](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/ui.png)
+
+
 
 🤗 AutoTrain is a no-code tool for training state-of-the-art models for Natural Language Processing (NLP) tasks, for Computer Vision (CV) tasks, and for Speech tasks and even for Tabular tasks. It is built on top of the awesome tools developed by the Hugging Face team, and it is designed to be easy to use.
 
 ## Who should use AutoTrain?
 
-AutoTrain is for anyone who wants to train a state-of-the-art model for a NLP, CV, Speech or Tabular task, but doesn't want to spend time on the technical details of training a model. AutoTrain is also for anyone who wants to train a model for a custom dataset, but doesn't want to spend time on the technical details of training a model. Our goal is to make it easy for anyone to train a state-of-the-art model for any task and our focus is not just data scientists or machine learning engineers, but also non-technical users.
-
-## How to use AutoTrain?
-
-We offer several ways to use AutoTrain:
-
-- No code users can use `AutoTrain Advanced` by creating a new space with AutoTrain Docker image: https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced. Please make sure you keep the space private and attach appropriate hardware to the space.
-
-- Developers can access and build on top of AutoTrain using python api or run AutoTrain Advanced UI locally. The python api is available in the `autotrain-advanced` package. You can install it using pip:
-
-```bash
-pip install autotrain-advanced
-```
+AutoTrain is for anyone who wants to train a state-of-the-art model for a NLP, CV, Speech or even Tabular task, but doesn't want to spend time on the technical details of training a model. AutoTrain is also for anyone who wants to train a model for a custom dataset, but doesn't want to spend time on the technical details of training a model. Our goal is to make it easy for anyone to train a state-of-the-art model for any task and our focus is not just data scientists or machine learning engineers, but also non-technical users.
 
 
 ## What is AutoTrain Advanced?
@@ -27,4 +17,43 @@ Using AutoTrain Advanced, advanced users can also control the hyperparameters us
 
 Everything else is the same as AutoTrain. You can use AutoTrain Advanced to train models for NLP, CV, Speech and Tabular tasks.
 
-We recommend using [AutoTrain Advanced](https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced) since it is faster, more flexible and will have more supported tasks and features in the future.
+We recommend using [AutoTrain Advanced](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true)
+since it is faster, more flexible and will have more supported tasks and features in the future.
+
+
+## How to use AutoTrain?
+
+We offer several ways to use AutoTrain:
+
+- No code users can use `AutoTrain Advanced` by creating a new space with AutoTrain Docker image: 
+[Click here](https://huggingface.co/spaces/autotrain-projects/autotrain-advanced?duplicate=true) to create AutoTrain Space.
+Please make sure you keep the space private and attach appropriate hardware to the space.
+
+- Developers can access and build on top of AutoTrain using python api or run AutoTrain Advanced UI locally. The python api is available in the `autotrain-advanced` package. You can install it using pip:
+
+```bash
+$ pip install autotrain-advanced
+```
+
+# Running the app locally
+
+To run the app locally, you can use the following command:
+
+```bash
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain app --host 127.0.0.1 --port 8000
+```
+
+This will start the app on `http://127.0.0.1:8000`.
+
+Its advised to install autotrain-advanced in a virtual environment to avoid any conflicts with other packages.
+
+```bash
+$ conda create -n autotrain python=3.10
+$ conda activate autotrain
+$ pip install autotrain-advanced
+$ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+$ conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain app --host 127.0.0.1 --port 8000
+```
