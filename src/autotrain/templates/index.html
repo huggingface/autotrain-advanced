@@ -296,6 +296,7 @@
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               <optgroup label="LLM Finetuning">
                 <option value="llm:sft">LLM SFT</option>
+                <option value="llm:orpo">LLM ORPO</option>
                 <option value="llm:generic">LLM Generic</option>
                 <option value="llm:dpo">LLM DPO</option>
                 <option value="llm:reward">LLM Reward</option>
@@ -726,6 +727,11 @@
           document.getElementById("valid_split").disabled = true;
           break;
         case 'llm:reward':
+          placeholderText = '{"text": "text", "rejected_text": "rejected_text"}';
+          document.getElementById("hub-dataset-radio").disabled = false;
+          document.getElementById("valid_split").disabled = true;
+          break;
+        case 'llm:orpo':
           placeholderText = '{"text": "text", "rejected_text": "rejected_text"}';
           document.getElementById("hub-dataset-radio").disabled = false;
           document.getElementById("valid_split").disabled = true;

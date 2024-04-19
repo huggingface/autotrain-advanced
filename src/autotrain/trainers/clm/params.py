@@ -54,6 +54,10 @@ class LLMTrainingParams(AutoTrainParams):
     model_ref: Optional[str] = Field(None, title="Reference, for DPO trainer")
     dpo_beta: float = Field(0.1, title="Beta for DPO trainer")
 
+    # orpo
+    max_prompt_length: int = Field(128, title="Prompt length")
+    max_completion_length: Optional[int] = Field(None, title="Completion length")
+
     # column mappings
     prompt_text_column: Optional[str] = Field(None, title="Prompt text column")
     text_column: str = Field("text", title="Text column")

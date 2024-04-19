@@ -41,4 +41,4 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
 
 
 logger = Logger().get_logger()
-__version__ = "0.7.54.dev0"
+__version__ = "0.7.55.dev0"

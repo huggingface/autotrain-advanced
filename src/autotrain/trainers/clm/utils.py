@@ -193,7 +193,7 @@ def apply_chat_template(
             messages, tokenize=False, add_generation_prompt=False
         )
 
-    elif config.trainer == "reward":
+    elif config.trainer in ("reward", "orpo"):
         if all(k in example.keys() for k in ("chosen", "rejected")):
             chosen_messages = example["chosen"]
             rejected_messages = example["rejected"]
@@ -205,7 +205,7 @@ def apply_chat_template(
             example["rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
         else:
             raise ValueError(
-                f"Could not format example as dialogue for `rm` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
+                f"Could not format example as dialogue for `rm/orpo` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
             )
     elif config.trainer == "dpo":
         if all(k in example.keys() for k in ("chosen", "rejected")):

@@ -21,7 +21,7 @@ from transformers import (
     default_data_collator,
 )
 from transformers.trainer_callback import PrinterCallback
-from trl import DPOTrainer, RewardConfig, RewardTrainer, SFTTrainer
+from trl import DPOTrainer, ORPOConfig, ORPOTrainer, RewardConfig, RewardTrainer, SFTTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -82,7 +82,7 @@ def process_input_data(config):
             token=config.token,
         )
     # rename columns for reward trainer
-    if config.trainer in ("dpo", "reward"):
+    if config.trainer in ("dpo", "reward", "orpo"):
         if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
             train_data = train_data.rename_column(config.text_column, "chosen")
         if not (config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names):
@@ -101,7 +101,7 @@ def process_input_data(config):
                 token=config.token,
             )
 
-        if config.trainer in ("dpo", "reward"):
+        if config.trainer in ("dpo", "reward", "orpo"):
             if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
                 valid_data = valid_data.rename_column(config.text_column, "chosen")
             if not (
@@ -242,7 +242,6 @@ def train(config):
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
         remove_unused_columns=False,
-        disable_tqdm=True,
     )
 
     if not config.disable_gradient_checkpointing:
@@ -259,6 +258,11 @@ def train(config):
     if config.trainer == "reward":
         training_args["max_length"] = config.block_size
         args = RewardConfig(**training_args)
+    elif config.trainer == "orpo":
+        training_args["max_length"] = config.block_size
+        training_args["max_prompt_length"] = config.max_prompt_length
+        training_args["max_completion_length"] = config.max_completion_length
+        args = ORPOConfig(**training_args)
     else:
         args = TrainingArguments(**training_args)
 
@@ -330,7 +334,7 @@ def train(config):
                 use_flash_attention_2=config.use_flash_attention_2,
                 torch_dtype=torch_dtype,
             )
-            if config.model_ref is not None:
+            if config.model_ref is not None and config.trainer == "dpo":
                 model_ref = AutoModelForCausalLM.from_pretrained(
                     config.model_ref,
                     config=model_config,
@@ -343,7 +347,7 @@ def train(config):
                 model_ref = None
 
     logger.info(f"model dtype: {model.dtype}")
-    if config.model_ref is not None:
+    if config.model_ref is not None and config.trainer == "dpo":
         logger.info(f"model_ref dtype: {model_ref.dtype}")
 
     model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
@@ -514,6 +518,14 @@ def train(config):
             eval_dataset=valid_data if config.valid_split is not None else None,
             peft_config=peft_config if config.peft else None,
             tokenizer=tokenizer,
+        )
+    elif config.trainer == "orpo":
+        trainer = ORPOTrainer(
+            **trainer_args,
+            train_dataset=train_data,
+            eval_dataset=valid_data if config.valid_split is not None else None,
+            tokenizer=tokenizer,
+            peft_config=peft_config if config.peft else None,
         )
     elif config.trainer == "dpo":
         if isinstance(config.block_size, int):

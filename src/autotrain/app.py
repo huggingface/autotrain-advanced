@@ -97,6 +97,7 @@ PARAMS["llm"] = LLMTrainingParams(
     padding="right",
     chat_template="none",
     save_strategy="no",
+    max_completion_length=128,
 ).model_dump()
 
 PARAMS["text-classification"] = TextClassificationParams(
@@ -221,15 +222,27 @@ async def fetch_params(task: str, param_type: str):
                     "model_ref",
                     "dpo_beta",
                     "add_eos_token",
+                    "max_prompt_length",
+                    "max_completion_length",
+                ]
+            elif trainer == "orpo":
+                more_hidden_params = [
+                    "model_ref",
+                    "dpo_beta",
+                    "add_eos_token",
                 ]
             elif trainer == "generic":
                 more_hidden_params = [
                     "model_ref",
                     "dpo_beta",
+                    "max_prompt_length",
+                    "max_completion_length",
                 ]
             elif trainer == "dpo":
                 more_hidden_params = [
                     "add_eos_token",
+                    "max_prompt_length",
+                    "max_completion_length",
                 ]
             if param_type == "basic":
                 more_hidden_params.extend(
@@ -251,6 +264,7 @@ async def fetch_params(task: str, param_type: str):
                         "lora_r",
                         "lora_alpha",
                         "lora_dropout",
+                        "max_completion_length",
                     ]
                 )
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
