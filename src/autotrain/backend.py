@@ -526,8 +526,6 @@ class NVCFRunner:
         if org_name is None:
             raise ValueError("SPACE_ID environment variable is not set")
         org_name = org_name.split("/")[0]
-        # dont allow remote code to run on NVCF
-        self.env_vars["ALLOW_REMOTE_CODE"] = "false"
         nvcf_fr_payload = {
             "cmd": [
                 "conda",
