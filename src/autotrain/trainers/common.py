@@ -202,11 +202,16 @@ class UploadLogs(TrainerCallback):
             if PartialState().process_index == 0:
                 current_time = time.time()
                 if current_time - self.last_upload_time >= 600:
-                    self.api.upload_folder(
-                        folder_path=os.path.join(self.config.project_name, "runs"),
-                        repo_id=self.config.repo_id,
-                        path_in_repo="runs",
-                    )
+                    try:
+                        self.api.upload_folder(
+                            folder_path=os.path.join(self.config.project_name, "runs"),
+                            repo_id=self.config.repo_id,
+                            path_in_repo="runs",
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to upload logs: {e}")
+                        logger.warning("Continuing training...")
+
                     self.last_upload_time = current_time
         return control
 
