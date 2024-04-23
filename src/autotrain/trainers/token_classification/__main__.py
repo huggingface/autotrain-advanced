@@ -17,6 +17,7 @@ from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
 from autotrain.trainers.common import (
+    ALLOW_REMOTE_CODE,
     LossLoggingCallback,
     TrainStartCallback,
     UploadLogs,
@@ -82,7 +83,7 @@ def train(config):
         model = AutoModelForTokenClassification.from_pretrained(
             config.model,
             config=model_config,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
             token=config.token,
             ignore_mismatched_sizes=True,
         )
@@ -91,17 +92,19 @@ def train(config):
             config.model,
             config=model_config,
             from_tf=True,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
             token=config.token,
             ignore_mismatched_sizes=True,
         )
 
     if model_config.model_type in {"bloom", "gpt2", "roberta"}:
         tokenizer = AutoTokenizer.from_pretrained(
-            config.model, token=config.token, trust_remote_code=True, add_prefix_space=True
+            config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE, add_prefix_space=True
         )
     else:
-        tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE
+        )
 
     train_data = TokenClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:

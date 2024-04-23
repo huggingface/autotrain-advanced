@@ -9,6 +9,7 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from autotrain import logger
+from autotrain.trainers.common import ALLOW_REMOTE_CODE
 
 
 DEFAULT_CHAT_TEMPLATE = "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
@@ -144,12 +145,12 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
         base_model_path,
         torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
-        trust_remote_code=True,
+        trust_remote_code=ALLOW_REMOTE_CODE,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
         target_model_path,
-        trust_remote_code=True,
+        trust_remote_code=ALLOW_REMOTE_CODE,
     )
     model.resize_token_embeddings(len(tokenizer))
 

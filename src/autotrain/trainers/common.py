@@ -17,6 +17,9 @@ from transformers import TrainerCallback, TrainerControl, TrainerState, Training
 from autotrain import logger
 
 
+ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
+
+
 def get_file_sizes(directory):
     file_sizes = {}
     for root, _, files in os.walk(directory):

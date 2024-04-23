@@ -18,6 +18,8 @@ YELLOW_TAG = FORMAT_TAG.format(code=93)
 PURPLE_TAG = FORMAT_TAG.format(code=95)
 CYAN_TAG = FORMAT_TAG.format(code=96)
 
+ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
+
 LFS_PATTERNS = [
     "*.bin.*",
     "*.lfs.*",
@@ -105,7 +107,7 @@ def job_watcher(func):
 
 
 def get_model_architecture(model_path_or_name: str, revision: str = "main") -> str:
-    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision, trust_remote_code=True)
+    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision, trust_remote_code=ALLOW_REMOTE_CODE)
     architectures = config.architectures
     if architectures is None or len(architectures) > 1:
         raise ValueError(

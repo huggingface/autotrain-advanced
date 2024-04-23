@@ -28,6 +28,7 @@ from autotrain.trainers.clm import utils
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.common import (
+    ALLOW_REMOTE_CODE,
     LossLoggingCallback,
     TrainStartCallback,
     UploadLogs,
@@ -152,11 +153,13 @@ def train(config):
             eos_token=special_tokens.EOS_TOKEN.value,
             additional_special_tokens=special_tokens.list(),
             token=config.token,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
         )
         tokenizer.chat_template = chat_template
     else:
-        tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE
+        )
         if tokenizer.chat_template is None:
             tokenizer.chat_template = utils.DEFAULT_CHAT_TEMPLATE
 
@@ -270,7 +273,7 @@ def train(config):
     model_config = AutoConfig.from_pretrained(
         config.model,
         token=config.token,
-        trust_remote_code=True,
+        trust_remote_code=ALLOW_REMOTE_CODE,
         use_cache=config.disable_gradient_checkpointing,
     )
     if config.trainer == "reward":
@@ -298,7 +301,7 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                trust_remote_code=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
                 use_flash_attention_2=config.use_flash_attention_2,
             )
         else:
@@ -307,7 +310,7 @@ def train(config):
                 config=model_config,
                 token=config.token,
                 quantization_config=bnb_config,
-                trust_remote_code=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
                 use_flash_attention_2=config.use_flash_attention_2,
             )
             model_ref = None
@@ -320,7 +323,7 @@ def train(config):
         if config.trainer == "reward":
             model = AutoModelForSequenceClassification.from_pretrained(
                 config.model,
-                trust_remote_code=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
                 num_labels=1,
                 use_flash_attention_2=config.use_flash_attention_2,
                 torch_dtype=torch_dtype,
@@ -330,7 +333,7 @@ def train(config):
                 config.model,
                 config=model_config,
                 token=config.token,
-                trust_remote_code=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
                 use_flash_attention_2=config.use_flash_attention_2,
                 torch_dtype=torch_dtype,
             )
@@ -339,7 +342,7 @@ def train(config):
                     config.model_ref,
                     config=model_config,
                     token=config.token,
-                    trust_remote_code=True,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                     use_flash_attention_2=config.use_flash_attention_2,
                     torch_dtype=torch_dtype,
                 )

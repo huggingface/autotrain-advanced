@@ -21,6 +21,7 @@ from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
 from autotrain.trainers.common import (
+    ALLOW_REMOTE_CODE,
     LossLoggingCallback,
     TrainStartCallback,
     UploadLogs,
@@ -74,7 +75,7 @@ def train(config):
                 token=config.token,
             )
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE)
 
     train_data = Seq2SeqDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
@@ -138,7 +139,7 @@ def train(config):
     model_config = AutoConfig.from_pretrained(
         config.model,
         token=config.token,
-        trust_remote_code=True,
+        trust_remote_code=ALLOW_REMOTE_CODE,
         use_cache=False,
     )
 
@@ -163,14 +164,14 @@ def train(config):
             config=model_config,
             token=config.token,
             quantization_config=bnb_config,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
         )
     else:
         model = AutoModelForSeq2SeqLM.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
         )
 
     embedding_size = model.get_input_embeddings().weight.shape[0]

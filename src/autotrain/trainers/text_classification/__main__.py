@@ -16,6 +16,7 @@ from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
 from autotrain.trainers.common import (
+    ALLOW_REMOTE_CODE,
     LossLoggingCallback,
     TrainStartCallback,
     UploadLogs,
@@ -92,7 +93,7 @@ def train(config):
         model = AutoModelForSequenceClassification.from_pretrained(
             config.model,
             config=model_config,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
             token=config.token,
             ignore_mismatched_sizes=True,
         )
@@ -101,12 +102,12 @@ def train(config):
             config.model,
             config=model_config,
             from_tf=True,
-            trust_remote_code=True,
+            trust_remote_code=ALLOW_REMOTE_CODE,
             token=config.token,
             ignore_mismatched_sizes=True,
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE)
     train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
         valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config)
