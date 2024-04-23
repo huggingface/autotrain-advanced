@@ -2,6 +2,7 @@ import json
 import os
 from typing import List
 
+import requests
 import torch
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -173,8 +174,12 @@ async def load_index(request: Request):
         token = request.session["oauth_info"]["access_token"]
     else:
         token = HF_TOKEN
-
-    _users = app_utils.user_validation(user_token=token)
+    try:
+        _users = app_utils.user_validation(user_token=token)
+    except requests.exceptions.JSONDecodeError:
+        if "oauth_info" in request.session:
+            request.session.pop("oauth_info", None)
+        return templates.TemplateResponse("login.html", {"request": request})
     context = {
         "request": request,
         "valid_users": _users,
