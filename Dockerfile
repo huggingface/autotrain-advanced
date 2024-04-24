@@ -66,7 +66,7 @@ SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
 RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia && \
     conda clean -ya && \
-    conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya \
+    conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya && \
     conda install xformers -c xformers && conda clean -ya
 # conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit && conda clean -ya
 
