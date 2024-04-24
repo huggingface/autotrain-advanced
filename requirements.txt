@@ -46,3 +46,4 @@ pyngrok==7.1.6
 authlib==1.3.0
 itsdangerous==2.2.0
 seqeval==1.2.2
+httpx==0.27.0
