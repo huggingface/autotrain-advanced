@@ -1,0 +1,57 @@
+# LLM Finetuning
+
+With AutoTrain, you can easily finetune large language models (LLMs) on your own data!
+
+AutoTrain supports the following types of LLM finetuning:
+
+- Causal Language Modeling (CLM)
+- Masked Language Modeling (MLM) [Coming Soon]
+
+## Data Preparation
+
+LLM finetuning accepts data in CSV format.
+
+### Data Format For SFT / Generic Trainer
+
+For SFT / Generic Trainer, the data should be in the following format:
+
+| text                                                          |
+|---------------------------------------------------------------|
+| human: hello \n bot: hi nice to meet you                      |
+| human: how are you \n bot: I am fine                          |
+| human: What is your name? \n bot: My name is Mary             |
+| human: Which is the best programming language? \n bot: Python |
+
+
+An example dataset for this format can be found here: https://huggingface.co/datasets/timdettmers/openassistant-guanaco
+
+For SFT/Generic training, your dataset must have a `text` column
+
+### Data Format For Reward Trainer
+
+For Reward Trainer, the data should be in the following format:
+
+| text                                                          | rejected_text                                                     |
+|---------------------------------------------------------------|-------------------------------------------------------------------|
+| human: hello \n bot: hi nice to meet you                      | human: hello \n bot: leave me alone                               |
+| human: how are you \n bot: I am fine                          | human: how are you \n bot: I am not fine                          |
+| human: What is your name? \n bot: My name is Mary             | human: What is your name? \n bot: Whats it to you?                |
+| human: Which is the best programming language? \n bot: Python | human: Which is the best programming language? \n bot: Javascript |
+
+For Reward Trainer, your dataset must have a `text` column (aka chosen text) and a `rejected_text` column.
+
+### Data Format For DPO Trainer
+
+For DPO Trainer, the data should be in the following format:
+
+| prompt                                  | text                | rejected_text      |
+|-----------------------------------------|---------------------|--------------------|
+| hello                                   | hi nice to meet you | leave me alone     |
+| how are you                             | I am fine           | I am not fine      |
+| What is your name?                      | My name is Mary     | Whats it to you?   |
+| What is your name?                      | My name is Mary     | I dont have a name |
+| Which is the best programming language? | Python              | Javascript         |
+| Which is the best programming language? | Python              | C++                |
+| Which is the best programming language? | Java                | C++                |
+
+For DPO Trainer, your dataset must have a `prompt` column, a `text` column (aka chosen text) and a `rejected_text` column.
