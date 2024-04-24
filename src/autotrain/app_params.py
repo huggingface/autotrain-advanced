@@ -52,7 +52,6 @@ class AppParams:
         _params["token"] = self.token
         _params["project_name"] = f"{self.project_name}"
         _params["push_to_hub"] = True
-        _params["repo_id"] = f"{self.username}/{self.project_name}"
         _params["data_path"] = self.data_path
         _params["username"] = self.username
         return _params

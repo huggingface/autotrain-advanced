@@ -31,7 +31,7 @@ def common_args():
         },
         {
             "arg": "--backend",
-            "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub and repo_id",
+            "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub & username",
             "required": False,
             "type": str,
             "default": "local-cli",
@@ -39,12 +39,6 @@ def common_args():
         {
             "arg": "--token",
             "help": "Hub token",
-            "required": False,
-            "type": str,
-        },
-        {
-            "arg": "--repo-id",
-            "help": "Hub repo id",
             "required": False,
             "type": str,
         },
@@ -62,7 +56,7 @@ def common_args():
         },
         {
             "arg": "--project-name",
-            "help": "Output directory or repo id",
+            "help": "Output directory",
             "required": True,
             "type": str,
         },

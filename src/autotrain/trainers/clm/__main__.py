@@ -131,9 +131,6 @@ def train(config):
 
     is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
 
-    if config.repo_id is None and config.username is not None:
-        config.repo_id = f"{config.username}/{config.project_name}"
-
     train_data, valid_data = process_input_data(config)
 
     special_tokens = None
@@ -607,10 +604,12 @@ def train(config):
             logger.info("Pushing model to hub...")
             save_training_params(config)
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True, exist_ok=True)
+            api.create_repo(
+                repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
+            )
             api.upload_folder(
                 folder_path=config.project_name,
-                repo_id=config.repo_id,
+                repo_id=f"{config.username}/{config.project_name}",
                 repo_type="model",
             )
 

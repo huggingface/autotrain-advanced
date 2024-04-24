@@ -17,7 +17,6 @@ class Seq2SeqParams(AutoTrainParams):
     push_to_hub: bool = Field(False, title="Push to hub")
     text_column: str = Field("text", title="Text column")
     target_column: str = Field("target", title="Target text column")
-    repo_id: Optional[str] = Field(None, title="Repo ID")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
     max_seq_length: int = Field(128, title="Max sequence length")

@@ -64,7 +64,6 @@ class DreamBoothTrainingParams(AutoTrainParams):
     mixed_precision: Optional[str] = Field(None, title="Mixed precision")
 
     token: Optional[str] = Field(None, title="Hub token")
-    repo_id: Optional[str] = Field(None, title="Hub model id")
     push_to_hub: bool = Field(False, title="Push to hub")
     username: Optional[str] = Field(None, title="Hub username")
 

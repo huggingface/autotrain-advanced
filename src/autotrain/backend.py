@@ -71,19 +71,14 @@ class SpaceRunner:
         }
 
         if not isinstance(self.params, GenericParams) and self.backend != "local-cli":
-            if self.params.repo_id is not None:
-                self.username = self.params.repo_id.split("/")[0]
-            elif self.params.username is not None:
+            if self.params.username is not None:
                 self.username = self.params.username
             else:
-                raise ValueError("Must provide either repo_id or username")
+                raise ValueError("Must provide username")
         else:
             self.username = self.params.username
 
         self.ep_api_url = f"https://api.endpoints.huggingface.cloud/v2/endpoint/{self.username}"
-
-        if self.params.repo_id is None and self.params.username is not None:
-            self.params.repo_id = f"{self.params.username}/{self.params.project_name}"
 
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
@@ -152,26 +147,25 @@ class SpaceRunner:
         _readme = io.BytesIO(_readme.encode())
         return _readme
 
-    def _add_secrets(self, api, repo_id):
+    def _add_secrets(self, api, space_id):
         if isinstance(self.params, GenericParams):
             for k, v in self.params.env.items():
-                api.add_space_secret(repo_id=repo_id, key=k, value=v)
+                api.add_space_secret(repo_id=space_id, key=k, value=v)
             self.params.env = {}
 
-        api.add_space_secret(repo_id=repo_id, key="HF_TOKEN", value=self.params.token)
-        api.add_space_secret(repo_id=repo_id, key="AUTOTRAIN_USERNAME", value=self.username)
-        api.add_space_secret(repo_id=repo_id, key="PROJECT_NAME", value=self.params.project_name)
-        api.add_space_secret(repo_id=repo_id, key="TASK_ID", value=str(self.task_id))
-        api.add_space_secret(repo_id=repo_id, key="PARAMS", value=self.params.model_dump_json())
+        api.add_space_secret(repo_id=space_id, key="HF_TOKEN", value=self.params.token)
+        api.add_space_secret(repo_id=space_id, key="AUTOTRAIN_USERNAME", value=self.username)
+        api.add_space_secret(repo_id=space_id, key="PROJECT_NAME", value=self.params.project_name)
+        api.add_space_secret(repo_id=space_id, key="TASK_ID", value=str(self.task_id))
+        api.add_space_secret(repo_id=space_id, key="PARAMS", value=self.params.model_dump_json())
 
         if isinstance(self.params, DreamBoothTrainingParams):
-            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.image_path)
+            api.add_space_secret(repo_id=space_id, key="DATA_PATH", value=self.params.image_path)
         else:
-            api.add_space_secret(repo_id=repo_id, key="DATA_PATH", value=self.params.data_path)
+            api.add_space_secret(repo_id=space_id, key="DATA_PATH", value=self.params.data_path)
 
         if not isinstance(self.params, GenericParams):
-            api.add_space_secret(repo_id=repo_id, key="MODEL", value=self.params.model)
-            api.add_space_secret(repo_id=repo_id, key="OUTPUT_MODEL_REPO", value=self.params.repo_id)
+            api.add_space_secret(repo_id=space_id, key="MODEL", value=self.params.model)
 
     def _create_endpoint(self):
         hardware = self.spaces_backends[self.backend]
@@ -200,7 +194,6 @@ class SpaceRunner:
                             "DATA_PATH": self.params.data_path,
                             "TASK_ID": str(self.task_id),
                             "MODEL": self.params.model,
-                            "OUTPUT_MODEL_REPO": self.params.repo_id,
                             "ENDPOINT_ID": f"{self.username}/{self.params.project_name}",
                         },
                         "health_route": "/",
@@ -236,11 +229,10 @@ class SpaceRunner:
 
             if not isinstance(self.params, GenericParams):
                 env_vars["MODEL"] = self.params.model
-                env_vars["OUTPUT_MODEL_REPO"] = self.params.repo_id
 
             if self.backend.startswith("dgx-"):
                 ngc_runner = NGCRunner(
-                    job_name=self.params.repo_id.replace("/", "-"),
+                    job_name=f"{self.username}-{self.params.project_name}",
                     env_vars=env_vars,
                     backend=self.backend,
                 )
@@ -248,7 +240,7 @@ class SpaceRunner:
                 return
             elif self.backend.startswith("nvcf-"):
                 nvcf_runner = NVCFRunner(
-                    job_name=self.params.repo_id.replace("/", "-"),
+                    job_name=f"{self.username}-{self.params.project_name}",
                     env_vars=env_vars,
                     backend=self.backend,
                 )
@@ -264,20 +256,20 @@ class SpaceRunner:
             return endpoint_id
 
         api = HfApi(token=self.params.token)
-        repo_id = f"{self.username}/autotrain-{self.params.project_name}"
+        space_id = f"{self.username}/autotrain-{self.params.project_name}"
         api.create_repo(
-            repo_id=repo_id,
+            repo_id=space_id,
             repo_type="space",
             space_sdk="docker",
             space_hardware=self.spaces_backends[self.backend.split("-")[1].lower()],
             private=True,
         )
-        self._add_secrets(api, repo_id)
+        self._add_secrets(api, space_id)
         readme = self._create_readme()
         api.upload_file(
             path_or_fileobj=readme,
             path_in_repo="README.md",
-            repo_id=repo_id,
+            repo_id=space_id,
             repo_type="space",
         )
 
@@ -285,10 +277,10 @@ class SpaceRunner:
         api.upload_file(
             path_or_fileobj=_dockerfile,
             path_in_repo="Dockerfile",
-            repo_id=repo_id,
+            repo_id=space_id,
             repo_type="space",
         )
-        return repo_id
+        return space_id
 
 
 @dataclass

@@ -46,7 +46,6 @@ HIDDEN_PARAMS = [
     "username",
     "task",
     "backend",
-    "repo_id",
     "train_split",
     "valid_split",
     "text_column",

@@ -462,7 +462,7 @@ class Trainer:
 
     def push_to_hub(self):
         repo_id = create_repo(
-            repo_id=self.config.repo_id,
+            repo_id=f"{self.config.username}/{self.config.project_name}",
             exist_ok=True,
             private=True,
             token=self.config.token,

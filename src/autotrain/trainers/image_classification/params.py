@@ -29,7 +29,6 @@ class ImageClassificationParams(AutoTrainParams):
     save_strategy: str = Field("epoch", title="Save strategy")
     token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
-    repo_id: Optional[str] = Field(None, title="Repo id")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     image_column: str = Field("image", title="Image column")
     target_column: str = Field("target", title="Target column")

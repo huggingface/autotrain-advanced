@@ -153,16 +153,16 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             if self.args.model is None:
                 raise ValueError("Model must be specified")
             if self.args.push_to_hub:
-                if self.args.repo_id is None:
-                    raise ValueError("Repo id must be specified for push to hub")
+                if self.args.username is None:
+                    raise ValueError("Username must be specified for push to hub")
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
         if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
             if not self.args.push_to_hub:
                 raise ValueError("Push to hub must be specified for spaces backend")
-            if self.args.username is None and self.args.repo_id is None:
-                raise ValueError("Repo id or username must be specified for spaces backend")
+            if self.args.username is None:
+                raise ValueError("Username must be specified for spaces backend")
             if self.args.token is None:
                 raise ValueError("Token must be specified for spaces backend")
 

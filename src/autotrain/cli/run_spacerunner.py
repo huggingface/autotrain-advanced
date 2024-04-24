@@ -143,7 +143,6 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             script_path=self.args.script_path,
             env=self.args.env,
             args=self.args.args,
-            repo_id=f"{self.args.username}/{self.args.project_name}",
         )
         sr = SpaceRunner(params=params, backend=self.args.backend)
         sr.prepare()

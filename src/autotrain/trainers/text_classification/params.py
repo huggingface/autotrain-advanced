@@ -31,7 +31,6 @@ class TextClassificationParams(AutoTrainParams):
     save_strategy: str = Field("epoch", title="Save strategy")
     token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
-    repo_id: Optional[str] = Field(None, title="Repo id")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     username: Optional[str] = Field(None, title="Hugging Face Username")
     log: str = Field("none", title="Logging using experiment tracking")

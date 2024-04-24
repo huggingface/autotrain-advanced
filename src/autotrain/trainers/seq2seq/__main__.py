@@ -47,9 +47,6 @@ def train(config):
     if isinstance(config, dict):
         config = Seq2SeqParams(**config)
 
-    if config.repo_id is None and config.username is not None:
-        config.repo_id = f"{config.username}/{config.project_name}"
-
     train_data = None
     valid_data = None
     # check if config.train_split.csv exists in config.data_path
@@ -235,10 +232,12 @@ def train(config):
             save_training_params(config)
             logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
-            api.create_repo(repo_id=config.repo_id, repo_type="model", private=True, exist_ok=True)
+            api.create_repo(
+                repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
+            )
             api.upload_folder(
                 folder_path=config.project_name,
-                repo_id=config.repo_id,
+                repo_id=f"{config.username}/{config.project_name}",
                 repo_type="model",
             )
 
