@@ -1,0 +1,83 @@
+# Starting the UI
+
+To run the autotrain cli locally or in colab, install autotrain-advanced python package:
+
+```bash
+$ pip install autotrain-advanced
+```
+
+and then run the following command:
+
+```bash
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain --help
+```
+
+This will start the app on `http://127.0.0.1:8000`.
+
+AutoTrain doesn't install pytorch, torchaudio, torchvision, or any other dependencies. You will need to install them separately.
+It is thus recommended to use conda environment:
+
+
+```bash
+$ conda create -n autotrain python=3.10
+$ conda activate autotrain
+
+$ pip install autotrain-advanced
+
+$ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+$ conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
+$ conda install xformers -c xformers
+
+$ python -m nltk.downloader punkt
+$ pip install flash-attn --no-build-isolation
+$ pip install deepspeed
+
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain --help
+```
+
+This will show the CLI commands that can be used:
+
+```bash
+$ autotrain --help
+usage: autotrain <command> [<args>]
+
+positional arguments:
+{
+    app,
+    llm,
+    setup,
+    dreambooth,
+    api,
+    text-classification,
+    image-classification,
+    tabular,
+    spacerunner,
+    seq2seq,
+    token-classification
+}
+    
+    commands
+
+options:
+  -h, --help            show this help message and exit
+  --version, -v         Display AutoTrain version
+
+For more information about a command, run: `autotrain <command> --help`
+```
+
+The autotrain commands that end users will be interested in are:
+
+- `app`: Start the AutoTrain UI
+- `llm`: Train a language model
+- `dreambooth`: Train a model using DreamBooth
+- `text-classification`: Train a text classification model
+- `image-classification`: Train an image classification model
+- `tabular`: Train a tabular model
+- `spacerunner`: Train any custom model using SpaceRunner
+- `seq2seq`: Train a sequence-to-sequence model
+- `token-classification`: Train a token classification model
+
+
+In case of any issues, please report on the [GitHub issues](https://github.com/huggingface/autotrain-advanced/).

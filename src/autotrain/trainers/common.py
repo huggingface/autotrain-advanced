@@ -81,7 +81,8 @@ def pause_space(params, is_failure=False):
             msg = "Your training run has failed! Please check the logs for more details"
             title = "Your training has failed ❌"
         else:
-            msg = f"Your training run was successful! [Check out your trained model here](https://huggingface.co/{params.repo_id})"
+            msg = "Your training run was successful! [Check out your trained model here]"
+            msg += f"(https://huggingface.co/{params.username}/{params.project_name})"
             title = "Your training has finished successfully ✅"
 
         if not params.token.startswith("hf_oauth_"):
@@ -93,11 +94,11 @@ def pause_space(params, is_failure=False):
                     repo_type="space",
                 )
             except Exception as e:
-                logger.error(f"Failed to create discussion: {e}")
+                logger.warning(f"Failed to create discussion: {e}")
                 if is_failure:
-                    logger.info("Model failed to train and discussion was not created.")
+                    logger.error("Model failed to train and discussion was not created.")
                 else:
-                    logger.info("Model trained successfully but discussion was not created.")
+                    logger.warning("Model trained successfully but discussion was not created.")
 
         api.pause_space(repo_id=os.environ["SPACE_ID"])
     if "ENDPOINT_ID" in os.environ:
@@ -188,7 +189,9 @@ class UploadLogs(TrainerCallback):
         if self.config.push_to_hub:
             if PartialState().process_index == 0:
                 self.api = HfApi(token=config.token)
-                self.api.create_repo(repo_id=config.repo_id, repo_type="model", private=True)
+                self.api.create_repo(
+                    repo_id=f"{self.config.username}/{self.config.project_name}", repo_type="model", private=True
+                )
 
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
 
@@ -205,7 +208,7 @@ class UploadLogs(TrainerCallback):
                     try:
                         self.api.upload_folder(
                             folder_path=os.path.join(self.config.project_name, "runs"),
-                            repo_id=self.config.repo_id,
+                            repo_id=f"{self.config.username}/{self.config.project_name}",
                             path_in_repo="runs",
                         )
                     except Exception as e:

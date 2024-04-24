@@ -28,9 +28,6 @@ def train(config):
     if config.model in utils.XL_MODELS:
         config.xl = True
 
-    if config.repo_id is None and config.username is not None:
-        config.repo_id = f"{config.username}/{config.project_name}"
-
     if config.project_name == "/tmp/model":
         snapshot_download(
             repo_id=config.image_path,
@@ -106,7 +103,7 @@ def train(config):
             max_grad_norm = config.max_grad_norm
             push_to_hub = config.push_to_hub
             hub_token = config.token
-            hub_model_id = config.repo_id
+            hub_model_id = f"{config.username}/{config.project_name}"
             logging_dir = os.path.join(config.project_name, "logs")
             allow_tf32 = config.allow_tf32
             report_to = "tensorboard" if config.logging else None
@@ -167,7 +164,7 @@ def train(config):
             max_grad_norm = config.max_grad_norm
             push_to_hub = config.push_to_hub
             hub_token = config.token
-            hub_model_id = config.repo_id
+            hub_model_id = f"{config.username}/{config.project_name}"
             logging_dir = os.path.join(config.project_name, "logs")
             allow_tf32 = config.allow_tf32
             report_to = "tensorboard" if config.logging else None
@@ -212,7 +209,7 @@ def train(config):
         remove_autotrain_data(config)
 
         repo_id = create_repo(
-            repo_id=config.repo_id,
+            repo_id=f"{config.username}/{config.project_name}",
             exist_ok=True,
             private=True,
             token=config.token,

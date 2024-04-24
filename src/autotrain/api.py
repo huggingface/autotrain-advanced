@@ -17,7 +17,6 @@ TASK_ID = int(os.environ.get("TASK_ID"))
 PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
-OUTPUT_MODEL_REPO = os.environ.get("OUTPUT_MODEL_REPO")
 DB = AutoTrainDB("autotrain.db")
 
 
@@ -49,7 +48,6 @@ logger.info(f"PROJECT_NAME: {PROJECT_NAME}")
 logger.info(f"TASK_ID: {TASK_ID}")
 logger.info(f"DATA_PATH: {DATA_PATH}")
 logger.info(f"MODEL: {MODEL}")
-logger.info(f"OUTPUT_MODEL_REPO: {OUTPUT_MODEL_REPO}")
 
 
 @api.get("/")

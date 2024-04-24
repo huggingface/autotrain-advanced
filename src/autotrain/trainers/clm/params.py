@@ -65,6 +65,5 @@ class LLMTrainingParams(AutoTrainParams):
 
     # push to hub
     push_to_hub: bool = Field(False, title="Push to hub")
-    repo_id: Optional[str] = Field(None, title="Repo id")
     username: Optional[str] = Field(None, title="Hugging Face Username")
     token: Optional[str] = Field(None, title="Huggingface token")

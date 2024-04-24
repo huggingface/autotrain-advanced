@@ -17,7 +17,6 @@ class TabularParams(AutoTrainParams):
     push_to_hub: bool = Field(False, title="Push to hub")
     id_column: str = Field("id", title="ID column")
     target_columns: Union[List[str], str] = Field(["target"], title="Target column(s)")
-    repo_id: Optional[str] = Field(None, title="Repo ID")
     categorical_columns: Optional[List[str]] = Field(None, title="Categorical columns")
     numerical_columns: Optional[List[str]] = Field(None, title="Numerical columns")
     task: str = Field("classification", title="Task")

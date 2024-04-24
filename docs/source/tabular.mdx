@@ -42,3 +42,75 @@ id,category1,category2,feature1,target
 ## Columns
 
 Your CSV dataset must have two columns: `id` and `target`.
+
+
+## Parameters
+
+```
+❯ autotrain tabular --help
+usage: autotrain <command> [<args>] tabular [-h] [--train] [--deploy] [--inference] [--username USERNAME]
+                                            [--backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}]
+                                            [--token TOKEN] [--push-to-hub] --model MODEL --project-name PROJECT_NAME [--data-path DATA_PATH]
+                                            [--train-split TRAIN_SPLIT] [--valid-split VALID_SPLIT] [--batch-size BATCH_SIZE] [--seed SEED]
+                                            --target-columns TARGET_COLUMNS [--categorical-columns CATEGORICAL_COLUMNS]
+                                            [--numerical-columns NUMERICAL_COLUMNS] --id-column ID_COLUMN --task {classification,regression}
+                                            [--num-trials NUM_TRIALS] [--time-limit TIME_LIMIT] [--categorical-imputer {most_frequent,None}]
+                                            [--numerical-imputer {mean,median,None}] [--numeric-scaler {standard,minmax,normal,robust}]
+
+✨ Run AutoTrain Tabular Data Training
+
+options:
+  -h, --help            show this help message and exit
+  --train               Command to train the model
+  --deploy              Command to deploy the model (limited availability)
+  --inference           Command to run inference (limited availability)
+  --username USERNAME   Hugging Face Hub Username
+  --backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}
+                        Backend to use: default or spaces. Spaces backend requires push_to_hub & username. Advanced users only.
+  --token TOKEN         Your Hugging Face API token. Token must have write access to the model hub.
+  --push-to-hub         Push to hub after training will push the trained model to the Hugging Face model hub.
+  --model MODEL         Base model to use for training
+  --project-name PROJECT_NAME
+                        Output directory / repo id for trained model (must be unique on hub)
+  --data-path DATA_PATH
+                        Train dataset to use. When using cli, this should be a directory path containing training and validation data in appropriate
+                        formats
+  --train-split TRAIN_SPLIT
+                        Train dataset split to use
+  --valid-split VALID_SPLIT
+                        Validation dataset split to use
+  --batch-size BATCH_SIZE
+                        Training batch size to use
+  --seed SEED           Random seed for reproducibility
+  --target-columns TARGET_COLUMNS
+                        Specify the names of the target or label columns separated by commas if multiple. These columns are what the model will
+                        predict. Required for defining the output of the model.
+  --categorical-columns CATEGORICAL_COLUMNS
+                        List the names of columns that contain categorical data, useful for models that need explicit handling of such data.
+                        Categorical data is typically processed differently from numerical data, such as through encoding. If not specified, the
+                        model will infer the data type.
+  --numerical-columns NUMERICAL_COLUMNS
+                        Identify columns that contain numerical data. Proper specification helps in applying appropriate scaling and normalization
+                        techniques, which can significantly impact model performance. If not specified, the model will infer the data type.
+  --id-column ID_COLUMN
+                        Specify the column name that uniquely identifies each row in the dataset. This is critical for tracking samples through the
+                        model pipeline and is often excluded from model training. Required field.
+  --task {classification,regression}
+                        Define the type of machine learning task, such as 'classification', 'regression'. This parameter determines the model's
+                        architecture and the loss function to use. Required to properly configure the model.
+  --num-trials NUM_TRIALS
+                        Set the number of trials for hyperparameter tuning or model experimentation. More trials can lead to better model
+                        configurations but require more computational resources. Default is 100 trials.
+  --time-limit TIME_LIMIT
+                        mpose a time limit (in seconds) for training or searching for the best model configuration. This helps manage resource
+                        allocation and ensures the process does not exceed available computational budgets. The default is 3600 seconds (1 hour).
+  --categorical-imputer {most_frequent,None}
+                        Select the method or strategy to impute missing values in categorical columns. Options might include 'most_frequent',
+                        'None'. Correct imputation can prevent biases and improve model accuracy.
+  --numerical-imputer {mean,median,None}
+                        Choose the imputation strategy for missing values in numerical columns. Common strategies include 'mean', & 'median'.
+                        Accurate imputation is vital for maintaining the integrity of numerical data.
+  --numeric-scaler {standard,minmax,normal,robust}
+                        Determine the type of scaling to apply to numerical data. Examples include 'standard' (zero mean and unit variance), 'min-
+                        max' (scaled between given range), etc. Scaling is essential for many algorithms to perform optimally
+```

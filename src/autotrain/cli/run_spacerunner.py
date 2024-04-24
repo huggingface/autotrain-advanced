@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+from autotrain import logger
 from autotrain.backend import SpaceRunner
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.generic.utils import create_dataset_repo
@@ -139,11 +140,10 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             data_path=dataset_id,
             username=self.args.username,
             token=self.args.token,
-            backend=self.args.backend,
             script_path=self.args.script_path,
             env=self.args.env,
             args=self.args.args,
-            repo_id=f"{self.args.username}/{self.args.project_name}",
         )
         sr = SpaceRunner(params=params, backend=self.args.backend)
-        sr.prepare()
+        space_id = sr.prepare()
+        logger.info(f"SpaceRunner created with ID: {space_id}")

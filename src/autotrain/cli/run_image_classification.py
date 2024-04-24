@@ -32,83 +32,85 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             },
             {
                 "arg": "--warmup-ratio",
-                "help": "Warmup proportion to use",
+                "help": "Define the proportion of training to be dedicated to a linear warmup where learning rate gradually increases. This can help in stabilizing the training process early on. Default ratio is 0.1.",
                 "required": False,
                 "type": float,
                 "default": 0.1,
             },
             {
                 "arg": "--optimizer",
-                "help": "Optimizer to use",
+                "help": "Choose the optimizer algorithm for training the model. Different optimizers can affect the training speed and model performance. 'adamw_torch' is used by default.",
                 "required": False,
                 "type": str,
                 "default": "adamw_torch",
             },
             {
                 "arg": "--scheduler",
-                "help": "Scheduler to use",
+                "help": "Select the learning rate scheduler to adjust the learning rate based on the number of epochs. 'linear' decreases the learning rate linearly from the initial lr set. Default is 'linear'. Try 'cosine' for a cosine annealing schedule.",
                 "required": False,
                 "type": str,
                 "default": "linear",
             },
             {
                 "arg": "--weight-decay",
-                "help": "Weight decay to use",
+                "help": "Set the weight decay rate to apply for regularization. Helps in preventing the model from overfitting by penalizing large weights. Default is 0.0, meaning no weight decay is applied.",
                 "required": False,
                 "type": float,
                 "default": 0.0,
             },
             {
                 "arg": "--max-grad-norm",
-                "help": "Max gradient norm to use",
+                "help": "Specify the maximum norm of the gradients for gradient clipping. Gradient clipping is used to prevent the exploding gradient problem in deep neural networks. Default is 1.0.",
                 "required": False,
                 "type": float,
                 "default": 1.0,
             },
             {
                 "arg": "--logging-steps",
-                "help": "Logging steps to use",
+                "help": "Determine how often to log training progress. Set this to the number of steps between each log output. -1 determines logging steps automatically. Default is -1.",
                 "required": False,
                 "type": int,
                 "default": -1,
             },
             {
                 "arg": "--evaluation-strategy",
-                "help": "Evaluation strategy to use",
+                "help": "Specify how often to evaluate the model performance. Options include 'no', 'steps', 'epoch'. 'epoch' evaluates at the end of each training epoch by default.",
                 "required": False,
                 "type": str,
                 "default": "epoch",
+                "choices": ["steps", "epoch", "no"],
             },
             {
                 "arg": "--save-total-limit",
-                "help": "Save total limit to use",
+                "help": "Limit the total number of model checkpoints to save. Helps manage disk space by retaining only the most recent checkpoints. Default is to save only the latest one.",
                 "required": False,
                 "type": int,
                 "default": 1,
             },
             {
                 "arg": "--save-strategy",
-                "help": "Save strategy to use",
+                "help": "Determine the strategy for saving model checkpoints. Possible values are 'no', 'steps', 'epoch'. 'epoch' saves a checkpoint at the end of each epoch by default.",
                 "required": False,
                 "type": str,
                 "default": "epoch",
+                "choices": ["steps", "epoch", "no"],
             },
             {
                 "arg": "--auto-find-batch-size",
-                "help": "Auto find batch size True/False",
+                "help": "Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch size that fits in memory.",
                 "required": False,
                 "action": "store_true",
             },
             {
                 "arg": "--mixed-precision",
-                "help": "fp16, bf16, or None",
+                "help": "Choose the precision mode for training to optimize performance and memory usage. Options are 'fp16', 'bf16', or None for default precision. Default is None.",
                 "required": False,
                 "type": str,
                 "default": None,
                 "choices": ["fp16", "bf16", None],
             },
         ]
-        arg_list.extend(common_args())
+        arg_list = common_args() + arg_list
         run_text_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
         )
@@ -128,6 +130,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                     required=arg.get("required", False),
                     type=arg.get("type"),
                     default=arg.get("default"),
+                    choices=arg.get("choices"),
                 )
         run_text_classification_parser.set_defaults(func=run_image_classification_command_factory)
 
@@ -153,16 +156,16 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             if self.args.model is None:
                 raise ValueError("Model must be specified")
             if self.args.push_to_hub:
-                if self.args.repo_id is None:
-                    raise ValueError("Repo id must be specified for push to hub")
+                if self.args.username is None:
+                    raise ValueError("Username must be specified for push to hub")
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
         if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
             if not self.args.push_to_hub:
                 raise ValueError("Push to hub must be specified for spaces backend")
-            if self.args.username is None and self.args.repo_id is None:
-                raise ValueError("Repo id or username must be specified for spaces backend")
+            if self.args.username is None:
+                raise ValueError("Username must be specified for spaces backend")
             if self.args.token is None:
                 raise ValueError("Token must be specified for spaces backend")
 
