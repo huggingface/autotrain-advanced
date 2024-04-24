@@ -74,6 +74,6 @@ COPY --chown=1000:1000 . /app/
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     autotrain setup && \
-    FLASH_ATTENTION_FORCE_BUILD=true pip install -U flash-attn && \
+    pip install -U flash-attn --no-build-isolation && \
     pip install -U deepspeed && \
     pip cache purge
