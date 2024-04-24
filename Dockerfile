@@ -74,6 +74,6 @@ COPY --chown=1000:1000 . /app/
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     autotrain setup && \
-    pip install -U flash-attn --no-build-isolation && \
+    pip install -U https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.7/flash_attn-2.5.7+cu122torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl && \
     pip install -U deepspeed && \
     pip cache purge
