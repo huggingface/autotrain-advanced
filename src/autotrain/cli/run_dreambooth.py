@@ -315,7 +315,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
             },
         ]
 
-        arg_list.extend(common_args())
+        arg_list = common_args() + arg_list
         run_dreambooth_parser = parser.add_parser("dreambooth", description="✨ Run AutoTrain DreamBooth Training")
         for arg in arg_list:
             if "action" in arg:
@@ -333,6 +333,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
                     required=arg.get("required", False),
                     type=arg.get("type"),
                     default=arg.get("default"),
+                    choices=arg.get("choices"),
                 )
         run_dreambooth_parser.set_defaults(func=run_dreambooth_command_factory)
 

@@ -32,6 +32,8 @@ RUN apt-get update &&  \
     git-lfs \
     libgl1 \
     unzip \
+    libjpeg-dev \
+    libpng-dev \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 

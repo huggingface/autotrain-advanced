@@ -1,0 +1,65 @@
+# Starting the UI
+
+The AutoTrain UI can be started in multiple ways depending on your needs.
+We offer UI on Hugging Face Spaces, Colab and locally!
+
+## Hugging Face Spaces
+
+To start the UI on Hugging Face Spaces, you can simply click on the following link:
+
+[![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-md.svg)](https://huggingface.co/login?next=/spaces/autotrain-projects/autotrain-advanced?duplicate=true)
+
+Please make sure you keep the space private and attach appropriate hardware to the space.
+You can also read more about AutoTrain on the homepage and follow the link there to start your own training instance on
+Hugging Face Spaces. [Click here](https://huggingface.co/autotrain) to visit the homepage.
+
+## Colab
+
+To start the UI on Colab, you can simply click on the following link:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
+
+Please note, to run the app on Colab, you will need an ngrok token. You can get one by signing up for free on [ngrok](https://ngrok.com/).
+This is because Colab does not allow exposing ports to the internet directly.
+
+
+## Locally
+
+To run the autotrain app locally, install autotrain-advanced python package:
+
+```bash
+$ pip install autotrain-advanced
+```
+
+and then run the following command:
+
+```bash
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain app --host 127.0.0.1 --port 8000
+```
+
+This will start the app on `http://127.0.0.1:8000`.
+
+AutoTrain doesn't install pytorch, torchaudio, torchvision, or any other dependencies. You will need to install them separately.
+It is thus recommended to use conda environment:
+
+
+```bash
+$ conda create -n autotrain python=3.10
+$ conda activate autotrain
+
+$ pip install autotrain-advanced
+
+$ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+$ conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
+$ conda install xformers -c xformers
+
+$ python -m nltk.downloader punkt
+$ pip install flash-attn --no-build-isolation
+$ pip install deepspeed
+
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain app --host 127.0.0.1 --port 8000
+```
+
+In case of any issues, please report on the [GitHub issues](https://github.com/huggingface/autotrain-advanced/).

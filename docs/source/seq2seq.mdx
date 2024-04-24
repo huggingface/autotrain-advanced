@@ -5,6 +5,8 @@ It is used in machine translation, text summarization, and question answering.
 
 ## Data Format
 
+You can have the dataset as a CSV file:
+
 ```csv
 text,target
 "this movie is great","dieser Film ist großartig"
@@ -14,6 +16,128 @@ text,target
 .
 ```
 
+Or as a JSONL file:
+
+```json
+{"text": "this movie is great", "target": "dieser Film ist großartig"}
+{"text": "this movie is bad", "target": "dieser Film ist schlecht"}
+.
+.
+.
+```
+
+
 ## Columns
 
-Your CSV dataset must have two columns: `text` and `target`.
+Your CSV/JSONL dataset must have two columns: `text` and `target`.
+
+## Parameters
+
+```
+❯ autotrain seq2seq --help
+usage: autotrain <command> [<args>] seq2seq [-h] [--train] [--deploy] [--inference] [--username USERNAME]
+                                            [--backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}]
+                                            [--token TOKEN] [--push-to-hub] --model MODEL --project-name PROJECT_NAME [--data-path DATA_PATH]
+                                            [--train-split TRAIN_SPLIT] [--valid-split VALID_SPLIT] [--batch-size BATCH_SIZE] [--seed SEED]
+                                            [--epochs EPOCHS] [--gradient_accumulation GRADIENT_ACCUMULATION] [--disable_gradient_checkpointing]
+                                            [--lr LR] [--log {none,wandb,tensorboard}] [--text-column TEXT_COLUMN] [--target-column TARGET_COLUMN]
+                                            [--max-seq-length MAX_SEQ_LENGTH] [--max-target-length MAX_TARGET_LENGTH] [--warmup-ratio WARMUP_RATIO]
+                                            [--optimizer OPTIMIZER] [--scheduler SCHEDULER] [--weight-decay WEIGHT_DECAY]
+                                            [--max-grad-norm MAX_GRAD_NORM] [--logging-steps LOGGING_STEPS]
+                                            [--evaluation-strategy EVALUATION_STRATEGY] [--save-total-limit SAVE_TOTAL_LIMIT]
+                                            [--save-strategy SAVE_STRATEGY] [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}] [--peft]
+                                            [--quantization {int8,None}] [--lora-r LORA_R] [--lora-alpha LORA_ALPHA] [--lora-dropout LORA_DROPOUT]
+                                            [--target-modules TARGET_MODULES]
+
+✨ Run AutoTrain Seq2Seq
+
+options:
+  -h, --help            show this help message and exit
+  --train               Command to train the model
+  --deploy              Command to deploy the model (limited availability)
+  --inference           Command to run inference (limited availability)
+  --username USERNAME   Hugging Face Hub Username
+  --backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}
+                        Backend to use: default or spaces. Spaces backend requires push_to_hub & username. Advanced users only.
+  --token TOKEN         Your Hugging Face API token. Token must have write access to the model hub.
+  --push-to-hub         Push to hub after training will push the trained model to the Hugging Face model hub.
+  --model MODEL         Base model to use for training
+  --project-name PROJECT_NAME
+                        Output directory / repo id for trained model (must be unique on hub)
+  --data-path DATA_PATH
+                        Train dataset to use. When using cli, this should be a directory path containing training and validation data in appropriate
+                        formats
+  --train-split TRAIN_SPLIT
+                        Train dataset split to use
+  --valid-split VALID_SPLIT
+                        Validation dataset split to use
+  --batch-size BATCH_SIZE
+                        Training batch size to use
+  --seed SEED           Random seed for reproducibility
+  --epochs EPOCHS       Number of training epochs
+  --gradient_accumulation GRADIENT_ACCUMULATION
+                        Gradient accumulation steps
+  --disable_gradient_checkpointing
+                        Disable gradient checkpointing
+  --lr LR               Learning rate
+  --log {none,wandb,tensorboard}
+                        Use experiment tracking
+  --text-column TEXT_COLUMN
+                        Specify the column name in the dataset that contains the text data. Useful for distinguishing between multiple text fields.
+                        Default is 'text'.
+  --target-column TARGET_COLUMN
+                        Specify the column name that holds the target data for training. Helps in distinguishing different potential outputs.
+                        Default is 'target'.
+  --max-seq-length MAX_SEQ_LENGTH
+                        Set the maximum sequence length (number of tokens) that the model should handle in a single input. Longer sequences are
+                        truncated. Affects both memory usage and computational requirements. Default is 128 tokens.
+  --max-target-length MAX_TARGET_LENGTH
+                        Define the maximum number of tokens for the target sequence in each input. Useful for models that generate outputs, ensuring
+                        uniformity in sequence length. Default is set to 128 tokens.
+  --warmup-ratio WARMUP_RATIO
+                        Define the proportion of training to be dedicated to a linear warmup where learning rate gradually increases. This can help
+                        in stabilizing the training process early on. Default ratio is 0.1.
+  --optimizer OPTIMIZER
+                        Choose the optimizer algorithm for training the model. Different optimizers can affect the training speed and model
+                        performance. 'adamw_torch' is used by default.
+  --scheduler SCHEDULER
+                        Select the learning rate scheduler to adjust the learning rate based on the number of epochs. 'linear' decreases the
+                        learning rate linearly from the initial lr set. Default is 'linear'. Try 'cosine' for a cosine annealing schedule.
+  --weight-decay WEIGHT_DECAY
+                        Set the weight decay rate to apply for regularization. Helps in preventing the model from overfitting by penalizing large
+                        weights. Default is 0.0, meaning no weight decay is applied.
+  --max-grad-norm MAX_GRAD_NORM
+                        Specify the maximum norm of the gradients for gradient clipping. Gradient clipping is used to prevent the exploding gradient
+                        problem in deep neural networks. Default is 1.0.
+  --logging-steps LOGGING_STEPS
+                        Determine how often to log training progress. Set this to the number of steps between each log output. -1 determines logging
+                        steps automatically. Default is -1.
+  --evaluation-strategy EVALUATION_STRATEGY
+                        Specify how often to evaluate the model performance. Options include 'no', 'steps', 'epoch'. 'epoch' evaluates at the end of
+                        each training epoch by default.
+  --save-total-limit SAVE_TOTAL_LIMIT
+                        Limit the total number of model checkpoints to save. Helps manage disk space by retaining only the most recent checkpoints.
+                        Default is to save only the latest one.
+  --save-strategy SAVE_STRATEGY
+                        Determine the strategy for saving model checkpoints. Possible values are 'no', 'steps', 'epoch'. 'epoch' saves a checkpoint
+                        at the end of each epoch by default.
+  --auto-find-batch-size
+                        Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch
+                        size that fits in memory.
+  --mixed-precision {fp16,bf16,None}
+                        Choose the precision mode for training to optimize performance and memory usage. Options are 'fp16', 'bf16', or None for
+                        default precision. Default is None.
+  --peft                Enable LoRA-PEFT
+  --quantization {int8,None}
+                        Select the quantization mode to reduce model size and potentially increase inference speed. Options include 'int8' for 8-bit
+                        integer quantization or None for no quantization. Default is None
+  --lora-r LORA_R       Set the rank 'R' for the LoRA (Low-Rank Adaptation) technique. Default is 16.
+  --lora-alpha LORA_ALPHA
+                        Specify the 'Alpha' parameter for LoRA. Default is 32.
+  --lora-dropout LORA_DROPOUT
+                        Determine the dropout rate to apply in the LoRA layers, which can help in preventing overfitting by randomly disabling a
+                        fraction of neurons during training. Default rate is 0.05.
+  --target-modules TARGET_MODULES
+                        List the modules within the model architecture that should be targeted for specific techniques such as LoRA adaptations.
+                        Useful for fine-tuning particular components of large models. By default all linear layers are targeted.
+```
