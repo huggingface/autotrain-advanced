@@ -6,6 +6,8 @@ import pandas as pd
 from datasets import ClassLabel, Dataset, DatasetDict, Sequence
 from sklearn.model_selection import train_test_split
 
+from autotrain import logger
+
 
 RESERVED_COLUMNS = ["autotrain_text", "autotrain_label"]
 LLM_RESERVED_COLUMNS = [
@@ -155,8 +157,18 @@ class TextTokenClassificationPreprocessor(TextBinaryClassificationPreprocessor):
     def prepare(self):
         train_df, valid_df = self.split()
         train_df, valid_df = self.prepare_columns(train_df, valid_df)
-        train_df.loc[:, "autotrain_text"] = train_df["autotrain_label"].apply(lambda x: ast.literal_eval(x))
-        valid_df.loc[:, "autotrain_text"] = valid_df["autotrain_label"].apply(lambda x: ast.literal_eval(x))
+        try:
+            train_df.loc[:, "autotrain_text"] = train_df["autotrain_text"].apply(lambda x: ast.literal_eval(x))
+            valid_df.loc[:, "autotrain_text"] = valid_df["autotrain_text"].apply(lambda x: ast.literal_eval(x))
+        except ValueError:
+            logger.warning("Unable to do ast.literal_eval on train_df['autotrain_text']")
+            logger.warning("assuming autotrain_text is already a list")
+        try:
+            train_df.loc[:, "autotrain_label"] = train_df["autotrain_label"].apply(lambda x: ast.literal_eval(x))
+            valid_df.loc[:, "autotrain_label"] = valid_df["autotrain_label"].apply(lambda x: ast.literal_eval(x))
+        except ValueError:
+            logger.warning("Unable to do ast.literal_eval on train_df['autotrain_label']")
+            logger.warning("assuming autotrain_label is already a list")
 
         label_names_train = sorted(set(train_df["autotrain_label"].explode().unique().tolist()))
         label_names_valid = sorted(set(valid_df["autotrain_label"].explode().unique().tolist()))

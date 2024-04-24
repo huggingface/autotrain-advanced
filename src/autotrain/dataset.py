@@ -288,6 +288,7 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 local=self.local,
+                convert_to_class_label=self.convert_to_class_label,
             )
             return preprocessor.prepare()
 

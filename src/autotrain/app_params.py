@@ -97,12 +97,12 @@ class AppParams:
         _params["model"] = self.base_model
         _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
-            _params["text_column"] = "autotrain_text"
-            _params["target_column"] = "autotrain_label"
+            _params["tokens_column"] = "autotrain_text"
+            _params["tags_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["text_column"] = self.column_mapping.get("text", "text")
-            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["tokens_column"] = self.column_mapping.get("text", "tokens")
+            _params["tags_column"] = self.column_mapping.get("label", "tags")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
 
