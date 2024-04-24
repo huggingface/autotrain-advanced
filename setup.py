@@ -14,8 +14,16 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
 
 # get INSTALL_REQUIRES from requirements.txt
-with open(os.path.join(this_directory, "requirements.txt"), encoding="utf-8") as f:
-    INSTALL_REQUIRES = f.read().splitlines()
+INSTALL_REQUIRES = []
+requirements_path = os.path.join(this_directory, "requirements.txt")
+with open(requirements_path, encoding="utf-8") as f:
+    for line in f:
+        # Exclude 'bitsandbytes' if installing on macOS
+        if "bitsandbytes" in line:
+            line = line.strip() + " ; sys_platform == 'linux'"
+            INSTALL_REQUIRES.append(line.strip())
+        else:
+            INSTALL_REQUIRES.append(line.strip())
 
 QUALITY_REQUIRE = [
     "black",
