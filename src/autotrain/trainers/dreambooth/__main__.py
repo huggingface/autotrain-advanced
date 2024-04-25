@@ -27,14 +27,17 @@ def train(config):
 
     if config.model in utils.XL_MODELS:
         config.xl = True
-
-    snapshot_download(
-        repo_id=config.image_path,
-        local_dir=config.project_name,
-        token=config.token,
-        repo_type="dataset",
-    )
-    config.image_path = os.path.join(config.project_name, "concept1")
+    try:
+        snapshot_download(
+            repo_id=config.image_path,
+            local_dir=config.project_name,
+            token=config.token,
+            repo_type="dataset",
+        )
+        config.image_path = os.path.join(config.project_name, "concept1")
+    except Exception as e:
+        logger.warning(f"Failed to download dataset: {e}")
+        pass
     if config.image_path == f"{config.project_name}/autotrain-data":
         config.image_path = os.path.join(config.image_path, "concept1")
 

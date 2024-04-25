@@ -113,7 +113,7 @@ def common_args():
             "type": int,
         },
         {
-            "arg": "--gradient_accumulation",
+            "arg": "--gradient-accumulation",
             "help": "Gradient accumulation steps",
             "required": False,
             "default": 1,
@@ -121,7 +121,7 @@ def common_args():
             "alias": ["--gradient-accumulation"],
         },
         {
-            "arg": "--disable_gradient_checkpointing",
+            "arg": "--disable-gradient-checkpointing",
             "help": "Disable gradient checkpointing",
             "required": False,
             "action": "store_true",
