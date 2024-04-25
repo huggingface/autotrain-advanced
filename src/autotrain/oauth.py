@@ -97,8 +97,6 @@ def _add_oauth_routes(app: fastapi.FastAPI) -> None:
 
         request.session["oauth_info"] = oauth_info
         return _redirect_to_target(request)
-        request.session["oauth_info"] = oauth_info
-        return _redirect_to_target(request)
 
 
 def _generate_redirect_uri(request: fastapi.Request) -> str:
@@ -118,6 +116,6 @@ def _generate_redirect_uri(request: fastapi.Request) -> str:
 
 
 def _redirect_to_target(request: fastapi.Request, default_target: str = "/") -> RedirectResponse:
-    # target = request.query_params.get("_target_url", default_target)
-    target = "https://huggingface.co/spaces/" + os.environ.get("SPACE_ID")
+    target = request.query_params.get("_target_url", default_target)
+    # target = "https://huggingface.co/spaces/" + os.environ.get("SPACE_ID")
     return RedirectResponse(target)
