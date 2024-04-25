@@ -127,8 +127,6 @@ def run_training(params, task_id, local=False, wait=False):
     else:
         raise NotImplementedError
 
-    if not local:
-        params.project_name = "/tmp/model"
     params.save(output_dir=params.project_name)
     cmd = launch_command(params=params)
     cmd = [str(c) for c in cmd]
