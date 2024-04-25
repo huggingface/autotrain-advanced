@@ -12,6 +12,7 @@ from .run_spacerunner import RunAutoTrainSpaceRunnerCommand
 from .run_tabular import RunAutoTrainTabularCommand
 from .run_text_classification import RunAutoTrainTextClassificationCommand
 from .run_token_classification import RunAutoTrainTokenClassificationCommand
+from .run_tools import RunAutoTrainToolsCommand
 
 
 def main():
@@ -35,6 +36,7 @@ def main():
     RunAutoTrainSpaceRunnerCommand.register_subcommand(commands_parser)
     RunAutoTrainSeq2SeqCommand.register_subcommand(commands_parser)
     RunAutoTrainTokenClassificationCommand.register_subcommand(commands_parser)
+    RunAutoTrainToolsCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

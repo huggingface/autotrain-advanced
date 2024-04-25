@@ -7,6 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
+<script>
+    function redirectToLogin() {
+        const uri = '/login/huggingface';
+        window.location.assign(uri + window.location.search);
+    }
+</script>
+
 <body>
     <header class="bg-white-800 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
@@ -15,14 +22,22 @@
     </header>
 
     <div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-2xl">
-        <h1 class="text-2xl font-bold mb-10">Login</h1>
-        <p class="text-gray-500 text-sm mb-10">Please <a href="/login/huggingface" target="_blank">login</a> to use
+        <p class="text-gray-500 text-xl mb-3 text-center">Please <a href="javascript:void(0);"
+                onclick="redirectToLogin()">login</a> to use
             AutoTrain</p>
-        <div style="text-align: center;">
-            <a href="/login/huggingface" target="_blank">
+        <div class="flex justify-center items-center">
+            <a href="javascript:void(0);" onclick="redirectToLogin()">
                 <img src="https://huggingface.co/datasets/huggingface/badges/resolve/main/sign-in-with-huggingface-xl.svg"
                     alt="Login using Hugging Face">
             </a>
+        </div>
+        <p class="text-gray-500 text-xs mt-10 text-center">Alternatively, if you face login issues, you can add your
+            Hugging Face Write Token to this space as a secret in space settings. Note: The name of secret must be
+            HF_TOKEN and the value must be your Hugging Face WRITE token! You can find your tokens in user settings.</p>
+        <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
+                target="_blank" class="text-blue-600">Docs</a> | <a
+                href="https://github.com/huggingface/autotrain-advanced" target="_blank"
+                class="text-blue-600">GitHub</a>
         </div>
     </div>
 </body>
