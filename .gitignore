@@ -16,7 +16,7 @@ __pycache__/
 *$py.class
 autotrain-data*
 autotrain-*
-
+op-*
 # C extensions
 *.so
 
