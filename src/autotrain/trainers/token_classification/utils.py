@@ -1,8 +1,6 @@
 import numpy as np
-from datasets import load_metric
+from seqeval import metrics
 
-
-_METRICS = load_metric("seqeval")
 
 MODEL_CARD = """
 ---
@@ -37,12 +35,11 @@ def token_classification_metrics(pred, label_list):
         for prediction, label in zip(predictions, labels)
     ]
 
-    results = _METRICS.compute(predictions=true_predictions, references=true_labels)
     results = {
-        "precision": results["overall_precision"],
-        "recall": results["overall_recall"],
-        "f1": results["overall_f1"],
-        "accuracy": results["overall_accuracy"],
+        "precision": metrics.precision_score(true_labels, true_predictions),
+        "recall": metrics.recall_score(true_labels, true_predictions),
+        "f1": metrics.f1_score(true_labels, true_predictions),
+        "accuracy": metrics.accuracy_score(true_labels, true_predictions),
     }
     return results
 
