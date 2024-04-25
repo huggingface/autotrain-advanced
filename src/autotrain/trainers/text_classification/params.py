@@ -28,7 +28,6 @@ class TextClassificationParams(AutoTrainParams):
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     save_total_limit: int = Field(1, title="Save total limit")
-    save_strategy: str = Field("epoch", title="Save strategy")
     token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")

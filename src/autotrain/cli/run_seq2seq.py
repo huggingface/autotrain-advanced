@@ -207,11 +207,6 @@ class RunAutoTrainSeq2SeqCommand(BaseAutoTrainCommand):
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
 
-        if len(self.args.target_modules.strip()) == 0:
-            self.args.target_modules = []
-        else:
-            self.args.target_modules = self.args.target_modules.split(",")
-
     def run(self):
         logger.info("Running Seq2Seq Classification")
         if self.args.train:

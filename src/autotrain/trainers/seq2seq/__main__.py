@@ -102,7 +102,7 @@ def train(config):
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
-        save_strategy=config.save_strategy,
+        save_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         gradient_accumulation_steps=config.gradient_accumulation,
         report_to=config.log,
         auto_find_batch_size=config.auto_find_batch_size,
@@ -179,6 +179,8 @@ def train(config):
         target_modules = config.target_modules.split(",") if config.target_modules is not None else None
         if target_modules:
             target_modules = [module.strip() for module in target_modules]
+        if len(target_modules) == 1 and target_modules[0] == "all-linear":
+            target_modules = "all-linear"
         lora_config = LoraConfig(
             r=config.lora_r,
             lora_alpha=config.lora_alpha,

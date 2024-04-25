@@ -75,7 +75,7 @@ usage: autotrain <command> [<args>] llm [-h] [--train] [--deploy] [--inference] 
                                         [--weight_decay WEIGHT_DECAY] [--max_grad_norm MAX_GRAD_NORM] [--add_eos_token] [--block_size BLOCK_SIZE]
                                         [--peft] [--lora_r LORA_R] [--lora_alpha LORA_ALPHA] [--lora_dropout LORA_DROPOUT]
                                         [--logging_steps LOGGING_STEPS] [--evaluation_strategy {epoch,steps,no}]
-                                        [--save_total_limit SAVE_TOTAL_LIMIT] [--save_strategy {epoch,steps}] [--auto_find_batch_size]
+                                        [--save_total_limit SAVE_TOTAL_LIMIT] [--auto_find_batch_size]
                                         [--mixed_precision {fp16,bf16,None}] [--quantization {int4,int8,None}] [--model_max_length MODEL_MAX_LENGTH]
                                         [--max_prompt_length MAX_PROMPT_LENGTH] [--max_completion_length MAX_COMPLETION_LENGTH]
                                         [--trainer {default,dpo,sft,orpo,reward}] [--target_modules TARGET_MODULES] [--merge_adapter]
@@ -162,8 +162,6 @@ options:
   --save_total_limit SAVE_TOTAL_LIMIT, --save-total-limit SAVE_TOTAL_LIMIT
                         Limit the total number of saved model checkpoints to manage disk usage effectively. Default is to save only the latest
                         checkpoint
-  --save_strategy {epoch,steps}, --save-strategy {epoch,steps}
-                        Define the checkpoint saving strategy, with 'epoch' as the default, saving checkpoints at the end of each training epoch.
   --auto_find_batch_size, --auto-find-batch-size
                         Automatically determine the optimal batch size based on system capabilities to maximize efficiency.
   --mixed_precision {fp16,bf16,None}, --mixed-precision {fp16,bf16,None}

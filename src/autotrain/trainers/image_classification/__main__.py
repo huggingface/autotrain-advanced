@@ -129,7 +129,7 @@ def train(config):
         evaluation_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
-        save_strategy=config.save_strategy,
+        save_strategy=config.evaluation_strategy if config.valid_split is not None else "no",
         gradient_accumulation_steps=config.gradient_accumulation,
         report_to=config.log,
         auto_find_batch_size=config.auto_find_batch_size,

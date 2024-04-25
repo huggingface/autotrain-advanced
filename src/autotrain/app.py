@@ -96,7 +96,6 @@ PARAMS["llm"] = LLMTrainingParams(
     epochs=3,
     padding="right",
     chat_template="none",
-    save_strategy="no",
     max_completion_length=128,
 ).model_dump()
 
@@ -111,7 +110,6 @@ PARAMS["image-classification"] = ImageClassificationParams(
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
     target_modules="all-linear",
-    save_strategy="no",
     log="tensorboard",
 ).model_dump()
 PARAMS["tabular"] = TabularParams(
@@ -257,7 +255,6 @@ async def fetch_params(task: str, param_type: str):
                         "logging_steps",
                         "evaluation_strategy",
                         "save_total_limit",
-                        "save_strategy",
                         "auto_find_batch_size",
                         "warmup_ratio",
                         "weight_decay",
@@ -281,7 +278,6 @@ async def fetch_params(task: str, param_type: str):
                 "logging_steps",
                 "auto_find_batch_size",
                 "save_total_limit",
-                "save_strategy",
                 "evaluation_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
@@ -294,7 +290,6 @@ async def fetch_params(task: str, param_type: str):
                 "logging_steps",
                 "auto_find_batch_size",
                 "save_total_limit",
-                "save_strategy",
                 "evaluation_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
@@ -307,7 +302,6 @@ async def fetch_params(task: str, param_type: str):
                 "logging_steps",
                 "auto_find_batch_size",
                 "save_total_limit",
-                "save_strategy",
                 "evaluation_strategy",
                 "quantization",
                 "lora_r",
@@ -325,7 +319,6 @@ async def fetch_params(task: str, param_type: str):
                 "logging_steps",
                 "auto_find_batch_size",
                 "save_total_limit",
-                "save_strategy",
                 "evaluation_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}

@@ -45,7 +45,7 @@ usage: autotrain <command> [<args>] seq2seq [-h] [--train] [--deploy] [--inferen
                                             [--optimizer OPTIMIZER] [--scheduler SCHEDULER] [--weight-decay WEIGHT_DECAY]
                                             [--max-grad-norm MAX_GRAD_NORM] [--logging-steps LOGGING_STEPS]
                                             [--evaluation-strategy EVALUATION_STRATEGY] [--save-total-limit SAVE_TOTAL_LIMIT]
-                                            [--save-strategy SAVE_STRATEGY] [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}] [--peft]
+                                            [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}] [--peft]
                                             [--quantization {int8,None}] [--lora-r LORA_R] [--lora-alpha LORA_ALPHA] [--lora-dropout LORA_DROPOUT]
                                             [--target-modules TARGET_MODULES]
 
@@ -118,9 +118,6 @@ options:
   --save-total-limit SAVE_TOTAL_LIMIT
                         Limit the total number of model checkpoints to save. Helps manage disk space by retaining only the most recent checkpoints.
                         Default is to save only the latest one.
-  --save-strategy SAVE_STRATEGY
-                        Determine the strategy for saving model checkpoints. Possible values are 'no', 'steps', 'epoch'. 'epoch' saves a checkpoint
-                        at the end of each epoch by default.
   --auto-find-batch-size
                         Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch
                         size that fits in memory.

@@ -156,15 +156,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--save-total-limit"],
             },
             {
-                "arg": "--save_strategy",
-                "help": "Define the checkpoint saving strategy, with 'epoch' as the default, saving checkpoints at the end of each training epoch. ",
-                "required": False,
-                "type": str,
-                "default": "epoch",
-                "alias": ["--save-strategy"],
-                "choices": ["epoch", "steps"],
-            },
-            {
                 "arg": "--auto_find_batch_size",
                 "help": "Automatically determine the optimal batch size based on system capabilities to maximize efficiency.",
                 "required": False,
