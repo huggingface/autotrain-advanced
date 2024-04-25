@@ -88,14 +88,6 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "default": 1,
             },
             {
-                "arg": "--save-strategy",
-                "help": "Determine the strategy for saving model checkpoints. Possible values are 'no', 'steps', 'epoch'. 'epoch' saves a checkpoint at the end of each epoch by default.",
-                "required": False,
-                "type": str,
-                "default": "epoch",
-                "choices": ["steps", "epoch", "no"],
-            },
-            {
                 "arg": "--auto-find-batch-size",
                 "help": "Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch size that fits in memory.",
                 "required": False,

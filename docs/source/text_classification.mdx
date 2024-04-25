@@ -70,7 +70,7 @@ usage: autotrain <command> [<args>] text-classification [-h] [--train] [--deploy
                                                         [--max-seq-length MAX_SEQ_LENGTH] [--warmup-ratio WARMUP_RATIO] [--optimizer OPTIMIZER]
                                                         [--scheduler SCHEDULER] [--weight-decay WEIGHT_DECAY] [--max-grad-norm MAX_GRAD_NORM]
                                                         [--logging-steps LOGGING_STEPS] [--evaluation-strategy {steps,epoch,no}]
-                                                        [--save-total-limit SAVE_TOTAL_LIMIT] [--save-strategy {steps,epoch,no}]
+                                                        [--save-total-limit SAVE_TOTAL_LIMIT]
                                                         [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}]
 
 ✨ Run AutoTrain Text Classification
@@ -139,9 +139,6 @@ options:
   --save-total-limit SAVE_TOTAL_LIMIT
                         Limit the total number of model checkpoints to save. Helps manage disk space by retaining only the most recent checkpoints.
                         Default is to save only the latest one.
-  --save-strategy {steps,epoch,no}
-                        Determine the strategy for saving model checkpoints. Possible values are 'no', 'steps', 'epoch'. 'epoch' saves a checkpoint
-                        at the end of each epoch by default.
   --auto-find-batch-size
                         Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch
                         size that fits in memory.
