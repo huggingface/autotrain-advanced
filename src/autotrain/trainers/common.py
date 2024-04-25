@@ -157,7 +157,7 @@ class AutoTrainParams(BaseModel):
         """
         super().__init__(**data)
 
-        if len(self.project_name) > 0 and self.project_name != "/tmp/model":
+        if len(self.project_name) > 0:
             # make sure project_name is always alphanumeric but can have hyphens. if not, raise ValueError
             if not self.project_name.replace("-", "").isalnum():
                 raise ValueError("project_name must be alphanumeric but can contain hyphens")

@@ -30,11 +30,11 @@ def train(config):
 
     snapshot_download(
         repo_id=config.image_path,
-        local_dir="/tmp/model",
+        local_dir=config.project_name,
         token=config.token,
         repo_type="dataset",
     )
-    config.image_path = "/tmp/model/concept1/"
+    config.image_path = os.path.join(config.project_name, "concept1")
     if config.image_path == f"{config.project_name}/autotrain-data":
         config.image_path = os.path.join(config.image_path, "concept1")
 
