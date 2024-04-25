@@ -8,7 +8,7 @@ on:
 jobs:
   dockerhub:
     name: NGC
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, a10, ci]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

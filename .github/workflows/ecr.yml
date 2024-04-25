@@ -14,7 +14,7 @@ env:
 jobs:
   ecr:
     name: Amazon ECR
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, a10, ci]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
