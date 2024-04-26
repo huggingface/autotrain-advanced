@@ -20,6 +20,7 @@ from autotrain.preprocessor.text import (
     Seq2SeqPreprocessor,
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
+    TextMultiColumnRegressionPreprocessor,
     TextSingleColumnRegressionPreprocessor,
     TextTokenClassificationPreprocessor,
 )

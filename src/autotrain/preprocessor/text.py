@@ -139,6 +139,79 @@ class TextSingleColumnRegressionPreprocessor(TextBinaryClassificationPreprocesso
             valid_df = valid_df.reset_index(drop=True)
             return train_df, valid_df
 
+    def prepare(self):
+        train_df, valid_df = self.split()
+        train_df, valid_df = self.prepare_columns(train_df, valid_df)
+
+        train_df = Dataset.from_pandas(train_df)
+        valid_df = Dataset.from_pandas(valid_df)
+
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
+
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
+
+
+class TextMultiColumnRegressionPreprocessor(TextSingleColumnRegressionPreprocessor):
+    def __post_init__(self):
+        # check if text_column and label_column are in train_data
+        if self.text_column not in self.train_data.columns:
+            raise ValueError(f"{self.text_column} not in train data")
+        for label in self.label_column:
+            if label not in self.train_data.columns:
+                raise ValueError(f"{label} not in train data")
+        # check if text_column and label_column are in valid_data
+        if self.valid_data is not None:
+            if self.text_column not in self.valid_data.columns:
+                raise ValueError(f"{self.text_column} not in valid data")
+            for label in self.label_column:
+                if label not in self.valid_data.columns:
+                    raise ValueError(f"{label} not in valid data")
+
+        # make sure no reserved columns are in train_data or valid_data
+        for column in RESERVED_COLUMNS:
+            if column in self.train_data.columns:
+                raise ValueError(f"{column} is a reserved column name")
+            if self.valid_data is not None:
+                if column in self.valid_data.columns:
+                    raise ValueError(f"{column} is a reserved column name")
+
+    def prepare_columns(self, train_df, valid_df):
+        train_df.loc[:, "autotrain_text"] = train_df[self.text_column]
+        valid_df.loc[:, "autotrain_text"] = valid_df[self.text_column]
+
+        for label in range(len(self.label_column)):
+            train_df.loc[:, f"autotrain_label_{label}"] = train_df[self.label_column[label]]
+
+        for label in range(len(self.label_column)):
+            valid_df.loc[:, f"autotrain_label_{label}"] = valid_df[self.label_column[label]]
+
+        drop_cols = [self.text_column] + self.label_column
+        train_df = train_df.drop(columns=drop_cols)
+        valid_df = valid_df.drop(columns=drop_cols)
+        return train_df, valid_df
+
 
 class TextTokenClassificationPreprocessor(TextBinaryClassificationPreprocessor):
     def split(self):
