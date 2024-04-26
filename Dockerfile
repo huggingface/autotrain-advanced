@@ -34,6 +34,7 @@ RUN apt-get update &&  \
     unzip \
     libjpeg-dev \
     libpng-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
