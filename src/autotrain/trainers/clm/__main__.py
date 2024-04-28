@@ -350,9 +350,9 @@ def train(config):
     if config.model_ref is not None and config.trainer == "dpo":
         logger.info(f"model_ref dtype: {model_ref.dtype}")
 
-    model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
+    model.resize_token_embeddings(len(tokenizer))
     if model_ref is not None:
-        model_ref.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=8)
+        model_ref.resize_token_embeddings(len(tokenizer))
     if config.peft:
         logger.info("preparing peft model...")
         if config.quantization is not None:
