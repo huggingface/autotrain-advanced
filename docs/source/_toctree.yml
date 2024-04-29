@@ -17,6 +17,8 @@
 - sections:
   - local: text_classification
     title: Text Classification
+  - local: text_regression
+    title: Text Regression
   - local: llm_finetuning
     title: LLM Finetuning
   - local: image_classification
