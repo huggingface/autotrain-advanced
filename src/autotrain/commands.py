@@ -11,6 +11,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
@@ -124,7 +125,7 @@ def launch_command(params):
             "--training_config",
             os.path.join(params.project_name, "training_params.json"),
         ]
-    elif isinstance(params, TextClassificationParams):
+    elif isinstance(params, TextClassificationParams) or isinstance(params, TextRegressionParams):
         if num_gpus == 0:
             cmd = [
                 "accelerate",
@@ -160,14 +161,24 @@ def launch_command(params):
             else:
                 cmd.append("no")
 
-        cmd.extend(
-            [
-                "-m",
-                "autotrain.trainers.text_classification",
-                "--training_config",
-                os.path.join(params.project_name, "training_params.json"),
-            ]
-        )
+        if isinstance(params, TextRegressionParams):
+            cmd.extend(
+                [
+                    "-m",
+                    "autotrain.trainers.text_regression",
+                    "--training_config",
+                    os.path.join(params.project_name, "training_params.json"),
+                ]
+            )
+        else:
+            cmd.extend(
+                [
+                    "-m",
+                    "autotrain.trainers.text_classification",
+                    "--training_config",
+                    os.path.join(params.project_name, "training_params.json"),
+                ]
+            )
     elif isinstance(params, TokenClassificationParams):
         if num_gpus == 0:
             cmd = [

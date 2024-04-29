@@ -309,18 +309,6 @@ def text_clf_munge_data(params, local):
 
 
 def text_reg_munge_data(params, local):
-    if isinstance(params.target_columns, str):
-        col_map_label = [params.target_columns]
-    else:
-        col_map_label = params.target_columns
-    task = params.task
-    if len(col_map_label) > 1:
-        task = "text_multi_column_regression"
-    elif len(col_map_label) == 1:
-        task = "text_single_column_regression"
-    else:
-        raise Exception("Invalid column mapping for regression task. Please provide a valid column mapping.")
-
     exts = ["csv", "jsonl"]
     ext_to_use = None
     for ext in exts:
@@ -338,11 +326,11 @@ def text_reg_munge_data(params, local):
         dset = AutoTrainDataset(
             train_data=[train_data_path],
             valid_data=[valid_data_path] if valid_data_path is not None else None,
-            task=task,
+            task="text_single_column_regression",
             token=params.token,
             project_name=params.project_name,
             username=params.username,
-            column_mapping={"text": params.text_column, "label": params.target_columns},
+            column_mapping={"text": params.text_column, "label": params.target_column},
             percent_valid=None,  # TODO: add to UI
             local=local,
             convert_to_class_label=False,

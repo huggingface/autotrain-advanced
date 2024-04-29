@@ -2,20 +2,26 @@ import torch
 
 
 class TextRegressionDataset:
-    def __init__(self, data, tokenizer, zeus_config, model_config):
+    def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer
-        self.config = zeus_config
-        self.model_config = model_config
-        self.max_len = self.config.max_len
+        self.config = config
+        self.text_column = self.config.text_column
+        self.target_column = self.config.target_column
+        self.max_len = self.config.max_seq_length
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, item):
-        text = str(self.data[item]["text"])
-        target = float(self.data[item]["target"])
-        inputs = self.tokenizer(text, max_length=self.max_len, padding="max_length", truncation=True)
+        text = str(self.data[item][self.text_column])
+        target = float(self.data[item][self.target_column])
+        inputs = self.tokenizer(
+            text,
+            max_length=self.max_len,
+            padding="max_length",
+            truncation=True,
+        )
 
         ids = inputs["input_ids"]
         mask = inputs["attention_mask"]

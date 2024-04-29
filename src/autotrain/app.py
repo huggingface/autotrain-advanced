@@ -25,6 +25,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
@@ -132,6 +133,10 @@ PARAMS["dreambooth"] = DreamBoothTrainingParams(
     lr=1e-4,
 ).model_dump()
 PARAMS["token-classification"] = TokenClassificationParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+PARAMS["text-regression"] = TextRegressionParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
@@ -281,6 +286,18 @@ async def fetch_params(task: str, param_type: str):
                 "evaluation_strategy",
             ]
             task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+        if task == "text-regression" and param_type == "basic":
+            more_hidden_params = [
+                "warmup_ratio",
+                "weight_decay",
+                "max_grad_norm",
+                "seed",
+                "logging_steps",
+                "auto_find_batch_size",
+                "save_total_limit",
+                "evaluation_strategy",
+            ]
+            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
         if task == "image-classification" and param_type == "basic":
             more_hidden_params = [
                 "warmup_ratio",
@@ -394,6 +411,8 @@ async def fetch_model_choices(task: str, custom_models: str = Query(None)):
         hub_models = MODEL_CHOICE["tabular-regression"]
     elif task == "token-classification":
         hub_models = MODEL_CHOICE["token-classification"]
+    elif task == "text-regression":
+        hub_models = MODEL_CHOICE["text-regression"]
     else:
         raise NotImplementedError
 
@@ -514,6 +533,8 @@ async def handle_form(
                 dset_task = "lm_training"
             elif task == "text-classification":
                 dset_task = "text_multi_class_classification"
+            elif task == "text-regression":
+                dset_task = "text_single_column_regression"
             elif task == "seq2seq":
                 dset_task = "seq2seq"
             elif task.startswith("tabular"):
