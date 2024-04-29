@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from pydantic import Field
 
@@ -22,7 +22,7 @@ class TextRegressionParams(AutoTrainParams):
     train_split: str = Field("train", title="Train split")
     valid_split: Optional[str] = Field(None, title="Validation split")
     text_column: str = Field("text", title="Text column")
-    target_columns: Union[List[str], str] = Field(["target"], title="Target column(s)")
+    target_column: str = Field("target", title="Target column(s)")
     logging_steps: int = Field(-1, title="Logging steps")
     project_name: str = Field("project-name", title="Output directory")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")

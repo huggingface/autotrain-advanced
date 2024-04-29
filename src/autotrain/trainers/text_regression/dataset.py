@@ -1,7 +1,7 @@
 import torch
 
 
-class RegressionDataset:
+class TextRegressionDataset:
     def __init__(self, data, tokenizer, zeus_config, model_config):
         self.data = data
         self.tokenizer = tokenizer

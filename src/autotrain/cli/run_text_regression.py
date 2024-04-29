@@ -24,12 +24,11 @@ class RunAutoTrainTextRegressionCommand(BaseAutoTrainCommand):
                 "default": "text",
             },
             {
-                "arg": "--target-columns",
-                "help": "Specify the names of the target or label columns separated by commas if multiple. These columns are what the model will predict. Required for defining the output of the model.",
+                "arg": "--target-column",
+                "help": "Specify the column name that holds the target or label data for training. Helps in distinguishing different potential outputs. Default is 'target'.",
                 "required": False,
                 "type": str,
                 "default": "target",
-                "alias": ["--target-column"],
             },
             {
                 "arg": "--max-seq-length",

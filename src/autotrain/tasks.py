@@ -9,7 +9,6 @@ NLP_TASKS = {
     "natural_language_inference": 22,
     "lm_training": 9,
     "seq2seq": 28,  # 27 is reserved for generic training
-    "text_multi_column_regression": 29,
 }
 
 VISION_TASKS = {
