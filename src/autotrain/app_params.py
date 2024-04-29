@@ -8,6 +8,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
@@ -44,6 +45,8 @@ class AppParams:
             return self._munge_params_llm()
         elif self.task == "token-classification":
             return self._munge_params_token_clf()
+        elif self.task == "text-regression":
+            return self._munge_params_text_reg()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -90,6 +93,21 @@ class AppParams:
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
         return TextClassificationParams(**_params)
+
+    def _munge_params_text_reg(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text", "text")
+            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+        return TextRegressionParams(**_params)
 
     def _munge_params_token_clf(self):
         _params = self._munge_common_params()

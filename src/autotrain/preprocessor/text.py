@@ -139,6 +139,39 @@ class TextSingleColumnRegressionPreprocessor(TextBinaryClassificationPreprocesso
             valid_df = valid_df.reset_index(drop=True)
             return train_df, valid_df
 
+    def prepare(self):
+        train_df, valid_df = self.split()
+        train_df, valid_df = self.prepare_columns(train_df, valid_df)
+
+        train_df = Dataset.from_pandas(train_df)
+        valid_df = Dataset.from_pandas(valid_df)
+
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
+
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
+
 
 class TextTokenClassificationPreprocessor(TextBinaryClassificationPreprocessor):
     def split(self):

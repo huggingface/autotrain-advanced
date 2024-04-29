@@ -15,6 +15,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
@@ -124,6 +125,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = ImageClassificationParams(**params)
     elif task_id == 4:
         params = TokenClassificationParams(**params)
+    elif task_id == 10:
+        params = TextRegressionParams(**params)
     else:
         raise NotImplementedError
 

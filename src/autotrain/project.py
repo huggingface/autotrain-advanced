@@ -12,6 +12,7 @@ from autotrain.trainers.image_classification.params import ImageClassificationPa
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
 
 
 @dataclass
@@ -25,6 +26,7 @@ class AutoTrainProject:
                 DreamBoothTrainingParams,
                 Seq2SeqParams,
                 ImageClassificationParams,
+                TextRegressionParams,
             ]
         ],
         LLMTrainingParams,
@@ -33,6 +35,7 @@ class AutoTrainProject:
         DreamBoothTrainingParams,
         Seq2SeqParams,
         ImageClassificationParams,
+        TextRegressionParams,
     ]
     backend: str
 

@@ -303,6 +303,7 @@
               </optgroup>
               <optgroup label="Other Text Tasks">
                 <option value="text-classification">Text Classification</option>
+                <option value="text-regression">Text Regression</option>
                 <option value="seq2seq">Sequence To Sequence</option>
                 <option value="token-classification">Token Classification</option>
               </optgroup>
@@ -737,6 +738,11 @@
           document.getElementById("valid_split").disabled = true;
           break;
         case 'text-classification':
+          placeholderText = '{"text": "text", "label": "target"}';
+          document.getElementById("hub-dataset-radio").disabled = false;
+          document.getElementById("valid_split").disabled = false;
+          break;
+        case 'text-regression':
           placeholderText = '{"text": "text", "label": "target"}';
           document.getElementById("hub-dataset-radio").disabled = false;
           document.getElementById("valid_split").disabled = false;
