@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-from enum import Enum
 from functools import partial
 
 import torch
@@ -37,32 +36,6 @@ from autotrain.trainers.common import (
     remove_autotrain_data,
     save_training_params,
 )
-
-
-class ZephyrSpecialTokens(str, Enum):
-    USER = "<|user|>"
-    ASSISTANT = "<|assistant|>"
-    SYSTEM = "<|system|>"
-    EOS_TOKEN = "</s>"
-    BOS_TOKEN = "<s>"
-    PAD_TOKEN = "<pad>"
-
-    @classmethod
-    def list(cls):
-        return [c.value for c in cls]
-
-
-class ChatmlSpecialTokens(str, Enum):
-    USER = "<|im_start|>user"
-    ASSISTANT = "<|im_start|>assistant"
-    SYSTEM = "<|im_start|>system"
-    EOS_TOKEN = "<|im_end|>"
-    BOS_TOKEN = "<s>"
-    PAD_TOKEN = "<pad>"
-
-    @classmethod
-    def list(cls):
-        return [c.value for c in cls]
 
 
 def parse_args():
@@ -126,6 +99,14 @@ def train(config):
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
 
+    if config.trainer == "default":
+        from autotrain.trainers.clm.train_clm_default import train as train_default
+
+        train_default(config)
+
+    else:
+        raise ValueError(f"trainer `{config.trainer}` not supported")
+
     if config.padding not in ("left", "right"):
         config.padding = None
 
@@ -136,10 +117,10 @@ def train(config):
     special_tokens = None
     chat_template = None
     if config.chat_template == "chatml":
-        special_tokens = ChatmlSpecialTokens
+        special_tokens = utils.ChatmlSpecialTokens
         chat_template = utils.CHATML_CHAT_TEMPLATE
     elif config.chat_template == "zephyr":
-        special_tokens = ZephyrSpecialTokens
+        special_tokens = utils.ZephyrSpecialTokens
         chat_template = utils.ZEPHYR_CHAT_TEMPLATE
 
     if special_tokens is not None:
