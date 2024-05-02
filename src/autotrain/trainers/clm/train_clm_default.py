@@ -86,18 +86,12 @@ def train(config):
             use_flash_attention_2=config.use_flash_attention_2,
         )
     else:
-        # torch_dtype = "auto"
-        # if config.mixed_precision == "bf16":
-        #     torch_dtype = torch.bfloat16
-        # if config.mixed_precision == "fp16":
-        #     torch_dtype = torch.float16
         model = AutoModelForCausalLM.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
             trust_remote_code=ALLOW_REMOTE_CODE,
             use_flash_attention_2=config.use_flash_attention_2,
-            # torch_dtype=torch_dtype,
         )
 
     logger.info(f"model dtype: {model.dtype}")
