@@ -1,8 +1,8 @@
 import torch
 from peft import LoraConfig
-from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
+from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers.trainer_callback import PrinterCallback
-from trl import SFTTrainer
+from trl import ORPOConfig, ORPOTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -11,7 +11,7 @@ from autotrain.trainers.common import ALLOW_REMOTE_CODE
 
 
 def train(config):
-    logger.info("Starting SFT training...")
+    logger.info("Starting ORPO training...")
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
     train_data, valid_data = utils.process_input_data(config)
@@ -22,7 +22,10 @@ def train(config):
     training_args = utils.configure_training_args(config, logging_steps)
     config = utils.configure_block_size(config, tokenizer)
 
-    args = TrainingArguments(**training_args)
+    training_args["max_length"] = config.block_size
+    training_args["max_prompt_length"] = config.max_prompt_length
+    training_args["max_completion_length"] = config.max_completion_length
+    args = ORPOConfig(**training_args)
 
     logger.info("loading model config...")
     model_config = AutoConfig.from_pretrained(
@@ -83,15 +86,13 @@ def train(config):
         model=model,
         callbacks=callbacks,
     )
-    trainer = SFTTrainer(
+
+    trainer = ORPOTrainer(
         **trainer_args,
         train_dataset=train_data,
         eval_dataset=valid_data if config.valid_split is not None else None,
-        peft_config=peft_config if config.peft else None,
-        dataset_text_field=config.text_column,
-        max_seq_length=config.block_size,
         tokenizer=tokenizer,
-        packing=True,
+        peft_config=peft_config if config.peft else None,
     )
 
     trainer.remove_callback(PrinterCallback)

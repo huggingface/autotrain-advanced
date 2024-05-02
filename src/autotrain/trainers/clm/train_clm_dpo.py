@@ -2,7 +2,7 @@ import torch
 from peft import LoraConfig
 from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
 from transformers.trainer_callback import PrinterCallback
-from trl import SFTTrainer
+from trl import DPOTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -11,7 +11,7 @@ from autotrain.trainers.common import ALLOW_REMOTE_CODE
 
 
 def train(config):
-    logger.info("Starting SFT training...")
+    logger.info("Starting DPO training...")
     if isinstance(config, dict):
         config = LLMTrainingParams(**config)
     train_data, valid_data = utils.process_input_data(config)
@@ -54,6 +54,8 @@ def train(config):
             trust_remote_code=ALLOW_REMOTE_CODE,
             use_flash_attention_2=config.use_flash_attention_2,
         )
+        logger.info("Using PEFT, model_ref will be set to None")
+        model_ref = None
     else:
         model = AutoModelForCausalLM.from_pretrained(
             config.model,
@@ -62,9 +64,23 @@ def train(config):
             trust_remote_code=ALLOW_REMOTE_CODE,
             use_flash_attention_2=config.use_flash_attention_2,
         )
+        if config.model_ref is not None:
+            model_ref = AutoModelForCausalLM.from_pretrained(
+                config.model_ref,
+                config=model_config,
+                token=config.token,
+                trust_remote_code=ALLOW_REMOTE_CODE,
+                use_flash_attention_2=config.use_flash_attention_2,
+            )
+        else:
+            model_ref = None
 
     logger.info(f"model dtype: {model.dtype}")
     model.resize_token_embeddings(len(tokenizer))
+
+    if model_ref is not None:
+        logger.info(f"model_ref dtype: {model_ref.dtype}")
+        model_ref.resize_token_embeddings(len(tokenizer))
 
     if config.peft:
         peft_config = LoraConfig(
@@ -83,15 +99,18 @@ def train(config):
         model=model,
         callbacks=callbacks,
     )
-    trainer = SFTTrainer(
+
+    trainer = DPOTrainer(
         **trainer_args,
+        ref_model=model_ref,
+        beta=config.dpo_beta,
         train_dataset=train_data,
         eval_dataset=valid_data if config.valid_split is not None else None,
-        peft_config=peft_config if config.peft else None,
-        dataset_text_field=config.text_column,
-        max_seq_length=config.block_size,
         tokenizer=tokenizer,
-        packing=True,
+        max_length=config.block_size,
+        max_prompt_length=config.max_prompt_length,
+        max_target_length=config.max_completion_length,
+        peft_config=peft_config if config.peft else None,
     )
 
     trainer.remove_callback(PrinterCallback)

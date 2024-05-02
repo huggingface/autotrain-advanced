@@ -53,6 +53,7 @@ def train(config):
 
     logging_steps = utils.configure_logging_steps(config, train_data, valid_data)
     training_args = utils.configure_training_args(config, logging_steps)
+    config = utils.configure_block_size(config, tokenizer)
     args = TrainingArguments(**training_args)
 
     logger.info("loading model config...")
@@ -123,7 +124,6 @@ def train(config):
         )
         model = get_peft_model(model, peft_config)
 
-    config = utils.configure_block_size(config, tokenizer)
     tokenize_fn = partial(utils.tokenize, tokenizer=tokenizer, config=config)
     group_texts_fn = partial(utils.group_texts, config=config)
 

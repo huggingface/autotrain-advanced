@@ -248,8 +248,6 @@ async def fetch_params(task: str, param_type: str):
             elif trainer == "dpo":
                 more_hidden_params = [
                     "add_eos_token",
-                    "max_prompt_length",
-                    "max_completion_length",
                 ]
             if param_type == "basic":
                 more_hidden_params.extend(
