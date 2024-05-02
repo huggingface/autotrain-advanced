@@ -77,6 +77,9 @@ class AppParams:
         if trainer != "generic":
             _params["trainer"] = trainer.lower()
 
+        if _params["quantization"] == "none":
+            _params["quantization"] = None
+
         return LLMTrainingParams(**_params)
 
     def _munge_params_text_clf(self):
