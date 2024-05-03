@@ -1,0 +1,28 @@
+task: text_multi_class_classification
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-imdb-finetuned
+log: tensorboard
+backend: local-cli
+
+data:
+  path: stanfordnlp/imdb
+  train_split: train
+  valid_split: test
+  column_mapping:
+    text_column: text
+    target_column: label
+
+params:
+  max_seq_length: 512
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
