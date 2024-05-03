@@ -1,4 +1,4 @@
-task: lm_training
+task: llm
 base_model: meta-llama/Meta-Llama-3-8B-Instruct
 project_name: llama3-8b-orpo
 log: tensorboard

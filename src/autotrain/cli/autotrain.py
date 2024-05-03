@@ -14,7 +14,7 @@ from autotrain.cli.run_text_classification import RunAutoTrainTextClassification
 from autotrain.cli.run_text_regression import RunAutoTrainTextRegressionCommand
 from autotrain.cli.run_token_classification import RunAutoTrainTokenClassificationCommand
 from autotrain.cli.run_tools import RunAutoTrainToolsCommand
-from autotrain.configparser import ConfigParser
+from autotrain.parser import AutoTrainConfigParser
 
 
 def main():
@@ -50,7 +50,7 @@ def main():
 
     if args.config:
         logger.info(f"Using AutoTrain configuration: {args.config}")
-        cp = ConfigParser(args.config)
+        cp = AutoTrainConfigParser(args.config)
         cp.run()
         exit(0)
 

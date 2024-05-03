@@ -1,8 +1,10 @@
 import os
 from dataclasses import dataclass
 
+import requests
 import yaml
 
+from autotrain import logger
 from autotrain.cli.utils import (
     dreambooth_munge_data,
     img_clf_munge_data,
@@ -26,13 +28,20 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 
 
 @dataclass
-class ConfigParser:
-    config_file: str
+class AutoTrainConfigParser:
+    config_path: str
 
     def __post_init__(self):
-        with open(self.config_file, "r") as f:
-            self.config = yaml.safe_load(f)
-        self.parsed_config = self._parse_config()
+        if self.config_path.startswith("http"):
+            response = requests.get(self.config_path)
+            if response.status_code == 200:
+                self.config = yaml.safe_load(response.content)
+            else:
+                raise ValueError("Failed to retrieve YAML file.")
+        else:
+            with open(self.config_path, "r") as f:
+                self.config = yaml.safe_load(f)
+
         self.task_param_map = {
             "lm_training": LLMTrainingParams,
             "dreambooth": DreamBoothTrainingParams,
@@ -43,46 +52,69 @@ class ConfigParser:
             "text_binary_classification": TextClassificationParams,
             "text_multi_class_classification": TextClassificationParams,
             "text_single_column_regression": TextRegressionParams,
-            "token_classification": TokenClassificationParams,
+            "text_token_classification": TokenClassificationParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
             "dreambooth": dreambooth_munge_data,
             "tabular": tabular_munge_data,
             "seq2seq": seq2seq_munge_data,
-            "image_binary_classification": img_clf_munge_data,
             "image_multi_class_classification": img_clf_munge_data,
-            "text_binary_classification": text_clf_munge_data,
             "text_multi_class_classification": text_clf_munge_data,
-            "token_classification": token_clf_munge_data,
+            "text_token_classification": token_clf_munge_data,
             "text_single_column_regression": text_reg_munge_data,
         }
+        self.task_aliases = {
+            "llm": "lm_training",
+            "llm_training": "lm_training",
+            "llm_finetuning": "lm_training",
+            "dreambooth": "dreambooth",
+            "image_binary_classification": "image_multi_class_classification",
+            "image_classification": "image_multi_class_classification",
+            "seq2seq": "seq2seq",
+            "tabular": "tabular",
+            "text_binary_classification": "text_multi_class_classification",
+            "text_classification": "text_multi_class_classification",
+            "text_single_column_regression": "text_single_column_regression",
+            "text_regression": "text_single_column_regression",
+            "token_classification": "text_token_classification",
+        }
+        task = self.config.get("task")
+        self.task = self.task_aliases.get(task, task)
+        if self.task is None:
+            raise ValueError("Task is required in the configuration file")
+        if self.task not in TASKS:
+            raise ValueError(f"Task `{self.task}` is not supported")
+        self.backend = self.config.get("backend")
+        if self.backend is None:
+            raise ValueError("Backend is required in the configuration file")
+
+        logger.info(f"Running task: {self.task}")
+        logger.info(f"Using backend: {self.backend}")
+
+        self.parsed_config = self._parse_config()
 
     def _parse_config(self):
-        task = self.config.get("task")
-        if task is None:
-            raise ValueError("Task is required in the configuration file")
-        if task not in TASKS:
-            raise ValueError(f"Task `{task}` is not supported")
         params = {
             "model": self.config["base_model"],
             "project_name": self.config["project_name"],
-            "log": self.config["log"],
         }
 
-        if task == "dreambooth":
+        if self.task == "dreambooth":
             params["image_path"] = self.config["data"]["path"]
+            params["prompt"] = self.config["data"]["prompt"]
         else:
             params["data_path"] = self.config["data"]["path"]
 
-        if task == "lm_training":
+        if self.task == "lm_training":
             params["chat_template"] = self.config["data"]["chat_template"]
 
-        if task != "dreambooth":
+        if self.task != "dreambooth":
             for k, v in self.config["data"]["column_mapping"].items():
                 params[k] = v
             params["train_split"] = self.config["data"]["train_split"]
             params["valid_split"] = self.config["data"]["valid_split"]
+            params["log"] = self.config["log"]
 
         if "hub" in self.config:
             params["username"] = self.config["hub"]["username"]
@@ -108,15 +140,9 @@ class ConfigParser:
         return params
 
     def run(self):
-        backend = self.config.get("backend")
-        task = self.config.get("task")
-        if backend is None:
-            raise ValueError("Backend is required in the configuration file")
-        if task is None:
-            raise ValueError("Task is required in the configuration file")
-
-        _params = self.task_param_map[self.config["task"]](**self.parsed_config)
-        _munge_fn = self.munge_data_map[self.config["task"]]
-        _munge_fn(_params, local=backend.startswith("local"))
-        project = AutoTrainProject(params=_params, backend=backend)
+        _params = self.task_param_map[self.task](**self.parsed_config)
+        logger.info(_params)
+        _munge_fn = self.munge_data_map[self.task]
+        _munge_fn(_params, local=self.backend.startswith("local"))
+        project = AutoTrainProject(params=_params, backend=self.backend)
         _ = project.create()

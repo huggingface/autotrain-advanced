@@ -1,0 +1,28 @@
+task: token_classification
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-conll2003-finetuned
+log: tensorboard
+backend: local-cli
+
+data:
+  path: conll2003
+  train_split: train
+  valid_split: validation
+  column_mapping:
+    tokens_column: tokens
+    tags_column: ner_tags
+
+params:
+  max_seq_length: 512
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

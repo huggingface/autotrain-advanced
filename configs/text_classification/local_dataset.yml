@@ -1,0 +1,28 @@
+task: text_classification
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-imdb-finetuned
+log: tensorboard
+backend: local-cli
+
+data:
+  path: data/ # this must be the path to the directory containing the train and valid files
+  train_split: train # this must be either train.csv or train.json
+  valid_split: valid # this must be either valid.csv or valid.json
+  column_mapping:
+    text_column: text # this must be the name of the column containing the text
+    target_column: label # this must be the name of the column containing the target
+
+params:
+  max_seq_length: 512
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

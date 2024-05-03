@@ -380,11 +380,11 @@ def token_clf_munge_data(params, local):
 
 def img_clf_munge_data(params, local):
     train_data_path = f"{params.data_path}/{params.train_split}"
-    if params.valid_split is not None:
-        valid_data_path = f"{params.data_path}/{params.valid_split}"
-    else:
-        valid_data_path = None
-    if os.path.isdir(train_data_path) or os.path.isdir(valid_data_path):
+    # if params.valid_split is not None:
+    #     valid_data_path = f"{params.data_path}/{params.valid_split}"
+    # else:
+    #     valid_data_path = None
+    if os.path.isdir(train_data_path):
         raise Exception("Image classification is not yet supported for local datasets using the CLI. Please use UI.")
     return params
 

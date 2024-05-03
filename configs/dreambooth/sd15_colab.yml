@@ -1,0 +1,24 @@
+task: dreambooth
+base_model: runwayml/stable-diffusion-v1-5
+project_name: autotrain-sd15-finetuned
+backend: local-cli
+
+data:
+  path: data/ # store all images in this folder
+  prompt: photo of sks person # prompt for the model
+
+params:
+  resolution: 512
+  batch_size: 1
+  num_steps: 500
+  lr: 1e-4
+  gradient_accumulation: 4
+  mixed_precision: fp16
+  train_text_encoder: false
+  xformers: false
+  use_8bit_adam: false
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

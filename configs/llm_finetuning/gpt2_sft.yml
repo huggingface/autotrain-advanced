@@ -1,4 +1,4 @@
-task: lm_training
+task: llm
 base_model: openai-community/gpt2
 project_name: autotrain-gpt2-finetuned-guanaco
 log: tensorboard
