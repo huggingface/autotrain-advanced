@@ -1,19 +1,20 @@
 import argparse
 
-from .. import __version__
-from .run_api import RunAutoTrainAPICommand
-from .run_app import RunAutoTrainAppCommand
-from .run_dreambooth import RunAutoTrainDreamboothCommand
-from .run_image_classification import RunAutoTrainImageClassificationCommand
-from .run_llm import RunAutoTrainLLMCommand
-from .run_seq2seq import RunAutoTrainSeq2SeqCommand
-from .run_setup import RunSetupCommand
-from .run_spacerunner import RunAutoTrainSpaceRunnerCommand
-from .run_tabular import RunAutoTrainTabularCommand
-from .run_text_classification import RunAutoTrainTextClassificationCommand
-from .run_text_regression import RunAutoTrainTextRegressionCommand
-from .run_token_classification import RunAutoTrainTokenClassificationCommand
-from .run_tools import RunAutoTrainToolsCommand
+from autotrain import __version__, logger
+from autotrain.cli.run_api import RunAutoTrainAPICommand
+from autotrain.cli.run_app import RunAutoTrainAppCommand
+from autotrain.cli.run_dreambooth import RunAutoTrainDreamboothCommand
+from autotrain.cli.run_image_classification import RunAutoTrainImageClassificationCommand
+from autotrain.cli.run_llm import RunAutoTrainLLMCommand
+from autotrain.cli.run_seq2seq import RunAutoTrainSeq2SeqCommand
+from autotrain.cli.run_setup import RunSetupCommand
+from autotrain.cli.run_spacerunner import RunAutoTrainSpaceRunnerCommand
+from autotrain.cli.run_tabular import RunAutoTrainTabularCommand
+from autotrain.cli.run_text_classification import RunAutoTrainTextClassificationCommand
+from autotrain.cli.run_text_regression import RunAutoTrainTextRegressionCommand
+from autotrain.cli.run_token_classification import RunAutoTrainTokenClassificationCommand
+from autotrain.cli.run_tools import RunAutoTrainToolsCommand
+from autotrain.configparser import ConfigParser
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
         epilog="For more information about a command, run: `autotrain <command> --help`",
     )
     parser.add_argument("--version", "-v", help="Display AutoTrain version", action="store_true")
+    parser.add_argument("--config", help="Optional configuration file", type=str)
     commands_parser = parser.add_subparsers(help="commands")
 
     # Register commands
@@ -44,6 +46,12 @@ def main():
 
     if args.version:
         print(__version__)
+        exit(0)
+
+    if args.config:
+        logger.info(f"Using AutoTrain configuration: {args.config}")
+        cp = ConfigParser(args.config)
+        cp.run()
         exit(0)
 
     if not hasattr(args, "func"):
