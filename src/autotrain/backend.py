@@ -496,7 +496,7 @@ class NVCFRunner:
                     logger.error("Training failed")
                     if "detail" in data:
                         detail_message = data["detail"]
-                        for line in detail_message.split('\n'):
+                        for line in detail_message.split("\n"):
                             if line.strip():
                                 print(line)
                     break
