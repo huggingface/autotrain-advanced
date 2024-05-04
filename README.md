@@ -31,6 +31,15 @@ Once done, you can start the application using:
     autotrain app --port 8080 --host 127.0.0.1
 
 
+If you are not fond of UI, you can use AutoTrain Configs to train using command line or simply AutoTrain CLI.
+
+To use config file for training, you can use the following command:
+
+    autotrain --config <path_to_config_file>
+
+
+You can find sample config files in the `configs` directory of this repository.
+
 ## Colabs
 
 | Task | Colab Link |
