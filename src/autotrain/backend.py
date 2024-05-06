@@ -492,6 +492,15 @@ class NVCFRunner:
                     logger.error("Failed to parse JSON from response")
                     continue
 
+                if response.status_code == 500:
+                    logger.error("Training failed")
+                    if "detail" in data:
+                        detail_message = data["detail"]
+                        for line in detail_message.split("\n"):
+                            if line.strip():
+                                print(line)
+                    break
+
                 if response.status_code in [200, 202]:
                     logger.info(
                         f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}"
