@@ -1,18 +1,13 @@
 task: llm
 base_model: meta-llama/Meta-Llama-3-8B-Instruct
-project_name: llama3-8b-orpo
+project_name: autotrain-llama3-8b-orpo
 log: tensorboard
 backend: local-cli
 
 data:
-  # path can also be a local folder. 
-  # if a local folder is provided, the training and validation files
-  # must be named "train.csv" and "valid.csv" respectively or
-  # "train.jsonl" and "valid.jsonl" respectively.
-  # validation split will be ignored for llm training.
   path: argilla/distilabel-capybara-dpo-7k-binarized
   train_split: train
-  valid_split: valid
+  valid_split: null
   chat_template: chatml
   column_mapping:
     text_column: chosen
