@@ -1,8 +1,8 @@
 task: llm
 base_model: meta-llama/Meta-Llama-3-8B-Instruct
-project_name: autotrain-llama3-8b-orpo
+project_name: autotrain-llama3-8b-orpo-t1
 log: tensorboard
-backend: local
+backend: spaces-a10g-largex4
 
 data:
   path: argilla/distilabel-capybara-dpo-7k-binarized
@@ -28,6 +28,7 @@ params:
   optimizer: adamw_torch
   scheduler: linear
   gradient_accumulation: 4
+  mixed_precision: fp16
 
 hub:
   username: ${HF_USERNAME}
