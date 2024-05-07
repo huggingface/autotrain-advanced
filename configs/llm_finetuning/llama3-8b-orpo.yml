@@ -2,7 +2,7 @@ task: llm
 base_model: meta-llama/Meta-Llama-3-8B-Instruct
 project_name: autotrain-llama3-8b-orpo
 log: tensorboard
-backend: local
+backend: spaces-a10g-largex4
 
 data:
   path: argilla/distilabel-capybara-dpo-7k-binarized
