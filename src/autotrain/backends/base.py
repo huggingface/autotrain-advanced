@@ -68,6 +68,8 @@ class BaseBackend:
     backend: str
 
     def __post_init__(self):
+        self.username = None
+
         if isinstance(self.params, GenericParams) and self.backend.startswith("local"):
             raise ValueError("Local backend is not supported for GenericParams")
 

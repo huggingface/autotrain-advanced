@@ -2,7 +2,7 @@ task: text_regression
 base_model: google-bert/bert-base-uncased
 project_name: autotrain-bert-sms-spam-finetuned
 log: tensorboard
-backend: local-cli
+backend: local
 
 data:
   path: sms_spam

@@ -1,7 +1,7 @@
 task: dreambooth
 base_model: stabilityai/stable-diffusion-xl-base-1.0
 project_name: autotrain-sdxl-finetuned
-backend: local-cli
+backend: local
 
 data:
   path: data/ # store all images in this folder

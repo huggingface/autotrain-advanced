@@ -2,7 +2,7 @@ task: text_classification
 base_model: google-bert/bert-base-uncased
 project_name: autotrain-bert-imdb-finetuned
 log: tensorboard
-backend: local-cli
+backend: local
 
 data:
   path: stanfordnlp/imdb

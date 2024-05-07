@@ -2,7 +2,7 @@ task: llm
 base_model: openai-community/gpt2
 project_name: autotrain-gpt2-finetuned-guanaco
 log: tensorboard
-backend: local-cli
+backend: local
 
 data:
   path: timdettmers/openassistant-guanaco
