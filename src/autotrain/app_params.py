@@ -77,8 +77,9 @@ class AppParams:
         if trainer != "generic":
             _params["trainer"] = trainer.lower()
 
-        if _params["quantization"] == "none":
-            _params["quantization"] = None
+        if "quantization" in _params:
+            if _params["quantization"] in ("none", "no"):
+                _params["quantization"] = None
 
         return LLMTrainingParams(**_params)
 
