@@ -1,13 +1,14 @@
 import asyncio
 import os
 import signal
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from autotrain import logger
-from autotrain.app_utils import get_running_jobs, run_training
 from autotrain.db import AutoTrainDB
+from autotrain.utils import get_running_jobs, run_training
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -18,6 +19,15 @@ PARAMS = os.environ.get("PARAMS")
 DATA_PATH = os.environ.get("DATA_PATH")
 MODEL = os.environ.get("MODEL")
 DB = AutoTrainDB("autotrain.db")
+
+
+def sigint_handler(signum, frame):
+    """Handle SIGINT signal gracefully."""
+    logger.info("SIGINT received. Exiting gracefully...")
+    sys.exit(0)  # Exit with code 0
+
+
+signal.signal(signal.SIGINT, sigint_handler)
 
 
 class BackgroundRunner:

@@ -247,41 +247,43 @@
             <select id="hardware" name="hardware"
               class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
               {% if enable_local == 1 %}
-              <option value="Local">Local/Space</option>
+              <option value="local-ui">Local/Space</option>
               {% endif %}
               {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
               <optgroup label="Hugging Face Spaces">
-                <option value="A10G Large">A10G Large</option>
-                <option value="A100 Large">A100 Large</option>
-                <option value="A10G Small">A10G Small</option>
-                <option value="T4 Medium">T4 Medium</option>
-                <option value="T4 Small">T4 Small</option>
-                <option value="CPU Upgrade">CPU Upgrade</option>
-                <option value="CPU (Free)">CPU (Free)</option>
+                <option value="spaces-a10g-large">1xA10G Large</option>
+                <option value="spaces-a10g-largex2">2xA10G Large</option>
+                <option value="spaces-a10g-largex4">4xA10G Large</option>
+                <option value="spaces-a100-large">A100 Large</option>
+                <option value="spaces-a10g-small">A10G Small</option>
+                <option value="spaces-t4-medium">T4 Medium</option>
+                <option value="spaces-t4-small">T4 Small</option>
+                <option value="spaces-cpu-upgrade">CPU Upgrade</option>
+                <option value="spaces-cpu-basic">CPU (Free)</option>
               </optgroup>
               <optgroup label="Hugging Face Endpoints">
-                <option value="EP US-East-1 1xA10g">1xA10G</option>
-                <option value="EP US-East-1 1xA100">1xA100</option>
-                <option value="EP US-East-1 2xA100">2xA100</option>
-                <option value="EP US-East-1 4xA100">4xA100</option>
-                <option value="EP US-East-1 8xA100">8xA100</option>
+                <option value="ep-aws-useast1-m">1xA10G</option>
+                <option value="ep-aws-useast1-xl">1xA100</option>
+                <option value="ep-aws-useast1-2xl">2xA100</option>
+                <option value="ep-aws-useast1-4xl">4xA100</option>
+                <option value="ep-aws-useast1-8xl">8xA100</option>
               </optgroup>
               {% endif %}
               {% if enable_ngc == 1 %}
               <optgroup label="NVIDIA DGX Cloud">
-                <option value="DGX 1xA100">1xA100 DGX</option>
-                <option value="DGX 2xA100">2xA100 DGX</option>
-                <option value="DGX 4xA100">4xA100 DGX</option>
-                <option value="DGX 8xA100">8xA100 DGX</option>
+                <option value="dgx-a100">1xA100 DGX</option>
+                <option value="dgx-2a100">2xA100 DGX</option>
+                <option value="dgx-4a100">4xA100 DGX</option>
+                <option value="dgx-8a100">8xA100 DGX</option>
               </optgroup>
               {% endif %}
               {% if enable_nvcf == 1 %}
               <optgroup label="NVIDIA Cloud Functions">
-                <option value="NVCF 1xL40S">1xL40S</option>
-                <option value="NVCF 1xH100">1xH100</option>
-                <option value="NVCF 2xH100">2xH100</option>
-                <option value="NVCF 4xH100">4xH100</option>
-                <option value="NVCF 8xH100">8xH100</option>
+                <option value="nvcf-l40sx1">1xL40S</option>
+                <option value="nvcf-h100x1">1xH100</option>
+                <option value="nvcf-h100x2">2xH100</option>
+                <option value="nvcf-h100x4">4xH100</option>
+                <option value="nvcf-h100x8">8xH100</option>
               </optgroup>
               {% endif %}
             </select>

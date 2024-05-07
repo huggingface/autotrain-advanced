@@ -1,25 +1,29 @@
 task: llm
-base_model: openai-community/gpt2
-project_name: autotrain-gpt2-finetuned-guanaco
+base_model: meta-llama/Meta-Llama-3-8B-Instruct
+project_name: autotrain-llama3-8b-orpo-t1
 log: tensorboard
-backend: local
+backend: spaces-a10g-largex4
 
 data:
-  path: timdettmers/openassistant-guanaco
+  path: argilla/distilabel-capybara-dpo-7k-binarized
   train_split: train
   valid_split: null
-  chat_template: null
+  chat_template: chatml
   column_mapping:
-    text_column: text
+    text_column: chosen
+    rejected_text_column: rejected
 
 params:
-  trainer: sft
+  trainer: orpo
   block_size: 1024
-  model_max_length: 2048
+  model_max_length: 8192
   max_prompt_length: 512
   epochs: 3
   batch_size: 2
   lr: 3e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
   padding: right
   optimizer: adamw_torch
   scheduler: linear

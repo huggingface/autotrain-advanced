@@ -2,7 +2,7 @@ task: text_regression
 base_model: google-bert/bert-base-uncased
 project_name: autotrain-bert-custom-finetuned
 log: tensorboard
-backend: local-cli
+backend: local
 
 data:
   path: data/ # this must be the path to the directory containing the train and valid files

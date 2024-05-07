@@ -2,7 +2,7 @@ task: image_classification
 base_model: google/vit-base-patch16-224
 project_name: autotrain-cats-vs-dogs-finetuned
 log: tensorboard
-backend: local-cli
+backend: local
 
 data:
   path: cats_vs_dogs
