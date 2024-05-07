@@ -84,21 +84,6 @@ class BaseBackend:
             else:
                 raise ValueError("Must provide username")
 
-        self.env_vars = {
-            "HF_TOKEN": self.params.token,
-            "AUTOTRAIN_USERNAME": self.username,
-            "PROJECT_NAME": self.params.project_name,
-            "TASK_ID": str(self.task_id),
-            "PARAMS": json.dumps(self.params.model_dump_json()),
-        }
-        if isinstance(self.params, DreamBoothTrainingParams):
-            self.env_vars["DATA_PATH"] = self.params.image_path
-        else:
-            self.env_vars["DATA_PATH"] = self.params.data_path
-
-        if not isinstance(self.params, GenericParams):
-            self.env_vars["MODEL"] = self.params.model
-
         if isinstance(self.params, LLMTrainingParams):
             self.task_id = 9
         elif isinstance(self.params, TextClassificationParams):
@@ -127,3 +112,18 @@ class BaseBackend:
             self.wait = False
         if self.backend in ("local", "local-cli"):
             self.wait = True
+
+        self.env_vars = {
+            "HF_TOKEN": self.params.token,
+            "AUTOTRAIN_USERNAME": self.username,
+            "PROJECT_NAME": self.params.project_name,
+            "TASK_ID": str(self.task_id),
+            "PARAMS": json.dumps(self.params.model_dump_json()),
+        }
+        if isinstance(self.params, DreamBoothTrainingParams):
+            self.env_vars["DATA_PATH"] = self.params.image_path
+        else:
+            self.env_vars["DATA_PATH"] = self.params.data_path
+
+        if not isinstance(self.params, GenericParams):
+            self.env_vars["MODEL"] = self.params.model
