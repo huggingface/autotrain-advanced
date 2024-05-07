@@ -1,22 +1,16 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.backend import SpaceRunner
+from autotrain.backends.base import AVAILABLE_HARDWARE
+from autotrain.backends.spaces import SpaceRunner
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.generic.utils import create_dataset_repo
 
 from . import BaseAutoTrainCommand
 
 
-BACKEND_CHOICES = [
-    "spaces-a10gl",
-    "spaces-a10gs",
-    "spaces-a100",
-    "spaces-t4m",
-    "spaces-t4s",
-    "spaces-cpu",
-    "spaces-cpuf",
-]
+BACKEND_CHOICES = list(AVAILABLE_HARDWARE.keys())
+BACKEND_CHOICES = [b for b in BACKEND_CHOICES if b.startswith("spaces-")]
 
 
 def run_spacerunner_command_factory(args):
