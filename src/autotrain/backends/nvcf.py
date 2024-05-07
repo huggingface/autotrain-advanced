@@ -1,27 +1,18 @@
+import os
+import threading
+import time
+from types import SimpleNamespace
+
+import requests
+
 from autotrain import logger
 from autotrain.backends.base import BaseBackend
 
 
-class NVCFRunner(BaseBackend)
-    job_name: str
-    env_vars: dict
-    backend: str
+NVCF_API = os.environ.get("NVCF_API")
 
-    def __post_init__(self):
-        self.nvcf_api = os.environ.get("NVCF_API")
-        self.hf_token = self.env_vars["HF_TOKEN"]
-        self.instance_map = {
-            "nvcf-l40sx1": {"id": "67bb8939-c932-429a-a446-8ae898311856"},
-            "nvcf-h100x1": {"id": "848348f8-a4e2-4242-bce9-6baa1bd70a66"},
-            "nvcf-h100x2": {"id": "fb006a89-451e-4d9c-82b5-33eff257e0bf"},
-            "nvcf-h100x4": {"id": "21bae5af-87e5-4132-8fc0-bf3084e59a57"},
-            "nvcf-h100x8": {"id": "6e0c2af6-5368-47e0-b15e-c070c2c92018"},
-        }
 
-        logger.info("Starting NVCF training")
-        logger.info(f"job_name: {self.job_name}")
-        logger.info(f"backend: {self.backend}")
-
+class NVCFRunner(BaseBackend):
     def _convert_dict_to_object(self, dictionary):
         if isinstance(dictionary, dict):
             for key, value in dictionary.items():
@@ -32,8 +23,8 @@ class NVCFRunner(BaseBackend)
         else:
             return dictionary
 
-    def _conf_nvcf(self, token, nvcf_type, url, method="POST", payload=None):
-        logger.info(f"{self.job_name}: {method} - Configuring NVCF {nvcf_type}.")
+    def _conf_nvcf(self, token, nvcf_type, url, job_name, method="POST", payload=None):
+        logger.info(f"{job_name}: {method} - Configuring NVCF {nvcf_type}.")
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
         try:
             if method.upper() == "POST":
@@ -45,36 +36,34 @@ class NVCFRunner(BaseBackend)
             response.raise_for_status()
 
             if response.status_code == 202:
-                logger.info(
-                    f"{self.job_name}: {method} - Successfully submitted NVCF job. Polling reqId for completion"
-                )
+                logger.info(f"{job_name}: {method} - Successfully submitted NVCF job. Polling reqId for completion")
                 response_data = response.json()
                 nvcf_reqid = response_data.get("nvcfRequestId")
                 if nvcf_reqid:
-                    logger.info(f"{self.job_name}: nvcfRequestId: {nvcf_reqid}")
+                    logger.info(f"{job_name}: nvcfRequestId: {nvcf_reqid}")
                     return nvcf_reqid
-                logger.warning(f"{self.job_name}: nvcfRequestId key is missing in the response body")
+                logger.warning(f"{job_name}: nvcfRequestId key is missing in the response body")
                 return None
 
             result = response.json()
             result_obj = self._convert_dict_to_object(result)
-            logger.info(f"{self.job_name}: {method} - Successfully processed NVCF {nvcf_type}.")
+            logger.info(f"{job_name}: {method} - Successfully processed NVCF {nvcf_type}.")
             return result_obj
 
         except requests.HTTPError as http_err:
             # Log the response body for more context
             error_message = http_err.response.text if http_err.response else "No additional error information."
             logger.error(
-                f"{self.job_name}: HTTP error occurred processing NVCF {nvcf_type} with {method} request: {http_err}. "
+                f"{job_name}: HTTP error occurred processing NVCF {nvcf_type} with {method} request: {http_err}. "
                 f"Error details: {error_message}"
             )
             raise Exception(f"HTTP Error {http_err.response.status_code}: {http_err}. Details: {error_message}")
 
         except (requests.Timeout, ConnectionError) as err:
-            logger.error(f"{self.job_name}: Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}")
+            logger.error(f"{job_name}: Failed to process NVCF {nvcf_type} with {method} request - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
 
-    def _poll_nvcf(self, url, token, method="get", timeout=86400, interval=30, op="poll"):
+    def _poll_nvcf(self, url, token, job_name, method="get", timeout=86400, interval=30, op="poll"):
         timeout = float(timeout)
         interval = float(interval)
         start_time = time.time()
@@ -111,7 +100,7 @@ class NVCFRunner(BaseBackend)
 
                 if response.status_code in [200, 202]:
                     logger.info(
-                        f"{self.job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}"
+                        f"{job_name}: {method} - {response.status_code} - {'Polling completed' if response.status_code == 200 else 'Polling reqId for completion'}"
                     )
 
                     if "log" in data:
@@ -138,7 +127,14 @@ class NVCFRunner(BaseBackend)
             raise TimeoutError(f"Operation '{op}' did not complete successfully within the timeout period.")
 
     def create(self):
-        nvcf_url_submit = f"{self.nvcf_api}/invoke/{self.instance_map[self.backend]['id']}"
+        hf_token = self.env_vars["HF_TOKEN"]
+        job_name = f"{self.username}-{self.params.project_name}"
+
+        logger.info("Starting NVCF training")
+        logger.info(f"job_name: {job_name}")
+        logger.info(f"backend: {self.backend}")
+
+        nvcf_url_submit = f"{NVCF_API}/invoke/{self.available_hardware[self.backend]['id']}"
         org_name = os.environ.get("SPACE_ID")
         if org_name is None:
             raise ValueError("SPACE_ID environment variable is not set")
@@ -165,19 +161,26 @@ class NVCFRunner(BaseBackend)
         }
 
         nvcf_fn_req = self._conf_nvcf(
-            token=self.hf_token, nvcf_type="job_submit", url=nvcf_url_submit, method="POST", payload=nvcf_fr_payload
+            token=hf_token,
+            nvcf_type="job_submit",
+            url=nvcf_url_submit,
+            job_name=job_name,
+            method="POST",
+            payload=nvcf_fr_payload,
         )
 
-        nvcf_url_reqpoll = f"{self.nvcf_api}/status/{nvcf_fn_req}"
-        logger.info(f"{self.job_name}: Polling : {nvcf_url_reqpoll}")
+        nvcf_url_reqpoll = f"{NVCF_API}/status/{nvcf_fn_req}"
+        logger.info(f"{job_name}: Polling : {nvcf_url_reqpoll}")
         poll_thread = threading.Thread(
             target=self._poll_nvcf,
             kwargs={
                 "url": nvcf_url_reqpoll,
-                "token": self.hf_token,
+                "token": hf_token,
+                "job_name": job_name,
                 "method": "GET",
                 "timeout": 172800,
                 "interval": 20,
             },
         )
         poll_thread.start()
+        return nvcf_fn_req

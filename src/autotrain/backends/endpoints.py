@@ -5,20 +5,10 @@ from autotrain.backends.base import BaseBackend
 
 ENDPOINTS_URL = "https://api.endpoints.huggingface.cloud/v2/endpoint/"
 
-AVAILABLE_HARDWARE = {
-    "ep-aws-useast1-s": "aws_us-east-1_gpu_small_g4dn.xlarge",
-    "ep-aws-useast1-m": "aws_us-east-1_gpu_medium_g5.2xlarge",
-    "ep-aws-useast1-l": "aws_us-east-1_gpu_large_g4dn.12xlarge",
-    "ep-aws-useast1-xl": "aws_us-east-1_gpu_xlarge_p4de",
-    "ep-aws-useast1-2xl": "aws_us-east-1_gpu_2xlarge_p4de",
-    "ep-aws-useast1-4xl": "aws_us-east-1_gpu_4xlarge_p4de",
-    "ep-aws-useast1-8xl": "aws_us-east-1_gpu_8xlarge_p4de",
-}
-
 
 class EndpointsRunner(BaseBackend):
     def _create(self):
-        hardware = AVAILABLE_HARDWARE[self.backend]
+        hardware = self.available_hardware[self.backend]
         accelerator = hardware.split("_")[2]
         instance_size = hardware.split("_")[3]
         region = hardware.split("_")[1]

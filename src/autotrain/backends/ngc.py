@@ -1,3 +1,10 @@
+import base64
+import json
+import os
+
+import requests
+from requests.exceptions import HTTPError
+
 from autotrain import logger
 from autotrain.backends.base import BaseBackend
 
@@ -6,18 +13,11 @@ NGC_API = os.environ.get("NGC_API", "https://api.ngc.nvidia.com/v2/org")
 NGC_AUTH = os.environ.get("NGC_AUTH", "https://authn.nvidia.com")
 NGC_ACE = os.environ.get("NGC_ACE")
 NGC_ORG = os.environ.get("NGC_ORG")
-NGC_CLI_API_KEY = os.environ.get("NGC_CLI_API_KEY")
+NGC_API_KEY = os.environ.get("NGC_CLI_API_KEY")
 NGC_TEAM = os.environ.get("NGC_TEAM")
 
-AVAILABLE_HARDWARE = {
-    "dgx-a100": "dgxa100.80g.1.norm",
-    "dgx-2a100": "dgxa100.80g.2.norm",
-    "dgx-4a100": "dgxa100.80g.4.norm",
-    "dgx-8a100": "dgxa100.80g.8.norm",
-}
 
-
-class NGCRunner(BaseBackend)
+class NGCRunner(BaseBackend):
     def _user_authentication_ngc(self):
         logger.info("Authenticating NGC user...")
         scope = "group/ngc"
@@ -48,23 +48,22 @@ class NGCRunner(BaseBackend)
             logger.info(
                 f"NGC Job ID: {result.get('job', {}).get('id')}, Job Status History: {result.get('jobStatusHistory')}"
             )
-            return result.get('job', {}).get('id')
+            return result.get("job", {}).get("id")
         except HTTPError as http_err:
             logger.error(f"HTTP error occurred: {http_err}")
             raise Exception(f"HTTP Error {response.status_code}: {http_err}")
         except (requests.Timeout, ConnectionError) as err:
             logger.error(f"Failed to create NGC job - {repr(err)}")
             raise Exception(f"Unreachable, please try again later: {err}")
-        return json.loads(response.text.encode("utf8"))
 
     def create(self):
-        job_name=f"{self.username}-{self.params.project_name}"
+        job_name = f"{self.username}-{self.params.project_name}"
         ngc_url = f"/{NGC_ORG}/team/{NGC_TEAM}"
         ngc_cmd = "set -x; conda run --no-capture-output -p /app/env autotrain api --port 7860 --host 0.0.0.0"
         ngc_payload = {
             "name": job_name,
             "aceName": NGC_ACE,
-            "aceInstance": AVAILABLE_HARDWARE[self.backend],
+            "aceInstance": self.available_hardware[self.backend],
             "dockerImageName": f"{NGC_ORG}/autotrain-advanced:latest",
             "command": ngc_cmd,
             "envs": [{"name": key, "value": value} for key, value in self.env_vars.items()],

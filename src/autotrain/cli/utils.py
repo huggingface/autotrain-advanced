@@ -1,5 +1,6 @@
 import os
 
+from autotrain.backends.base import AVAILABLE_HARDWARE
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset
 
 
@@ -34,17 +35,8 @@ def common_args():
             "help": "Backend to use: default or spaces. Spaces backend requires push_to_hub & username. Advanced users only.",
             "required": False,
             "type": str,
-            "default": "local-cli",
-            "choices": [
-                "local-cli",
-                "spaces-a10gl",
-                "spaces-a10gs",
-                "spaces-a100",
-                "spaces-t4m",
-                "spaces-t4s",
-                "spaces-cpu",
-                "spaces-cpuf",
-            ],
+            "default": "local",
+            "choices": AVAILABLE_HARDWARE.keys(),
         },
         {
             "arg": "--token",

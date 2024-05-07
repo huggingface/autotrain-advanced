@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from autotrain import logger
-from autotrain.app_utils import get_running_jobs, run_training
 from autotrain.db import AutoTrainDB
+from autotrain.utils import get_running_jobs, run_training
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN")

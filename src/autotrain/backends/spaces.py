@@ -1,22 +1,36 @@
+import io
+
+from huggingface_hub import HfApi
+
 from autotrain.backends.base import BaseBackend
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.generic.params import GenericParams
 
 
-AVAILABLE_HARDWARE = {
-    "spaces-a10g-large": "a10g-large",
-    "spaces-a10g-small": "a10g-small",
-    "spaces-a100-large": "a100-large",
-    "spaces-t4-medium": "t4-medium",
-    "spaces-t4-small": "t4-small",
-    "spaces-cpu": "cpu-upgrade",
-    "spaces-cpu-basic": "cpu-basic",
-    "spaces-l4x1": "l4x1",
-    "spaces-l4x4": "l4x4",
-    "spaces-a10g-largex2": "a10g-largex2",
-    "spaces-a10g-largex4": "a10g-largex4",
-}
+_DOCKERFILE = """
+FROM huggingface/autotrain-advanced:latest
+
+CMD pip uninstall -y autotrain-advanced && pip install -U autotrain-advanced && autotrain api --port 7860 --host 0.0.0.0
+"""
+
+# format _DOCKERFILE
+_DOCKERFILE = _DOCKERFILE.replace("\n", " ").replace("  ", "\n").strip()
 
 
 class SpaceRunner(BaseBackend):
+    def _create_readme(self):
+        _readme = "---\n"
+        _readme += f"title: {self.params.project_name}\n"
+        _readme += "emoji: 🚀\n"
+        _readme += "colorFrom: green\n"
+        _readme += "colorTo: indigo\n"
+        _readme += "sdk: docker\n"
+        _readme += "pinned: false\n"
+        _readme += "duplicated_from: autotrain-projects/autotrain-advanced\n"
+        _readme += "---\n"
+        _readme = io.BytesIO(_readme.encode())
+        return _readme
+
     def _add_secrets(self, api, space_id):
         if isinstance(self.params, GenericParams):
             for k, v in self.params.env.items():
@@ -44,7 +58,7 @@ class SpaceRunner(BaseBackend):
             repo_id=space_id,
             repo_type="space",
             space_sdk="docker",
-            space_hardware=self.spaces_backends[self.backend.split("-")[1].lower()],
+            space_hardware=self.available_hardware[self.backend[len("spaces-") :]],
             private=True,
         )
         self._add_secrets(api, space_id)
