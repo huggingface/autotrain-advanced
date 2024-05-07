@@ -1,7 +1,7 @@
 task: dreambooth
 base_model: runwayml/stable-diffusion-v1-5
 project_name: autotrain-sd15-finetuned
-backend: local-cli
+backend: local
 
 data:
   path: data/ # store all images in this folder

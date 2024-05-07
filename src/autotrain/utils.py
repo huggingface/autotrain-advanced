@@ -1,12 +1,22 @@
-import glob
 import json
 import os
-import shutil
-import traceback
+import signal
+import subprocess
 
-from transformers import AutoConfig
+import psutil
+import requests
 
-from autotrain import logger
+from autotrain import config, logger
+from autotrain.commands import launch_command
+from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.generic.params import GenericParams
+from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
+from autotrain.trainers.tabular.params import TabularParams
+from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 FORMAT_TAG = "\033[{code}m"
@@ -37,80 +47,122 @@ LFS_PATTERNS = [
 ]
 
 
-class UnauthenticatedError(Exception):
-    pass
+def get_running_jobs(db):
+    running_jobs = db.get_running_jobs()
+    if running_jobs:
+        for _pid in running_jobs:
+            proc_status = get_process_status(_pid)
+            proc_status = proc_status.strip().lower()
+            if proc_status in ("completed", "error", "zombie"):
+                logger.info(f"Killing PID: {_pid}")
+                try:
+                    kill_process_by_pid(_pid)
+                except Exception as e:
+                    logger.info(f"Error while killing process: {e}")
+                    logger.info(f"Process {_pid} is already completed. Skipping...")
+                db.delete_job(_pid)
+
+    running_jobs = db.get_running_jobs()
+    return running_jobs
 
 
-class UnreachableAPIError(Exception):
-    pass
-
-
-def save_model(torch_model, model_path):
-    torch_model.save_pretrained(model_path)
+def get_process_status(pid):
     try:
-        torch_model.save_pretrained(model_path, safe_serialization=True)
-    except Exception as e:
-        logger.error(f"Safe serialization failed with error: {e}")
+        process = psutil.Process(pid)
+        proc_status = process.status()
+        return proc_status
+    except psutil.NoSuchProcess:
+        logger.info(f"No process found with PID: {pid}")
+        return "Completed"
 
 
-def save_tokenizer(tok, model_path):
-    tok.save_pretrained(model_path)
+def kill_process_by_pid(pid):
+    """Kill process by PID."""
+    os.kill(pid, signal.SIGTERM)
 
 
-def update_model_config(model, job_config):
-    model.config._name_or_path = "AutoTrain"
-    if job_config.task in ("speech_recognition", "summarization"):
-        return model
-    if "max_seq_length" in job_config:
-        model.config.max_length = job_config.max_seq_length
-        model.config.padding = "max_length"
-    return model
-
-
-def save_model_card(model_card, model_path):
-    with open(os.path.join(model_path, "README.md"), "w") as fp:
-        fp.write(f"{model_card}")
-
-
-def create_file(filename, file_content, model_path):
-    with open(os.path.join(model_path, filename), "w") as fp:
-        fp.write(f"{file_content}")
-
-
-def save_config(conf, model_path):
-    with open(os.path.join(model_path, "config.json"), "w") as fp:
-        json.dump(conf, fp)
-
-
-def remove_checkpoints(model_path):
-    subfolders = glob.glob(os.path.join(model_path, "*/"))
-    for subfolder in subfolders:
-        shutil.rmtree(subfolder)
+def user_authentication(token):
+    if token.startswith("hf_oauth"):
+        _api_url = config.HF_API + "/oauth/userinfo"
+    else:
+        _api_url = config.HF_API + "/api/whoami-v2"
+    headers = {}
+    cookies = {}
+    if token.startswith("hf_"):
+        headers["Authorization"] = f"Bearer {token}"
+    else:
+        cookies = {"token": token}
     try:
-        os.remove(os.path.join(model_path, "emissions.csv"))
-    except OSError:
-        pass
-
-
-def job_watcher(func):
-    def wrapper(co2_tracker, *args, **kwargs):
-        try:
-            return func(co2_tracker, *args, **kwargs)
-        except Exception:
-            logger.error(f"{func.__name__} has failed due to an exception:")
-            logger.error(traceback.format_exc())
-            co2_tracker.stop()
-            # delete training tracker file
-            os.remove(os.path.join("/tmp", "training"))
-
-    return wrapper
-
-
-def get_model_architecture(model_path_or_name: str, revision: str = "main") -> str:
-    config = AutoConfig.from_pretrained(model_path_or_name, revision=revision, trust_remote_code=ALLOW_REMOTE_CODE)
-    architectures = config.architectures
-    if architectures is None or len(architectures) > 1:
-        raise ValueError(
-            f"The model architecture is either not defined or not unique. Found architectures: {architectures}"
+        response = requests.get(
+            _api_url,
+            headers=headers,
+            cookies=cookies,
+            timeout=3,
         )
-    return architectures[0]
+    except (requests.Timeout, ConnectionError) as err:
+        logger.error(f"Failed to request whoami-v2 - {repr(err)}")
+        raise Exception("Hugging Face Hub is unreachable, please try again later.")
+    resp = response.json()
+    user_info = {}
+    if "error" in resp:
+        return resp
+    if token.startswith("hf_oauth"):
+        user_info["id"] = resp["sub"]
+        user_info["name"] = resp["preferred_username"]
+        user_info["orgs"] = [resp["orgs"][k]["preferred_username"] for k in range(len(resp["orgs"]))]
+    else:
+        user_info["id"] = resp["id"]
+        user_info["name"] = resp["name"]
+        user_info["orgs"] = [resp["orgs"][k]["name"] for k in range(len(resp["orgs"]))]
+    return user_info
+
+
+def user_validation(user_token):
+    if user_token is None:
+        raise Exception("Please login with a write token.")
+
+    if user_token is None or len(user_token) == 0:
+        raise Exception("Invalid token. Please login with a write token.")
+
+    user_info = user_authentication(token=user_token)
+    username = user_info["name"]
+    orgs = user_info["orgs"]
+
+    who_is_training = [username] + orgs
+
+    return who_is_training
+
+
+def run_training(params, task_id, local=False, wait=False):
+    params = json.loads(params)
+    if isinstance(params, str):
+        params = json.loads(params)
+    if task_id == 9:
+        params = LLMTrainingParams(**params)
+    elif task_id == 28:
+        params = Seq2SeqParams(**params)
+    elif task_id in (1, 2):
+        params = TextClassificationParams(**params)
+    elif task_id in (13, 14, 15, 16, 26):
+        params = TabularParams(**params)
+    elif task_id == 27:
+        params = GenericParams(**params)
+    elif task_id == 25:
+        params = DreamBoothTrainingParams(**params)
+    elif task_id == 18:
+        params = ImageClassificationParams(**params)
+    elif task_id == 4:
+        params = TokenClassificationParams(**params)
+    elif task_id == 10:
+        params = TextRegressionParams(**params)
+    else:
+        raise NotImplementedError
+
+    params.save(output_dir=params.project_name)
+    cmd = launch_command(params=params)
+    cmd = [str(c) for c in cmd]
+    env = os.environ.copy()
+    process = subprocess.Popen(cmd, env=env)
+    if wait:
+        process.wait()
+    return process.pid

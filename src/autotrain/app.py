@@ -11,7 +11,8 @@ from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
 from nvitop import Device
 
-from autotrain import __version__, app_utils, logger
+import autotrain.utils as app_utils
+from autotrain import __version__, logger
 from autotrain.app_params import AppParams
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.db import AutoTrainDB
@@ -461,7 +462,7 @@ async def handle_form(
         valid_split = None
 
     logger.info(f"hardware: {hardware}")
-    if hardware == "Local":
+    if hardware == "local-ui":
         running_jobs = app_utils.get_running_jobs(DB)
         if running_jobs:
             raise HTTPException(
@@ -514,7 +515,7 @@ async def handle_form(
                 username=autotrain_user,
                 valid_data=validation_files[0] if validation_files else None,
                 percent_valid=None,  # TODO: add to UI
-                local=hardware.lower() == "local",
+                local=hardware.lower() == "local-ui",
             )
         elif task == "dreambooth":
             dset = AutoTrainDreamboothDataset(
@@ -523,7 +524,7 @@ async def handle_form(
                 token=token,
                 project_name=project_name,
                 username=autotrain_user,
-                local=hardware.lower() == "local",
+                local=hardware.lower() == "local-ui",
             )
 
         else:
@@ -562,7 +563,7 @@ async def handle_form(
                 column_mapping=column_mapping,
                 valid_data=validation_files,
                 percent_valid=None,  # TODO: add to UI
-                local=hardware.lower() == "local",
+                local=hardware.lower() == "local-ui",
                 ext=file_extension,
             )
             if task in ("text-classification", "token-classification"):
@@ -588,16 +589,15 @@ async def handle_form(
     project = AutoTrainProject(params=params, backend=hardware)
     job_id = project.create()
     monitor_url = ""
-    if hardware == "Local":
+    if hardware == "local-ui":
         DB.add_job(job_id)
         monitor_url = "Monitor your job locally / in logs"
-    elif hardware.startswith("EP"):
+    elif hardware.startswith("ep-"):
         monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{job_id}"
-    else:
+    elif hardware.startswith("spaces-"):
         monitor_url = f"https://hf.co/spaces/{job_id}"
-
-    if job_id is None:
-        monitor_url = "Success! Monitor your job in logs"
+    else:
+        monitor_url = "Success! Monitor your job in logs. Job ID: {job_id}"
 
     return {"success": "true", "monitor_url": monitor_url}
 
