@@ -58,7 +58,7 @@ class SpaceRunner(BaseBackend):
             repo_id=space_id,
             repo_type="space",
             space_sdk="docker",
-            space_hardware=self.available_hardware[self.backend[len("spaces-") :]],
+            space_hardware=self.available_hardware[self.backend],
             private=True,
         )
         self._add_secrets(api, space_id)
