@@ -5,15 +5,23 @@
     title: How much does it cost?
   - local: support
     title: Get help and support
-  - local: quickstart_spaces
-    title: Quickstart on Hugging Face Spaces
+  - local: faq
+    title: Frequently Asked Questions
   title: Getting Started
+- sections:
+  - local: quickstart_spaces
+    title: Quickstart
+  title: AutoTrain on Hugging Face Spaces
 - sections:
   - local: quickstart
     title: Quickstart
   - local: config
     title: Configurations
   title: Use AutoTrain Locally
+- sections:
+  - local: col_map
+    title: Understanding Column Mapping
+  title: Column Mapping
 - sections:
   - local: text_classification
     title: Text Classification
@@ -31,4 +39,20 @@
     title: Token Classification
   - local: tabular
     title: Tabular
-  title: Data Formats & Parameters
+  title: Data Formats
+- sections:
+  - local: text_classification_params
+    title: Text Classification & Regression
+  - local: llm_finetuning_params
+    title: LLM Finetuning
+  - local: image_classification
+    title: Image Classification
+  - local: dreambooth_params
+    title: DreamBooth
+  - local: seq2seq_params
+    title: Seq2Seq
+  - local: token_classification_params
+    title: Token Classification
+  - local: tabular_params
+    title: Tabular
+  title: Parameters
