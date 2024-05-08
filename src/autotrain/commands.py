@@ -53,25 +53,36 @@ def launch_command(params):
                 "2",
             ]
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "none",
-                "--offload_param_device",
-                "none",
-                "--zero3_save_16bit_model",
-                "true",
-                "--zero3_init_flag",
-                "true",
-                "--deepspeed_multinode_launcher",
-                "standard",
-                "--gradient_accumulation_steps",
-                str(params.gradient_accumulation),
-            ]
+            if params.quantization in ("int8", "int4") and params.peft and params.mixed_precision == "bf16":
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                    str(num_gpus),
+                ]
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "none",
+                    "--offload_param_device",
+                    "none",
+                    "--zero3_save_16bit_model",
+                    "true",
+                    "--zero3_init_flag",
+                    "true",
+                    "--deepspeed_multinode_launcher",
+                    "standard",
+                    "--gradient_accumulation_steps",
+                    str(params.gradient_accumulation),
+                ]
 
         if num_gpus > 0:
             cmd.append("--mixed_precision")
@@ -284,25 +295,36 @@ def launch_command(params):
                 "2",
             ]
         else:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--use_deepspeed",
-                "--zero_stage",
-                "3",
-                "--offload_optimizer_device",
-                "none",
-                "--offload_param_device",
-                "none",
-                "--zero3_save_16bit_model",
-                "true",
-                "--zero3_init_flag",
-                "true",
-                "--deepspeed_multinode_launcher",
-                "standard",
-                "--gradient_accumulation_steps",
-                str(params.gradient_accumulation),
-            ]
+            if params.quantization in ("int8", "int4") and params.peft and params.mixed_precision == "bf16":
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--multi_gpu",
+                    "--num_machines",
+                    "1",
+                    "--num_processes",
+                    str(num_gpus),
+                ]
+            else:
+                cmd = [
+                    "accelerate",
+                    "launch",
+                    "--use_deepspeed",
+                    "--zero_stage",
+                    "3",
+                    "--offload_optimizer_device",
+                    "none",
+                    "--offload_param_device",
+                    "none",
+                    "--zero3_save_16bit_model",
+                    "true",
+                    "--zero3_init_flag",
+                    "true",
+                    "--deepspeed_multinode_launcher",
+                    "standard",
+                    "--gradient_accumulation_steps",
+                    str(params.gradient_accumulation),
+                ]
         if num_gpus > 0:
             cmd.append("--mixed_precision")
             if params.mixed_precision == "fp16":
