@@ -21,7 +21,7 @@
 - sections:
   - local: col_map
     title: Understanding Column Mapping
-  title: Column Mapping
+  title: Miscellaneous
 - sections:
   - local: text_classification
     title: Text Classification
@@ -45,7 +45,7 @@
     title: Text Classification & Regression
   - local: llm_finetuning_params
     title: LLM Finetuning
-  - local: image_classification
+  - local: image_classification_params
     title: Image Classification
   - local: dreambooth_params
     title: DreamBooth
