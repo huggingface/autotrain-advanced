@@ -1,6 +1,6 @@
+# What is AutoTrain Advanced?
+
 ![autotrain-homepage](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/autotrain_homepage.png)
-
-
 
 🤗 AutoTrain Advanced (or simply AutoTrain), developed by Hugging Face, is a robust no-code 
 platform designed to simplify the process of training state-of-the-art models across 
@@ -9,7 +9,7 @@ and even Tabular Data analysis. This tool leverages the powerful frameworks crea
 various teams at Hugging Face, making advanced machine learning and artificial intelligence accessible to a broader 
 audience without requiring deep technical expertise.
 
-## Who should use AutoTrain?
+# Who should use AutoTrain?
 
 AutoTrain is the perfect tool for anyone eager to dive into the world of machine learning 
 without getting bogged down by the complexities of model training. 
@@ -26,7 +26,7 @@ background. If you're looking to harness the power of AI for your projects,
 AutoTrain is your answer.
 
 
-## How to use AutoTrain?
+# How to use AutoTrain?
 
 We offer several ways to use AutoTrain:
 
@@ -46,33 +46,3 @@ AutoTrain Advanced empowers users to achieve remarkable results in AI without th
 for extensive programming knowledge. Start your journey with AutoTrain today and unlock 
 the potential of machine learning for your projects!
 
-# Installation
-
-You can install it using pip:
-
-```bash
-$ pip install autotrain-advanced
-```
-
-# Running AutoTrain Locally
-
-To run the autotrain app locally, you can use the following command:
-
-```bash
-$ export HF_TOKEN=your_hugging_face_write_token
-$ autotrain app --host 127.0.0.1 --port 8000
-```
-
-This will start the app on `http://127.0.0.1:8000`.
-
-Its advised to install autotrain-advanced in a virtual environment to avoid any conflicts with other packages.
-
-```bash
-$ conda create -n autotrain python=3.10
-$ conda activate autotrain
-$ pip install autotrain-advanced
-$ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-$ conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
-$ export HF_TOKEN=your_hugging_face_write_token
-$ autotrain app --host 127.0.0.1 --port 8000
-```

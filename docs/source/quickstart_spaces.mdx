@@ -1,0 +1,78 @@
+# Quickstart Guide to AutoTrain on Hugging Face Spaces
+
+AutoTrain on Hugging Face Spaces is the preferred choice for a streamlined experience in 
+model training. This platform is optimized for ease of use, with pre-installed dependencies 
+and managed hardware resources. AutoTrain on Hugging Face Spaces can be used both by 
+no-code users and developers, making it versatile for various levels of expertise.
+
+
+## Creating a New AutoTrain Space
+
+Getting started with AutoTrain is straightforward. Here’s how you can create your new space:
+
+1. **Visit the AutoTrain Page**: To create a new space with AutoTrain Docker image, all you need to do is go 
+to [AutoTrain Homepage](https://hf.co/autotrain) and click on "Create new project".
+
+2. **Log In or View the Setup Screen**: If not logged in, you'll be prompted to do so. Then, you’ll see a screen similar to this:
+
+![autotrain-duplicate-space](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/duplicate_space.png)
+
+3. **Set Up Your Space**:
+
+- **Choose a Space Name**: Name your space something relevant to your project.
+
+- **Allocate Hardware Resources**: Select the necessary computational resources based on your project needs.
+
+- **Duplicate Space**: Click on "Duplicate Space" to initiate your AutoTrain space with the Docker image.
+
+4. **Configuration Options**:
+
+- PAUSE_ON_FAILURE: Set this to 0 if you prefer the space not to pause on training failures, useful for running continuous experiments. This option can also be used if you continuously want to perfom many experiments in the same space.
+
+5. **Launch and Train**:
+
+- Once done, in a few seconds, the AutoTrain Space will be up and running and you will be presented with the following screen:
+
+![autotrain-space](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/autotrain_space.png)
+
+- From here, you can select tasks, upload datasets, choose models, adjust hyperparameters (if needed), 
+and start the training process directly within the space.
+
+- The space will manage its own activity, shutting down post-training unless configured 
+otherwise based on the `PAUSE_ON_FAILURE` setting.
+
+6. **Monitoring Progress**:
+
+- All training logs and progress can be monitored via TensorBoard, accessible under 
+`username/project_name` on the Hugging Face Hub.
+
+- Once training concludes successfully, you’ll find the model files in the same repository.
+
+7. **Navigating the UI**:
+
+- If you need help understanding any UI elements, click on the small (i) information icons for detailed descriptions.
+
+If you are confused about the UI elements, click on the small (i) information icon to get more information about the UI element.
+
+For data formats and detailed parameter information, please see the Data Formats and Parameters section where we provide 
+example datasets and detailed information about the parameters for each task supported by AutoTrain.
+
+# Ensuring Your AutoTrain is Up-to-Date
+
+We are constantly adding new features and tasks to AutoTrain Advanced. To benefit from the latest features, tasks, and bug fixes, update your AutoTrain space regularly:
+
+- *Factory Reboot*: Navigate to the settings page of your space and click on "Factory reboot" to upgrade to the latest version of AutoTrain Advanced.
+
+![autotrain-space-template](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/space_template_5.png)
+
+- *Note*: Simply "restarting" the space does not update it; a factory reboot is necessary for a complete update.
+
+
+For additional details on data formats and specific parameters, refer to the 
+'Data Formats and Parameters' section where we provide example datasets and extensive 
+parameter information for each supported task by AutoTrain.
+
+
+With these steps, you can effortlessly initiate and manage your AutoTrain projects on 
+Hugging Face Spaces, leveraging the platform's robust capabilities for your machine learning and AI 
+needs.

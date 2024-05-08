@@ -1,12 +1,12 @@
 - sections: 
   - local: index
     title: 🤗 AutoTrain
-  - local: getting_started
-    title: Installation
   - local: cost
     title: How much does it cost?
   - local: support
     title: Get help and support
+  - local: quickstart_spaces
+    title: Quickstart on Hugging Face Spaces
   title: Getting Started
 - sections:
   - local: quickstart
