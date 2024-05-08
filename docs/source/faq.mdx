@@ -62,3 +62,25 @@ To use the CLI instead on Colab, you can follow the same instructions as for usi
 Yes, AutoTrain has a docker image. 
 You can find the docker image on Docker Hub [here](https://hub.docker.com/r/huggingface/autotrain-advanced).
 
+
+## Is windows supported?
+
+Unfortunately, AutoTrain does not officially support Windows at the moment.
+You can try using WSL (Windows Subsystem for Linux) to run AutoTrain on Windows or the docker image.
+
+## "--project-name" argument can not be set as a directory
+
+`--project-name` argument should not be a path. it will be created where autotrain command is run.
+This parameter must be alphanumeric and can contain hypens.
+
+## I am getting `config.json` not found error
+
+This means you have trained an adapter model (peft=true) which doesnt generate config.json. 
+It doesnt matter though, the model can still be loaded with AutoModelForCausalLM or with Inference endpoints.
+If you want to merge weights with base models, you can use `autotrain tools`. Please read about it in miscelleneous section.
+
+## Does autotrain support multi-gpu training?
+
+Yes, autotrain supports multi-gpu training. 
+AutoTrain will determine on its own if the user is running the command on a multi-gpu setup and will use 
+multi-gpu ddp if number of gpus is greater than 1 and less than 4 and deepspeed if number of gpus is greater than or equal to 4.
