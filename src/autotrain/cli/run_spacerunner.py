@@ -138,6 +138,6 @@ class RunAutoTrainSpaceRunnerCommand(BaseAutoTrainCommand):
             env=self.args.env,
             args=self.args.args,
         )
-        sr = SpaceRunner(params=params, backend=self.args.backend)
-        space_id = sr.prepare()
-        logger.info(f"SpaceRunner created with ID: {space_id}")
+        project = SpaceRunner(params=params, backend=self.args.backend)
+        job_id = project.create()
+        logger.info(f"Job ID: {job_id}")

@@ -1,151 +1,35 @@
 # DreamBooth
 
-DreamBooth is a method to personalize text-to-image models like Stable Diffusion given just a few (3-5) images of a subject. It allows the model to generate contextualized images of the subject in different scenes, poses, and views.
+DreamBooth is an innovative method that allows for the customization of text-to-image 
+models like Stable Diffusion using just a few images of a subject. 
+DreamBooth enables the generation of new, contextually varied images of the 
+subject in a range of scenes, poses, and viewpoints, expanding the creative 
+possibilities of generative models.
+
 
 ## Data Preparation
 
 The data format for DreamBooth training is simple. All you need is images of a concept (e.g. a person) and a concept token.
 
-To train a dreambooth model, please select an appropriate model from the hub.
-When choosing a model from the hub, please make sure you select the correct image size compatible with the model.
+### Step 1: Gather Your Images
 
-Your concept token is `prompt` in parameters section.
+Collect 3-5 high-quality images of the subject you wish to personalize. 
+These images should vary slightly in pose or background to provide the model with a 
+diverse learning set. You can select more images if you want to train a more robust model.
 
-## Parameters
 
-```
-❯ autotrain dreambooth --help
-usage: autotrain <command> [<args>] dreambooth [-h] [--train] [--deploy] [--inference] [--username USERNAME]
-                                               [--backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}]
-                                               [--token TOKEN] [--push-to-hub] --model MODEL --project-name PROJECT_NAME [--data-path DATA_PATH]
-                                               [--train-split TRAIN_SPLIT] [--valid-split VALID_SPLIT] [--batch-size BATCH_SIZE] [--seed SEED]
-                                               [--epochs EPOCHS] [--gradient_accumulation GRADIENT_ACCUMULATION] [--disable_gradient_checkpointing]
-                                               [--lr LR] [--log {none,wandb,tensorboard}] [--revision REVISION] [--tokenizer TOKENIZER] --image-path
-                                               IMAGE_PATH [--class-image-path CLASS_IMAGE_PATH] --prompt PROMPT [--class-prompt CLASS_PROMPT]
-                                               [--num-class-images NUM_CLASS_IMAGES] [--class-labels-conditioning CLASS_LABELS_CONDITIONING]
-                                               [--prior-preservation] [--prior-loss-weight PRIOR_LOSS_WEIGHT] --resolution RESOLUTION
-                                               [--center-crop] [--train-text-encoder] [--sample-batch-size SAMPLE_BATCH_SIZE]
-                                               [--num-steps NUM_STEPS] [--checkpointing-steps CHECKPOINTING_STEPS]
-                                               [--resume-from-checkpoint RESUME_FROM_CHECKPOINT] [--scale-lr] [--scheduler SCHEDULER]
-                                               [--warmup-steps WARMUP_STEPS] [--num-cycles NUM_CYCLES] [--lr-power LR_POWER]
-                                               [--dataloader-num-workers DATALOADER_NUM_WORKERS] [--use-8bit-adam] [--adam-beta1 ADAM_BETA1]
-                                               [--adam-beta2 ADAM_BETA2] [--adam-weight-decay ADAM_WEIGHT_DECAY] [--adam-epsilon ADAM_EPSILON]
-                                               [--max-grad-norm MAX_GRAD_NORM] [--allow-tf32]
-                                               [--prior-generation-precision PRIOR_GENERATION_PRECISION] [--local-rank LOCAL_RANK] [--xformers]
-                                               [--pre-compute-text-embeddings] [--tokenizer-max-length TOKENIZER_MAX_LENGTH]
-                                               [--text-encoder-use-attention-mask] [--rank RANK] [--xl] [--mixed-precision MIXED_PRECISION]
-                                               [--validation-prompt VALIDATION_PROMPT] [--num-validation-images NUM_VALIDATION_IMAGES]
-                                               [--validation-epochs VALIDATION_EPOCHS] [--checkpoints-total-limit CHECKPOINTS_TOTAL_LIMIT]
-                                               [--validation-images VALIDATION_IMAGES] [--logging]
+### Step 2: Select Your Model
 
-✨ Run AutoTrain DreamBooth Training
+Choose a base model from the Hugging Face Hub that is compatible with your needs. 
+It's essential to select a model that supports the image size of your training data. 
+Models available on the hub often have specific requirements or capabilities, 
+so ensure the model you choose can accommodate the dimensions of your images.
 
-options:
-  -h, --help            show this help message and exit
-  --train               Command to train the model
-  --deploy              Command to deploy the model (limited availability)
-  --inference           Command to run inference (limited availability)
-  --username USERNAME   Hugging Face Hub Username
-  --backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}
-                        Backend to use: default or spaces. Spaces backend requires push_to_hub & username. Advanced users only.
-  --token TOKEN         Your Hugging Face API token. Token must have write access to the model hub.
-  --push-to-hub         Push to hub after training will push the trained model to the Hugging Face model hub.
-  --model MODEL         Base model to use for training
-  --project-name PROJECT_NAME
-                        Output directory / repo id for trained model (must be unique on hub)
-  --data-path DATA_PATH
-                        Train dataset to use. When using cli, this should be a directory path containing training and validation data in appropriate
-                        formats
-  --train-split TRAIN_SPLIT
-                        Train dataset split to use
-  --valid-split VALID_SPLIT
-                        Validation dataset split to use
-  --batch-size BATCH_SIZE
-                        Training batch size to use
-  --seed SEED           Random seed for reproducibility
-  --epochs EPOCHS       Number of training epochs
-  --gradient_accumulation GRADIENT_ACCUMULATION
-                        Gradient accumulation steps
-  --disable_gradient_checkpointing
-                        Disable gradient checkpointing
-  --lr LR               Learning rate
-  --log {none,wandb,tensorboard}
-                        Use experiment tracking
-  --revision REVISION   Model revision to use for training
-  --tokenizer TOKENIZER
-                        Tokenizer to use for training
-  --image-path IMAGE_PATH
-                        Path to the images
-  --class-image-path CLASS_IMAGE_PATH
-                        Path to the class images
-  --prompt PROMPT       Instance prompt
-  --class-prompt CLASS_PROMPT
-                        Class prompt
-  --num-class-images NUM_CLASS_IMAGES
-                        Number of class images
-  --class-labels-conditioning CLASS_LABELS_CONDITIONING
-                        Class labels conditioning
-  --prior-preservation  With prior preservation
-  --prior-loss-weight PRIOR_LOSS_WEIGHT
-                        Prior loss weight
-  --resolution RESOLUTION
-                        Resolution
-  --center-crop         Center crop
-  --train-text-encoder  Train text encoder
-  --sample-batch-size SAMPLE_BATCH_SIZE
-                        Sample batch size
-  --num-steps NUM_STEPS
-                        Max train steps
-  --checkpointing-steps CHECKPOINTING_STEPS
-                        Checkpointing steps
-  --resume-from-checkpoint RESUME_FROM_CHECKPOINT
-                        Resume from checkpoint
-  --scale-lr            Scale learning rate
-  --scheduler SCHEDULER
-                        Learning rate scheduler
-  --warmup-steps WARMUP_STEPS
-                        Learning rate warmup steps
-  --num-cycles NUM_CYCLES
-                        Learning rate num cycles
-  --lr-power LR_POWER   Learning rate power
-  --dataloader-num-workers DATALOADER_NUM_WORKERS
-                        Dataloader num workers
-  --use-8bit-adam       Use 8bit adam
-  --adam-beta1 ADAM_BETA1
-                        Adam beta 1
-  --adam-beta2 ADAM_BETA2
-                        Adam beta 2
-  --adam-weight-decay ADAM_WEIGHT_DECAY
-                        Adam weight decay
-  --adam-epsilon ADAM_EPSILON
-                        Adam epsilon
-  --max-grad-norm MAX_GRAD_NORM
-                        Max grad norm
-  --allow-tf32          Allow TF32
-  --prior-generation-precision PRIOR_GENERATION_PRECISION
-                        Prior generation precision
-  --local-rank LOCAL_RANK
-                        Local rank
-  --xformers            Enable xformers memory efficient attention
-  --pre-compute-text-embeddings
-                        Pre compute text embeddings
-  --tokenizer-max-length TOKENIZER_MAX_LENGTH
-                        Tokenizer max length
-  --text-encoder-use-attention-mask
-                        Text encoder use attention mask
-  --rank RANK           Rank
-  --xl                  XL
-  --mixed-precision MIXED_PRECISION
-                        mixed precision, fp16, bf16, none
-  --validation-prompt VALIDATION_PROMPT
-                        Validation prompt
-  --num-validation-images NUM_VALIDATION_IMAGES
-                        Number of validation images
-  --validation-epochs VALIDATION_EPOCHS
-                        Validation epochs
-  --checkpoints-total-limit CHECKPOINTS_TOTAL_LIMIT
-                        Checkpoints total limit
-  --validation-images VALIDATION_IMAGES
-                        Validation images
-  --logging             Logging using tensorboard
-```
+
+### Step 3: Define Your Concept Token
+
+The concept token is a crucial element in DreamBooth training. 
+This token acts as a unique identifier for your subject within the model. 
+Typically, you will use a simple, descriptive keyword like prompt in the parameters 
+section of your training setup. This token will be used to generate new images of 
+your subject by the model.

@@ -1,0 +1,162 @@
+# Understanding Column Mapping
+
+Column mapping is a critical setup process in AutoTrain that informs the system 
+about the roles of different columns in your dataset. Whether it's a tabular 
+dataset, text classification data, or another type, the need for precise 
+column mapping ensures that AutoTrain processes each dataset element correctly.
+
+## How Column Mapping Works
+
+AutoTrain has no way of knowing what the columns in your dataset represent. 
+AutoTrain requires a clear understanding of each column's function within 
+your dataset to train models effectively. This is managed through a 
+straightforward mapping system in the user interface, represented as a dictionary. 
+Here's a typical example:
+
+```
+{"text": "text", "label": "target"}
+```
+
+In this example, the `text column in your dataset corresponds to the text data 
+AutoTrain uses for processing, and the `target`` column is treated as the 
+label for training.
+
+But let's not get confused! AutoTrain has a way to understand what each column in your dataset represents.
+If your data is already in AutoTrain format, you dont need to change column mappings.
+If not, you can easily map the columns in your dataset to the correct AutoTrain format.
+
+In the UI, you will see column mapping as a dictionary:
+
+```
+{"text": "text", "label": "target"}
+```
+
+Here, the column `text` in your dataset is mapped to the AutoTrain column `text`, 
+and the column `target` in your dataset is mapped to the AutoTrain column `label`.
+
+Let's say you are training a text classification model and your dataset has the following columns:
+
+```
+full_text, target_sentiment
+"this movie is great", positive
+"this movie is bad", negative
+```
+
+You can map these columns to the AutoTrain format as follows:
+
+```
+{"text": "full_text", "label": "target_sentiment"}
+```
+
+If your dataset has the columns: `text` and `label`, you don't need to change the column mapping.
+
+Let's take a look at column mappings for each task:
+
+## LLM
+
+Note: For all LLM tasks, if the text column(s) is not formatted i.e. if contains samples in chat format (dict or json), then you 
+should use `chat_template` parameter. Read more about it in LLM Parameters Section.
+
+
+### SFT / Generic Trainer
+
+```
+{"text": "text"}
+```
+
+`text`: The column in your dataset that contains the text data.
+
+
+### Reward / ORPO Trainer
+
+```
+{"text": "text", "rejected_text": "rejected_text"}
+```
+
+`text`: The column in your dataset that contains the text data.
+
+`rejected_text`: The column in your dataset that contains the rejected text data.
+
+### DPO Trainer
+
+```
+{"prompt": "prompt", "text": "text", "rejected_text": "rejected_text"}
+```
+
+`prompt`: The column in your dataset that contains the prompt data.
+
+`text`: The column in your dataset that contains the text data.
+
+`rejected_text`: The column in your dataset that contains the rejected text data.
+
+
+## Text Classification & Regression, Seq2Seq
+
+For text classification and regression, the column mapping should be as follows:
+
+```
+{"text": "dataset_text_column", "label": "dataset_target_column"}
+```
+
+`text`: The column in your dataset that contains the text data.
+
+`label`: The column in your dataset that contains the target variable.
+
+
+## Token Classification
+
+
+```
+{"text": "tokens", "label": "tags"}
+```
+
+`text`: The column in your dataset that contains the tokens. These tokens must be a list of strings.
+
+`label`: The column in your dataset that contains the tags. These tags must be a list of strings.
+
+For token classification, if you are using a CSV, make sure that the columns are stringified lists.
+
+## Tabular Classification & Regression
+
+```
+{"id": "id", "label": ["target"]}
+```
+
+`id`: The column in your dataset that contains the unique identifier for each row.
+
+`label`: The column in your dataset that contains the target variable. This should be a list of strings.
+
+For a single target column, you can pass a list with a single element.
+
+For multiple target columns, e.g. a multi label classification task, you can pass a list with multiple elements.
+
+
+# DreamBooth LoRA
+
+Dreambooth doesn't require column mapping.
+
+# Image Classification
+
+For image classification, the column mapping should be as follows:
+
+```
+{"image": "image_column", "label": "label_column"}
+```
+
+Image classification requires column mapping only when you are using a dataset from Hugging Face Hub.
+For uploaded datasets, leave column mapping as it is.
+
+## Ensuring Accurate Mapping
+
+To ensure your model trains correctly:
+
+- Verify Column Names: Double-check that the names used in the mapping dictionary accurately reflect those in your dataset.
+
+- Format Appropriately: Especially in token classification, ensure your data format matches expectations (e.g., lists of strings).
+
+- Update Mappings for New Datasets: Each new dataset might require its unique mappings based on its structure and the task at hand.
+
+By following these guidelines and using the provided examples as templates, 
+you can effectively instruct AutoTrain on how to interpret and handle your 
+data for various machine learning tasks. This process is fundamental for 
+achieving optimal results from your model training endeavors.

@@ -1,0 +1,64 @@
+# Frequently Asked Questions
+
+## Are my data and models secure?
+
+Yes, your data and models are secure. AutoTrain uses the Hugging Face Hub to store your data and models.
+All your data and models are uploaded to your Hugging Face account as private repositories and are only accessible by you.
+Read more about security [here](https://huggingface.co/docs/hub/en/security). 
+
+## Do you upload my data to the Hugging Face Hub?
+
+AutoTrain will not upload your dataset to the Hub if you are using the local backend or training in the same space.
+AutoTrain will push your dataset to the Hub if you are using features like: DGX Cloud 
+or using local CLI to train on Hugging Face's infrastructure.
+
+You can safely remove the dataset from the Hub after training is complete.
+If uploaded, the dataset will be stored in your Hugging Face account as a private repository and will only be accessible by you
+and the training process. It is not used once the training is complete.
+
+## I get error `Your installed package nvidia-ml-py is corrupted. Skip patch functions`
+
+This error can be safely ignored. It is a warning from the `nvitop` library and does not affect the functionality of AutoTrain.
+
+## I get 409 conflict error when using the UI
+
+This error occurs when you try to create a project with the same name as an existing project. 
+To resolve this error, you can either delete the existing project or create a new project 
+with a different name.
+
+This error can also occur when you are trying to train a model while a model is already training in the same space or locally.
+
+
+## The model I want to use doesn't show up in the model selection dropdown.
+
+If the model you want to use is not available in the model selection dropdown, 
+you can add it in the environment variable `AUTOTRAIN_CUSTOM_MODELS` in the space settings.
+For example, if you want to add the `xxx/yyy` model, go to space settings, create a variable named `AUTOTRAIN_CUSTOM_MODELS` 
+and set the value to `xxx/yyy`.
+
+You can also pass the model name as query parameter in the URL. For example, if you want to use the `xxx/yyy` model, 
+you can use the URL `https://huggingface.co/spaces/your_autotrain_space?custom_models=xxx/yyy`.
+
+## How do I use AutoTrain locally?
+
+AutoTrain can be used locally by installing the AutoTrain Advanced pypi package.
+You can read more in *Use AutoTrain Locally* section.
+
+
+## Can I run AutoTrain on Colab?
+
+To start the UI on Colab, you can simply click on the following link:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
+
+Please note, to run the app on Colab, you will need an ngrok token. You can get one by signing up for free on [ngrok](https://ngrok.com/).
+This is because Colab does not allow exposing ports to the internet directly.
+
+To use the CLI instead on Colab, you can follow the same instructions as for using AutoTrain locally.
+
+
+## Does AutoTrain have a docker image?
+
+Yes, AutoTrain has a docker image. 
+You can find the docker image on Docker Hub [here](https://hub.docker.com/r/huggingface/autotrain-advanced).
+

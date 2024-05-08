@@ -1,38 +1,46 @@
-# Starting the UI
+# Quickstart
 
-To run the autotrain cli locally or in colab, install autotrain-advanced python package:
+This quickstart is for local installation and usage.
+If you want to use AutoTrain on Hugging Face Spaces, please refer to the *AutoTrain on Hugging Face Spaces* section.
+
+You can install AutoTrain Advanced using pip:
 
 ```bash
 $ pip install autotrain-advanced
 ```
 
-and then run the following command:
-
-```bash
-$ export HF_TOKEN=your_hugging_face_write_token
-$ autotrain --help
-```
-
-This will start the app on `http://127.0.0.1:8000`.
-
-AutoTrain doesn't install pytorch, torchaudio, torchvision, or any other dependencies. You will need to install them separately.
-It is thus recommended to use conda environment:
-
+It is advised to install autotrain-advanced in a virtual environment to avoid any conflicts with other packages.
+Note: AutoTrain doesn't install pytorch, torchaudio, torchvision, or any other large dependencies. You will need to install them separately.
 
 ```bash
 $ conda create -n autotrain python=3.10
 $ conda activate autotrain
-
 $ pip install autotrain-advanced
-
 $ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 $ conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
 $ conda install xformers -c xformers
-
 $ python -m nltk.downloader punkt
-$ pip install flash-attn --no-build-isolation
-$ pip install deepspeed
+$ pip install flash-attn --no-build-isolation # if you want to use flash-attn
+$ pip install deepspeed # if you want to use deepspeed
+````
 
+# Running AutoTrain User Interface (UI)
+
+To run the autotrain app locally, you can use the following command:
+
+```bash
+$ export HF_TOKEN=your_hugging_face_write_token
+$ autotrain app --host 127.0.0.1 --port 8000
+```
+
+This will start the app on `http://127.0.0.1:8000`.
+
+
+# Using AutoTrain Command Line Interface (CLI)
+
+It is also possible to use the CLI:
+
+```bash
 $ export HF_TOKEN=your_hugging_face_write_token
 $ autotrain --help
 ```
@@ -40,7 +48,6 @@ $ autotrain --help
 This will show the CLI commands that can be used:
 
 ```bash
-$ autotrain --help
 usage: autotrain <command> [<args>]
 
 positional arguments:
@@ -51,6 +58,7 @@ positional arguments:
     dreambooth,
     api,
     text-classification,
+    text-regression,
     image-classification,
     tabular,
     spacerunner,
@@ -63,9 +71,12 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --version, -v         Display AutoTrain version
+  --config CONFIG       Optional configuration file
 
 For more information about a command, run: `autotrain <command> --help`
 ```
+
+It is advised to use `autotrain --config CONFIG_FILE` command when using the CLI.
 
 The autotrain commands that end users will be interested in are:
 
@@ -73,11 +84,11 @@ The autotrain commands that end users will be interested in are:
 - `llm`: Train a language model
 - `dreambooth`: Train a model using DreamBooth
 - `text-classification`: Train a text classification model
+- `text-regression`: Train a text regression model
 - `image-classification`: Train an image classification model
 - `tabular`: Train a tabular model
 - `spacerunner`: Train any custom model using SpaceRunner
 - `seq2seq`: Train a sequence-to-sequence model
 - `token-classification`: Train a token classification model
 
-
-In case of any issues, please report on the [GitHub issues](https://github.com/huggingface/autotrain-advanced/).
+Note: above commands are not required if you use preferred `autotrain --config CONFIG_FILE` command to train the models.

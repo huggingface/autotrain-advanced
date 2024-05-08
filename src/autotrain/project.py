@@ -51,18 +51,18 @@ class AutoTrainProject:
     def create(self):
         if self.backend.startswith("local"):
             runner = LocalRunner(params=self.params, backend=self.backend)
-            runner.create()
+            return runner.create()
         elif self.backend.startswith("spaces-"):
             runner = SpaceRunner(params=self.params, backend=self.backend)
-            runner.create()
+            return runner.create()
         elif self.backend.startswith("ep-"):
             runner = EndpointsRunner(params=self.params, backend=self.backend)
-            runner.create()
+            return runner.create()
         elif self.backend.startswith("ngc-"):
             runner = NGCRunner(params=self.params, backend=self.backend)
-            runner.create()
+            return runner.create()
         elif self.backend.startswith("nvcf-"):
             runner = NVCFRunner(params=self.params, backend=self.backend)
-            runner.create()
+            return runner.create()
         else:
             raise NotImplementedError

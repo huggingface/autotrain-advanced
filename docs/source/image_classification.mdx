@@ -1,11 +1,23 @@
 # Image Classification
 
-Image classification is a supervised learning problem: define a set of target classes (objects to identify in images), and train a model to recognize them using labeled example photos.
-Using AutoTrain, its super-easy to train a state-of-the-art image classification model. Just upload a set of images, and AutoTrain will automatically train a model to classify them.
+Image classification is a form of supervised learning where a model is trained to identify 
+and categorize objects within images. AutoTrain simplifies the process, enabling you to 
+train a state-of-the-art image classification model by simply uploading labeled example 
+images.
 
-## Data Preparation
 
-The data for image classification must be in zip format, with each class in a separate subfolder. For example, if you want to classify cats and dogs, your zip file should look like this:
+## Preparing your data
+
+To ensure your image classification model trains effectively, follow these guidelines for preparing your data:
+
+
+### Organizing Images
+
+
+Prepare a zip file containing your categorized images. Each category should have its own 
+subfolder named after the class it represents. For example, to differentiate between 
+'cats' and 'dogs', your zip file structure should resemble the following:
+
 
 ```
 cats_and_dogs.zip
@@ -21,100 +33,31 @@ cats_and_dogs.zip
     └── ...
 ```
 
+### Image Requirements
+
+- Format: Ensure all images are in JPEG, JPG, or PNG format.
+
+- Quantity: Include at least 5 images per class to provide the model with sufficient examples for learning.
+
+- Exclusivity: The zip file should exclusively contain folders named after the classes, 
+and these folders should only contain relevant images. No additional files or nested 
+folders should be included.
+
+
+** Additional Tips** 
+
+- Uniformity: While not required, having images of similar sizes and resolutions can help improve model performance.
+
+- Variability: Include a variety of images for each class to encompass the range of 
+appearances and contexts the model might encounter in real-world scenarios.
+
 Some points to keep in mind:
 
 - The zip file should contain multiple folders (the classes), each folder should contain images of a single class.
 - The name of the folder should be the name of the class.
 - The images must be jpeg, jpg or png.
 - There should be at least 5 images per class.
-- There should not be any other files in the zip file.
-- There should not be any other folders inside the zip folder.
+- There must not be any other files in the zip file.
+- There must not be any other folders inside the zip folder.
 
 When train.zip is decompressed, it creates two folders: cats and dogs. these are the two categories for classification. The images for both categories are in their respective folders. You can have as many categories as you want.
-
-
-## Parameters
-
-```
-❯ autotrain image-classification --help
-usage: autotrain <command> [<args>] image-classification [-h] [--train] [--deploy] [--inference] [--username USERNAME]
-                                                         [--backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}]
-                                                         [--token TOKEN] [--push-to-hub] --model MODEL --project-name PROJECT_NAME
-                                                         [--data-path DATA_PATH] [--train-split TRAIN_SPLIT] [--valid-split VALID_SPLIT]
-                                                         [--batch-size BATCH_SIZE] [--seed SEED] [--epochs EPOCHS]
-                                                         [--gradient_accumulation GRADIENT_ACCUMULATION] [--disable_gradient_checkpointing]
-                                                         [--lr LR] [--log {none,wandb,tensorboard}] [--image-column IMAGE_COLUMN]
-                                                         [--target-column TARGET_COLUMN] [--warmup-ratio WARMUP_RATIO] [--optimizer OPTIMIZER]
-                                                         [--scheduler SCHEDULER] [--weight-decay WEIGHT_DECAY] [--max-grad-norm MAX_GRAD_NORM]
-                                                         [--logging-steps LOGGING_STEPS] [--evaluation-strategy {steps,epoch,no}]
-                                                         [--save-total-limit SAVE_TOTAL_LIMIT]
-                                                         [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}]
-
-✨ Run AutoTrain Image Classification
-
-options:
-  -h, --help            show this help message and exit
-  --train               Command to train the model
-  --deploy              Command to deploy the model (limited availability)
-  --inference           Command to run inference (limited availability)
-  --username USERNAME   Hugging Face Hub Username
-  --backend {local-cli,spaces-a10gl,spaces-a10gs,spaces-a100,spaces-t4m,spaces-t4s,spaces-cpu,spaces-cpuf}
-                        Backend to use: default or spaces. Spaces backend requires push_to_hub & username. Advanced users only.
-  --token TOKEN         Your Hugging Face API token. Token must have write access to the model hub.
-  --push-to-hub         Push to hub after training will push the trained model to the Hugging Face model hub.
-  --model MODEL         Base model to use for training
-  --project-name PROJECT_NAME
-                        Output directory / repo id for trained model (must be unique on hub)
-  --data-path DATA_PATH
-                        Train dataset to use. When using cli, this should be a directory path containing training and validation data in appropriate
-                        formats
-  --train-split TRAIN_SPLIT
-                        Train dataset split to use
-  --valid-split VALID_SPLIT
-                        Validation dataset split to use
-  --batch-size BATCH_SIZE
-                        Training batch size to use
-  --seed SEED           Random seed for reproducibility
-  --epochs EPOCHS       Number of training epochs
-  --gradient_accumulation GRADIENT_ACCUMULATION
-                        Gradient accumulation steps
-  --disable_gradient_checkpointing
-                        Disable gradient checkpointing
-  --lr LR               Learning rate
-  --log {none,wandb,tensorboard}
-                        Use experiment tracking
-  --image-column IMAGE_COLUMN
-                        Image column to use
-  --target-column TARGET_COLUMN
-                        Target column to use
-  --warmup-ratio WARMUP_RATIO
-                        Define the proportion of training to be dedicated to a linear warmup where learning rate gradually increases. This can help
-                        in stabilizing the training process early on. Default ratio is 0.1.
-  --optimizer OPTIMIZER
-                        Choose the optimizer algorithm for training the model. Different optimizers can affect the training speed and model
-                        performance. 'adamw_torch' is used by default.
-  --scheduler SCHEDULER
-                        Select the learning rate scheduler to adjust the learning rate based on the number of epochs. 'linear' decreases the
-                        learning rate linearly from the initial lr set. Default is 'linear'. Try 'cosine' for a cosine annealing schedule.
-  --weight-decay WEIGHT_DECAY
-                        Set the weight decay rate to apply for regularization. Helps in preventing the model from overfitting by penalizing large
-                        weights. Default is 0.0, meaning no weight decay is applied.
-  --max-grad-norm MAX_GRAD_NORM
-                        Specify the maximum norm of the gradients for gradient clipping. Gradient clipping is used to prevent the exploding gradient
-                        problem in deep neural networks. Default is 1.0.
-  --logging-steps LOGGING_STEPS
-                        Determine how often to log training progress. Set this to the number of steps between each log output. -1 determines logging
-                        steps automatically. Default is -1.
-  --evaluation-strategy {steps,epoch,no}
-                        Specify how often to evaluate the model performance. Options include 'no', 'steps', 'epoch'. 'epoch' evaluates at the end of
-                        each training epoch by default.
-  --save-total-limit SAVE_TOTAL_LIMIT
-                        Limit the total number of model checkpoints to save. Helps manage disk space by retaining only the most recent checkpoints.
-                        Default is to save only the latest one.
-  --auto-find-batch-size
-                        Enable automatic batch size determination based on your hardware capabilities. When set, it tries to find the largest batch
-                        size that fits in memory.
-  --mixed-precision {fp16,bf16,None}
-                        Choose the precision mode for training to optimize performance and memory usage. Options are 'fp16', 'bf16', or None for
-                        default precision. Default is None.
-```

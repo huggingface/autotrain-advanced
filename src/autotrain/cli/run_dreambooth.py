@@ -389,4 +389,5 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
         params = DreamBoothTrainingParams(**vars(self.args))
         params = dreambooth_munge_data(params, local=self.args.backend.startswith("local"))
         project = AutoTrainProject(params=params, backend=self.args.backend)
-        _ = project.create()
+        job_id = project.create()
+        logger.info(f"Job ID: {job_id}")

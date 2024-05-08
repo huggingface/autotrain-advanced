@@ -145,4 +145,5 @@ class AutoTrainConfigParser:
         _munge_fn = self.munge_data_map[self.task]
         _munge_fn(_params, local=self.backend.startswith("local"))
         project = AutoTrainProject(params=_params, backend=self.backend)
-        _ = project.create()
+        job_id = project.create()
+        logger.info(f"Job ID: {job_id}")
