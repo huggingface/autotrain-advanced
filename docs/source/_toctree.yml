@@ -9,11 +9,11 @@
     title: Get help and support
   title: Getting Started
 - sections:
-  - local: starting_ui
-    title: Starting the UI
-  - local: starting_cli
-    title: Starting the CLI
-  title: Starting AutoTrain
+  - local: quickstart
+    title: Quickstart
+  - local: config
+    title: Configurations
+  title: Use AutoTrain Locally
 - sections:
   - local: text_classification
     title: Text Classification
@@ -31,4 +31,4 @@
     title: Token Classification
   - local: tabular
     title: Tabular
-  title: Tasks
+  title: Data Formats & Parameters

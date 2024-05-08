@@ -7,7 +7,7 @@ ENDPOINTS_URL = "https://api.endpoints.huggingface.cloud/v2/endpoint/"
 
 
 class EndpointsRunner(BaseBackend):
-    def _create(self):
+    def create(self):
         hardware = self.available_hardware[self.backend]
         accelerator = hardware.split("_")[2]
         instance_size = hardware.split("_")[3]

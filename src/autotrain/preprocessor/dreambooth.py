@@ -35,9 +35,14 @@ class DreamboothPreprocessor:
 
     def _upload_concept_images(self, file, api):
         logger.info(f"Uploading {file} to concept1")
+        if isinstance(file, str):
+            path_in_repo = f"concept1/{file.split('/')[-1]}"
+        else:
+            path_in_repo = f"concept1/{file.filename.split('/')[-1]}"
+
         api.upload_file(
-            path_or_fileobj=file.file.read(),
-            path_in_repo=f"concept1/{file.filename.split('/')[-1]}",
+            path_or_fileobj=file if isinstance(file, str) else file.file.read(),
+            path_in_repo=path_in_repo,
             repo_id=self.repo_name,
             repo_type="dataset",
             token=self.token,
