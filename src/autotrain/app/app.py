@@ -19,7 +19,7 @@ from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_proces
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
 from autotrain.help import get_app_help
 from autotrain.project import AutoTrainProject
-
+from autotrain.app.models import APICreateProjectModel
 
 logger.info("Starting AutoTrain...")
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
@@ -29,8 +29,8 @@ ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = AutoTrainDB("autotrain.db")
-
 MODEL_CHOICE = fetch_models()
+
 app = FastAPI()
 if HF_TOKEN is None and IS_RUNNING_IN_SPACE:
     attach_oauth(app)
@@ -430,14 +430,16 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     logs = logs.split("\n")
     logs = logs[::-1]
 
-    devices = Device.all()
-    device_logs = []
-    for device in devices:
-        device_logs.append(
-            f"Device {device.index}: {device.name()} - {device.memory_used_human()}/{device.memory_total_human()}"
-        )
-    device_logs.append("-----------------")
-    logs = device_logs + logs
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        devices = Device.all()
+        device_logs = []
+        for device in devices:
+            device_logs.append(
+                f"Device {device.index}: {device.name()} - {device.memory_used_human()}/{device.memory_total_human()}"
+            )
+        device_logs.append("-----------------")
+        logs = device_logs + logs
     return {"logs": logs}
 
 
@@ -456,3 +458,21 @@ async def stop_training(authenticated: bool = Depends(user_authentication)):
                 logger.info(f"Process {_pid} is already completed. Skipping...")
         return {"success": True}
     return {"success": False}
+
+
+"""
+api elements:
+- create_project
+- logs
+- stop_training
+"""
+
+
+@app.post("/api/create_project", response_class=JSONResponse)
+async def api_create_project(project: APICreateProjectModel, authenticated: bool = Depends(user_authentication)):
+    """
+    This function is used to create a new project
+    :param project: APICreateProjectModel
+    :return: JSONResponse
+    """
+    return {"success": "true"}

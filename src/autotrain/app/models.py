@@ -1,6 +1,42 @@
 import collections
 
 from huggingface_hub import list_models
+from pydantic import BaseModel
+from autotrain.trainers.clm.params import LLMTrainingParams
+from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.seq2seq.params import Seq2SeqParams
+from autotrain.trainers.tabular.params import TabularParams
+from autotrain.trainers.text_classification.params import TextClassificationParams
+from autotrain.trainers.text_regression.params import TextRegressionParams
+from autotrain.trainers.token_classification.params import TokenClassificationParams
+from typing import List, Literal, Optional, Dict, Union
+from autotrain.backends.base import AVAILABLE_HARDWARE
+
+
+class APICreateProjectModel(BaseModel):
+    project_name: str
+    task: Literal[
+        "llm:generic",
+        "llm:sft",
+        "llm:dpo",
+        "llm:orpo",
+        "image-classification",
+        "dreambooth",
+        "seq2seq",
+        "token-classification",
+        "text-classification",
+        "text-regression",
+        "tabular",
+    ]
+    base_model: str
+    hardware: Literal[tuple(AVAILABLE_HARDWARE.keys())]
+    params: Dict[str, Union[str, int, float, bool, None]]
+    username: str
+    column_mapping: Optional[Dict[str, Union[List[str], str]]] = None
+    hub_dataset: str
+    train_split: str
+    valid_split: str
 
 
 def get_sorted_models(hub_models):
