@@ -86,7 +86,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             logger.info(f"AutoTrain Public URL: {url}")
             logger.info("Please wait for the app to load...")
 
-        command = f"uvicorn autotrain.app:app --host {self.host} --port {self.port}"
+        command = f"uvicorn autotrain.app.app:app --host {self.host} --port {self.port}"
         command += f" --workers {self.workers} --log-level error"
 
         with open("autotrain.log", "w", encoding="utf-8") as log_file:

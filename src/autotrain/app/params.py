@@ -12,6 +12,108 @@ from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
+HIDDEN_PARAMS = [
+    "token",
+    "project_name",
+    "username",
+    "task",
+    "backend",
+    "train_split",
+    "valid_split",
+    "text_column",
+    "rejected_text_column",
+    "prompt_text_column",
+    "push_to_hub",
+    "trainer",
+    "model",
+    "data_path",
+    "image_path",
+    "class_image_path",
+    "revision",
+    "tokenizer",
+    "class_prompt",
+    "num_class_images",
+    "class_labels_conditioning",
+    "resume_from_checkpoint",
+    "dataloader_num_workers",
+    "allow_tf32",
+    "prior_generation_precision",
+    "local_rank",
+    "tokenizer_max_length",
+    "rank",
+    "xl",
+    "checkpoints_total_limit",
+    "validation_images",
+    "validation_epochs",
+    "num_validation_images",
+    "validation_prompt",
+    "sample_batch_size",
+    "log",
+    "image_column",
+    "target_column",
+    "id_column",
+    "target_columns",
+    "tokens_column",
+    "tags_column",
+]
+
+
+PARAMS = {}
+PARAMS["llm"] = LLMTrainingParams(
+    target_modules="all-linear",
+    log="tensorboard",
+    mixed_precision="fp16",
+    quantization="int4",
+    peft=True,
+    block_size=1024,
+    epochs=3,
+    padding="right",
+    chat_template="none",
+    max_completion_length=128,
+).model_dump()
+
+PARAMS["text-classification"] = TextClassificationParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+PARAMS["image-classification"] = ImageClassificationParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+PARAMS["seq2seq"] = Seq2SeqParams(
+    mixed_precision="fp16",
+    target_modules="all-linear",
+    log="tensorboard",
+).model_dump()
+PARAMS["tabular"] = TabularParams(
+    categorical_imputer="most_frequent",
+    numerical_imputer="median",
+    numeric_scaler="robust",
+).model_dump()
+PARAMS["dreambooth"] = DreamBoothTrainingParams(
+    prompt="<enter your prompt here>",
+    vae_model="",
+    num_steps=500,
+    disable_gradient_checkpointing=False,
+    mixed_precision="fp16",
+    batch_size=1,
+    gradient_accumulation=4,
+    resolution=1024,
+    use_8bit_adam=False,
+    xformers=False,
+    train_text_encoder=False,
+    lr=1e-4,
+).model_dump()
+PARAMS["token-classification"] = TokenClassificationParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+PARAMS["text-regression"] = TextRegressionParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+
+
 @dataclass
 class AppParams:
     job_params_json: str
@@ -202,3 +304,164 @@ class AppParams:
             _params.pop("weight_decay")
 
         return DreamBoothTrainingParams(**_params)
+
+
+def get_task_params(task, param_type):
+    if task.startswith("llm"):
+        trainer = task.split(":")[1].lower()
+        task = task.split(":")[0].lower()
+
+    if task.startswith("tabular"):
+        task = "tabular"
+
+    if task not in PARAMS:
+        return {}
+
+    task_params = PARAMS[task]
+    task_params = {k: v for k, v in task_params.items() if k not in HIDDEN_PARAMS}
+    if task == "llm":
+        more_hidden_params = []
+        if trainer in ("sft", "reward"):
+            more_hidden_params = [
+                "model_ref",
+                "dpo_beta",
+                "add_eos_token",
+                "max_prompt_length",
+                "max_completion_length",
+            ]
+        elif trainer == "orpo":
+            more_hidden_params = [
+                "model_ref",
+                "dpo_beta",
+                "add_eos_token",
+            ]
+        elif trainer == "generic":
+            more_hidden_params = [
+                "model_ref",
+                "dpo_beta",
+                "max_prompt_length",
+                "max_completion_length",
+            ]
+        elif trainer == "dpo":
+            more_hidden_params = [
+                "add_eos_token",
+            ]
+        if param_type == "basic":
+            more_hidden_params.extend(
+                [
+                    "padding",
+                    "use_flash_attention_2",
+                    "disable_gradient_checkpointing",
+                    "logging_steps",
+                    "evaluation_strategy",
+                    "save_total_limit",
+                    "auto_find_batch_size",
+                    "warmup_ratio",
+                    "weight_decay",
+                    "max_grad_norm",
+                    "seed",
+                    "quantization",
+                    "merge_adapter",
+                    "lora_r",
+                    "lora_alpha",
+                    "lora_dropout",
+                    "max_completion_length",
+                ]
+            )
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "text-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "text-regression" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "image-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "seq2seq" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+            "quantization",
+            "lora_r",
+            "lora_alpha",
+            "lora_dropout",
+            "target_modules",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "token-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "dreambooth":
+        more_hidden_params = [
+            "epochs",
+            "logging",
+            "bf16",
+        ]
+        if param_type == "basic":
+            more_hidden_params.extend(
+                [
+                    "prior_preservation",
+                    "prior_loss_weight",
+                    "seed",
+                    "center_crop",
+                    "train_text_encoder",
+                    "disable_gradient_checkpointing",
+                    "scale_lr",
+                    "warmup_steps",
+                    "num_cycles",
+                    "lr_power",
+                    "adam_beta1",
+                    "adam_beta2",
+                    "adam_weight_decay",
+                    "adam_epsilon",
+                    "max_grad_norm",
+                    "pre_compute_text_embeddings",
+                    "text_encoder_use_attention_mask",
+                ]
+            )
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+
+    return task_params
