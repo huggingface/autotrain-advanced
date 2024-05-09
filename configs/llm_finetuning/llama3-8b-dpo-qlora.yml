@@ -1,13 +1,13 @@
 task: llm
-base_model: meta-llama/Meta-Llama-3-70B-Instruct
-project_name: autotrain-llama3-70b-orpo-v1
+base_model: meta-llama/Meta-Llama-3-8B-Instruct
+project_name: autotrain-llama3-8b-dpo-qlora
 log: tensorboard
 backend: local
 
 data:
-  path: argilla/distilabel-capybara-dpo-7k-binarized
+  path: mlabonne/orpo-dpo-mix-40k
   train_split: train
-  valid_split: valid
+  valid_split: null
   chat_template: chatml
   column_mapping:
     text_column: chosen
@@ -15,21 +15,21 @@ data:
     prompt_text_column: prompt
 
 params:
-  trainer: orpo
-  block_size: 2048
-  model_max_length: 8192
-  max_prompt_length: 1024
+  trainer: dpo
+  block_size: 1024
+  model_max_length: 2048
+  max_prompt_length: 512
   epochs: 3
-  batch_size: 1
-  lr: 1e-5
+  batch_size: 2
+  lr: 3e-5
   peft: true
-  quantization: null
+  quantization: int4
   target_modules: all-linear
   padding: right
-  optimizer: paged_adamw_8bit
-  scheduler: cosine
+  optimizer: adamw_torch
+  scheduler: linear
   gradient_accumulation: 4
-  mixed_precision: bf16
+  mixed_precision: fp16
 
 hub:
   username: ${HF_USERNAME}

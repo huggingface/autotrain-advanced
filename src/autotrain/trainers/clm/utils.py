@@ -224,7 +224,7 @@ def apply_chat_template(
             messages, tokenize=False, add_generation_prompt=False
         )
 
-    elif config.trainer in ("reward", "orpo"):
+    elif config.trainer == "reward":
         if all(k in example.keys() for k in ("chosen", "rejected")):
             chosen_messages = example["chosen"]
             rejected_messages = example["rejected"]
@@ -232,13 +232,19 @@ def apply_chat_template(
                 chosen_messages = ast.literal_eval(chosen_messages)
             if isinstance(rejected_messages, str):
                 rejected_messages = ast.literal_eval(rejected_messages)
+
+            if config.chat_template == "zephyr" and chosen_messages[0]["role"] != "system":
+                chosen_messages.insert(0, {"role": "system", "content": ""})
+            if config.chat_template == "zephyr" and rejected_messages[0]["role"] != "system":
+                rejected_messages.insert(0, {"role": "system", "content": ""})
+
             example["chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
             example["rejected"] = tokenizer.apply_chat_template(rejected_messages, tokenize=False)
         else:
             raise ValueError(
                 f"Could not format example as dialogue for `rm/orpo` task! Require `[chosen, rejected]` keys but found {list(example.keys())}"
             )
-    elif config.trainer == "dpo":
+    elif config.trainer in ("dpo", "orpo"):
         if all(k in example.keys() for k in ("chosen", "rejected")):
             # For DPO, the inputs are triples of (prompt, chosen, rejected), where `chosen` and `rejected` are the final turn of a dialogue
             # We therefore need to extract the N-1 turns to form the prompt
@@ -247,6 +253,8 @@ def apply_chat_template(
             if isinstance(example["rejected"], str):
                 example["rejected"] = ast.literal_eval(example["rejected"])
             prompt_messages = example["chosen"][:-1]
+            if config.chat_template == "zephyr" and example["chosen"][0]["role"] != "system":
+                prompt_messages.insert(0, {"role": "system", "content": ""})
             chosen_messages = example["chosen"][-1:]
             rejected_messages = example["rejected"][-1:]
             example["chosen"] = tokenizer.apply_chat_template(chosen_messages, tokenize=False)
@@ -322,7 +330,7 @@ def process_input_data(config):
             train_data = train_data.rename_column(config.text_column, "chosen")
         if not (config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names):
             train_data = train_data.rename_column(config.rejected_text_column, "rejected")
-    if config.trainer == "dpo":
+    if config.trainer in ("dpo", "orpo"):
         if not (config.prompt_text_column == "prompt" and config.prompt_text_column in train_data.column_names):
             train_data = train_data.rename_column(config.prompt_text_column, "prompt")
 
@@ -343,7 +351,7 @@ def process_input_data(config):
                 config.rejected_text_column == "rejected" and config.rejected_text_column in valid_data.column_names
             ):
                 valid_data = valid_data.rename_column(config.rejected_text_column, "rejected")
-        if config.trainer == "dpo":
+        if config.trainer in ("dpo", "reward"):
             if not (config.prompt_text_column == "prompt" and config.prompt_text_column in valid_data.column_names):
                 valid_data = valid_data.rename_column(config.prompt_text_column, "prompt")
     else:
@@ -401,6 +409,8 @@ def get_tokenizer(config):
 def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
     valid_data = None
     if config.chat_template in ("chatml", "zephyr", "tokenizer"):
+        logger.info("Applying chat template")
+        logger.info("For ORPO/DPO, `prompt` will be extracted from chosen messages")
         train_data = train_data.map(
             apply_chat_template,
             fn_kwargs={

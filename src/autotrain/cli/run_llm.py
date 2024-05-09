@@ -33,7 +33,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--rejected-text-column"],
             },
             {
-                "arg": "--prompt-text-column",
+                "arg": "--prompt_text_column",
                 "help": "Identify the column that contains prompt text for tasks requiring contextual inputs, such as conversation or completion generation. Default is 'prompt'. Used only for dpo trainer",
                 "required": False,
                 "type": str,
@@ -45,6 +45,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "help": "Reference model to use for DPO when not using PEFT",
                 "required": False,
                 "type": str,
+                "alias": ["--model-ref"],
             },
             {
                 "arg": "--warmup_ratio",

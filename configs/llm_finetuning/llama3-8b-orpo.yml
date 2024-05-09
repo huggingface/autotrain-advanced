@@ -12,6 +12,7 @@ data:
   column_mapping:
     text_column: chosen
     rejected_text_column: rejected
+    prompt_text_column: prompt
 
 params:
   trainer: orpo
