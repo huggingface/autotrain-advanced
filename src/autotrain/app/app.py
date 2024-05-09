@@ -84,6 +84,9 @@ def user_authentication(request: Request):
                     detail="Invalid or expired token: Bearer",
                 )
 
+    if IS_RUNNING_IN_SPACE:
+        return templates.TemplateResponse("login.html", {"request": request})
+
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
