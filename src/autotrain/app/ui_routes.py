@@ -13,7 +13,6 @@ from nvitop import Device
 from autotrain import __version__, logger
 from autotrain.app.db import AutoTrainDB
 from autotrain.app.models import fetch_models
-from autotrain.app.oauth import attach_oauth
 from autotrain.app.params import AppParams, get_task_params
 from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_process_by_pid, token_verification
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
@@ -32,9 +31,6 @@ DB = AutoTrainDB("autotrain.db")
 MODEL_CHOICE = fetch_models()
 
 ui_router = APIRouter()
-if HF_TOKEN is None and IS_RUNNING_IN_SPACE:
-    attach_oauth(ui_router)
-
 static_path = os.path.join(BASE_DIR, "static")
 ui_router.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
