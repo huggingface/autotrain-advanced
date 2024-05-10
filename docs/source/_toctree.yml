@@ -21,6 +21,8 @@
 - sections:
   - local: col_map
     title: Understanding Column Mapping
+  - local: autotrain_api
+    title: AutoTrain API
   title: Miscellaneous
 - sections:
   - local: text_classification

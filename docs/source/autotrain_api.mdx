@@ -1,0 +1,57 @@
+# AutoTrain API
+
+With AutoTrain API, you can run your own instance of AutoTrain and use it to 
+train models on Hugging Face Spaces infrastructure (local training coming soon). 
+This API is designed to be used with autotrain compatible models and datasets, and it provides a simple interface to
+train models with minimal configuration.
+
+## Getting Started
+
+To get started with AutoTrain API, all you need to do is install `autotrain-advanced`
+as discussed in running locally section and run the autotrain app command:
+
+```bash
+$ autotrain app --port 8000 --host 127.0.0.1
+```
+
+You can then access the API reference at `http://127.0.0.1:8000/docs`.
+
+## Example Usage
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/create_project" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer hf_XXXXX" \
+     -d '{
+           "username": "abhishek",
+           "project_name": "my-autotrain-api-model",
+           "task": "llm:orpo",
+           "base_model": "meta-llama/Meta-Llama-3-8B-Instruct",
+           "hub_dataset": "argilla/distilabel-capybara-dpo-7k-binarized",
+           "train_split": "train",
+           "hardware": "spaces-a10g-large",
+           "column_mapping": {
+               "text_column": "chosen",
+               "rejected_text_column": "rejected",
+               "prompt_text_column": "prompt"
+           },
+           "params": {
+               "block_size": 1024,
+               "model_max_length": 4096,
+               "max_prompt_length": 512,
+               "epochs": 1,
+               "batch_size": 2,
+               "lr": 0.00003,
+               "peft": true,
+               "quantization": "int4",
+               "target_modules": "all-linear",
+               "padding": "right",
+               "optimizer": "adamw_torch",
+               "scheduler": "linear",
+               "gradient_accumulation": 4,
+               "mixed_precision": "fp16",
+               "chat_template": "chatml"
+           }
+         }'
+```
+
