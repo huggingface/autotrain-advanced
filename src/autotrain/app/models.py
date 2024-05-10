@@ -1,35 +1,6 @@
 import collections
-from typing import Dict, List, Literal, Optional, Union
 
 from huggingface_hub import list_models
-from pydantic import BaseModel
-
-from autotrain.backends.base import AVAILABLE_HARDWARE
-
-
-class APICreateProjectModel(BaseModel):
-    project_name: str
-    task: Literal[
-        "llm:generic",
-        "llm:sft",
-        "llm:dpo",
-        "llm:orpo",
-        "image-classification",
-        "dreambooth",
-        "seq2seq",
-        "token-classification",
-        "text-classification",
-        "text-regression",
-        "tabular",
-    ]
-    base_model: str
-    hardware: Literal[tuple(AVAILABLE_HARDWARE.keys())]
-    params: Dict[str, Union[str, int, float, bool, None]]
-    username: str
-    column_mapping: Optional[Dict[str, Union[List[str], str]]] = None
-    hub_dataset: str
-    train_split: str
-    valid_split: str
 
 
 def get_sorted_models(hub_models):

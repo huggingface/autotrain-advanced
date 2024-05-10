@@ -86,7 +86,7 @@
           statusParagraph.innerText = '';
           return;
         }
-        fetch('/is_model_training')
+        fetch('/ui/is_model_training')
           .then(response => response.json()) // Assuming the response is in JSON format
           .then(data => {
             // Construct the message to display
@@ -588,7 +588,6 @@
   </div>
   </div>
 </body>
-
 <script>
   window.addEventListener("load", function () {
     // Get references to the radio buttons and the tab content elements
@@ -619,8 +618,6 @@
     uploadDatasetRadio.click();
   });
 </script>
-
-
 <script>
   window.addEventListener('load', function () {
     const stopTrainingButton = document.getElementById('stop-training-button');
@@ -644,8 +641,6 @@
     });
   });
 </script>
-
-
 <script>
   async function openHelpModal(contentId) {
     const modal = document.getElementById('help-modal');
@@ -701,7 +696,6 @@
   });
 
 </script>
-
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var taskSelect = document.getElementById('task');
@@ -796,7 +790,6 @@
   });
 
 </script>
-
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const taskSelect = document.getElementById('task');
@@ -820,7 +813,6 @@
   });
 
 </script>
-
 <script>
   // Function to hide all tab contents
   function hideAllTabContents() {
@@ -862,7 +854,6 @@
   activateTab(document.querySelector('#training-data-tab'), document.querySelector('#training-data'));
 
 </script>
-
 <script type="module">
   import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
   document.addEventListener("DOMContentLoaded", function () {
@@ -984,7 +975,6 @@
     });
   });
 </script>
-
 <script>
   document.getElementById('data_files_training').addEventListener('change', function () {
     var fileContainer = document.getElementById('file-container-training');

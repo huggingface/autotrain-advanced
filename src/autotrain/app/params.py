@@ -127,6 +127,7 @@ class AppParams:
     train_split: Optional[str] = None
     valid_split: Optional[str] = None
     using_hub_dataset: Optional[bool] = False
+    api: Optional[bool] = False
 
     def __post_init__(self):
         if self.using_hub_dataset and not self.train_split:
@@ -169,9 +170,13 @@ class AppParams:
             _params["prompt_text_column"] = "autotrain_prompt"
             _params["rejected_text_column"] = "autotrain_rejected_text"
         else:
-            _params["text_column"] = self.column_mapping.get("text", "text")
-            _params["prompt_text_column"] = self.column_mapping.get("prompt", "prompt")
-            _params["rejected_text_column"] = self.column_mapping.get("rejected_text", "rejected_text")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["prompt_text_column"] = self.column_mapping.get(
+                "prompt" if not self.api else "prompt_text_column", "prompt"
+            )
+            _params["rejected_text_column"] = self.column_mapping.get(
+                "rejected_text" if not self.api else "rejected_text_column", "rejected_text"
+            )
             _params["train_split"] = self.train_split
         _params["log"] = "tensorboard"
 
@@ -194,8 +199,8 @@ class AppParams:
             _params["target_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["text_column"] = self.column_mapping.get("text", "text")
-            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["target_column"] = self.column_mapping.get("label" if not self.api else "target_column", "label")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
         return TextClassificationParams(**_params)
@@ -209,8 +214,8 @@ class AppParams:
             _params["target_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["text_column"] = self.column_mapping.get("text", "text")
-            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["target_column"] = self.column_mapping.get("label" if not self.api else "target_column", "label")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
         return TextRegressionParams(**_params)
@@ -224,8 +229,8 @@ class AppParams:
             _params["tags_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["tokens_column"] = self.column_mapping.get("text", "tokens")
-            _params["tags_column"] = self.column_mapping.get("label", "tags")
+            _params["tokens_column"] = self.column_mapping.get("text" if not self.api else "tokens_column", "text")
+            _params["tags_column"] = self.column_mapping.get("label" if not self.api else "tags_column", "label")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
 
@@ -240,8 +245,8 @@ class AppParams:
             _params["target_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["text_column"] = self.column_mapping.get("text", "text")
-            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["target_column"] = self.column_mapping.get("label" if not self.api else "target_column", "label")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
 
@@ -256,8 +261,8 @@ class AppParams:
             _params["target_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["image_column"] = self.column_mapping.get("image", "image")
-            _params["target_column"] = self.column_mapping.get("label", "label")
+            _params["image_column"] = self.column_mapping.get("image" if not self.api else "image_column", "image")
+            _params["target_column"] = self.column_mapping.get("label" if not self.api else "target_column", "label")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
 
@@ -275,10 +280,10 @@ class AppParams:
                     "autotrain_label_" + str(i) for i in range(len(self.column_mapping["label"]))
                 ]
         else:
-            _params["id_column"] = self.column_mapping.get("id", "id")
+            _params["id_column"] = self.column_mapping.get("id" if not self.api else "id_column", "id")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
-            _params["target_columns"] = self.column_mapping.get("label", "label")
+            _params["target_columns"] = self.column_mapping.get("label" if not self.api else "target_columns", "label")
 
         if len(_params["categorical_imputer"].strip()) == 0 or _params["categorical_imputer"].lower() == "none":
             _params["categorical_imputer"] = None
