@@ -29,6 +29,7 @@ params:
   optimizer: adamw_torch
   scheduler: linear
   gradient_accumulation: 4
+  mixed_precision: fp16
 
 hub:
   username: ${HF_USERNAME}
