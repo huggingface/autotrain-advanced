@@ -150,7 +150,7 @@ class NVCFRunner(BaseBackend):
                 "-u",
                 "-m",
                 "uvicorn",
-                "autotrain.api:api",
+                "autotrain.app.training_api:api",
                 "--host",
                 "0.0.0.0",
                 "--port",

@@ -17,7 +17,7 @@
         const basicParamsRadio = document.getElementById('basic-params-radio');
 
         document.getElementById('params').value = 'Loading...';
-        fetch(`/params/${taskValue}/${basicParamsRadio.checked ? 'basic' : 'full'}`)
+        fetch(`/ui/params/${taskValue}/${basicParamsRadio.checked ? 'basic' : 'full'}`)
           .then(response => response.json())
           .then(data => {
             document.getElementById('params').value = JSON.stringify(data, null, 2);
@@ -31,7 +31,7 @@
         const customModelsValue = queryParams.get('custom_models');
         console.log(customModelsValue);
 
-        let fetchURL = `/model_choices/${taskValue}`;
+        let fetchURL = `/ui/model_choices/${taskValue}`;
         if (customModelsValue) {
           fetchURL += `?custom_models=${customModelsValue}`;
         }
@@ -66,7 +66,7 @@
           return;
         }
         // Send a request to the /accelerators endpoint
-        fetch('/accelerators')
+        fetch('/ui/accelerators')
           .then(response => response.json()) // Assuming the response is in JSON format
           .then(data => {
             // Update the paragraph with the number of accelerators
@@ -165,7 +165,7 @@
 
       // Function to fetch logs from the server
       function fetchLogs() {
-        fetch('/logs')
+        fetch('/ui/logs')
           .then(response => response.json())
           .then(data => {
             var logContainer = document.getElementById('logContent');
@@ -629,7 +629,7 @@
     stopTrainingButton.addEventListener('click', function () {
       loadingSpinner.classList.remove('hidden');
 
-      fetch('/stop_training', {
+      fetch('/ui/stop_training', {
         method: 'GET'
       })
         .then(response => response.text())
@@ -652,7 +652,7 @@
     var helpModalContent = document.querySelector('#help-modal .text-center');
 
     try {
-      const response = await fetch(`/help/${contentId}`);
+      const response = await fetch(`/ui/help/${contentId}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -938,7 +938,7 @@
 
       // Send request to internal API
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/create_project', true);
+      xhr.open('POST', '/ui/create_project', true);
 
       // Handle the response
       xhr.onload = function () {

@@ -1,16 +1,9 @@
 import collections
+from typing import Dict, List, Literal, Optional, Union
 
 from huggingface_hub import list_models
 from pydantic import BaseModel
-from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
-from autotrain.trainers.image_classification.params import ImageClassificationParams
-from autotrain.trainers.seq2seq.params import Seq2SeqParams
-from autotrain.trainers.tabular.params import TabularParams
-from autotrain.trainers.text_classification.params import TextClassificationParams
-from autotrain.trainers.text_regression.params import TextRegressionParams
-from autotrain.trainers.token_classification.params import TokenClassificationParams
-from typing import List, Literal, Optional, Dict, Union
+
 from autotrain.backends.base import AVAILABLE_HARDWARE
 
 
