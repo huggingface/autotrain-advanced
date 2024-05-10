@@ -9,7 +9,7 @@ from autotrain import logger
 from autotrain.backends.base import BaseBackend
 
 
-NVCF_API = os.environ.get("NVCF_API")
+NVCF_API = "https://huggingface.co/api/integrations/dgx/v1"
 
 
 class NVCFRunner(BaseBackend):
@@ -150,7 +150,7 @@ class NVCFRunner(BaseBackend):
                 "-u",
                 "-m",
                 "uvicorn",
-                "autotrain.api:api",
+                "autotrain.app.training_api:api",
                 "--host",
                 "0.0.0.0",
                 "--port",

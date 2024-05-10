@@ -77,14 +77,14 @@ setup(
     ],
     keywords="automl autonlp autotrain huggingface",
     data_files=[
-        ("static", ["src/autotrain/static/logo.png"]),
+        ("static", ["src/autotrain/app/static/logo.png"]),
         (
             "templates",
             [
-                "src/autotrain/templates/index.html",
-                "src/autotrain/templates/error.html",
-                "src/autotrain/templates/duplicate.html",
-                "src/autotrain/templates/login.html",
+                "src/autotrain/app/templates/index.html",
+                "src/autotrain/app/templates/error.html",
+                "src/autotrain/app/templates/duplicate.html",
+                "src/autotrain/app/templates/login.html",
             ],
         ),
     ],

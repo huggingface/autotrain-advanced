@@ -2,184 +2,90 @@ import json
 import os
 from typing import List
 
-import requests
 import torch
-from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
 from nvitop import Device
 
-import autotrain.utils as app_utils
 from autotrain import __version__, logger
-from autotrain.app_params import AppParams
+from autotrain.app.db import AutoTrainDB
+from autotrain.app.models import fetch_models
+from autotrain.app.params import AppParams, get_task_params
+from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_process_by_pid, token_verification
 from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
-from autotrain.db import AutoTrainDB
 from autotrain.help import get_app_help
-from autotrain.models import fetch_models
-from autotrain.oauth import attach_oauth
 from autotrain.project import AutoTrainProject
-from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
-from autotrain.trainers.image_classification.params import ImageClassificationParams
-from autotrain.trainers.seq2seq.params import Seq2SeqParams
-from autotrain.trainers.tabular.params import TabularParams
-from autotrain.trainers.text_classification.params import TextClassificationParams
-from autotrain.trainers.text_regression.params import TextRegressionParams
-from autotrain.trainers.token_classification.params import TokenClassificationParams
 
 
 logger.info("Starting AutoTrain...")
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
+IS_RUNNING_IN_SPACE = "SPACE_ID" in os.environ
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = AutoTrainDB("autotrain.db")
-
-if HF_TOKEN is None and "SPACE_ID" not in os.environ:
-    logger.error("HF_TOKEN not set")
-    raise ValueError("HF_TOKEN environment variable is not set")
-
-HIDDEN_PARAMS = [
-    "token",
-    "project_name",
-    "username",
-    "task",
-    "backend",
-    "train_split",
-    "valid_split",
-    "text_column",
-    "rejected_text_column",
-    "prompt_text_column",
-    "push_to_hub",
-    "trainer",
-    "model",
-    "data_path",
-    "image_path",
-    "class_image_path",
-    "revision",
-    "tokenizer",
-    "class_prompt",
-    "num_class_images",
-    "class_labels_conditioning",
-    "resume_from_checkpoint",
-    "dataloader_num_workers",
-    "allow_tf32",
-    "prior_generation_precision",
-    "local_rank",
-    "tokenizer_max_length",
-    "rank",
-    "xl",
-    "checkpoints_total_limit",
-    "validation_images",
-    "validation_epochs",
-    "num_validation_images",
-    "validation_prompt",
-    "sample_batch_size",
-    "log",
-    "image_column",
-    "target_column",
-    "id_column",
-    "target_columns",
-    "tokens_column",
-    "tags_column",
-]
-
-PARAMS = {}
-PARAMS["llm"] = LLMTrainingParams(
-    target_modules="all-linear",
-    log="tensorboard",
-    mixed_precision="fp16",
-    quantization="int4",
-    peft=True,
-    block_size=1024,
-    epochs=3,
-    padding="right",
-    chat_template="none",
-    max_completion_length=128,
-).model_dump()
-
-PARAMS["text-classification"] = TextClassificationParams(
-    mixed_precision="fp16",
-    log="tensorboard",
-).model_dump()
-PARAMS["image-classification"] = ImageClassificationParams(
-    mixed_precision="fp16",
-    log="tensorboard",
-).model_dump()
-PARAMS["seq2seq"] = Seq2SeqParams(
-    mixed_precision="fp16",
-    target_modules="all-linear",
-    log="tensorboard",
-).model_dump()
-PARAMS["tabular"] = TabularParams(
-    categorical_imputer="most_frequent",
-    numerical_imputer="median",
-    numeric_scaler="robust",
-).model_dump()
-PARAMS["dreambooth"] = DreamBoothTrainingParams(
-    prompt="<enter your prompt here>",
-    vae_model="",
-    num_steps=500,
-    disable_gradient_checkpointing=False,
-    mixed_precision="fp16",
-    batch_size=1,
-    gradient_accumulation=4,
-    resolution=1024,
-    use_8bit_adam=False,
-    xformers=False,
-    train_text_encoder=False,
-    lr=1e-4,
-).model_dump()
-PARAMS["token-classification"] = TokenClassificationParams(
-    mixed_precision="fp16",
-    log="tensorboard",
-).model_dump()
-PARAMS["text-regression"] = TextRegressionParams(
-    mixed_precision="fp16",
-    log="tensorboard",
-).model_dump()
-
-
 MODEL_CHOICE = fetch_models()
 
-app = FastAPI()
-if HF_TOKEN is None:
-    attach_oauth(app)
-
+ui_router = APIRouter()
 static_path = os.path.join(BASE_DIR, "static")
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+ui_router.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
 
 logger.info("AutoTrain started successfully")
 
 
-@app.get("/", response_class=HTMLResponse)
-async def load_index(request: Request):
+def user_authentication(request: Request):
+    # priority: hf_token env var > oauth_info in session > token in bearer header
+    # if "oauth_info" in request.session:
+    if HF_TOKEN is not None:
+        try:
+            _ = token_verification(token=os.environ.get("HF_TOKEN"))
+            return HF_TOKEN
+        except Exception as e:
+            logger.error(f"Failed to verify token: {e}")
+            if IS_RUNNING_IN_SPACE:
+                return templates.TemplateResponse("login.html", {"request": request})
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired token: HF_TOKEN",
+                )
+
+    if IS_RUNNING_IN_SPACE and "oauth_info" in request.session:
+        try:
+            _ = token_verification(token=request.session["oauth_info"]["access_token"])
+            return request.session["oauth_info"]["access_token"]
+        except Exception as e:
+            request.session.pop("oauth_info", None)
+            logger.error(f"Failed to verify token: {e}")
+            return templates.TemplateResponse("login.html", {"request": request})
+
+    if IS_RUNNING_IN_SPACE:
+        return templates.TemplateResponse("login.html", {"request": request})
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+    )
+
+
+@ui_router.get("/", response_class=HTMLResponse)
+async def load_index(request: Request, token: str = Depends(user_authentication)):
     """
     This function is used to load the index page
     :return: HTMLResponse
     """
     if os.environ.get("SPACE_ID") == "autotrain-projects/autotrain-advanced":
         return templates.TemplateResponse("duplicate.html", {"request": request})
-
-    if HF_TOKEN is None:
-        try:
-            if "oauth_info" not in request.session:
-                return templates.TemplateResponse("login.html", {"request": request})
-        except AssertionError:
-            return templates.TemplateResponse("login.html", {"request": request})
-
-    if HF_TOKEN is None:
-        token = request.session["oauth_info"]["access_token"]
-    else:
-        token = HF_TOKEN
     try:
-        _users = app_utils.user_validation(user_token=token)
-    except requests.exceptions.JSONDecodeError:
+        _users = get_user_and_orgs(user_token=token)
+    except Exception as e:
+        logger.error(f"Failed to get user and orgs: {e}")
         if "oauth_info" in request.session:
             request.session.pop("oauth_info", None)
         return templates.TemplateResponse("login.html", {"request": request})
@@ -194,8 +100,8 @@ async def load_index(request: Request):
     return templates.TemplateResponse("index.html", context)
 
 
-@app.get("/logout", response_class=HTMLResponse)
-async def oauth_logout(request: Request):
+@ui_router.get("/logout", response_class=HTMLResponse)
+async def oauth_logout(request: Request, authenticated: bool = Depends(user_authentication)):
     """
     This function is used to logout the oauth user
     :return: HTMLResponse
@@ -204,8 +110,8 @@ async def oauth_logout(request: Request):
     return RedirectResponse("/")
 
 
-@app.get("/params/{task}/{param_type}", response_class=JSONResponse)
-async def fetch_params(task: str, param_type: str):
+@ui_router.get("/params/{task}/{param_type}", response_class=JSONResponse)
+async def fetch_params(task: str, param_type: str, authenticated: bool = Depends(user_authentication)):
     """
     This function is used to fetch the parameters for a given task
     :param task: str
@@ -213,166 +119,18 @@ async def fetch_params(task: str, param_type: str):
     :return: JSONResponse
     """
     logger.info(f"Task: {task}")
-    if task.startswith("llm"):
-        trainer = task.split(":")[1].lower()
-        task = task.split(":")[0].lower()
-
-    if task.startswith("tabular"):
-        task = "tabular"
-
-    if task in PARAMS:
-        task_params = PARAMS[task]
-        task_params = {k: v for k, v in task_params.items() if k not in HIDDEN_PARAMS}
-        if task == "llm":
-            more_hidden_params = []
-            if trainer in ("sft", "reward"):
-                more_hidden_params = [
-                    "model_ref",
-                    "dpo_beta",
-                    "add_eos_token",
-                    "max_prompt_length",
-                    "max_completion_length",
-                ]
-            elif trainer == "orpo":
-                more_hidden_params = [
-                    "model_ref",
-                    "dpo_beta",
-                    "add_eos_token",
-                ]
-            elif trainer == "generic":
-                more_hidden_params = [
-                    "model_ref",
-                    "dpo_beta",
-                    "max_prompt_length",
-                    "max_completion_length",
-                ]
-            elif trainer == "dpo":
-                more_hidden_params = [
-                    "add_eos_token",
-                ]
-            if param_type == "basic":
-                more_hidden_params.extend(
-                    [
-                        "padding",
-                        "use_flash_attention_2",
-                        "disable_gradient_checkpointing",
-                        "logging_steps",
-                        "evaluation_strategy",
-                        "save_total_limit",
-                        "auto_find_batch_size",
-                        "warmup_ratio",
-                        "weight_decay",
-                        "max_grad_norm",
-                        "seed",
-                        "quantization",
-                        "merge_adapter",
-                        "lora_r",
-                        "lora_alpha",
-                        "lora_dropout",
-                        "max_completion_length",
-                    ]
-                )
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "text-classification" and param_type == "basic":
-            more_hidden_params = [
-                "warmup_ratio",
-                "weight_decay",
-                "max_grad_norm",
-                "seed",
-                "logging_steps",
-                "auto_find_batch_size",
-                "save_total_limit",
-                "evaluation_strategy",
-            ]
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "text-regression" and param_type == "basic":
-            more_hidden_params = [
-                "warmup_ratio",
-                "weight_decay",
-                "max_grad_norm",
-                "seed",
-                "logging_steps",
-                "auto_find_batch_size",
-                "save_total_limit",
-                "evaluation_strategy",
-            ]
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "image-classification" and param_type == "basic":
-            more_hidden_params = [
-                "warmup_ratio",
-                "weight_decay",
-                "max_grad_norm",
-                "seed",
-                "logging_steps",
-                "auto_find_batch_size",
-                "save_total_limit",
-                "evaluation_strategy",
-            ]
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "seq2seq" and param_type == "basic":
-            more_hidden_params = [
-                "warmup_ratio",
-                "weight_decay",
-                "max_grad_norm",
-                "seed",
-                "logging_steps",
-                "auto_find_batch_size",
-                "save_total_limit",
-                "evaluation_strategy",
-                "quantization",
-                "lora_r",
-                "lora_alpha",
-                "lora_dropout",
-                "target_modules",
-            ]
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "token-classification" and param_type == "basic":
-            more_hidden_params = [
-                "warmup_ratio",
-                "weight_decay",
-                "max_grad_norm",
-                "seed",
-                "logging_steps",
-                "auto_find_batch_size",
-                "save_total_limit",
-                "evaluation_strategy",
-            ]
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        if task == "dreambooth":
-            more_hidden_params = [
-                "epochs",
-                "logging",
-                "bf16",
-            ]
-            if param_type == "basic":
-                more_hidden_params.extend(
-                    [
-                        "prior_preservation",
-                        "prior_loss_weight",
-                        "seed",
-                        "center_crop",
-                        "train_text_encoder",
-                        "disable_gradient_checkpointing",
-                        "scale_lr",
-                        "warmup_steps",
-                        "num_cycles",
-                        "lr_power",
-                        "adam_beta1",
-                        "adam_beta2",
-                        "adam_weight_decay",
-                        "adam_epsilon",
-                        "max_grad_norm",
-                        "pre_compute_text_embeddings",
-                        "text_encoder_use_attention_mask",
-                    ]
-                )
-            task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-        return task_params
-    return {"error": "Task not found"}
+    task_params = get_task_params(task, param_type)
+    if len(task_params) == 0:
+        return {"error": "Task not found"}
+    return task_params
 
 
-@app.get("/model_choices/{task}", response_class=JSONResponse)
-async def fetch_model_choices(task: str, custom_models: str = Query(None)):
+@ui_router.get("/model_choices/{task}", response_class=JSONResponse)
+async def fetch_model_choices(
+    task: str,
+    custom_models: str = Query(None),
+    authenticated: bool = Depends(user_authentication),
+):
     """
     This function is used to fetch the model choices for a given task
     :param task: str
@@ -420,9 +178,8 @@ async def fetch_model_choices(task: str, custom_models: str = Query(None)):
     return resp
 
 
-@app.post("/create_project", response_class=JSONResponse)
+@ui_router.post("/create_project", response_class=JSONResponse)
 async def handle_form(
-    request: Request,
     project_name: str = Form(...),
     task: str = Form(...),
     base_model: str = Form(...),
@@ -435,10 +192,10 @@ async def handle_form(
     hub_dataset: str = Form(""),
     train_split: str = Form(""),
     valid_split: str = Form(""),
+    token: str = Depends(user_authentication),
 ):
     """
     This function is used to create a new project
-    :param request: Request
     :param project_name: str
     :param task: str
     :param base_model: str
@@ -463,16 +220,11 @@ async def handle_form(
 
     logger.info(f"hardware: {hardware}")
     if hardware == "local-ui":
-        running_jobs = app_utils.get_running_jobs(DB)
+        running_jobs = get_running_jobs(DB)
         if running_jobs:
             raise HTTPException(
                 status_code=409, detail="Another job is already running. Please wait for it to finish."
             )
-
-    if HF_TOKEN is None:
-        token = request.session["oauth_info"]["access_token"]
-    else:
-        token = HF_TOKEN
 
     if repo_exists(f"{autotrain_user}/{project_name}", token=token):
         raise HTTPException(
@@ -602,8 +354,8 @@ async def handle_form(
     return {"success": "true", "monitor_url": monitor_url}
 
 
-@app.get("/help/{element_id}", response_class=JSONResponse)
-async def fetch_help(element_id: str):
+@ui_router.get("/help/{element_id}", response_class=JSONResponse)
+async def fetch_help(element_id: str, authenticated: bool = Depends(user_authentication)):
     """
     This function is used to fetch the help text for a given element
     :param element_id: str
@@ -613,8 +365,8 @@ async def fetch_help(element_id: str):
     return {"message": msg}
 
 
-@app.get("/accelerators", response_class=JSONResponse)
-async def available_accelerators():
+@ui_router.get("/accelerators", response_class=JSONResponse)
+async def available_accelerators(authenticated: bool = Depends(user_authentication)):
     """
     This function is used to fetch the number of available accelerators
     :return: JSONResponse
@@ -630,20 +382,20 @@ async def available_accelerators():
     return {"accelerators": num_gpus}
 
 
-@app.get("/is_model_training", response_class=JSONResponse)
-async def is_model_training():
+@ui_router.get("/is_model_training", response_class=JSONResponse)
+async def is_model_training(authenticated: bool = Depends(user_authentication)):
     """
     This function is used to fetch the number of running jobs
     :return: JSONResponse
     """
-    running_jobs = app_utils.get_running_jobs(DB)
+    running_jobs = get_running_jobs(DB)
     if running_jobs:
         return {"model_training": True, "pids": running_jobs}
     return {"model_training": False, "pids": []}
 
 
-@app.get("/logs", response_class=JSONResponse)
-async def fetch_logs():
+@ui_router.get("/logs", response_class=JSONResponse)
+async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     """
     This function is used to fetch the logs
     :return: JSONResponse
@@ -658,29 +410,33 @@ async def fetch_logs():
 
     logs = logs.split("\n")
     logs = logs[::-1]
+    # remove lines containing /is_model_training & /accelerators
+    logs = [log for log in logs if "/is_model_training" not in log and "/accelerators" not in log]
 
-    devices = Device.all()
-    device_logs = []
-    for device in devices:
-        device_logs.append(
-            f"Device {device.index}: {device.name()} - {device.memory_used_human()}/{device.memory_total_human()}"
-        )
-    device_logs.append("-----------------")
-    logs = device_logs + logs
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        devices = Device.all()
+        device_logs = []
+        for device in devices:
+            device_logs.append(
+                f"Device {device.index}: {device.name()} - {device.memory_used_human()}/{device.memory_total_human()}"
+            )
+        device_logs.append("-----------------")
+        logs = device_logs + logs
     return {"logs": logs}
 
 
-@app.get("/stop_training", response_class=JSONResponse)
-async def stop_training():
+@ui_router.get("/stop_training", response_class=JSONResponse)
+async def stop_training(authenticated: bool = Depends(user_authentication)):
     """
     This function is used to stop the training
     :return: JSONResponse
     """
-    running_jobs = app_utils.get_running_jobs(DB)
+    running_jobs = get_running_jobs(DB)
     if running_jobs:
         for _pid in running_jobs:
             try:
-                app_utils.kill_process_by_pid(_pid)
+                kill_process_by_pid(_pid)
             except Exception:
                 logger.info(f"Process {_pid} is already completed. Skipping...")
         return {"success": True}
