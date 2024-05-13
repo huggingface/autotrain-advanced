@@ -48,3 +48,5 @@ itsdangerous==2.2.0
 seqeval==1.2.2
 httpx==0.27.0
 pyyaml==6.0.1
+torchmetrics==1.4.0
+pycocotools==2.0.7
