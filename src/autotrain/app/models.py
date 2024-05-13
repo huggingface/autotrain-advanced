@@ -112,6 +112,39 @@ def _fetch_image_classification_models():
     return hub_models
 
 
+def _fetch_image_object_detection_models():
+    hub_models = list(
+        list_models(
+            task="object-detection",
+            library="transformers",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+            pipeline_tag="object-detection",
+        )
+    )
+    hub_models = get_sorted_models(hub_models)
+
+    trending_models = list(
+        list_models(
+            task="object-detection",
+            library="transformers",
+            sort="likes7d",
+            direction=-1,
+            limit=30,
+            full=False,
+            pipeline_tag="object-detection",
+        )
+    )
+    if len(trending_models) > 0:
+        trending_models = get_sorted_models(trending_models)
+        hub_models = [m for m in hub_models if m not in trending_models]
+        hub_models = trending_models + hub_models
+
+    return hub_models
+
+
 def _fetch_dreambooth_models():
     hub_models1 = list(
         list_models(
@@ -245,6 +278,7 @@ def fetch_models():
     _mc["seq2seq"] = _fetch_seq2seq_models()
     _mc["token-classification"] = _fetch_token_classification_models()
     _mc["text-regression"] = _fetch_text_classification_models()
+    _mc["image-object-detection"] = _fetch_image_object_detection_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [

@@ -172,6 +172,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["token-classification"]
     elif task == "text-regression":
         hub_models = MODEL_CHOICE["text-regression"]
+    elif task == "image-object-detection":
+        hub_models = MODEL_CHOICE["image-object-detection"]
     else:
         raise NotImplementedError
 
