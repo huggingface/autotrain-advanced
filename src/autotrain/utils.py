@@ -12,7 +12,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
-
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 
 ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
 
@@ -39,6 +39,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = TokenClassificationParams(**params)
     elif task_id == 10:
         params = TextRegressionParams(**params)
+    elif task_id == 29:
+        params = ObjectDetectionParams(**params)
     else:
         raise NotImplementedError
 

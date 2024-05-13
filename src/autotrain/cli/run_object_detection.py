@@ -1,28 +1,28 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import common_args, img_clf_munge_data, get_field_info
+from autotrain.cli.utils import common_args, img_obj_detect_munge_data, get_field_info
 from autotrain.project import AutoTrainProject
-from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 
 from . import BaseAutoTrainCommand
 
 
-def run_image_classification_command_factory(args):
-    return RunAutoTrainImageClassificationCommand(args)
+def run_object_detection_command_factory(args):
+    return RunAutoTrainObjectDetectionCommand(args)
 
 
-class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
+class RunAutoTrainObjectDetectionCommand(BaseAutoTrainCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        arg_list = get_field_info(ImageClassificationParams)
+        arg_list = get_field_info(ObjectDetectionParams)
         arg_list = common_args() + arg_list
-        run_image_classification_parser = parser.add_parser(
-            "image-classification", description="✨ Run AutoTrain Image Classification"
+        run_object_detection_parser = parser.add_parser(
+            "object-detection", description="✨ Run AutoTrain Object Detection"
         )
         for arg in arg_list:
             if "action" in arg:
-                run_image_classification_parser.add_argument(
+                run_object_detection_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
@@ -30,7 +30,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                     default=arg.get("default"),
                 )
             else:
-                run_image_classification_parser.add_argument(
+                run_object_detection_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
@@ -38,7 +38,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                     default=arg.get("default"),
                     choices=arg.get("choices"),
                 )
-        run_image_classification_parser.set_defaults(func=run_image_classification_command_factory)
+        run_object_detection_parser.set_defaults(func=run_object_detection_command_factory)
 
     def __init__(self, args):
         self.args = args
@@ -76,10 +76,10 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 raise ValueError("Token must be specified for spaces backend")
 
     def run(self):
-        logger.info("Running Image Classification")
+        logger.info("Running Object Detection")
         if self.args.train:
-            params = ImageClassificationParams(**vars(self.args))
-            params = img_clf_munge_data(params, local=self.args.backend.startswith("local"))
+            params = ObjectDetectionParams(**vars(self.args))
+            params = img_obj_detect_munge_data(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")

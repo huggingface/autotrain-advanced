@@ -11,7 +11,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
-
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 
 AVAILABLE_HARDWARE = {
     # hugging face spaces
@@ -64,6 +64,7 @@ class BaseBackend:
         Seq2SeqParams,
         TokenClassificationParams,
         TextRegressionParams,
+        ObjectDetectionParams,
     ]
     backend: str
 
@@ -102,6 +103,8 @@ class BaseBackend:
             self.task_id = 4
         elif isinstance(self.params, TextRegressionParams):
             self.task_id = 10
+        elif isinstance(self.params, ObjectDetectionParams):
+            self.task_id = 29
         else:
             raise NotImplementedError
 
