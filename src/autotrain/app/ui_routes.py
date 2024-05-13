@@ -5,7 +5,6 @@ from typing import List
 import torch
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
 from nvitop import Device
@@ -36,8 +35,6 @@ DB = AutoTrainDB("autotrain.db")
 MODEL_CHOICE = fetch_models()
 
 ui_router = APIRouter()
-static_path = os.path.join(BASE_DIR, "static")
-ui_router.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
 
