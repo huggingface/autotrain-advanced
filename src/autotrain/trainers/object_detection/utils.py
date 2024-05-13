@@ -39,6 +39,7 @@ MODEL_CARD = """
 tags:
 - autotrain
 - object-detection
+- vision
 widget:
 - src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg
   example_title: Tiger
@@ -152,8 +153,6 @@ def object_detection_metrics(evaluation_results, image_processor, threshold=0.0,
         logits: torch.Tensor
         pred_boxes: torch.Tensor
 
-    print(evaluation_results)
-
     predictions, targets = evaluation_results.predictions, evaluation_results.label_ids
 
     # For metric computation we need to provide:
@@ -207,7 +206,7 @@ def object_detection_metrics(evaluation_results, image_processor, threshold=0.0,
     return metrics
 
 
-def create_model_card(config, trainer, num_classes):
+def create_model_card(config, trainer):
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         eval_scores = [f"{k[len('eval_'):]}: {v}" for k, v in eval_scores.items() if k in VALID_METRICS]

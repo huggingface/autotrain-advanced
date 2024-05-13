@@ -169,15 +169,27 @@ def get_default_value(field_data: dict) -> Any:
 def get_field_info(params_class):
     schema = params_class.model_json_schema()
     properties = schema.get("properties", {})
-    field_info = [
-        {
+    # field_info = [
+    #     {
+    #         "arg": f"--{field_name.replace('_', '-')}",
+    #         "type": python_type_from_schema_field(field_data),
+    #         "help": field_data.get("title", ""),
+    #         "default": get_default_value(field_data),
+    #     }
+    #     for field_name, field_data in properties.items()
+    # ]
+    field_info = []
+    for field_name, field_data in properties.items():
+        temp_info = {
             "arg": f"--{field_name.replace('_', '-')}",
             "type": python_type_from_schema_field(field_data),
             "help": field_data.get("title", ""),
             "default": get_default_value(field_data),
         }
-        for field_name, field_data in properties.items()
-    ]
+        if temp_info["type"] == bool:
+            temp_info["action"] = "store_true"
+
+        field_info.append(temp_info)
     return field_info
 
 

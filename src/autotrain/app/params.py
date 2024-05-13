@@ -81,6 +81,10 @@ PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
+PARAMS["image-object-detection"] = ObjectDetectionParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
     target_modules="all-linear",
@@ -420,6 +424,18 @@ def get_task_params(task, param_type):
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "image-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "image-object-detection" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",

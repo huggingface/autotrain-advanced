@@ -103,12 +103,6 @@ def train(config):
     )
     train_data, valid_data = utils.process_data(train_data, valid_data, image_processor, config)
 
-    print(train_data[0])
-    print(train_data[0]["pixel_values"].shape)
-
-    print(valid_data[0])
-    print(valid_data[0]["pixel_values"].shape)
-
     if config.logging_steps == -1:
         if config.valid_split is not None:
             logging_steps = int(0.2 * len(valid_data) / config.batch_size)

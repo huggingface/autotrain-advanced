@@ -1,0 +1,57 @@
+# Object Detection
+
+Object detection is a form of supervised learning where a model is trained to identify 
+and categorize objects within images. AutoTrain simplifies the process, enabling you to
+train a state-of-the-art object detection model by simply uploading labeled example images.
+
+
+## Preparing your data
+
+To ensure your object detection model trains effectively, follow these guidelines for preparing your data:
+
+
+### Organizing Images
+
+
+Prepare a zip file containing your images and metadata.jsonl.
+
+
+```
+Archive.zip
+├── 0001.png
+├── 0002.png
+├── 0003.png
+├── .
+├── .
+├── .
+└── metadata.jsonl
+```
+
+Example for `metadata.jsonl`:
+
+```
+{"file_name": "0001.png", "objects": {"bbox": [[302.0, 109.0, 73.0, 52.0]], "categories": [0]}}
+{"file_name": "0002.png", "objects": {"bbox": [[810.0, 100.0, 57.0, 28.0]], "categories": [1]}}
+{"file_name": "0003.png", "objects": {"bbox": [[160.0, 31.0, 248.0, 616.0], [741.0, 68.0, 202.0, 401.0]], "categories": [2, 2]}}
+```
+
+### Image Requirements
+
+- Format: Ensure all images are in JPEG, JPG, or PNG format.
+
+- Quantity: Include at least 5 images to provide the model with sufficient examples for learning.
+
+- Exclusivity: The zip file should exclusively contain images and metadata.jsonl.
+No additional files or nested folders should be included.
+
+
+Some points to keep in mind:
+
+- The zip file should contain multiple folders (the classes), each folder should contain images of a single class.
+- The name of the folder should be the name of the class.
+- The images must be jpeg, jpg or png.
+- There should be at least 5 images per class.
+- There must not be any other files in the zip file.
+- There must not be any other folders inside the zip folder.
+
+When train.zip is decompressed, it creates no folders: only images and metadata.jsonl.
