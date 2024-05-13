@@ -1,5 +1,6 @@
 import argparse
 import json
+from functools import partial
 
 from accelerate.state import PartialState
 from datasets import load_dataset, load_from_disk
@@ -27,7 +28,6 @@ from autotrain.trainers.common import (
 )
 from autotrain.trainers.object_detection import utils
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
-from functools import partial
 
 
 def parse_args():
@@ -182,6 +182,32 @@ def train(config):
     )
     trainer.remove_callback(PrinterCallback)
     trainer.train()
+
+    logger.info("Finished training, saving model...")
+    trainer.save_model(config.project_name)
+    image_processor.save_pretrained(config.project_name)
+
+    model_card = utils.create_model_card(config, trainer)
+
+    # save model card to output directory as README.md
+    with open(f"{config.project_name}/README.md", "w") as f:
+        f.write(model_card)
+
+    if config.push_to_hub:
+        if PartialState().process_index == 0:
+            remove_autotrain_data(config)
+            save_training_params(config)
+            logger.info("Pushing model to hub...")
+            api = HfApi(token=config.token)
+            api.create_repo(
+                repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
+            )
+            api.upload_folder(
+                folder_path=config.project_name, repo_id=f"{config.username}/{config.project_name}", repo_type="model"
+            )
+
+    if PartialState().process_index == 0:
+        pause_space(config)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import os
+from typing import Any, Optional, Type
 
 from autotrain.backends.base import AVAILABLE_HARDWARE
 from autotrain.dataset import (
@@ -7,7 +8,6 @@ from autotrain.dataset import (
     AutoTrainImageClassificationDataset,
     AutoTrainObjectDetectionDataset,
 )
-from typing import Optional, Type, Any
 
 
 def common_args():
@@ -470,6 +470,4 @@ def img_obj_detect_munge_data(params, local):
         params.valid_split = "validation"
         params.image_column = "autotrain_image"
         params.objects_column = "autotrain_objects"
-        params.height_column = "autotrain_height"
-        params.width_column = "autotrain_width"
     return params

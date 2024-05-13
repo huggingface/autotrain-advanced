@@ -1,11 +1,62 @@
+from dataclasses import dataclass
+
 import albumentations as A
-import numpy as np
+import torch
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from transformers.image_transforms import center_to_corners_format
 
 from autotrain.trainers.object_detection.dataset import ObjectDetectionDataset
-import torch
-from transformers.image_transforms import center_to_corners_format
-from dataclasses import dataclass
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
+
+
+VALID_METRICS = (
+    "eval_loss",
+    "eval_map",
+    "eval_map_50",
+    "eval_map_75",
+    "eval_map_small",
+    "eval_map_medium",
+    "eval_map_large",
+    "eval_mar_1",
+    "eval_mar_10",
+    "eval_mar_100",
+    "eval_mar_small",
+    "eval_mar_medium",
+    "eval_mar_large",
+    "eval_map_Coverall",
+    "eval_mar_100_Coverall",
+    "eval_map_Face_Shield",
+    "eval_mar_100_Face_Shield",
+    "eval_map_Gloves",
+    "eval_mar_100_Gloves",
+    "eval_map_Goggles",
+    "eval_mar_100_Goggles",
+    "eval_map_Mask",
+    "eval_mar_100_Mask",
+)
+
+MODEL_CARD = """
+---
+tags:
+- autotrain
+- object-detection
+widget:
+- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg
+  example_title: Tiger
+- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg
+  example_title: Teapot
+- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg
+  example_title: Palace
+datasets:
+- {dataset}
+---
+
+# Model Trained Using AutoTrain
+
+- Problem type: Object Detection
+
+## Validation Metrics
+{validation_metrics}
+"""
 
 
 def collate_fn(batch):
@@ -153,5 +204,20 @@ def object_detection_metrics(evaluation_results, image_processor, threshold=0.0,
 
     metrics = {k: round(v.item(), 4) for k, v in metrics.items()}
 
-
     return metrics
+
+
+def create_model_card(config, trainer, num_classes):
+    if config.valid_split is not None:
+        eval_scores = trainer.evaluate()
+        eval_scores = [f"{k[len('eval_'):]}: {v}" for k, v in eval_scores.items() if k in VALID_METRICS]
+        eval_scores = "\n\n".join(eval_scores)
+
+    else:
+        eval_scores = "No validation metrics available"
+
+    model_card = MODEL_CARD.format(
+        dataset=config.data_path,
+        validation_metrics=eval_scores,
+    )
+    return model_card

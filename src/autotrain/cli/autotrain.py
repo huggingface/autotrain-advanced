@@ -6,6 +6,7 @@ from autotrain.cli.run_app import RunAutoTrainAppCommand
 from autotrain.cli.run_dreambooth import RunAutoTrainDreamboothCommand
 from autotrain.cli.run_image_classification import RunAutoTrainImageClassificationCommand
 from autotrain.cli.run_llm import RunAutoTrainLLMCommand
+from autotrain.cli.run_object_detection import RunAutoTrainObjectDetectionCommand
 from autotrain.cli.run_seq2seq import RunAutoTrainSeq2SeqCommand
 from autotrain.cli.run_setup import RunSetupCommand
 from autotrain.cli.run_spacerunner import RunAutoTrainSpaceRunnerCommand
@@ -15,7 +16,6 @@ from autotrain.cli.run_text_regression import RunAutoTrainTextRegressionCommand
 from autotrain.cli.run_token_classification import RunAutoTrainTokenClassificationCommand
 from autotrain.cli.run_tools import RunAutoTrainToolsCommand
 from autotrain.parser import AutoTrainConfigParser
-from autotrain.cli.run_object_detection import RunAutoTrainObjectDetectionCommand
 
 
 def main():

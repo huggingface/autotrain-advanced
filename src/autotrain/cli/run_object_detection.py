@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import common_args, img_obj_detect_munge_data, get_field_info
+from autotrain.cli.utils import common_args, get_field_info, img_obj_detect_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 

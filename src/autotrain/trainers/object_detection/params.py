@@ -31,8 +31,6 @@ class ObjectDetectionParams(AutoTrainParams):
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     image_column: str = Field("image", title="Image column")
     objects_column: str = Field("objects", title="Target column")
-    height_column: str = Field("height", title="Height column")
-    width_column: str = Field("width", title="Width column")
     log: str = Field("none", title="Logging using experiment tracking")
     image_square_size: Optional[int] = Field(
         600, title="Image longest size will be resized to this value, then image will be padded to square."
