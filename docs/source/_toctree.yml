@@ -33,6 +33,8 @@
     title: LLM Finetuning
   - local: image_classification
     title: Image Classification
+  - local: object_detection
+    title: Object Detection
   - local: dreambooth
     title: DreamBooth
   - local: seq2seq
@@ -49,6 +51,8 @@
     title: LLM Finetuning
   - local: image_classification_params
     title: Image Classification
+  - local: object_detection_params
+    title: Object Detection
   - local: dreambooth_params
     title: DreamBooth
   - local: seq2seq_params

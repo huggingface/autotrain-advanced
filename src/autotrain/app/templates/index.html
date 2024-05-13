@@ -312,6 +312,7 @@
               <optgroup label="Image Tasks">
                 <option value="dreambooth">DreamBooth LoRA</option>
                 <option value="image-classification">Image Classification</option>
+                <option value="image-object-detection">Object Detection</option>
               </optgroup>
               <optgroup label="Tabular Tasks">
                 <option value="tabular:classification">Tabular Classification</option>
@@ -762,6 +763,11 @@
           break;
         case 'image-classification':
           placeholderText = '{"image": "image", "label": "label"}';
+          document.getElementById("hub-dataset-radio").disabled = false;
+          document.getElementById("valid_split").disabled = false;
+          break;
+        case 'image-object-detection':
+          placeholderText = '{"image": "image", "objects": "objects"}';
           document.getElementById("hub-dataset-radio").disabled = false;
           document.getElementById("valid_split").disabled = false;
           break;

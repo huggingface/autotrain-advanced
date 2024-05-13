@@ -6,6 +6,7 @@ from autotrain.cli.run_app import RunAutoTrainAppCommand
 from autotrain.cli.run_dreambooth import RunAutoTrainDreamboothCommand
 from autotrain.cli.run_image_classification import RunAutoTrainImageClassificationCommand
 from autotrain.cli.run_llm import RunAutoTrainLLMCommand
+from autotrain.cli.run_object_detection import RunAutoTrainObjectDetectionCommand
 from autotrain.cli.run_seq2seq import RunAutoTrainSeq2SeqCommand
 from autotrain.cli.run_setup import RunSetupCommand
 from autotrain.cli.run_spacerunner import RunAutoTrainSpaceRunnerCommand
@@ -41,6 +42,7 @@ def main():
     RunAutoTrainTokenClassificationCommand.register_subcommand(commands_parser)
     RunAutoTrainToolsCommand.register_subcommand(commands_parser)
     RunAutoTrainTextRegressionCommand.register_subcommand(commands_parser)
+    RunAutoTrainObjectDetectionCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

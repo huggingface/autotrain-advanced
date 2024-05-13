@@ -15,7 +15,12 @@ from autotrain.app.db import AutoTrainDB
 from autotrain.app.models import fetch_models
 from autotrain.app.params import AppParams, get_task_params
 from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_process_by_pid, token_verification
-from autotrain.dataset import AutoTrainDataset, AutoTrainDreamboothDataset, AutoTrainImageClassificationDataset
+from autotrain.dataset import (
+    AutoTrainDataset,
+    AutoTrainDreamboothDataset,
+    AutoTrainImageClassificationDataset,
+    AutoTrainObjectDetectionDataset,
+)
 from autotrain.help import get_app_help
 from autotrain.project import AutoTrainProject
 
@@ -261,6 +266,16 @@ async def handle_form(
     if len(hub_dataset) == 0:
         if task == "image-classification":
             dset = AutoTrainImageClassificationDataset(
+                train_data=training_files[0],
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                valid_data=validation_files[0] if validation_files else None,
+                percent_valid=None,  # TODO: add to UI
+                local=hardware.lower() == "local-ui",
+            )
+        if task == "image-object-detection":
+            dset = AutoTrainObjectDetectionDataset(
                 train_data=training_files[0],
                 token=token,
                 project_name=project_name,

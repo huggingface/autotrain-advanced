@@ -103,12 +103,12 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
             },
         ]
         arg_list = common_args() + arg_list
-        run_text_classification_parser = parser.add_parser(
+        run_image_classification_parser = parser.add_parser(
             "image-classification", description="✨ Run AutoTrain Image Classification"
         )
         for arg in arg_list:
             if "action" in arg:
-                run_text_classification_parser.add_argument(
+                run_image_classification_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
@@ -116,7 +116,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                     default=arg.get("default"),
                 )
             else:
-                run_text_classification_parser.add_argument(
+                run_image_classification_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
                     required=arg.get("required", False),
@@ -124,7 +124,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                     default=arg.get("default"),
                     choices=arg.get("choices"),
                 )
-        run_text_classification_parser.set_defaults(func=run_image_classification_command_factory)
+        run_image_classification_parser.set_defaults(func=run_image_classification_command_factory)
 
     def __init__(self, args):
         self.args = args
@@ -162,7 +162,7 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 raise ValueError("Token must be specified for spaces backend")
 
     def run(self):
-        logger.info("Running Text Classification")
+        logger.info("Running Image Classification")
         if self.args.train:
             params = ImageClassificationParams(**vars(self.args))
             params = img_clf_munge_data(params, local=self.args.backend.startswith("local"))

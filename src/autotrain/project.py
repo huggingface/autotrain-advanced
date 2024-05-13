@@ -14,6 +14,7 @@ from autotrain.backends.spaces import SpaceRunner
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -32,6 +33,7 @@ class AutoTrainProject:
                 Seq2SeqParams,
                 ImageClassificationParams,
                 TextRegressionParams,
+                ObjectDetectionParams,
             ]
         ],
         LLMTrainingParams,
@@ -41,6 +43,7 @@ class AutoTrainProject:
         Seq2SeqParams,
         ImageClassificationParams,
         TextRegressionParams,
+        ObjectDetectionParams,
     ]
     backend: str
 

@@ -6,6 +6,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -64,6 +65,7 @@ class BaseBackend:
         Seq2SeqParams,
         TokenClassificationParams,
         TextRegressionParams,
+        ObjectDetectionParams,
     ]
     backend: str
 
@@ -102,6 +104,8 @@ class BaseBackend:
             self.task_id = 4
         elif isinstance(self.params, TextRegressionParams):
             self.task_id = 10
+        elif isinstance(self.params, ObjectDetectionParams):
+            self.task_id = 29
         else:
             raise NotImplementedError
 

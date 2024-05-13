@@ -5,6 +5,7 @@ from typing import Optional
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -80,6 +81,10 @@ PARAMS["image-classification"] = ImageClassificationParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
+PARAMS["image-object-detection"] = ObjectDetectionParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
 PARAMS["seq2seq"] = Seq2SeqParams(
     mixed_precision="fp16",
     target_modules="all-linear",
@@ -140,6 +145,8 @@ class AppParams:
             return self._munge_params_seq2seq()
         elif self.task == "image-classification":
             return self._munge_params_img_clf()
+        elif self.task == "image-object-detection":
+            return self._munge_params_img_obj_det()
         elif self.task.startswith("tabular"):
             return self._munge_params_tabular()
         elif self.task == "dreambooth":
@@ -267,6 +274,24 @@ class AppParams:
             _params["valid_split"] = self.valid_split
 
         return ImageClassificationParams(**_params)
+
+    def _munge_params_img_obj_det(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["image_column"] = "autotrain_image"
+            _params["objects_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["image_column"] = self.column_mapping.get("image" if not self.api else "image_column", "image")
+            _params["objects_column"] = self.column_mapping.get(
+                "objects" if not self.api else "objects_column", "objects"
+            )
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+
+        return ObjectDetectionParams(**_params)
 
     def _munge_params_tabular(self):
         _params = self._munge_common_params()
@@ -399,6 +424,18 @@ def get_task_params(task, param_type):
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "image-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "image-object-detection" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",
