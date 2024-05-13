@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import common_args, get_field_info, img_obj_detect_munge_data
+from autotrain.cli.utils import get_field_info, img_obj_detect_munge_data
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 
@@ -16,7 +16,26 @@ class RunAutoTrainObjectDetectionCommand(BaseAutoTrainCommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         arg_list = get_field_info(ObjectDetectionParams)
-        arg_list = common_args() + arg_list
+        arg_list = [
+            {
+                "arg": "--train",
+                "help": "Command to train the model",
+                "required": False,
+                "action": "store_true",
+            },
+            {
+                "arg": "--deploy",
+                "help": "Command to deploy the model (limited availability)",
+                "required": False,
+                "action": "store_true",
+            },
+            {
+                "arg": "--inference",
+                "help": "Command to run inference (limited availability)",
+                "required": False,
+                "action": "store_true",
+            },
+        ] + arg_list
         run_object_detection_parser = parser.add_parser(
             "object-detection", description="✨ Run AutoTrain Object Detection"
         )
