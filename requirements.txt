@@ -1,4 +1,4 @@
-albumentations==1.4.4
+albumentations==1.4.6
 codecarbon==2.3.5
 datasets[vision]~=2.19.0
 evaluate==0.4.1
