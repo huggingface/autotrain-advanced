@@ -22,16 +22,6 @@ VALID_METRICS = (
     "eval_mar_small",
     "eval_mar_medium",
     "eval_mar_large",
-    "eval_map_Coverall",
-    "eval_mar_100_Coverall",
-    "eval_map_Face_Shield",
-    "eval_mar_100_Face_Shield",
-    "eval_map_Gloves",
-    "eval_mar_100_Gloves",
-    "eval_map_Goggles",
-    "eval_mar_100_Goggles",
-    "eval_map_Mask",
-    "eval_mar_100_Mask",
 )
 
 MODEL_CARD = """
