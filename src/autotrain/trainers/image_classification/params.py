@@ -32,3 +32,5 @@ class ImageClassificationParams(AutoTrainParams):
     image_column: str = Field("image", title="Image column")
     target_column: str = Field("target", title="Target column")
     log: str = Field("none", title="Logging using experiment tracking")
+    early_stopping_patience: int = Field(5, title="Early stopping patience")
+    early_stopping_threshold: float = Field(0.01, title="Early stopping threshold")

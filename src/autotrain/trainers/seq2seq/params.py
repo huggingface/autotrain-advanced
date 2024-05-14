@@ -42,3 +42,5 @@ class Seq2SeqParams(AutoTrainParams):
     lora_dropout: float = Field(0.05, title="LoRA-Dropout")
     target_modules: str = Field("all-linear", title="Target modules for PEFT")
     log: str = Field("none", title="Logging using experiment tracking")
+    early_stopping_patience: int = Field(5, title="Early stopping patience")
+    early_stopping_threshold: float = Field(0.01, title="Early stopping threshold")

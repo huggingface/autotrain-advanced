@@ -153,7 +153,10 @@ def train(config):
         training_args["bf16"] = True
 
     if config.valid_split is not None:
-        early_stop = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
+        early_stop = EarlyStoppingCallback(
+            early_stopping_patience=config.early_stopping_patience,
+            early_stopping_threshold=config.early_stopping_threshold,
+        )
         callbacks_to_use = [early_stop]
     else:
         callbacks_to_use = []

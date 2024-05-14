@@ -101,6 +101,20 @@ class RunAutoTrainImageClassificationCommand(BaseAutoTrainCommand):
                 "default": None,
                 "choices": ["fp16", "bf16", None],
             },
+            {
+                "arg": "--early-stopping-patience",
+                "help": "Specify the number of epochs with no improvement after which training will stop. Default is 5.",
+                "required": False,
+                "type": int,
+                "default": 5,
+            },
+            {
+                "arg": "--early-stopping-threshold",
+                "help": "Define the minimum change in the monitored metric to qualify as an improvement. Default is 0.01.",
+                "required": False,
+                "type": float,
+                "default": 0.01,
+            },
         ]
         arg_list = common_args() + arg_list
         run_image_classification_parser = parser.add_parser(

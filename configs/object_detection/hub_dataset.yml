@@ -1,0 +1,31 @@
+task: object_detection
+base_model: facebook/detr-resnet-50
+project_name: autotrain-obj-det-cppe5-1
+log: tensorboard
+backend: local
+
+data:
+  path: cppe-5
+  train_split: train
+  valid_split: test
+  column_mapping:
+    image_column: image
+    objects_column: objects
+
+params:
+  image_square_size: 600
+  epochs: 100
+  batch_size: 8
+  lr: 5e-5
+  weight_decay: 1e-4
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+  early_stopping_patience: 50
+  early_stopping_threshold: 0.001
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
