@@ -56,6 +56,7 @@ HIDDEN_PARAMS = [
     "target_columns",
     "tokens_column",
     "tags_column",
+    "objects_column",
 ]
 
 
@@ -409,6 +410,8 @@ def get_task_params(task, param_type):
             "auto_find_batch_size",
             "save_total_limit",
             "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "text-regression" and param_type == "basic":
@@ -421,6 +424,8 @@ def get_task_params(task, param_type):
             "auto_find_batch_size",
             "save_total_limit",
             "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "image-classification" and param_type == "basic":
@@ -433,6 +438,8 @@ def get_task_params(task, param_type):
             "auto_find_batch_size",
             "save_total_limit",
             "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "image-object-detection" and param_type == "basic":
@@ -445,6 +452,8 @@ def get_task_params(task, param_type):
             "auto_find_batch_size",
             "save_total_limit",
             "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "seq2seq" and param_type == "basic":
@@ -462,6 +471,8 @@ def get_task_params(task, param_type):
             "lora_alpha",
             "lora_dropout",
             "target_modules",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "token-classification" and param_type == "basic":
@@ -474,6 +485,8 @@ def get_task_params(task, param_type):
             "auto_find_batch_size",
             "save_total_limit",
             "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "dreambooth":

@@ -33,3 +33,5 @@ class TextRegressionParams(AutoTrainParams):
     evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
     username: Optional[str] = Field(None, title="Hugging Face Username")
     log: str = Field("none", title="Logging using experiment tracking")
+    early_stopping_patience: int = Field(5, title="Early stopping patience")
+    early_stopping_threshold: float = Field(0.01, title="Early stopping threshold")

@@ -35,3 +35,5 @@ class ObjectDetectionParams(AutoTrainParams):
     image_square_size: Optional[int] = Field(
         600, title="Image longest size will be resized to this value, then image will be padded to square."
     )
+    early_stopping_patience: int = Field(5, title="Early stopping patience")
+    early_stopping_threshold: float = Field(0.01, title="Early stopping threshold")

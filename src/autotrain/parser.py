@@ -8,6 +8,7 @@ from autotrain import logger
 from autotrain.cli.utils import (
     dreambooth_munge_data,
     img_clf_munge_data,
+    img_obj_detect_munge_data,
     llm_munge_data,
     seq2seq_munge_data,
     tabular_munge_data,
@@ -20,6 +21,7 @@ from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -47,6 +49,7 @@ class AutoTrainConfigParser:
             "dreambooth": DreamBoothTrainingParams,
             "image_binary_classification": ImageClassificationParams,
             "image_multi_class_classification": ImageClassificationParams,
+            "image_object_detection": ObjectDetectionParams,
             "seq2seq": Seq2SeqParams,
             "tabular": TabularParams,
             "text_binary_classification": TextClassificationParams,
@@ -60,6 +63,7 @@ class AutoTrainConfigParser:
             "tabular": tabular_munge_data,
             "seq2seq": seq2seq_munge_data,
             "image_multi_class_classification": img_clf_munge_data,
+            "image_object_detection": img_obj_detect_munge_data,
             "text_multi_class_classification": text_clf_munge_data,
             "text_token_classification": token_clf_munge_data,
             "text_single_column_regression": text_reg_munge_data,
@@ -78,6 +82,8 @@ class AutoTrainConfigParser:
             "text_single_column_regression": "text_single_column_regression",
             "text_regression": "text_single_column_regression",
             "token_classification": "text_token_classification",
+            "image_object_detection": "image_object_detection",
+            "object_detection": "image_object_detection",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)
