@@ -22,6 +22,8 @@ params:
   scheduler: linear
   gradient_accumulation: 1
   mixed_precision: fp16
+  early_stopping_patience: 50
+  early_stopping_threshold: 0.001
 
 hub:
   username: ${HF_USERNAME}
