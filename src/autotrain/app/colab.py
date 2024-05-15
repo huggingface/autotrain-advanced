@@ -5,7 +5,6 @@ import string
 import subprocess
 
 import ipywidgets as widgets
-import requests
 import yaml
 
 from autotrain.app.models import fetch_models
@@ -201,17 +200,8 @@ def colab_app():
 
     separator = widgets.HTML('<div style="border-left: 1px solid black; height: 100%;"></div>')
 
-    logo = widgets.Image(
-        value=requests.get(
-            "https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/src/autotrain/app/static/logo.png"
-        ).content,
-        format="png",
-        layout=widgets.Layout(width="300px"),
-    )
-    logo_box = widgets.VBox([logo], layout=widgets.Layout(align_items="flex-start"))
-
     _main_layout = widgets.HBox([left_column, separator, right_column])
-    main_layout = widgets.VBox([logo_box, _main_layout, start_training_button])
+    main_layout = widgets.VBox([_main_layout, start_training_button])
 
     def on_dataset_change(change):
         if change["new"] == "Local":
@@ -307,90 +297,97 @@ def colab_app():
             base_model.value = "Enter base model..."
 
     def start_training(b):
-        print("Training is starting... Please wait!")
-        os.environ["HF_USERNAME"] = hf_user.value
-        os.environ["HF_TOKEN"] = hf_token.value
-        train_split_value = train_split.value.strip() if train_split.value.strip() != "" else None
-        valid_split_value = valid_split.value.strip() if valid_split.value.strip() != "" else None
-        params_val = json.loads(parameters.value)
-        if task_dropdown.value.startswith("llm"):
-            params_val["trainer"] = task_dropdown.value.split(":")[1]
-            # remove "trainer" key from params_val if it is not present in the task
-            params_val = {k: v for k, v in params_val.items() if k != "trainer"}
+        start_training_button.disabled = True
+        try:
+            print("Training is starting... Please wait!")
+            os.environ["HF_USERNAME"] = hf_user.value
+            os.environ["HF_TOKEN"] = hf_token.value
+            train_split_value = train_split.value.strip() if train_split.value.strip() != "" else None
+            valid_split_value = valid_split.value.strip() if valid_split.value.strip() != "" else None
+            params_val = json.loads(parameters.value)
+            if task_dropdown.value.startswith("llm"):
+                params_val["trainer"] = task_dropdown.value.split(":")[1]
+                params_val = {k: v for k, v in params_val.items() if k != "trainer"}
 
-        if TASK_MAP[task_dropdown.value] == "dreambooth":
-            prompt = params_val.get("prompt")
-            if prompt is None:
-                raise ValueError("Prompt is required for DreamBooth task")
-            if not isinstance(prompt, str):
-                raise ValueError("Prompt should be a string")
-            params_val = {k: v for k, v in params_val.items() if k != "prompt"}
-        else:
-            prompt = None
+            if TASK_MAP[task_dropdown.value] == "dreambooth":
+                prompt = params_val.get("prompt")
+                if prompt is None:
+                    raise ValueError("Prompt is required for DreamBooth task")
+                if not isinstance(prompt, str):
+                    raise ValueError("Prompt should be a string")
+                params_val = {k: v for k, v in params_val.items() if k != "prompt"}
+            else:
+                prompt = None
 
-        push_to_hub = params_val.get("push_to_hub", True)
-        if "push_to_hub" in params_val:
-            params_val = {k: v for k, v in params_val.items() if k != "push_to_hub"}
+            push_to_hub = params_val.get("push_to_hub", True)
+            if "push_to_hub" in params_val:
+                params_val = {k: v for k, v in params_val.items() if k != "push_to_hub"}
 
-        if TASK_MAP[task_dropdown.value] != "dreambooth":
-            config = {
-                "task": TASK_MAP[task_dropdown.value].split(":")[0],
-                "base_model": base_model.value,
-                "project_name": project_name.value,
-                "log": "tensorboard",
-                "backend": "local",
-                "data": {
-                    "path": dataset_path.value,
-                    "train_split": train_split_value,
-                    "valid_split": valid_split_value,
-                    "column_mapping": json.loads(col_mapping.value),
-                },
-                "params": params_val,
-                "hub": {
-                    "username": "${{HF_USERNAME}}",
-                    "token": "${{HF_TOKEN}}",
-                    "push_to_hub": push_to_hub,
-                },
-            }
-        else:
-            config = {
-                "task": TASK_MAP[task_dropdown.value],
-                "base_model": base_model.value,
-                "project_name": project_name.value,
-                "backend": "local",
-                "data": {
-                    "path": dataset_path.value,
-                    "prompt": params_val["prompt"],
-                },
-                "params": params_val,
-                "hub": {
-                    "username": "${HF_USERNAME}",
-                    "token": "${HF_TOKEN}",
-                    "push_to_hub": push_to_hub,
-                },
-            }
+            if TASK_MAP[task_dropdown.value] != "dreambooth":
+                config = {
+                    "task": TASK_MAP[task_dropdown.value].split(":")[0],
+                    "base_model": base_model.value,
+                    "project_name": project_name.value,
+                    "log": "tensorboard",
+                    "backend": "local",
+                    "data": {
+                        "path": dataset_path.value,
+                        "train_split": train_split_value,
+                        "valid_split": valid_split_value,
+                        "column_mapping": json.loads(col_mapping.value),
+                    },
+                    "params": params_val,
+                    "hub": {
+                        "username": "${{HF_USERNAME}}",
+                        "token": "${{HF_TOKEN}}",
+                        "push_to_hub": push_to_hub,
+                    },
+                }
+            else:
+                config = {
+                    "task": TASK_MAP[task_dropdown.value],
+                    "base_model": base_model.value,
+                    "project_name": project_name.value,
+                    "backend": "local",
+                    "data": {
+                        "path": dataset_path.value,
+                        "prompt": params_val["prompt"],
+                    },
+                    "params": params_val,
+                    "hub": {
+                        "username": "${HF_USERNAME}",
+                        "token": "${HF_TOKEN}",
+                        "push_to_hub": push_to_hub,
+                    },
+                }
 
-        with open("config.yml", "w") as f:
-            yaml.dump(config, f)
+            with open("config.yml", "w") as f:
+                yaml.dump(config, f)
 
-        cmd = "autotrain --config config.yml"
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        while True:
-            output = process.stdout.readline()
-            if output == "" and process.poll() is not None:
-                break
-            if output:
-                print(output.strip())
+            cmd = "autotrain --config config.yml"
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            while True:
+                output = process.stdout.readline()
+                if output == "" and process.poll() is not None:
+                    break
+                if output:
+                    print(output.strip())
 
-        _ = process.poll()
+            poll_res = process.poll()
+            if poll_res != 0:
+                start_training_button.disabled = False
+                raise Exception(f"Training failed with exit code: {poll_res}")
+            print("Training completed successfully!")
+            start_training_button.disabled = False
+        except Exception as e:
+            print("An error occurred while starting training!")
+            print(f"Error: {e}")
+            start_training_button.disabled = False
 
     start_training_button.on_click(start_training)
-
-    # Observe changes in task_dropdown to update col_mapping
     dataset_source_dropdown.observe(on_dataset_change, names="value")
     task_dropdown.observe(update_col_mapping, names="value")
     task_dropdown.observe(update_parameters, names="value")
     task_dropdown.observe(update_base_model, names="value")
     parameters_dropdown.observe(update_parameters, names="value")
-
     return main_layout
