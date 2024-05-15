@@ -299,6 +299,7 @@ def colab_app():
             base_model.value = "Enter base model..."
 
     def start_training(b):
+        print("Training is starting... Please wait!")
         os.environ["HF_USERNAME"] = hf_user.value
         os.environ["HF_TOKEN"] = hf_token.value
         train_split_value = train_split.value.strip() if train_split.value.strip() != "" else None
@@ -318,7 +319,7 @@ def colab_app():
                     "path": dataset_path.value,
                     "train_split": train_split_value,
                     "valid_split": valid_split_value,
-                    "col_mapping": json.loads(col_mapping.value),
+                    "column_mapping": json.loads(col_mapping.value),
                 },
                 "params": params_val,
                 "hub": {"username": "${{HF_USERNAME}}", "token": "${{HF_TOKEN}}"},
