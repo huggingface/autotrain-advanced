@@ -58,8 +58,9 @@ def colab_app():
     }
 
     def _get_params(task, param_type):
-        _p = json.dumps(get_task_params(task, param_type=param_type), indent=4)
+        _p = get_task_params(task, param_type=param_type)
         _p["push_to_hub"] = True
+        _p = json.dumps(_p, indent=4)
         return _p
 
     hf_token_label = widgets.HTML("<h5 style='margin-bottom: 0; margin-top: 0;'>Hugging Face Write Token</h5>")
