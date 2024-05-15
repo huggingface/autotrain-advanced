@@ -20,6 +20,8 @@ def generate_random_string():
 
 
 def colab_app():
+    if not os.path.exists("data"):
+        os.makedirs("data")
     MODEL_CHOICES = fetch_models()
     TASK_NAMES = [
         "LLM SFT",
@@ -54,6 +56,11 @@ def colab_app():
         "Tabular Classification": "tabular:classification",
         "Tabular Regression": "tabular:regression",
     }
+
+    def _get_params(task, param_type):
+        _p = json.dumps(get_task_params(task, param_type=param_type), indent=4)
+        _p["push_to_hub"] = True
+        return _p
 
     hf_token_label = widgets.HTML("<h5 style='margin-bottom: 0; margin-top: 0;'>Hugging Face Write Token</h5>")
     hf_token = widgets.Password(
@@ -127,7 +134,7 @@ def colab_app():
     )
 
     parameters = widgets.Textarea(
-        value=json.dumps(get_task_params("llm:sft", param_type="basic"), indent=4),
+        value=_get_params("llm:sft", "basic"),
         description="",
         disabled=False,
         layout=widgets.Layout(height="400px", width="400px"),
@@ -218,7 +225,7 @@ def colab_app():
     def update_parameters(*args):
         task = TASK_MAP[task_dropdown.value]
         param_type = parameters_dropdown.value.lower()
-        parameters.value = json.dumps(get_task_params(task, param_type), indent=4)
+        parameters.value = _get_params(task, param_type)
 
     def update_col_mapping(*args):
         task = TASK_MAP[task_dropdown.value]
@@ -307,6 +314,22 @@ def colab_app():
         params_val = json.loads(parameters.value)
         if task_dropdown.value.startswith("llm"):
             params_val["trainer"] = task_dropdown.value.split(":")[1]
+            # remove "trainer" key from params_val if it is not present in the task
+            params_val = {k: v for k, v in params_val.items() if k != "trainer"}
+
+        if TASK_MAP[task_dropdown.value] == "dreambooth":
+            prompt = params_val.get("prompt")
+            if prompt is None:
+                raise ValueError("Prompt is required for DreamBooth task")
+            if not isinstance(prompt, str):
+                raise ValueError("Prompt should be a string")
+            params_val = {k: v for k, v in params_val.items() if k != "prompt"}
+        else:
+            prompt = None
+
+        push_to_hub = params_val.get("push_to_hub", True)
+        if "push_to_hub" in params_val:
+            params_val = {k: v for k, v in params_val.items() if k != "push_to_hub"}
 
         if TASK_MAP[task_dropdown.value] != "dreambooth":
             config = {
@@ -322,7 +345,11 @@ def colab_app():
                     "column_mapping": json.loads(col_mapping.value),
                 },
                 "params": params_val,
-                "hub": {"username": "${{HF_USERNAME}}", "token": "${{HF_TOKEN}}"},
+                "hub": {
+                    "username": "${{HF_USERNAME}}",
+                    "token": "${{HF_TOKEN}}",
+                    "push_to_hub": push_to_hub,
+                },
             }
         else:
             config = {
@@ -335,7 +362,11 @@ def colab_app():
                     "prompt": params_val["prompt"],
                 },
                 "params": params_val,
-                "hub": {"username": "${HF_USERNAME}", "token": "${HF_TOKEN}"},
+                "hub": {
+                    "username": "${HF_USERNAME}",
+                    "token": "${HF_TOKEN}",
+                    "push_to_hub": push_to_hub,
+                },
             }
 
         with open("config.yml", "w") as f:
