@@ -59,6 +59,12 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             help="Share the app on ngrok",
             required=False,
         )
+        run_app_parser.add_argument(
+            "--colab",
+            action="store_true",
+            help="Use app in colab",
+            required=False,
+        )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
     def __init__(self, port, host, share, workers):
@@ -68,9 +74,14 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.workers = workers
 
     def run(self):
-        from pyngrok import ngrok
 
+        if self.colab:
+            from autotrain.app.colab import colab_app
+
+            colab_app()
         if self.share:
+            from pyngrok import ngrok
+
             os.system(f"fuser -n tcp -k {self.port}")
             authtoken = os.environ.get("NGROK_AUTH_TOKEN", "")
             if authtoken.strip() == "":

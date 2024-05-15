@@ -165,7 +165,8 @@ class AppParams:
         _params = json.loads(self.job_params_json)
         _params["token"] = self.token
         _params["project_name"] = f"{self.project_name}"
-        _params["push_to_hub"] = True
+        if "push_to_hub" not in _params:
+            _params["push_to_hub"] = True
         _params["data_path"] = self.data_path
         _params["username"] = self.username
         return _params
