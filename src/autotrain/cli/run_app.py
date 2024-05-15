@@ -22,7 +22,7 @@ def handle_output(stream, log_file):
 
 
 def run_app_command_factory(args):
-    return RunAutoTrainAppCommand(args.port, args.host, args.share, args.workers)
+    return RunAutoTrainAppCommand(args.port, args.host, args.share, args.workers, args.colab)
 
 
 class RunAutoTrainAppCommand(BaseAutoTrainCommand):
@@ -67,11 +67,12 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         )
         run_app_parser.set_defaults(func=run_app_command_factory)
 
-    def __init__(self, port, host, share, workers):
+    def __init__(self, port, host, share, workers, colab):
         self.port = port
         self.host = host
         self.share = share
         self.workers = workers
+        self.colab = colab
 
     def run(self):
 

@@ -2,6 +2,7 @@ import json
 import os
 import random
 import string
+import subprocess
 
 import ipywidgets as widgets
 import requests
@@ -299,10 +300,8 @@ def colab_app():
             base_model.value = "Enter base model..."
 
     def start_training(b):
-        # export HF_USERNAME and HF_TOKEN as environment variables
         os.environ["HF_USERNAME"] = hf_user.value
         os.environ["HF_TOKEN"] = hf_token.value
-
         train_split_value = train_split.value.strip() if train_split.value.strip() != "" else None
         valid_split_value = valid_split.value.strip() if valid_split.value.strip() != "" else None
         params_val = json.loads(parameters.value)
@@ -336,10 +335,14 @@ def colab_app():
                     "prompt": params_val["prompt"],
                 },
                 "params": params_val,
+                "hub": {"username": "${{HF_USERNAME}}", "token": "${{HF_TOKEN}}"},
             }
 
         with open("config.yml", "w") as f:
             yaml.dump(config, f)
+
+        cmd = "autotrain --config config.yml"
+        subprocess.run(cmd.split())
 
     start_training_button.on_click(start_training)
 
