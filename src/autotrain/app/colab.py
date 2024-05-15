@@ -334,7 +334,7 @@ def colab_app():
                     "prompt": params_val["prompt"],
                 },
                 "params": params_val,
-                "hub": {"username": "${{HF_USERNAME}}", "token": "${{HF_TOKEN}}"},
+                "hub": {"username": "${HF_USERNAME}", "token": "${HF_TOKEN}"},
             }
 
         with open("config.yml", "w") as f:
