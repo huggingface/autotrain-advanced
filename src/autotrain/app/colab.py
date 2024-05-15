@@ -7,7 +7,6 @@ import subprocess
 import ipywidgets as widgets
 import requests
 import yaml
-from IPython.display import display
 
 from autotrain.app.models import fetch_models
 from autotrain.app.params import get_task_params
@@ -353,5 +352,4 @@ def colab_app():
     task_dropdown.observe(update_base_model, names="value")
     parameters_dropdown.observe(update_parameters, names="value")
 
-    # Display widgets
-    display(main_layout)
+    return main_layout

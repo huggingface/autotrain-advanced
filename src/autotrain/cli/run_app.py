@@ -77,9 +77,14 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
     def run(self):
 
         if self.colab:
+            from IPython.display import display
+
             from autotrain.app.colab import colab_app
 
-            colab_app()
+            elements = colab_app()
+            display(*elements)
+            return
+
         if self.share:
             from pyngrok import ngrok
 
