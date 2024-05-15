@@ -38,7 +38,16 @@ warnings.filterwarnings("ignore", category=UserWarning, module="peft")
 warnings.filterwarnings("ignore", category=UserWarning, module="accelerate")
 warnings.filterwarnings("ignore", category=UserWarning, module="datasets")
 warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
-
+warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub")
 
 logger = Logger().get_logger()
 __version__ = "0.7.95.dev0"
+
+
+def is_colab():
+    try:
+        import google.colab
+
+        return True
+    except ImportError:
+        return False

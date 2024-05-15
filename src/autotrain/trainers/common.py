@@ -14,7 +14,7 @@ from huggingface_hub import HfApi
 from pydantic import BaseModel
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 
-from autotrain import logger
+from autotrain import is_colab, logger
 
 
 ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
@@ -170,7 +170,7 @@ class AutoTrainParams(BaseModel):
         defaults = set(self.model_fields.keys())
         supplied = set(data.keys())
         not_supplied = defaults - supplied
-        if not_supplied:
+        if not_supplied and not is_colab:
             logger.warning(f"Parameters not supplied by user and set to default: {', '.join(not_supplied)}")
 
         # Parameters that were supplied but not used
