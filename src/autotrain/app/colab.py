@@ -341,7 +341,15 @@ def colab_app():
             yaml.dump(config, f)
 
         cmd = "autotrain --config config.yml"
-        subprocess.run(cmd.split())
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        while True:
+            output = process.stdout.readline()
+            if output == "" and process.poll() is not None:
+                break
+            if output:
+                print(output.strip())
+
+        _ = process.poll()
 
     start_training_button.on_click(start_training)
 

@@ -82,7 +82,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             from autotrain.app.colab import colab_app
 
             elements = colab_app()
-            display(*elements)
+            display(elements)
             return
 
         if self.share:
