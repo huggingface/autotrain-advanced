@@ -135,7 +135,7 @@ class NVCFRunner(BaseBackend):
         logger.info(f"backend: {self.backend}")
 
         nvcf_url_submit = f"{NVCF_API}/invoke/{self.available_hardware[self.backend]['id']}"
-        org_name = os.environ.get("SPACE_ID")
+        org_name = os.environ.get("SPACE_ID", "nvidia/test")
         if org_name is None:
             raise ValueError("SPACE_ID environment variable is not set")
         org_name = org_name.split("/")[0]

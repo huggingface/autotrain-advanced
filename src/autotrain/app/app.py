@@ -13,8 +13,8 @@ from autotrain.app.ui_routes import ui_router
 logger.info("Starting AutoTrain...")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI()
-if "SPACE_ID" in os.environ:
-    attach_oauth(app)
+# if "SPACE_ID" in os.environ:
+#     attach_oauth(app)
 
 app.include_router(ui_router, prefix="/ui", include_in_schema=False)
 app.include_router(api_router, prefix="/api")
