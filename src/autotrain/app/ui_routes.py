@@ -363,7 +363,7 @@ async def handle_form(
     elif hardware.startswith("spaces-"):
         monitor_url = f"https://hf.co/spaces/{job_id}"
     else:
-        monitor_url = "Success! Monitor your job in logs. Job ID: {job_id}"
+        monitor_url = f"Success! Monitor your job in logs. Job ID: {job_id}"
 
     return {"success": "true", "monitor_url": monitor_url}
 
