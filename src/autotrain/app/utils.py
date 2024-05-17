@@ -8,6 +8,14 @@ import requests
 from autotrain import config, logger
 
 
+def graceful_exit(signum, frame):
+    logger.info("SIGTERM received. Performing cleanup...")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, graceful_exit)
+
+
 def get_running_jobs(db):
     running_jobs = db.get_running_jobs()
     if running_jobs:
@@ -39,14 +47,13 @@ def get_process_status(pid):
 
 def kill_process_by_pid(pid):
     """Kill process by PID."""
-
-    def sigint_handler(signum, frame):
-        """Handle SIGINT signal gracefully."""
-        logger.info("SIGINT received. Exiting gracefully...")
-        sys.exit(0)  # Exit with code 0
-
-    signal.signal(signal.SIGINT, sigint_handler)
-    os.kill(pid, signal.SIGTERM)
+    try:
+        os.kill(pid, signal.SIGTERM)
+        logger.info(f"Sent SIGTERM to process with PID {pid}")
+    except ProcessLookupError:
+        logger.error(f"No process found with PID {pid}")
+    except Exception as e:
+        logger.error(f"Failed to send SIGTERM to process with PID {pid}: {e}")
 
 
 def token_verification(token):

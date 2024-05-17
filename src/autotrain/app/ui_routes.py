@@ -1,5 +1,7 @@
 import json
 import os
+import signal
+import sys
 from typing import List
 
 import torch
@@ -37,6 +39,15 @@ MODEL_CHOICE = fetch_models()
 ui_router = APIRouter()
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
+
+
+def graceful_exit(signum, frame):
+    logger.info("SIGTERM received. Performing cleanup...")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, graceful_exit)
+
 
 logger.info("AutoTrain started successfully")
 
