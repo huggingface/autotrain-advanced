@@ -436,7 +436,11 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     logs = logs.split("\n")
     logs = logs[::-1]
     # remove lines containing /is_model_training & /accelerators
-    logs = [log for log in logs if "/is_model_training" not in log and "/accelerators" not in log]
+    logs = [
+        log
+        for log in logs
+        if "/ui/is_model_training" not in log and "/ui/accelerators" not in log and "/ui/logs" not in log
+    ]
 
     cuda_available = torch.cuda.is_available()
     if cuda_available:
