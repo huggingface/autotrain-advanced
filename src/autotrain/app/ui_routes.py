@@ -284,7 +284,7 @@ async def handle_form(
                 percent_valid=None,  # TODO: add to UI
                 local=hardware.lower() == "local-ui",
             )
-        if task == "image-object-detection":
+        elif task == "image-object-detection":
             dset = AutoTrainObjectDetectionDataset(
                 train_data=training_files[0],
                 token=token,
