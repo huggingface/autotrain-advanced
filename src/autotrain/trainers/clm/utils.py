@@ -49,7 +49,7 @@ widget:
   - messages:
       - role: user
         content: What is your favorite condiment?
-license: other
+license: other{dataset_tag}
 ---
 
 # Model Trained Using AutoTrain
@@ -197,7 +197,17 @@ def create_model_card(config):
         peft = "\n- peft"
     else:
         peft = ""
-    return MODEL_CARD.format(peft=peft).strip()
+
+    if config.data_path == f"{config.project_name}/autotrain-data":
+        dataset_tag = ""
+    else:
+        dataset_tag = f"\n- dataset: {config.data_path}"
+
+    model_card = MODEL_CARD.format(
+        dataset_tag=dataset_tag,
+        peft=peft,
+    )
+    return model_card.strip()
 
 
 def pause_endpoint(params):

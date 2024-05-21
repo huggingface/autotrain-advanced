@@ -39,9 +39,7 @@ widget:
 - src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg
   example_title: Teapot
 - src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg
-  example_title: Palace
-datasets:
-- {dataset}
+  example_title: Palace{dataset_tag}
 ---
 
 # Model Trained Using AutoTrain
@@ -130,8 +128,13 @@ def create_model_card(config, trainer, num_classes):
     else:
         eval_scores = "No validation metrics available"
 
+    if config.data_path == f"{config.project_name}/autotrain-data":
+        dataset_tag = ""
+    else:
+        dataset_tag = f"\n- dataset: {config.data_path}"
+
     model_card = MODEL_CARD.format(
-        dataset=config.data_path,
+        dataset_tag=dataset_tag,
         validation_metrics=eval_scores,
     )
     return model_card
