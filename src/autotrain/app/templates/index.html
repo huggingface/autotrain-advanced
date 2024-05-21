@@ -206,12 +206,12 @@
 </head>
 
 <body>
-  <header class="bg-white-800 text-white p-2">
+  <header class="bg-gray-200 text-white p-2">
     <div class="container mx-auto flex justify-between items-center">
-      <img src="/static/logo.png" alt="AutoTrain" , class="w-32">
+      <img src="/static/logo.png" alt="AutoTrain" , class="w-48">
     </div>
   </header>
-  <div class="form-container max-w-5xl mx-auto p-6 shadow-2xl">
+  <div class="form-container mx-auto p-6">
     <form action="#" method="post" class="grid grid-cols-2 gap-2" enctype="multipart/form-data">
       <div>
         <div class="columns-2 mb-2">
@@ -362,7 +362,8 @@
                 </label>
                 <input type="text" name="train_split" id="train_split"
                   class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split (optional)
+                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split
+                  (optional)
                 </label>
                 <input type="text" name="valid_split" id="valid_split"
                   class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -398,7 +399,8 @@
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                     </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
+                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training
+                        File(s)
                         <p class="text-xs text-gray-700" id="file-container-training"></p>
                   </div>
                   <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
@@ -415,7 +417,8 @@
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                     </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
+                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Validation
+                        File(s)
                         <p class="text-xs text-gray-700" id="file-container-valid"></p>
                   </div>
                   <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
@@ -437,21 +440,7 @@
       </div>
       <div>
         <div class="form-group">
-          <div class="text-sm font-normal text-right mb-2">
-            <button type="button" id="button_logs"
-              class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-xs px-3 py-1.5 text-center inline-flex items-center">
-              <svg class="w-3 h-3 me-1 -ms-1 text-[#626890]" aria-hidden="true" focusable="false" data-prefix="fas"
-                data-icon="terminal" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                <path fill="currentColor"
-                  d="M624 64H304a48 48 0 0 0-48 48v352a48 48 0 0 0 48 48h320a48 48 0 0 0 48-48V112a48 48 0 0 0-48-48zM328 120h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm144 0h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm0 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm-72 48h320a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H304a8 8 0 0 1-8-8v-16a8 8 0 0 1 8-8zm0 112v-48h320v48zm-8-128h336v96H312z">
-                </path>
-              </svg>
-              Logs
-            </button>
-          </div>
-          <hr>
-          <label for="params" class="text-sm font-medium text-gray-700">Training Parameters (find params to
-            copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)
+          <label for="params" class="text-sm font-medium text-gray-700">Training Parameters
             <button type="button" id="params_info" class="text-gray-500 hover:text-gray-700">
               <i class="fas fa-info-circle"></i>
             </button>
@@ -501,8 +490,10 @@
       <div class="relative p-4 w-full max-w-md max-h-full">
         <div class="relative bg-white rounded-lg shadow-2xl">
           <div class="p-4 md:p-5 text-center">
-            <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be charged for
-              this action. You can ignore this message if you are running AutoTrain on a local hardware. Are you sure
+            <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be
+              charged for
+              this action. You can ignore this message if you are running AutoTrain on a local hardware.
+              Are you sure
               you want to continue?</h3>
             <button data-modal-hide="confirmation-modal" type="button"
               class="confirm text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">
@@ -583,6 +574,18 @@
     <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
         target="_blank" class="text-blue-600">Docs</a> | <a href="https://github.com/huggingface/autotrain-advanced"
         target="_blank" class="text-blue-600">GitHub</a>
+    </div>
+    <div class="text-sm font-normal text-center mb-2">
+      <button type="button" id="button_logs"
+        class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-xs px-3 py-1.5 text-center inline-flex items-center">
+        <svg class="w-3 h-3 me-1 -ms-1 text-[#626890]" aria-hidden="true" focusable="false" data-prefix="fas"
+          data-icon="terminal" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+          <path fill="currentColor"
+            d="M624 64H304a48 48 0 0 0-48 48v352a48 48 0 0 0 48 48h320a48 48 0 0 0 48-48V112a48 48 0 0 0-48-48zM328 120h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm144 0h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm0 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm-72 48h320a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H304a8 8 0 0 1-8-8v-16a8 8 0 0 1 8-8zm0 112v-48h320v48zm-8-128h336v96H312z">
+          </path>
+        </svg>
+        Logs
+      </button>
     </div>
     <div class="block text-xs font-normal text-gray-400 text-center">{{version}}
     </div>
