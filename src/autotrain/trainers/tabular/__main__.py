@@ -139,11 +139,20 @@ def train(config):
         logger.info("loading dataset from disk")
         train_data = load_from_disk(config.data_path)[config.train_split]
     else:
-        train_data = load_dataset(
-            config.data_path,
-            split=config.train_split,
-            token=config.token,
-        )
+        if ":" in config.train_split:
+            dataset_config_name, split = config.train_split.split(":")
+            train_data = load_dataset(
+                config.data_path,
+                name=dataset_config_name,
+                split=split,
+                token=config.token,
+            )
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
     train_data = train_data.to_pandas()
 
     if config.valid_split is not None:
@@ -151,11 +160,20 @@ def train(config):
             logger.info("loading dataset from disk")
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if ":" in config.valid_split:
+                dataset_config_name, split = config.valid_split.split(":")
+                valid_data = load_dataset(
+                    config.data_path,
+                    name=dataset_config_name,
+                    split=split,
+                    token=config.token,
+                )
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
         valid_data = valid_data.to_pandas()
 
     if valid_data is None:

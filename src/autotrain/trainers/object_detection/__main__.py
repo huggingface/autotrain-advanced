@@ -46,21 +46,39 @@ def train(config):
     if config.data_path == f"{config.project_name}/autotrain-data":
         train_data = load_from_disk(config.data_path)[config.train_split]
     else:
-        train_data = load_dataset(
-            config.data_path,
-            split=config.train_split,
-            token=config.token,
-        )
+        if ":" in config.train_split:
+            dataset_config_name, split = config.train_split.split(":")
+            train_data = load_dataset(
+                config.data_path,
+                name=dataset_config_name,
+                split=split,
+                token=config.token,
+            )
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
 
     if config.valid_split is not None:
         if config.data_path == f"{config.project_name}/autotrain-data":
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if ":" in config.valid_split:
+                dataset_config_name, split = config.valid_split.split(":")
+                valid_data = load_dataset(
+                    config.data_path,
+                    name=dataset_config_name,
+                    split=split,
+                    token=config.token,
+                )
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
 
     logger.info(f"Train data: {train_data}")
     logger.info(f"Valid data: {valid_data}")
