@@ -329,11 +329,20 @@ def process_input_data(config):
         logger.info("loading dataset from disk")
         train_data = load_from_disk(config.data_path)[config.train_split]
     else:
-        train_data = load_dataset(
-            config.data_path,
-            split=config.train_split,
-            token=config.token,
-        )
+        if ":" in config.train_split:
+            dataset_config_name, split = config.train_split.split(":")
+            train_data = load_dataset(
+                config.data_path,
+                name=dataset_config_name,
+                split=split,
+                token=config.token,
+            )
+        else:
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
     # rename columns for reward trainer
     if config.trainer in ("dpo", "reward", "orpo"):
         if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
@@ -348,11 +357,20 @@ def process_input_data(config):
         if config.data_path == f"{config.project_name}/autotrain-data":
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
-            valid_data = load_dataset(
-                config.data_path,
-                split=config.valid_split,
-                token=config.token,
-            )
+            if ":" in config.valid_split:
+                dataset_config_name, split = config.valid_split.split(":")
+                valid_data = load_dataset(
+                    config.data_path,
+                    name=dataset_config_name,
+                    split=split,
+                    token=config.token,
+                )
+            else:
+                valid_data = load_dataset(
+                    config.data_path,
+                    split=config.valid_split,
+                    token=config.token,
+                )
 
         if config.trainer in ("dpo", "reward", "orpo"):
             if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
