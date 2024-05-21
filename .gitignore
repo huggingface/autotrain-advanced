@@ -19,6 +19,7 @@ autotrain-*
 op-*
 # C extensions
 *.so
+test.yml
 
 # Distribution / packaging
 .Python
