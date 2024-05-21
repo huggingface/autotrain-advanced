@@ -201,7 +201,7 @@ def create_model_card(config):
     if config.data_path == f"{config.project_name}/autotrain-data":
         dataset_tag = ""
     else:
-        dataset_tag = f"\n- dataset: {config.data_path}"
+        dataset_tag = f"\ndatasets:\n- {config.data_path}"
 
     model_card = MODEL_CARD.format(
         dataset_tag=dataset_tag,
