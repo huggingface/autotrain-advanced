@@ -1,3 +1,5 @@
+import os
+
 import evaluate
 import nltk
 import numpy as np
@@ -51,7 +53,7 @@ def create_model_card(config, trainer):
     else:
         eval_scores = "No validation metrics available"
 
-    if config.data_path == f"{config.project_name}/autotrain-data":
+    if config.data_path == f"{config.project_name}/autotrain-data" or os.path.isdir(config.data_path):
         dataset_tag = ""
     else:
         dataset_tag = f"\ndatasets:\n- {config.data_path}"

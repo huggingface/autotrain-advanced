@@ -273,3 +273,7 @@ class ObjectDetectionPreprocessor:
                     private=True,
                     token=self.token,
                 )
+
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"

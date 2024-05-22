@@ -198,7 +198,7 @@ def create_model_card(config):
     else:
         peft = ""
 
-    if config.data_path == f"{config.project_name}/autotrain-data":
+    if config.data_path == f"{config.project_name}/autotrain-data" or os.path.isdir(config.data_path):
         dataset_tag = ""
     else:
         dataset_tag = f"\ndatasets:\n- {config.data_path}"
