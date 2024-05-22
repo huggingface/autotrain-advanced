@@ -351,7 +351,7 @@ def colab_app():
                     "backend": "local",
                     "data": {
                         "path": dataset_path.value,
-                        "prompt": params_val["prompt"],
+                        "prompt": prompt,
                     },
                     "params": params_val,
                     "hub": {

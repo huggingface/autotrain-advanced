@@ -17,6 +17,18 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 
 
 def launch_command(params):
+    """
+    Launches training command based on the given parameters.
+
+    Args:
+        params: An instance of a parameter class (LLMTrainingParams, DreamBoothTrainingParams, GenericParams, TabularParams,
+                TextClassificationParams, TextRegressionParams, TokenClassificationParams, ImageClassificationParams,
+                ObjectDetectionParams, Seq2SeqParams).
+
+    Returns:
+        None
+    """
+
     params.project_name = shlex.split(params.project_name)[0]
     cuda_available = torch.cuda.is_available()
     mps_available = torch.backends.mps.is_available()
