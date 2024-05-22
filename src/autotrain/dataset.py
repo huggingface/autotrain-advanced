@@ -28,7 +28,7 @@ from autotrain.preprocessor.vision import ImageClassificationPreprocessor, Objec
 
 def remove_non_image_files(folder):
     # Define allowed image file extensions
-    allowed_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"}
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG", ".jsonl"}
 
     # Iterate through all files in the folder
     for root, dirs, files in os.walk(folder):
