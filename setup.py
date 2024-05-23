@@ -77,7 +77,14 @@ setup(
     ],
     keywords="automl autonlp autotrain huggingface",
     data_files=[
-        ("static", ["src/autotrain/app/static/logo.png"]),
+        (
+            "static",
+            [
+                "src/autotrain/app/static/logo.png",
+                "src/autotrain/app/static/scripts/fetch_data_and_update_models.js",
+                "src/autotrain/app/static/scripts/poll.js",
+            ],
+        ),
         (
             "templates",
             [
