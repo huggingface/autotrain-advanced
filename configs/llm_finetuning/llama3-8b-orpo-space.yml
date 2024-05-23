@@ -1,4 +1,4 @@
-task: llm
+task: llm-orpo
 base_model: meta-llama/Meta-Llama-3-8B-Instruct
 project_name: autotrain-llama3-8b-orpo-t1
 log: tensorboard
@@ -15,7 +15,6 @@ data:
     prompt_text_column: prompt
 
 params:
-  trainer: orpo
   block_size: 1024
   model_max_length: 8192
   max_prompt_length: 512

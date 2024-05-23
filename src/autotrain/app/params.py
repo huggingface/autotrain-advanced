@@ -283,9 +283,10 @@ class AppParams:
         _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["image_column"] = "autotrain_image"
-            _params["objects_column"] = "autotrain_label"
+            _params["objects_column"] = "autotrain_objects"
             _params["valid_split"] = "validation"
         else:
+
             _params["image_column"] = self.column_mapping.get("image" if not self.api else "image_column", "image")
             _params["objects_column"] = self.column_mapping.get(
                 "objects" if not self.api else "objects_column", "objects"

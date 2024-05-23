@@ -1,4 +1,4 @@
-task: llm
+task: llm-sft
 base_model: meta-llama/Meta-Llama-3-70B-Instruct
 project_name: autotrain-llama3-70b-math-v1
 log: tensorboard
@@ -13,7 +13,6 @@ data:
     text_column: text
 
 params:
-  trainer: sft
   block_size: 2048
   model_max_length: 8192
   epochs: 2

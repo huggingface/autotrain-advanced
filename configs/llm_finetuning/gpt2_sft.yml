@@ -1,4 +1,4 @@
-task: llm
+task: llm-sft
 base_model: openai-community/gpt2
 project_name: autotrain-gpt2-finetuned-guanaco
 log: tensorboard
@@ -13,7 +13,6 @@ data:
     text_column: text
 
 params:
-  trainer: sft
   block_size: 1024
   model_max_length: 2048
   max_prompt_length: 512

@@ -70,8 +70,11 @@ class AutoTrainConfigParser:
         }
         self.task_aliases = {
             "llm": "lm_training",
-            "llm_training": "lm_training",
-            "llm_finetuning": "lm_training",
+            "llm-sft": "lm_training",
+            "llm-orpo": "lm_training",
+            "llm-generic": "lm_training",
+            "llm-dpo": "lm_training",
+            "llm-reward": "lm_training",
             "dreambooth": "dreambooth",
             "image_binary_classification": "image_multi_class_classification",
             "image-binary-classification": "image_multi_class_classification",
@@ -123,6 +126,12 @@ class AutoTrainConfigParser:
 
         if self.task == "lm_training":
             params["chat_template"] = self.config["data"]["chat_template"]
+            if "-" in self.config["task"]:
+                params["trainer"] = self.config["task"].split("-")[1]
+                if params["trainer"] == "generic":
+                    params["trainer"] = "default"
+                if params["trainer"] not in ["sft", "orpo", "dpo", "reward", "default"]:
+                    raise ValueError("Invalid LLM training task")
 
         if self.task != "dreambooth":
             for k, v in self.config["data"]["column_mapping"].items():
