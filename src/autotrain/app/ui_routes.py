@@ -40,6 +40,251 @@ ui_router = APIRouter()
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
 
+UI_PARAMS = {
+    "mixed_precision": {
+        "type": "dropdown",
+        "label": "Mixed precision",
+        "options": ["fp16", "bf16", "none"],
+        "default": "fp16",
+    },
+    "optimizer": {
+        "type": "dropdown",
+        "label": "Optimizer",
+        "options": ["adamw_torch", "adamw", "adam", "sgd"],
+        "default": "adamw_torch",
+    },
+    "scheduler": {
+        "type": "dropdown",
+        "label": "Scheduler",
+        "options": ["linear", "cosine", "cosine_warmup", "constant"],
+        "default": "linear",
+    },
+    "evaluation_strategy": {
+        "type": "dropdown",
+        "label": "Evaluation strategy",
+        "options": ["epoch", "steps"],
+        "default": "epoch",
+    },
+    "logging_steps": {
+        "type": "number",
+        "label": "Logging steps",
+        "default": 10,
+    },
+    "save_total_limit": {
+        "type": "number",
+        "label": "Save total limit",
+        "default": 1,
+    },
+    "auto_find_batch_size": {
+        "type": "dropdown",
+        "label": "Auto find batch size",
+        "options": ["true", "false"],
+        "default": "false",
+    },
+    "warmup_ratio": {
+        "type": "number",
+        "label": "Warmup proportion",
+        "default": 0.1,
+    },
+    "max_grad_norm": {
+        "type": "number",
+        "label": "Max grad norm",
+        "default": 1.0,
+    },
+    "weight_decay": {
+        "type": "number",
+        "label": "Weight decay",
+        "default": 0.0,
+    },
+    "epochs": {
+        "type": "number",
+        "label": "Epochs",
+        "default": 3,
+    },
+    "batch_size": {
+        "type": "number",
+        "label": "Batch size",
+        "default": 2,
+    },
+    "lr": {
+        "type": "number",
+        "label": "Learning rate",
+        "default": 3e-5,
+    },
+    "seed": {
+        "type": "number",
+        "label": "Seed",
+        "default": 42,
+    },
+    "gradient_accumulation": {
+        "type": "number",
+        "label": "Gradient accumulation",
+        "default": 4,
+    },
+    "block_size": {
+        "type": "number",
+        "label": "Block size",
+        "default": 512,
+    },
+    "model_max_length": {
+        "type": "number",
+        "label": "Model max length",
+        "default": 2048,
+    },
+    "add_eos_token": {
+        "type": "dropdown",
+        "label": "Add EOS token",
+        "options": ["true", "false"],
+        "default": "true",
+    },
+    "disable_gradient_checkpointing": {
+        "type": "dropdown",
+        "label": "Disable GC",
+        "options": ["true", "false"],
+        "default": "false",
+    },
+    "use_flash_attention_2": {
+        "type": "dropdown",
+        "label": "Use flash attention",
+        "options": ["true", "false"],
+        "default": "false",
+    },
+    "log": {
+        "type": "dropdown",
+        "label": "Logging",
+        "options": ["tensorboard", "none"],
+        "default": "tensorboard",
+    },
+    "quantization": {
+        "type": "dropdown",
+        "label": "Quantization",
+        "options": ["int4", "int8", "none"],
+        "default": "int4",
+    },
+    "target_modules": {
+        "type": "string",
+        "label": "Target modules",
+        "default": "all-linear",
+    },
+    "merge_adapter": {
+        "type": "dropdown",
+        "label": "Merge adapter",
+        "options": ["true", "false"],
+        "default": "false",
+    },
+    "peft": {
+        "type": "dropdown",
+        "label": "PEFT/LoRA",
+        "options": ["true", "false"],
+        "default": "true",
+    },
+    "lora_r": {
+        "type": "number",
+        "label": "Lora r",
+        "default": 16,
+    },
+    "lora_alpha": {
+        "type": "number",
+        "label": "Lora alpha",
+        "default": 32,
+    },
+    "lora_dropout": {
+        "type": "number",
+        "label": "Lora dropout",
+        "default": 0.05,
+    },
+    "model_ref": {
+        "type": "string",
+        "label": "Reference model",
+        "default": None,
+    },
+    "dpo_beta": {
+        "type": "number",
+        "label": "DPO beta",
+        "default": 0.1,
+    },
+    "max_prompt_length": {
+        "type": "number",
+        "label": "Prompt length",
+        "default": 128,
+    },
+    "max_completion_length": {
+        "type": "number",
+        "label": "Completion length",
+        "default": None,
+    },
+    "chat_template": {
+        "type": "dropdown",
+        "label": "Chat template",
+        "options": ["none", "zephyr", "chatml", "tokenizer"],
+        "default": "none",
+    },
+    "padding": {
+        "type": "dropdown",
+        "label": "Padding side",
+        "options": ["right", "left", "none"],
+        "default": "right",
+    },
+    "max_seq_length": {
+        "type": "number",
+        "label": "Max sequence length",
+        "default": 512,
+    },
+    "early_stopping_patience": {
+        "type": "number",
+        "label": "Early stopping patience",
+        "default": 3,
+    },
+    "early_stopping_threshold": {
+        "type": "number",
+        "label": "Early stopping threshold",
+        "default": 0.001,
+    },
+    "max_target_length": {
+        "type": "number",
+        "label": "Max target length",
+        "default": 512,
+    },
+    "categorical_columns": {
+        "type": "string",
+        "label": "Categorical columns",
+        "default": "",
+    },
+    "numerical_columns": {
+        "type": "string",
+        "label": "Numerical columns",
+        "default": "",
+    },
+    "num_trials": {
+        "type": "number",
+        "label": "Number of trials",
+        "default": 100,
+    },
+    "time_limit": {
+        "type": "number",
+        "label": "Time limit",
+        "default": 3600,
+    },
+    "categorical_imputer": {
+        "type": "dropdown",
+        "label": "Categorical imputer",
+        "options": ["most_frequent", "none"],
+        "default": "most_frequent",
+    },
+    "numerical_imputer": {
+        "type": "dropdown",
+        "label": "Numerical imputer",
+        "options": ["mean", "median", "none"],
+        "default": "mean",
+    },
+    "numeric_scaler": {
+        "type": "dropdown",
+        "label": "Numeric scaler",
+        "options": ["standard", "minmax", "maxabs", "robust", "none"],
+        "default": "standard",
+    },
+}
+
 
 def graceful_exit(signum, frame):
     logger.info("SIGTERM received. Performing cleanup...")
@@ -135,7 +380,15 @@ async def fetch_params(task: str, param_type: str, authenticated: bool = Depends
     task_params = get_task_params(task, param_type)
     if len(task_params) == 0:
         return {"error": "Task not found"}
-    return task_params
+    ui_params = {}
+    for param in task_params:
+        if param in UI_PARAMS:
+            ui_params[param] = UI_PARAMS[param]
+        else:
+            logger.info(f"Param {param} not found in UI_PARAMS")
+
+    ui_params = dict(sorted(ui_params.items(), key=lambda x: x[1]["type"]))
+    return ui_params
 
 
 @ui_router.get("/model_choices/{task}", response_class=JSONResponse)
