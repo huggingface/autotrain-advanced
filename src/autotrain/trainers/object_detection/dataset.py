@@ -25,7 +25,7 @@ class ObjectDetectionDataset:
                     "image_id": str(item),
                     "category_id": output["category"][j],
                     "iscrowd": 0,
-                    "area": objects["area"][j],  # comes from input data
+                    "area": objects["bbox"][j][2] * objects["bbox"][j][3],  # [x, y, w, h
                     "bbox": output["bboxes"][j],
                 }
             )

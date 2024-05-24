@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
-from datasets import load_dataset
+from datasets import ClassLabel, Features, Image, Sequence, Value, load_dataset
 from sklearn.model_selection import train_test_split
 
 
@@ -169,6 +169,30 @@ class ObjectDetectionPreprocessor:
     seed: Optional[int] = 42
     local: Optional[bool] = False
 
+    @staticmethod
+    def _process_metadata(data_path):
+        metadata = pd.read_json(os.path.join(data_path, "metadata.jsonl"), lines=True)
+        # make sure that the metadata.jsonl file contains the required columns: file_name, objects
+        if "file_name" not in metadata.columns or "objects" not in metadata.columns:
+            raise ValueError(f"{data_path}/metadata.jsonl should contain 'file_name' and 'objects' columns.")
+
+        # keeo only file_name and objects columns
+        metadata = metadata[["file_name", "objects"]]
+        # inside metadata objects column, values should be bbox, area and category
+        # if area does not exist, it should be created by multiplying bbox width and height
+        categories = []
+        for _, row in metadata.iterrows():
+            obj = row["objects"]
+            if "bbox" not in obj or "category" not in obj:
+                raise ValueError(f"{data_path}/metadata.jsonl should contain 'bbox' and 'category' keys in 'objects'.")
+            # keep only bbox, area and category keys
+            obj = {k: obj[k] for k in ["bbox", "category"]}
+            categories.extend(obj["category"])
+
+        categories = set(categories)
+
+        return metadata, categories
+
     def __post_init__(self):
         # Check if train data path exists
         if not os.path.exists(self.train_data):
@@ -218,13 +242,36 @@ class ObjectDetectionPreprocessor:
             shutil.copytree(self.train_data, os.path.join(data_dir, "train"))
             shutil.copytree(self.valid_data, os.path.join(data_dir, "validation"))
 
-            dataset = load_dataset("imagefolder", data_dir=data_dir)
+            train_metadata, train_categories = self._process_metadata(os.path.join(data_dir, "train"))
+            valid_metadata, valid_categories = self._process_metadata(os.path.join(data_dir, "validation"))
+
+            train_metadata.to_json(os.path.join(data_dir, "train", "metadata.jsonl"), orient="records", lines=True)
+            valid_metadata.to_json(
+                os.path.join(data_dir, "validation", "metadata.jsonl"), orient="records", lines=True
+            )
+
+            all_categories = train_categories.union(valid_categories)
+
+            features = Features(
+                {
+                    "image": Image(),
+                    "objects": Sequence(
+                        {
+                            "bbox": Sequence(Value("float32"), length=4),
+                            "category": ClassLabel(names=list(all_categories)),
+                        }
+                    ),
+                }
+            )
+
+            dataset = load_dataset("imagefolder", data_dir=data_dir, features=features)
             dataset = dataset.rename_columns(
                 {
                     "image": "autotrain_image",
                     "objects": "autotrain_objects",
                 }
             )
+
             if self.local:
                 dataset.save_to_disk(f"{self.project_name}/autotrain-data")
             else:
@@ -258,13 +305,36 @@ class ObjectDetectionPreprocessor:
             train_df.to_json(os.path.join(data_dir, "train", "metadata.jsonl"), orient="records", lines=True)
             valid_df.to_json(os.path.join(data_dir, "validation", "metadata.jsonl"), orient="records", lines=True)
 
-            dataset = load_dataset("imagefolder", data_dir=data_dir)
+            train_metadata, train_categories = self._process_metadata(os.path.join(data_dir, "train"))
+            valid_metadata, valid_categories = self._process_metadata(os.path.join(data_dir, "validation"))
+
+            train_metadata.to_json(os.path.join(data_dir, "train", "metadata.jsonl"), orient="records", lines=True)
+            valid_metadata.to_json(
+                os.path.join(data_dir, "validation", "metadata.jsonl"), orient="records", lines=True
+            )
+
+            all_categories = train_categories.union(valid_categories)
+
+            features = Features(
+                {
+                    "image": Image(),
+                    "objects": Sequence(
+                        {
+                            "bbox": Sequence(Value("float32"), length=4),
+                            "category": ClassLabel(names=list(all_categories)),
+                        }
+                    ),
+                }
+            )
+
+            dataset = load_dataset("imagefolder", data_dir=data_dir, features=features)
             dataset = dataset.rename_columns(
                 {
                     "image": "autotrain_image",
                     "objects": "autotrain_objects",
                 }
             )
+
             if self.local:
                 dataset.save_to_disk(f"{self.project_name}/autotrain-data")
             else:
