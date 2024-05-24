@@ -43,7 +43,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub"
 logger = Logger().get_logger()
 __version__ = "0.7.110.dev0"
 
-g
+
 def is_colab():
     try:
         import google.colab
