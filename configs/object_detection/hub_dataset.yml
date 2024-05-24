@@ -1,6 +1,6 @@
 task: object_detection
 base_model: facebook/detr-resnet-50
-project_name: autotrain-obj-det-cppe5-1
+project_name: autotrain-obj-det-cppe5-2
 log: tensorboard
 backend: local
 
