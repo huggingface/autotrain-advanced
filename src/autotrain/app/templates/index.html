@@ -12,113 +12,9 @@
     </script>
     <script src="/static/scripts/fetch_data_and_update_models.js" defer></script>
     <script src="/static/scripts/poll.js" defer></script>
+    <script src="/static/scripts/listeners.js" defer></script>
+    <script src="/static/scripts/column_mapping.js" defer></script>
 </head>
-
-<script>
-    window.addEventListener("load", function () {
-        async function fetchParams() {
-            const taskValue = document.getElementById('task').value;
-            // const basicParamsRadio = document.getElementById('basic-params-radio');
-            const response = await fetch(`/ui/params/${taskValue}/full`);
-            const params = await response.json();
-            return params;
-        }
-
-        function createElement(param, config) {
-            let element = '';
-            switch (config.type) {
-                case 'number':
-                    element = `<div>
-                        <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
-                        <input type="number" name="param_${param}" id="param_${param}" value="${config.default}"
-                            class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>`;
-                    break;
-                case 'dropdown':
-                    let options = config.options.map(option => `<option value="${option}" ${option === config.default ? 'selected' : ''}>${option}</option>`).join('');
-                    element = `<div>
-                        <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
-                        <select name="param_${param}" id="param_${param}"
-                            class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            ${options}
-                        </select>
-                    </div>`;
-                    break;
-                case 'checkbox':
-                    element = `<div>
-                        <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
-                        <input type="checkbox" name="param_${param}" id="param_${param}" ${config.default ? 'checked' : ''}
-                            class="mt-1 text-xs font-medium border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>`;
-                    break;
-                case 'string':
-                    element = `<div>
-                        <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
-                        <input type="text" name="param_${param}" id="param_${param}" value="${config.default}"
-                            class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>`;
-                    break;
-            }
-            return element;
-        }
-
-        function renderUI(params) {
-            const uiContainer = document.getElementById('dynamic-ui');
-            let rowDiv = null;
-            let rowIndex = 0;
-            let lastType = null;
-
-            Object.keys(params).forEach((param, index) => {
-                const config = params[param];
-                if (lastType !== config.type || rowIndex >= 3) {
-                    if (rowDiv) uiContainer.appendChild(rowDiv);
-                    rowDiv = document.createElement('div');
-                    rowDiv.className = 'grid grid-cols-3 gap-2 mb-2';
-                    rowIndex = 0;
-                }
-                rowDiv.innerHTML += createElement(param, config);
-                rowIndex++;
-                lastType = config.type;
-            });
-            if (rowDiv) uiContainer.appendChild(rowDiv);
-        }
-
-        fetchParams().then(params => renderUI(params));
-        document.getElementById('task').addEventListener('change', function () {
-            fetchParams().then(params => {
-                document.getElementById('dynamic-ui').innerHTML = '';
-                renderUI(params);
-            });
-        });
-    });
-</script>
-
-<script>
-    window.addEventListener("load", function () {
-        const dataSource = document.getElementById("dataset_source");
-        const uploadDataTabContent = document.getElementById("upload-data-tab-content");
-        const hubDataTabContent = document.getElementById("hub-data-tab-content");
-        const uploadDataTabs = document.getElementById("upload-data-tabs");
-
-        function handleDataSource() {
-            if (dataSource.value === "hub") {
-                uploadDataTabContent.style.display = "none";
-                uploadDataTabs.style.display = "none";
-                hubDataTabContent.style.display = "block";
-            } else if (dataSource.value === "local") {
-                uploadDataTabContent.style.display = "block";
-                uploadDataTabs.style.display = "block";
-                hubDataTabContent.style.display = "none";
-            }
-        }
-
-        // Attach event listeners to dataset_source dropdown
-        dataSource.addEventListener("change", handleDataSource);
-
-        // Trigger the event listener to set the initial state
-        handleDataSource();
-    });
-</script>
 
 <body>
     <button data-drawer-target="separator-sidebar" data-drawer-toggle="separator-sidebar"
@@ -238,6 +134,18 @@
                         {% endif %}
                     </select>
                 </li>
+                <li>
+                    <label for="parameter_mode" class="text-sm font-medium text-gray-700">Parameter Mode
+                        <button type="button" id="parameter_mode_info" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </label>
+                    <select id="parameter_mode" name="parameter_mode"
+                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="basic">Basic</option>
+                        <option value="full">Full</option>
+                    </select>
+                </li>
             </ul>
             <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
                 <li>
@@ -310,7 +218,7 @@
                 <div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="base_model" class="text-xl text-gray-400 mb-2 mt-2">
+                            <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
                                 Base Model
                             </p>
                             <select name="base_model" id="base_model"
@@ -320,7 +228,16 @@
                     </div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="dataset_source" class="text-xl text-gray-400 mb-2 mt-2">Dataset Source
+                            <p for="project_name" class="text-xl text-gray-800 mb-2 mt-2">
+                                Project Name
+                            </p>
+                            <input type="text" name="project_name" id="project_name"
+                                class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p for="dataset_source" class="text-xl text-gray-800 mb-2 mt-2">Dataset Source
                             </p>
                             <select id="dataset_source" name="dataset_source"
                                 class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -408,19 +325,321 @@
                             </div>
                         </div>
                     </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p for="col_map" class="text-xl text-gray-800 mb-2 mt-2">
+                                Column Mapping
+                            </p>
+                            <div id="col_map_div"></div>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <div class="items-center justify-center h-96">
                         <div class="w-full px-4">
-                            <p for="base_model" class="text-xl text-gray-400 mb-2 mt-2">
+                            <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
                                 Parameters
                             </p>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" class="sr-only peer" id="show-json-parameters">
+                                <div
+                                    class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
+                                </div>
+                                <span class="ms-3 text-sm font-medium text-gray-900">JSON</span>
+                            </label>
                             <div id="dynamic-ui"></div>
+                            <div id="json-parameters" class="hidden">
+                                <textarea id="params_json" name="params_json" placeholder="Loading..."></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div id="json-error-message" style="color: red;"></div>
+    <div id="error-message" style="color: red;"></div>
+    <div id="success-message" style="color: green;"></div>
+    <div id="loadingSpinner" role="status"
+        class="hiddden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex flex-col items-center">
+        <div class="hidden animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-400"></div>
+        <span class="sr-only mt-4 text-blue-500">Loading...</span>
+    </div>
+    <div class="hidden justify-center items-center">
+        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+    </div>
+    <div id="confirmation-modal" tabindex="-1"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be
+                        charged for
+                        this action. You can ignore this message if you are running AutoTrain on a local hardware.
+                        Are you sure
+                        you want to continue?</h3>
+                    <button data-modal-hide="confirmation-modal" type="button"
+                        class="confirm text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">
+                        Yes, I'm sure
+                    </button>
+                    <button data-modal-hide="confirmation-modal" type="button"
+                        class="cancel text-white bg-red-600 hover:bg-red-100 focus:ring-4 focus:outline-none focus:ring-red-200 rounded-lg border border-red-200 text-sm font-medium px-5 py-2.5 hover:text-red-900 focus:z-10">No,
+                        cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="logs-modal" tabindex="-1"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-5xl max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    data-modal-hide="logs-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                    <div id="logContent"
+                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)]">
+                        <!-- Logs will be appended here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="final-modal" tabindex="-1"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    data-modal-hide="final-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="help-modal" tabindex="-1"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <br>
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    data-modal-hide="help-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </body>
+
+<script>
+    document.getElementById('data_files_training').addEventListener('change', function () {
+        var fileContainer = document.getElementById('file-container-training');
+        var files = this.files;
+        var fileText = '';
+
+        for (var i = 0; i < files.length; i++) {
+            fileText += files[i].name + ' ';
+        }
+
+        fileContainer.innerHTML = fileText;
+    });
+    document.getElementById('data_files_valid').addEventListener('change', function () {
+        var fileContainer = document.getElementById('file-container-valid');
+        var files = this.files;
+        var fileText = '';
+
+        for (var i = 0; i < files.length; i++) {
+            fileText += files[i].name + ' ';
+        }
+
+        fileContainer.innerHTML = fileText;
+    });
+</script>
+<script>
+    function generateRandomString(length) {
+        let result = '';
+        const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+
+    function setRandomProjectName() {
+        const part1 = generateRandomString(5);
+        const part2 = generateRandomString(5);
+        const randomName = `autotrain-${part1}-${part2}`;
+        document.getElementById('project_name').value = randomName;
+    }
+
+    window.onload = setRandomProjectName;
+</script>
+
+<script type="module">
+    import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('success-message').textContent = '';
+        document.getElementById('error-message').textContent = '';
+
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        function showFinalModal() {
+            const modal = document.getElementById('final-modal');
+            modal.classList.add('flex');
+            modal.classList.remove('hidden');
+        }
+
+        function hideFinalModal() {
+            const modal = document.getElementById('final-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function showModal() {
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.add('flex');
+            modal.classList.remove('hidden');
+        }
+
+        function showLogsModal() {
+            const modal = document.getElementById('logs-modal');
+            modal.classList.add('flex');
+            modal.classList.remove('hidden');
+        }
+
+        function hideLogsModal() {
+            const modal = document.getElementById('logs-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        document.getElementById('start-training-button').addEventListener('click', function () {
+            showModal();
+        });
+
+        document.querySelector('#confirmation-modal .confirm').addEventListener('click', async function () {
+            hideModal();
+            loadingSpinner.classList.remove('hidden');
+            console.log(document.getElementById('params_json').value)
+
+            var formData = new FormData();
+            var columnMapping = {};
+            var params;
+            var paramsJsonElement = document.getElementById('params_json');
+            document.querySelectorAll('[id^="col_map_"]').forEach(function (element) {
+                var key = element.id.replace('col_map_', '');
+                columnMapping[key] = element.value;
+            });
+
+            if (paramsJsonElement.value == '{}' || paramsJsonElement.value == '') {
+                var paramsDict = {};
+                document.querySelectorAll('[id^="param_"]').forEach(function (element) {
+                    var key = element.id.replace('param_', '');
+                    paramsDict[key] = element.value;
+                });
+                params = JSON.stringify(paramsDict);
+            } else {
+                params = paramsJsonElement.value;
+            }
+            formData.append('project_name', document.getElementById('project_name').value);
+            formData.append('task', document.getElementById('task').value);
+            formData.append('base_model', document.getElementById('base_model').value);
+            formData.append('hardware', document.getElementById('hardware').value);
+            formData.append('params', params);
+            formData.append('autotrain_user', document.getElementById('autotrain_user').value);
+            formData.append('column_mapping', JSON.stringify(columnMapping));
+            formData.append('hub_dataset', document.getElementById('hub_dataset').value);
+            formData.append('train_split', document.getElementById('train_split').value);
+            formData.append('valid_split', document.getElementById('valid_split').value);
+
+            var trainingFiles = document.getElementById('data_files_training').files;
+            for (var i = 0; i < trainingFiles.length; i++) {
+                formData.append('data_files_training', trainingFiles[i]);
+            }
+
+            var validationFiles = document.getElementById('data_files_valid').files;
+            for (var i = 0; i < validationFiles.length; i++) {
+                formData.append('data_files_valid', validationFiles[i]);
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/ui/create_project', true);
+
+            xhr.onload = function () {
+                loadingSpinner.classList.add('hidden');
+                var finalModalContent = document.querySelector('#final-modal .text-center');
+
+                if (xhr.status === 200) {
+                    var responseObj = JSON.parse(xhr.responseText);
+                    var monitorURL = responseObj.monitor_url;
+                    if (monitorURL.startsWith('http')) {
+                        finalModalContent.innerHTML = '<p>Success!</p>' +
+                            '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
+                    } else {
+                        finalModalContent.innerHTML = '<p>Success!</p>' +
+                            '<p>' + monitorURL + '</p>';
+                    }
+
+                    showFinalModal();
+                } else {
+                    finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
+                    console.error('Error:', xhr.status, xhr.statusText);
+                    showFinalModal();
+                }
+            };
+
+            xhr.send(formData);
+        });
+
+        document.querySelector('#confirmation-modal .cancel').addEventListener('click', function () {
+            hideModal();
+        });
+
+        document.querySelector('#final-modal button').addEventListener('click', function () {
+            hideFinalModal();
+        });
+
+        document.querySelector('#button_logs').addEventListener('click', function () {
+            showLogsModal();
+        });
+
+        document.querySelector('[data-modal-hide="logs-modal"]').addEventListener('click', function () {
+            hideLogsModal();
+        });
+    });
+</script>
+
+</html>
