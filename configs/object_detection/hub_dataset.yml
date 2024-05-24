@@ -5,9 +5,9 @@ log: tensorboard
 backend: local
 
 data:
-  path: keremberke/license-plate-object-detection
-  train_split: full:validation
-  valid_split: full:test
+  path: cppe-5
+  train_split: train
+  valid_split: test
   column_mapping:
     image_column: image
     objects_column: objects
