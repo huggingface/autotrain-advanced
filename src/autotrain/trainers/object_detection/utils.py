@@ -183,12 +183,19 @@ def object_detection_metrics(evaluation_results, image_processor, threshold=0.0,
 
     # Replace list of per class metrics with separate metric for each class
     classes = metrics.pop("classes")
-    map_per_class = metrics.pop("map_per_class")
-    mar_100_per_class = metrics.pop("mar_100_per_class")
-    for class_id, class_map, class_mar in zip(classes, map_per_class, mar_100_per_class):
-        class_name = id2label[class_id.item()] if id2label is not None else class_id.item()
-        metrics[f"map_{class_name}"] = class_map
-        metrics[f"mar_100_{class_name}"] = class_mar
+    try:
+        len(classes)
+        calc_map_per_class = True
+    except TypeError:
+        calc_map_per_class = False
+
+    if calc_map_per_class:
+        map_per_class = metrics.pop("map_per_class")
+        mar_100_per_class = metrics.pop("mar_100_per_class")
+        for class_id, class_map, class_mar in zip(classes, map_per_class, mar_100_per_class):
+            class_name = id2label[class_id.item()] if id2label is not None else class_id.item()
+            metrics[f"map_{class_name}"] = class_map
+            metrics[f"mar_100_{class_name}"] = class_mar
 
     metrics = {k: round(v.item(), 4) for k, v in metrics.items()}
 

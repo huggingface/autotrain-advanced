@@ -1,13 +1,13 @@
 task: object_detection
 base_model: facebook/detr-resnet-50
-project_name: autotrain-obj-det-cppe5-1
+project_name: autotrain-obj-det-cppe5-2
 log: tensorboard
 backend: local
 
 data:
-  path: cppe-5
-  train_split: train
-  valid_split: test
+  path: keremberke/license-plate-object-detection
+  train_split: full:validation
+  valid_split: full:test
   column_mapping:
     image_column: image
     objects_column: objects
