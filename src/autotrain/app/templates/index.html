@@ -13,8 +13,108 @@
     <script src="/static/scripts/fetch_data_and_update_models.js" defer></script>
     <script src="/static/scripts/poll.js" defer></script>
     <script src="/static/scripts/listeners.js" defer></script>
-    <script src="/static/scripts/column_mapping.js" defer></script>
+    <script src="/static/scripts/utils.js" defer></script>
+    <script src="/static/scripts/logs.js" defer></script>
 </head>
+
+<script>
+    window.addEventListener("load", function () {
+        function createColumnMappings(selectedTask) {
+            const colMapDiv = document.getElementById("div_cmap");
+            colMapDiv.innerHTML = ''; // Clear previous mappings
+
+            let fields = [];
+            let fieldNames = [];
+
+            switch (selectedTask) {
+                case 'llm:sft':
+                case 'llm:generic':
+                    fields = ['text'];
+                    fieldNames = ['text'];
+                    break;
+                case 'llm:dpo':
+                case 'llm:orpo':
+                    fields = ['prompt', 'text', 'rejected_text'];
+                    fieldNames = ['prompt', 'chosen', 'rejected'];
+                    break;
+                case 'llm:reward':
+                    fields = ['text', 'rejected_text'];
+                    fieldNames = ['chosen', 'rejected'];
+                    break;
+                case 'text-classification':
+                case 'seq2seq':
+                case 'text-regression':
+                    fields = ['text', 'label'];
+                    fieldNames = ['text', 'target'];
+                    break;
+                case 'token-classification':
+                    fields = ['text', 'label'];
+                    fieldNames = ['tokens', 'tags'];
+                    break;
+                case 'dreambooth':
+                    fields = ['image'];
+                    fieldNames = ['image'];
+                    break;
+                case 'image-classification':
+                    fields = ['image', 'label'];
+                    fieldNames = ['image', 'label'];
+                    break;
+                case 'image-object-detection':
+                    fields = ['image', 'objects'];
+                    fieldNames = ['image', 'objects'];
+                    break;
+                case 'tabular:classification':
+                case 'tabular:regression':
+                    fields = ['id', 'label'];
+                    fieldNames = ['id', 'target'];
+                    break;
+                default:
+                    return; // Do nothing if task is not recognized
+            }
+
+            fields.forEach((field, index) => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'mb-2';
+                fieldDiv.innerHTML = `
+  <label class="block text-gray-600 text-sm font-bold mb-1" for="col_map_${field}">
+    ${field}:
+  </label>
+  <input type="text" id="col_map_${field}" name="col_map_${field}" value="${fieldNames[index]}" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+`;
+                colMapDiv.appendChild(fieldDiv);
+            });
+        }
+
+        document.querySelector('select#task').addEventListener('change', (event) => {
+            const selectedTask = event.target.value;
+            createColumnMappings(selectedTask);
+        });
+        createColumnMappings(document.querySelector('select#task').value);
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const taskSelect = document.getElementById('task');
+        const validDataTab = document.getElementById('valid-data-tab');
+
+        function toggleValidationTab() {
+            const task = taskSelect.value;
+            // Check if the selected task is DreamBooth or any LLM task
+            if (task === 'dreambooth' || task.includes('llm:')) {
+                validDataTab.style.display = 'none'; // Hide the tab
+            } else {
+                validDataTab.style.display = 'block'; // Show the tab
+            }
+        }
+
+        // Initialize the state of the validation tab
+        toggleValidationTab();
+
+        // Add event listener for changes in the task dropdown
+        taskSelect.addEventListener('change', toggleValidationTab);
+    });
+
+</script>
 
 <body>
     <button data-drawer-target="separator-sidebar" data-drawer-toggle="separator-sidebar"
@@ -33,7 +133,7 @@
         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar">
         <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50">
-            <a href="https://huggingface.co/autotrain" class="flex items-center ps-2.5 mb-5">
+            <a href="https://huggingface.co/autotrain" target="_blank" class="flex items-center ps-2.5 mb-5">
                 <img src="https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/logo.png"
                     class="h-6 me-3 sm:h-7" alt="AutoTrain Logo" />
             </a>
@@ -149,7 +249,7 @@
             </ul>
             <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
                 <li>
-                    <a href="#"
+                    <a href="#" id="button_logs"
                         class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
                         <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -158,12 +258,13 @@
                             <path
                                 d="M14 4H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2ZM2 16v-6h12v6H2Z" />
                         </svg>
-                        <span class="ms-3">GitHub</span>
+                        <span class="ms-3">Logs</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#"
-                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                    <a href="https://huggingface.co/docs/autotrain" target="_blank
+                        class=" flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100
+                        group">
                         <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 16 20">
@@ -174,7 +275,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#"
+                    <a href="https://huggingface.co/docs/autotrain/faq" target="_blank"
                         class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
                         <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -183,6 +284,18 @@
                                 d="m5.4 2.736 3.429 3.429A5.046 5.046 0 0 1 10.134 6c.356.01.71.06 1.056.147l3.41-3.412c.136-.133.287-.248.45-.344A9.889 9.889 0 0 0 10.269 1c-1.87-.041-3.713.44-5.322 1.392a2.3 2.3 0 0 1 .454.344Zm11.45 1.54-.126-.127a.5.5 0 0 0-.706 0l-2.932 2.932c.029.023.049.054.078.077.236.194.454.41.65.645.034.038.078.067.11.107l2.927-2.927a.5.5 0 0 0 0-.707Zm-2.931 9.81c-.024.03-.057.052-.081.082a4.963 4.963 0 0 1-.633.639c-.041.036-.072.083-.115.117l2.927 2.927a.5.5 0 0 0 .707 0l.127-.127a.5.5 0 0 0 0-.707l-2.932-2.931Zm-1.442-4.763a3.036 3.036 0 0 0-1.383-1.1l-.012-.007a2.955 2.955 0 0 0-1-.213H10a2.964 2.964 0 0 0-2.122.893c-.285.29-.509.634-.657 1.013l-.01.016a2.96 2.96 0 0 0-.21 1 2.99 2.99 0 0 0 .489 1.716c.009.014.022.026.032.04a3.04 3.04 0 0 0 1.384 1.1l.012.007c.318.129.657.2 1 .213.392.015.784-.05 1.15-.192.012-.005.02-.013.033-.018a3.011 3.011 0 0 0 1.676-1.7v-.007a2.89 2.89 0 0 0 0-2.207 2.868 2.868 0 0 0-.27-.515c-.007-.012-.02-.025-.03-.039Zm6.137-3.373a2.53 2.53 0 0 1-.35.447L14.84 9.823c.112.428.166.869.16 1.311-.01.356-.06.709-.147 1.054l3.413 3.412c.132.134.249.283.347.444A9.88 9.88 0 0 0 20 11.269a9.912 9.912 0 0 0-1.386-5.319ZM14.6 19.264l-3.421-3.421c-.385.1-.781.152-1.18.157h-.134c-.356-.01-.71-.06-1.056-.147l-3.41 3.412a2.503 2.503 0 0 1-.443.347A9.884 9.884 0 0 0 9.732 21H10a9.9 9.9 0 0 0 5.044-1.388 2.519 2.519 0 0 1-.444-.348ZM1.735 15.6l3.426-3.426a4.608 4.608 0 0 1-.013-2.367L1.735 6.4a2.507 2.507 0 0 1-.35-.447 9.889 9.889 0 0 0 0 10.1c.1-.164.217-.316.35-.453Zm5.101-.758a4.957 4.957 0 0 1-.651-.645c-.033-.038-.077-.067-.11-.107L3.15 17.017a.5.5 0 0 0 0 .707l.127.127a.5.5 0 0 0 .706 0l2.932-2.933c-.03-.018-.05-.053-.078-.076ZM6.08 7.914c.03-.037.07-.063.1-.1.183-.22.384-.423.6-.609.047-.04.082-.092.129-.13L3.983 4.149a.5.5 0 0 0-.707 0l-.127.127a.5.5 0 0 0 0 .707L6.08 7.914Z" />
                         </svg>
                         <span class="ms-3">FAQs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://github.com/huggingface/autotrain-advanced" target="_blank"
+                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.727-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.084-.729.084-.729 1.205.084 1.838 1.238 1.838 1.238 1.07 1.835 2.809 1.304 3.495.998.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.333-5.466-5.931 0-1.31.47-2.381 1.236-3.221-.123-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.004-.404 1.02.005 2.047.138 3.005.404 2.29-1.553 3.297-1.23 3.297-1.23.653 1.653.241 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.61-2.803 5.625-5.474 5.921.43.37.823 1.096.823 2.21v3.293c0 .322.218.694.824.576 4.765-1.589 8.199-6.084 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                        <span class="ms-3">GitHub Repo</span>
                     </a>
                 </li>
             </ul>
@@ -218,21 +331,21 @@
                 <div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
+                            <p for="project_name" class="text-xl text-gray-800 mb-2 mt-2">
+                                Project Name
+                            </p>
+                            <input type="text" name="project_name" id="project_name"
+                                class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
                             <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
                                 Base Model
                             </p>
                             <select name="base_model" id="base_model"
                                 class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             </select>
-                        </div>
-                    </div>
-                    <div class="items-center justify-center h-24">
-                        <div class="w-full px-4">
-                            <p for="project_name" class="text-xl text-gray-800 mb-2 mt-2">
-                                Project Name
-                            </p>
-                            <input type="text" name="project_name" id="project_name"
-                                class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
                     <div class="items-center justify-center h-24">
@@ -327,23 +440,23 @@
                     </div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="col_map" class="text-xl text-gray-800 mb-2 mt-2">
+                            <p class="text-xl text-gray-800 mb-2 mt-2">
                                 Column Mapping
                             </p>
-                            <div id="col_map_div"></div>
+                            <div id="div_cmap"></div>
                         </div>
                     </div>
                 </div>
                 <div>
                     <div class="items-center justify-center h-96">
                         <div class="w-full px-4">
-                            <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
+                            <p class="text-xl text-gray-800 mb-2 mt-2">
                                 Parameters
                             </p>
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" value="" class="sr-only peer" id="show-json-parameters">
                                 <div
-                                    class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
+                                    class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
                                 </div>
                                 <span class="ms-3 text-sm font-medium text-gray-900">JSON</span>
                             </label>
@@ -361,52 +474,54 @@
     <div id="error-message" style="color: red;"></div>
     <div id="success-message" style="color: green;"></div>
     <div id="loadingSpinner" role="status"
-        class="hiddden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex flex-col items-center">
-        <div class="hidden animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-400"></div>
+        class="hidden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex flex-col items-center">
+        <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-400"></div>
         <span class="sr-only mt-4 text-blue-500">Loading...</span>
     </div>
     <div class="hidden justify-center items-center">
         <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
     <div id="confirmation-modal" tabindex="-1"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-md max-h-full">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+        <div class="relative w-full max-w-md p-4">
             <div class="relative bg-white rounded-lg shadow-2xl">
-                <div class="p-4 md:p-5 text-center">
-                    <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be
-                        charged for
-                        this action. You can ignore this message if you are running AutoTrain on a local hardware.
-                        Are you sure
-                        you want to continue?</h3>
-                    <button data-modal-hide="confirmation-modal" type="button"
-                        class="confirm text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">
-                        Yes, I'm sure
-                    </button>
-                    <button data-modal-hide="confirmation-modal" type="button"
-                        class="cancel text-white bg-red-600 hover:bg-red-100 focus:ring-4 focus:outline-none focus:ring-red-200 rounded-lg border border-red-200 text-sm font-medium px-5 py-2.5 hover:text-red-900 focus:z-10">No,
-                        cancel</button>
+                <div class="p-6 text-center">
+                    <h3 class="mb-5 text-lg font-medium text-gray-900">AutoTrain is a paid offering and you will be
+                        charged for this action. You can ignore this message if you are running AutoTrain on a local
+                        hardware.
+                        Are you sure you want to continue?</h3>
+                    <div class="flex justify-center space-x-4">
+                        <button data-modal-hide="confirmation-modal" type="button"
+                            class="confirm text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
+                            Yes, I'm sure
+                        </button>
+                        <button data-modal-hide="confirmation-modal" type="button"
+                            class="cancel text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:ring-gray-300 rounded-lg text-sm font-medium px-5 py-2.5 focus:outline-none">
+                            No, cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <div id="logs-modal" tabindex="-1"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-5xl max-h-full">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+        <div class="relative w-full max-w-5xl p-4">
             <div class="relative bg-white rounded-lg shadow-2xl">
                 <button type="button"
-                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
                     data-modal-hide="logs-modal">
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                     </svg>
                     <span class="sr-only">Close</span>
                 </button>
-                <div class="p-4 md:p-5 text-center">
-                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                <div class="p-6 md:p-8 text-center">
+                    <h3 class="mb-5 text-lg font-medium text-gray-900">Logs</h3>
                     <div id="logContent"
-                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)]">
+                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 pt-4">
                         <!-- Logs will be appended here -->
                     </div>
                 </div>
@@ -418,7 +533,7 @@
         <div class="relative p-4 w-full max-w-md max-h-full">
             <div class="relative bg-white rounded-lg shadow-2xl">
                 <button type="button"
-                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                     data-modal-hide="final-modal">
                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -439,7 +554,7 @@
             <div class="relative bg-white rounded-lg shadow-2xl">
                 <br>
                 <button type="button"
-                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                     data-modal-hide="help-modal">
                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -454,192 +569,7 @@
             </div>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </body>
-
-<script>
-    document.getElementById('data_files_training').addEventListener('change', function () {
-        var fileContainer = document.getElementById('file-container-training');
-        var files = this.files;
-        var fileText = '';
-
-        for (var i = 0; i < files.length; i++) {
-            fileText += files[i].name + ' ';
-        }
-
-        fileContainer.innerHTML = fileText;
-    });
-    document.getElementById('data_files_valid').addEventListener('change', function () {
-        var fileContainer = document.getElementById('file-container-valid');
-        var files = this.files;
-        var fileText = '';
-
-        for (var i = 0; i < files.length; i++) {
-            fileText += files[i].name + ' ';
-        }
-
-        fileContainer.innerHTML = fileText;
-    });
-</script>
-<script>
-    function generateRandomString(length) {
-        let result = '';
-        const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-
-    function setRandomProjectName() {
-        const part1 = generateRandomString(5);
-        const part2 = generateRandomString(5);
-        const randomName = `autotrain-${part1}-${part2}`;
-        document.getElementById('project_name').value = randomName;
-    }
-
-    window.onload = setRandomProjectName;
-</script>
-
-<script type="module">
-    import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
-    document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById('success-message').textContent = '';
-        document.getElementById('error-message').textContent = '';
-
-        const loadingSpinner = document.getElementById('loadingSpinner');
-
-        function showFinalModal() {
-            const modal = document.getElementById('final-modal');
-            modal.classList.add('flex');
-            modal.classList.remove('hidden');
-        }
-
-        function hideFinalModal() {
-            const modal = document.getElementById('final-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-
-        function showModal() {
-            const modal = document.getElementById('confirmation-modal');
-            modal.classList.add('flex');
-            modal.classList.remove('hidden');
-        }
-
-        function showLogsModal() {
-            const modal = document.getElementById('logs-modal');
-            modal.classList.add('flex');
-            modal.classList.remove('hidden');
-        }
-
-        function hideLogsModal() {
-            const modal = document.getElementById('logs-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-
-        function hideModal() {
-            const modal = document.getElementById('confirmation-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-
-        document.getElementById('start-training-button').addEventListener('click', function () {
-            showModal();
-        });
-
-        document.querySelector('#confirmation-modal .confirm').addEventListener('click', async function () {
-            hideModal();
-            loadingSpinner.classList.remove('hidden');
-            console.log(document.getElementById('params_json').value)
-
-            var formData = new FormData();
-            var columnMapping = {};
-            var params;
-            var paramsJsonElement = document.getElementById('params_json');
-            document.querySelectorAll('[id^="col_map_"]').forEach(function (element) {
-                var key = element.id.replace('col_map_', '');
-                columnMapping[key] = element.value;
-            });
-
-            if (paramsJsonElement.value == '{}' || paramsJsonElement.value == '') {
-                var paramsDict = {};
-                document.querySelectorAll('[id^="param_"]').forEach(function (element) {
-                    var key = element.id.replace('param_', '');
-                    paramsDict[key] = element.value;
-                });
-                params = JSON.stringify(paramsDict);
-            } else {
-                params = paramsJsonElement.value;
-            }
-            formData.append('project_name', document.getElementById('project_name').value);
-            formData.append('task', document.getElementById('task').value);
-            formData.append('base_model', document.getElementById('base_model').value);
-            formData.append('hardware', document.getElementById('hardware').value);
-            formData.append('params', params);
-            formData.append('autotrain_user', document.getElementById('autotrain_user').value);
-            formData.append('column_mapping', JSON.stringify(columnMapping));
-            formData.append('hub_dataset', document.getElementById('hub_dataset').value);
-            formData.append('train_split', document.getElementById('train_split').value);
-            formData.append('valid_split', document.getElementById('valid_split').value);
-
-            var trainingFiles = document.getElementById('data_files_training').files;
-            for (var i = 0; i < trainingFiles.length; i++) {
-                formData.append('data_files_training', trainingFiles[i]);
-            }
-
-            var validationFiles = document.getElementById('data_files_valid').files;
-            for (var i = 0; i < validationFiles.length; i++) {
-                formData.append('data_files_valid', validationFiles[i]);
-            }
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/ui/create_project', true);
-
-            xhr.onload = function () {
-                loadingSpinner.classList.add('hidden');
-                var finalModalContent = document.querySelector('#final-modal .text-center');
-
-                if (xhr.status === 200) {
-                    var responseObj = JSON.parse(xhr.responseText);
-                    var monitorURL = responseObj.monitor_url;
-                    if (monitorURL.startsWith('http')) {
-                        finalModalContent.innerHTML = '<p>Success!</p>' +
-                            '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
-                    } else {
-                        finalModalContent.innerHTML = '<p>Success!</p>' +
-                            '<p>' + monitorURL + '</p>';
-                    }
-
-                    showFinalModal();
-                } else {
-                    finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
-                    console.error('Error:', xhr.status, xhr.statusText);
-                    showFinalModal();
-                }
-            };
-
-            xhr.send(formData);
-        });
-
-        document.querySelector('#confirmation-modal .cancel').addEventListener('click', function () {
-            hideModal();
-        });
-
-        document.querySelector('#final-modal button').addEventListener('click', function () {
-            hideFinalModal();
-        });
-
-        document.querySelector('#button_logs').addEventListener('click', function () {
-            showLogsModal();
-        });
-
-        document.querySelector('[data-modal-hide="logs-modal"]').addEventListener('click', function () {
-            hideLogsModal();
-        });
-    });
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
 </html>

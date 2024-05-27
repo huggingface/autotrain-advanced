@@ -238,6 +238,36 @@ UI_PARAMS = {
         "label": "Numeric scaler",
         "options": ["standard", "minmax", "maxabs", "robust", "none"],
     },
+    "vae_model": {
+        "type": "string",
+        "label": "VAE model",
+    },
+    "prompt": {
+        "type": "string",
+        "label": "Prompt",
+    },
+    "resolution": {
+        "type": "string",
+        "label": "Resolution",
+    },
+    "num_steps": {
+        "type": "number",
+        "label": "Number of steps",
+    },
+    "checkpointing_steps": {
+        "type": "number",
+        "label": "Checkpointing steps",
+    },
+    "use_8bit_adam": {
+        "type": "dropdown",
+        "label": "Use 8-bit Adam",
+        "options": [True, False],
+    },
+    "xformers": {
+        "type": "dropdown",
+        "label": "xFormers",
+        "options": [True, False],
+    },
 }
 
 
@@ -457,6 +487,10 @@ async def handle_form(
         )
 
     params = json.loads(params)
+    # convert "null" to None
+    for key in params:
+        if params[key] == "null":
+            params[key] = None
     column_mapping = json.loads(column_mapping)
 
     training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
@@ -523,6 +557,11 @@ async def handle_form(
             elif task == "seq2seq":
                 dset_task = "seq2seq"
             elif task.startswith("tabular"):
+                if "," in column_mapping["label"]:
+                    column_mapping["label"] = column_mapping["label"].split(",")
+                else:
+                    column_mapping["label"] = [column_mapping["label"]]
+                column_mapping["label"] = [col.strip() for col in column_mapping["label"]]
                 subtask = task.split(":")[-1].lower()
                 if len(column_mapping["label"]) > 1 and subtask == "classification":
                     dset_task = "tabular_multi_label_classification"
@@ -645,11 +684,7 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     logs = logs.split("\n")
     logs = logs[::-1]
     # remove lines containing /is_model_training & /accelerators
-    logs = [
-        log
-        for log in logs
-        if "/ui/is_model_training" not in log and "/ui/accelerators" not in log and "/ui/logs" not in log
-    ]
+    logs = [log for log in logs if "/ui/" not in log and "/static/" not in log and "nvidia-ml-py" not in log]
 
     cuda_available = torch.cuda.is_available()
     if cuda_available:

@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const baseModelSelect = document.getElementById('base_model');
         const queryParams = new URLSearchParams(window.location.search);
         const customModelsValue = queryParams.get('custom_models');
-        console.log(customModelsValue);
 
         let fetchURL = `/ui/model_choices/${taskValue}`;
         if (customModelsValue) {

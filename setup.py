@@ -83,6 +83,8 @@ setup(
                 "src/autotrain/app/static/logo.png",
                 "src/autotrain/app/static/scripts/fetch_data_and_update_models.js",
                 "src/autotrain/app/static/scripts/poll.js",
+                "src/autotrain/app/static/scripts/listeners.js",
+                "src/autotrain/app/static/scripts/column_mapping.js",
             ],
         ),
         (
