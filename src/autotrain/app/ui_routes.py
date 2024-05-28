@@ -519,10 +519,9 @@ async def handle_form(
         if not train_split:
             raise HTTPException(status_code=400, detail="Please enter a training split.")
 
-    file_extension = os.path.splitext(data_files_training[0].filename)[1]
-    file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
-
     if len(hub_dataset) == 0:
+        file_extension = os.path.splitext(data_files_training[0].filename)[1]
+        file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
         if task == "image-classification":
             dset = AutoTrainImageClassificationDataset(
                 train_data=training_files[0],

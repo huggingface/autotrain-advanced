@@ -569,6 +569,29 @@
         var autotrain_local_value = {{ enable_local }};
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stopTrainingButton = document.getElementById('stop-training-button');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            stopTrainingButton.addEventListener('click', function () {
+                loadingSpinner.classList.remove('hidden');
+
+                fetch('/ui/stop_training', {
+                    method: 'GET'
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        console.log(data);
+                        loadingSpinner.classList.add('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loadingSpinner.classList.add('hidden');
+                    });
+            });
+        });
+    </script>
 </body>
 
 </html>
