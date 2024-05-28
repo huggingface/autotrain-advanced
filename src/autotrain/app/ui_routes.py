@@ -269,6 +269,10 @@ UI_PARAMS = {
         "label": "xFormers",
         "options": [True, False],
     },
+    "image_square_size": {
+        "type": "number",
+        "label": "Image square size",
+    },
 }
 
 
