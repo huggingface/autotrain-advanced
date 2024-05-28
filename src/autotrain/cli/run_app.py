@@ -107,15 +107,21 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         command += f" --workers {self.workers}"
 
         with open("autotrain.log", "w", encoding="utf-8") as log_file:
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                shell=True,
-                text=True,
-                bufsize=1,
-                preexec_fn=os.setsid,
-            )
+            if sys.platform == "win32":
+                process = subprocess.Popen(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, bufsize=1
+                )
+
+            else:
+                process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    shell=True,
+                    text=True,
+                    bufsize=1,
+                    preexec_fn=os.setsid,
+                )
 
             output_thread = threading.Thread(target=handle_output, args=(process.stdout, log_file))
             output_thread.start()
@@ -125,7 +131,10 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
                 output_thread.join()
             except KeyboardInterrupt:
                 logger.warning("Attempting to terminate the process...")
-                # If user cancels (Ctrl+C), terminate the subprocess
-                # Use os.killpg to send SIGTERM to the process group, ensuring all child processes are killed
-                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                if sys.platform == "win32":
+                    process.terminate()
+                else:
+                    # If user cancels (Ctrl+C), terminate the subprocess
+                    # Use os.killpg to send SIGTERM to the process group, ensuring all child processes are killed
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
                 logger.info("Process terminated by user")
