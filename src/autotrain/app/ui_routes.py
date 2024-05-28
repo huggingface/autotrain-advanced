@@ -248,7 +248,7 @@ UI_PARAMS = {
         "label": "Prompt",
     },
     "resolution": {
-        "type": "string",
+        "type": "number",
         "label": "Resolution",
     },
     "num_steps": {
@@ -494,10 +494,6 @@ async def handle_form(
         if params[key] == "null":
             params[key] = None
     column_mapping = json.loads(column_mapping)
-
-    logger.info(params)
-    logger.info(column_mapping)
-    return {"success": "true", "monitor_url": "fake"}
 
     training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
