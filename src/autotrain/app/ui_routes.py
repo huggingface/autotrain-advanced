@@ -2,6 +2,7 @@ import json
 import os
 import signal
 import sys
+import time
 from typing import List
 
 import torch
@@ -339,6 +340,7 @@ async def load_index(request: Request, token: str = Depends(user_authentication)
         "enable_nvcf": ENABLE_NVCF,
         "enable_local": AUTOTRAIN_LOCAL,
         "version": __version__,
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     return templates.TemplateResponse("index.html", context)
 
@@ -493,6 +495,10 @@ async def handle_form(
             params[key] = None
     column_mapping = json.loads(column_mapping)
 
+    logger.info(params)
+    logger.info(column_mapping)
+    return {"success": "true", "monitor_url": "fake"}
+
     training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
     validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
 
@@ -644,6 +650,8 @@ async def available_accelerators(authenticated: bool = Depends(user_authenticati
     This function is used to fetch the number of available accelerators
     :return: JSONResponse
     """
+    if AUTOTRAIN_LOCAL == 0:
+        return {"accelerators": "Not available in cloud mode."}
     cuda_available = torch.cuda.is_available()
     mps_available = torch.backends.mps.is_available()
     if cuda_available:
@@ -661,6 +669,8 @@ async def is_model_training(authenticated: bool = Depends(user_authentication)):
     This function is used to fetch the number of running jobs
     :return: JSONResponse
     """
+    if AUTOTRAIN_LOCAL == 0:
+        return {"model_training": "Not available in cloud mode."}
     running_jobs = get_running_jobs(DB)
     if running_jobs:
         return {"model_training": True, "pids": running_jobs}

@@ -1,4 +1,4 @@
-window.addEventListener("load", function () {
+document.addEventListener('DOMContentLoaded', function () {
     const dataSource = document.getElementById("dataset_source");
     const uploadDataTabContent = document.getElementById("upload-data-tab-content");
     const hubDataTabContent = document.getElementById("hub-data-tab-content");

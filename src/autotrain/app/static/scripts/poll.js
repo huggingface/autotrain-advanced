@@ -1,10 +1,12 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', (event) => {
     function pollAccelerators() {
+        const numAcceleratorsElement = document.getElementById('num_accelerators');
         if (autotrain_local_value === 0) {
-            let statusParagraph = document.getElementById('num_accelerators');
-            statusParagraph.innerText = '';
+            numAcceleratorsElement.innerText = 'Accelerators: Only available in local mode.';
+            numAcceleratorsElement.style.display = 'block'; // Ensure the element is visible
             return;
         }
+
         // Send a request to the /accelerators endpoint
         fetch('/ui/accelerators')
             .then(response => response.json()) // Assuming the response is in JSON format
@@ -22,8 +24,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Send a request to the /is_model_training endpoint
 
         if (autotrain_local_value === 0) {
-            let statusParagraph = document.getElementById('is_model_training');
-            statusParagraph.innerText = '';
+            const statusParagraph = document.getElementById('is_model_training');
+            statusParagraph.innerText = 'Running jobs: Only available in local mode.';
+            statusParagraph.style.display = 'block';
             return;
         }
         fetch('/ui/is_model_training')

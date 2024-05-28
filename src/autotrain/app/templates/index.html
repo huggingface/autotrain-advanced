@@ -6,15 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-    <script>
-        var autotrain_local_value = {{ enable_local }};
-    </script>
-    <script src="/static/scripts/fetch_data_and_update_models.js" defer></script>
-    <script src="/static/scripts/poll.js" defer></script>
-    <script src="/static/scripts/listeners.js" defer></script>
-    <script src="/static/scripts/utils.js" defer></script>
-    <script src="/static/scripts/logs.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="/static/scripts/fetch_data_and_update_models.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/poll.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/listeners.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/utils.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/logs.js?cb={{ time }}" defer></script>
 </head>
 
 <script>
@@ -568,7 +565,9 @@
             </div>
         </div>
     </div>
+    <script>
+        var autotrain_local_value = {{ enable_local }};
+    </script>
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
 </html>
