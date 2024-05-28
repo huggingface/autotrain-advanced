@@ -2,1039 +2,573 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-  <script>
-    var autotrain_local_value = {{ enable_local }};
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.getElementById('json-error-message').textContent = '';
-      function fetchDataAndUpdateTextarea() {
-        const taskValue = document.getElementById('task').value;
-        const basicParamsRadio = document.getElementById('basic-params-radio');
-
-        document.getElementById('params').value = 'Loading...';
-        fetch(`/ui/params/${taskValue}/${basicParamsRadio.checked ? 'basic' : 'full'}`)
-          .then(response => response.json())
-          .then(data => {
-            document.getElementById('params').value = JSON.stringify(data, null, 2);
-          })
-          .catch(error => console.error('Error:', error));
-      }
-      function fetchDataAndUpdateModels() {
-        const taskValue = document.getElementById('task').value;
-        const baseModelSelect = document.getElementById('base_model');
-        const queryParams = new URLSearchParams(window.location.search);
-        const customModelsValue = queryParams.get('custom_models');
-        console.log(customModelsValue);
-
-        let fetchURL = `/ui/model_choices/${taskValue}`;
-        if (customModelsValue) {
-          fetchURL += `?custom_models=${customModelsValue}`;
-        }
-        baseModelSelect.innerHTML = 'Fetching models...';
-        fetch(fetchURL)
-          .then(response => response.json())
-          .then(data => {
-            const baseModelSelect = document.getElementById('base_model');
-            baseModelSelect.innerHTML = ''; // Clear existing options
-            data.forEach(model => {
-              let option = document.createElement('option');
-              option.value = model.id; // Assuming each model has an 'id'
-              option.textContent = model.name; // Assuming each model has a 'name'
-              baseModelSelect.appendChild(option);
-            });
-          })
-          .catch(error => console.error('Error:', error));
-      }
-      // Function to validate JSON in the textarea
-      function validateJSON() {
-        try {
-          JSON.parse(document.getElementById('params').value);
-          document.getElementById('error-message').textContent = '';
-        } catch (e) {
-          document.getElementById('error-message').textContent = 'Invalid parameters: ' + e.message;
-        }
-      }
-      function pollAccelerators() {
-        if (autotrain_local_value === 0) {
-          let statusParagraph = document.getElementById('num_accelerators');
-          statusParagraph.innerText = '';
-          return;
-        }
-        // Send a request to the /accelerators endpoint
-        fetch('/ui/accelerators')
-          .then(response => response.json()) // Assuming the response is in JSON format
-          .then(data => {
-            // Update the paragraph with the number of accelerators
-            document.getElementById('num_accelerators').innerText = `Accelerators: ${data.accelerators}`;
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            // Update the paragraph to show an error message
-            document.getElementById('num_accelerators').innerText = 'Accelerators: Error fetching data';
-          });
-      }
-      function pollModelTrainingStatus() {
-        // Send a request to the /is_model_training endpoint
-
-        if (autotrain_local_value === 0) {
-          let statusParagraph = document.getElementById('is_model_training');
-          statusParagraph.innerText = '';
-          return;
-        }
-        fetch('/ui/is_model_training')
-          .then(response => response.json()) // Assuming the response is in JSON format
-          .then(data => {
-            // Construct the message to display
-            let message = data.model_training ? 'Running job PID(s): ' + data.pids.join(', ') : 'No running jobs';
-
-            // Update the paragraph with the status of model training
-            let statusParagraph = document.getElementById('is_model_training');
-            statusParagraph.innerText = message;
-            let stopTrainingButton = document.getElementById('stop-training-button');
-            let startTrainingButton = document.getElementById('start-training-button');
-
-            // Change the text color based on the model training status
-            if (data.model_training) {
-              // Set text color to red if jobs are running
-              statusParagraph.style.color = 'red';
-              stopTrainingButton.style.display = 'block';
-              startTrainingButton.style.display = 'none';
-            } else {
-              // Set text color to green if no jobs are running
-              statusParagraph.style.color = 'green';
-              stopTrainingButton.style.display = 'none';
-              startTrainingButton.style.display = 'block';
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            // Update the paragraph to show an error message
-            let statusParagraph = document.getElementById('is_model_training');
-            statusParagraph.innerText = 'Error fetching training status';
-            statusParagraph.style.color = 'red'; // Set error message color to red
-          });
-      }
-
-      setInterval(pollAccelerators, 10000);
-      setInterval(pollModelTrainingStatus, 5000);
-
-      // Event listener for dropdown changes
-      document.getElementById('task').addEventListener('change', fetchDataAndUpdateTextarea);
-      document.getElementById('task').addEventListener('change', fetchDataAndUpdateModels);
-      document.getElementById("basic-params-radio").addEventListener("click", fetchDataAndUpdateTextarea);
-      document.getElementById("full-params-radio").addEventListener("click", fetchDataAndUpdateTextarea);
-
-      // Event listener for textarea changes
-      document.getElementById('params').addEventListener('blur', validateJSON);
-
-      // Initial call to populate the textarea when the page loads
-      fetchDataAndUpdateTextarea();
-      fetchDataAndUpdateModels();
-      pollAccelerators();
-      pollModelTrainingStatus();
-    });
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var fetchLogsInterval;
-
-      // Function to check the modal's display property and fetch logs if visible
-      function fetchAndDisplayLogs() {
-        var modal = document.getElementById('logs-modal');
-        var displayStyle = window.getComputedStyle(modal).display;
-
-        // Check if the modal display property is 'flex'
-        if (displayStyle === 'flex') {
-          fetchLogs(); // Initial fetch when the modal is opened
-
-          // Clear any existing interval to avoid duplicates
-          clearInterval(fetchLogsInterval);
-
-          // Set up the interval to fetch logs every 5 seconds
-          fetchLogsInterval = setInterval(fetchLogs, 5000);
-        } else {
-          // Clear the interval when the modal is not displayed as 'flex'
-          clearInterval(fetchLogsInterval);
-        }
-      }
-
-      // Function to fetch logs from the server
-      function fetchLogs() {
-        fetch('/ui/logs')
-          .then(response => response.json())
-          .then(data => {
-            var logContainer = document.getElementById('logContent');
-            logContainer.innerHTML = ''; // Clear previous logs
-
-            // Handling the case when logs are only available in local mode or no logs available
-            if (typeof data.logs === 'string') {
-              logContainer.textContent = data.logs;
-            } else {
-              // Assuming data.logs is an array of log entries
-              data.logs.forEach(log => {
-                if (log.trim().length > 0) {
-                  var p = document.createElement('p');
-                  p.textContent = log;
-                  logContainer.appendChild(p); // Appends logs in order received
-                }
-              });
-            }
-          })
-          .catch(error => console.error('Error fetching logs:', error));
-      }
-
-      // Set up an observer to detect when the modal becomes visible or hidden
-      var observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-          if (mutation.attributeName === 'class') {
-            fetchAndDisplayLogs();
-          }
-        });
-      });
-
-      var modal = document.getElementById('logs-modal');
-      observer.observe(modal, {
-        attributes: true //configure it to listen to attribute changes
-      });
-    });
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="/static/scripts/fetch_data_and_update_models.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/poll.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/listeners.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/utils.js?cb={{ time }}" defer></script>
+    <script src="/static/scripts/logs.js?cb={{ time }}" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
 </head>
 
-<body>
-  <header class="bg-white text-white">
-    <div class="container flex justify-between items-center">
-      <img src="/static/logo.png" alt="AutoTrain" , class="w-48">
-    </div>
-  </header>
-  <div class="form-container mx-auto p-6">
-    <form action="#" method="post" class="grid grid-cols-2 gap-2" enctype="multipart/form-data">
-      <div>
-        <div class="columns-2 mb-2">
-          <div class="form-group">
-            <label for="autotrain_user" class="text-sm font-medium text-gray-700">Hugging Face User
-              <button type="button" id="autotrain_user_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <select name="autotrain_user" , id="autotrain_user"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              {% for user in valid_users %}
-              <option value="{{ user }}">{{ user }}</option>
-              {% endfor %}
-            </select>
-            <label for="project_name" class="text-sm font-medium text-gray-700">Project name
-              <button type="button" id="project_name_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <input type="text" name="project_name" id="project_name"
-              class="mt-1 block w-full border border-gray-300 px-3 py-1.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="eg: imdb-sentiment-analysis">
-          </div>
-        </div>
-        <div class="columns-2 mb-2">
-          <div class="form-group">
-            <label for="hardware" class="text-sm font-medium text-gray-700">Hardware
-              <button type="button" id="hardware_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <select id="hardware" name="hardware"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              {% if enable_local == 1 %}
-              <option value="local-ui">Local/Space</option>
-              {% endif %}
-              {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
-              <optgroup label="Hugging Face Spaces">
-                <option value="spaces-a10g-large">1xA10G Large</option>
-                <option value="spaces-a10g-largex2">2xA10G Large</option>
-                <option value="spaces-a10g-largex4">4xA10G Large</option>
-                <option value="spaces-a100-large">A100 Large</option>
-                <option value="spaces-a10g-small">A10G Small</option>
-                <option value="spaces-t4-medium">T4 Medium</option>
-                <option value="spaces-t4-small">T4 Small</option>
-                <option value="spaces-cpu-upgrade">CPU Upgrade</option>
-                <option value="spaces-cpu-basic">CPU (Free)</option>
-              </optgroup>
-              <optgroup label="Hugging Face Endpoints">
-                <option value="ep-aws-useast1-m">1xA10G</option>
-                <option value="ep-aws-useast1-xl">1xA100</option>
-                <option value="ep-aws-useast1-2xl">2xA100</option>
-                <option value="ep-aws-useast1-4xl">4xA100</option>
-                <option value="ep-aws-useast1-8xl">8xA100</option>
-              </optgroup>
-              {% endif %}
-              {% if enable_ngc == 1 %}
-              <optgroup label="NVIDIA DGX Cloud">
-                <option value="dgx-a100">1xA100 DGX</option>
-                <option value="dgx-2a100">2xA100 DGX</option>
-                <option value="dgx-4a100">4xA100 DGX</option>
-                <option value="dgx-8a100">8xA100 DGX</option>
-              </optgroup>
-              {% endif %}
-              {% if enable_nvcf == 1 %}
-              <optgroup label="NVIDIA Cloud Functions">
-                <option value="nvcf-l40sx1">1xL40S</option>
-                <option value="nvcf-h100x1">1xH100</option>
-                <option value="nvcf-h100x2">2xH100</option>
-                <option value="nvcf-h100x4">4xH100</option>
-                <option value="nvcf-h100x8">8xH100</option>
-              </optgroup>
-              {% endif %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="task" class="text-sm font-medium text-gray-700">Task
-              <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-info-circle"></i>
-              </button>
-            </label>
-            <select id="task" name="task"
-              class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <optgroup label="LLM Finetuning">
-                <option value="llm:sft">LLM SFT</option>
-                <option value="llm:orpo">LLM ORPO</option>
-                <option value="llm:generic">LLM Generic</option>
-                <option value="llm:dpo">LLM DPO</option>
-                <option value="llm:reward">LLM Reward</option>
-              </optgroup>
-              <optgroup label="Other Text Tasks">
-                <option value="text-classification">Text Classification</option>
-                <option value="text-regression">Text Regression</option>
-                <option value="seq2seq">Sequence To Sequence</option>
-                <option value="token-classification">Token Classification</option>
-              </optgroup>
-              <optgroup label="Image Tasks">
-                <option value="dreambooth">DreamBooth LoRA</option>
-                <option value="image-classification">Image Classification</option>
-                <option value="image-object-detection">Object Detection</option>
-              </optgroup>
-              <optgroup label="Tabular Tasks">
-                <option value="tabular:classification">Tabular Classification</option>
-                <option value="tabular:regression">Tabular Regression</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-        <div class="form-group mb-2">
-          <label for="base_model" class="text-sm font-medium text-gray-700">Base Model
-            <button type="button" id="base_model_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <select name="base_model" id="base_model"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          </select>
-        </div>
-        <div class="mb-2">
-          <label class="text-sm font-medium text-gray-700">Dataset
-            <button type="button" id="dataset_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <div class="flex items-center ps-4 border border-gray-300 rounded">
-            <input checked id="upload-dataset-radio" type="radio" value="" name="dataset-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="upload-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Upload
-              Dataset</label>
-            <input id="hub-dataset-radio" type="radio" value="" name="dataset-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="hub-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Hub
-              Dataset</label>
-          </div>
-        </div>
-        <div id="form-group">
-          <div id="hub-data-tab-content">
-            <div class="form-group">
-              <label for="hub_dataset" class="text-sm font-medium text-gray-700">Hub Dataset
-              </label>
-              <input type="text" name="hub_dataset" id="hub_dataset"
-                class="mt-1 block w-full border border-gray-300 px-3 py-2.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div class="columns-2 mb-2 mt-2">
-              <div class="form-group">
-                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
-                </label>
-                <input type="text" name="train_split" id="train_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split
-                  (optional)
-                </label>
-                <input type="text" name="valid_split" id="valid_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="upload-data-tabs">
-          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
-            data-tabs-toggle="#upload-data-tab-content" role="tablist">
-            <li class="me-2" role="presentation">
-              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="training-data-tab"
-                data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
-                aria-selected="false">Training Data</button>
-            </li>
-            <li class="me-2" role="presentation">
-              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="valid-data-tab"
-                data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
-                aria-selected="false">Validation Data
-                (optional)</button>
-            </li>
-          </ul>
-        </div>
-        <div id="form-group">
-          <div id="upload-data-tab-content">
-            <div class="hidden p-4" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
-              <div class="flex items-center justify-center w-full h-20">
-                <label for="data_files_training"
-                  class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
-                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                      fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                    </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training
-                        File(s)
-                        <p class="text-xs text-gray-700" id="file-container-training"></p>
-                  </div>
-                  <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
-                </label>
-              </div>
-            </div>
-            <div class="hidden p-4" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
-              <div class="flex items-center justify-center w-full h-20">
-                <label for="data_files_valid"
-                  class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
-                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                      fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                    </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Validation
-                        File(s)
-                        <p class="text-xs text-gray-700" id="file-container-valid"></p>
-                  </div>
-                  <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="columns-1" id="text_label">
-          <label for="column_mapping" class="text-sm font-medium text-gray-700">Column mapping
-            <button type="button" id="column_mapping_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <input type="text" name="column_mapping" id="column_mapping"
-            class="mt-2 mb-4 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
+<script>
+    window.addEventListener("load", function () {
+        function createColumnMappings(selectedTask) {
+            const colMapDiv = document.getElementById("div_cmap");
+            colMapDiv.innerHTML = ''; // Clear previous mappings
 
-      </div>
-      <div>
-        <div class="form-group">
-          <label for="params" class="text-sm font-medium text-gray-700">Training Parameters
-            <button type="button" id="params_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <div class="flex items-center ps-20">
-            <input checked id="basic-params-radio" type="radio" value="" name="params-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="basic-params-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Basic</label>
-            <input id="full-params-radio" type="radio" value="" name="params-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="full-params-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Full</label>
-          </div>
-          <textarea id="params" name="params" rows="20" class="p-2.5 w-full text-sm text-gray-900"
-            placeholder="Loading..."></textarea>
+            let fields = [];
+            let fieldNames = [];
+
+            switch (selectedTask) {
+                case 'llm:sft':
+                case 'llm:generic':
+                    fields = ['text'];
+                    fieldNames = ['text'];
+                    break;
+                case 'llm:dpo':
+                case 'llm:orpo':
+                    fields = ['prompt', 'text', 'rejected_text'];
+                    fieldNames = ['prompt', 'chosen', 'rejected'];
+                    break;
+                case 'llm:reward':
+                    fields = ['text', 'rejected_text'];
+                    fieldNames = ['chosen', 'rejected'];
+                    break;
+                case 'text-classification':
+                case 'seq2seq':
+                case 'text-regression':
+                    fields = ['text', 'label'];
+                    fieldNames = ['text', 'target'];
+                    break;
+                case 'token-classification':
+                    fields = ['text', 'label'];
+                    fieldNames = ['tokens', 'tags'];
+                    break;
+                case 'dreambooth':
+                    fields = ['image'];
+                    fieldNames = ['image'];
+                    break;
+                case 'image-classification':
+                    fields = ['image', 'label'];
+                    fieldNames = ['image', 'label'];
+                    break;
+                case 'image-object-detection':
+                    fields = ['image', 'objects'];
+                    fieldNames = ['image', 'objects'];
+                    break;
+                case 'tabular:classification':
+                case 'tabular:regression':
+                    fields = ['id', 'label'];
+                    fieldNames = ['id', 'target'];
+                    break;
+                default:
+                    return; // Do nothing if task is not recognized
+            }
+
+            fields.forEach((field, index) => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'mb-2';
+                fieldDiv.innerHTML = `
+  <label class="block text-gray-600 text-sm font-bold mb-1" for="col_map_${field}">
+    ${field}:
+  </label>
+  <input type="text" id="col_map_${field}" name="col_map_${field}" value="${fieldNames[index]}" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+`;
+                colMapDiv.appendChild(fieldDiv);
+            });
+        }
+
+        document.querySelector('select#task').addEventListener('change', (event) => {
+            const selectedTask = event.target.value;
+            createColumnMappings(selectedTask);
+        });
+        createColumnMappings(document.querySelector('select#task').value);
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const taskSelect = document.getElementById('task');
+        const validDataTab = document.getElementById('valid-data-tab');
+
+        function toggleValidationTab() {
+            const task = taskSelect.value;
+            // Check if the selected task is DreamBooth or any LLM task
+            if (task === 'dreambooth' || task.includes('llm:')) {
+                validDataTab.style.display = 'none'; // Hide the tab
+            } else {
+                validDataTab.style.display = 'block'; // Show the tab
+            }
+        }
+
+        // Initialize the state of the validation tab
+        toggleValidationTab();
+
+        // Add event listener for changes in the task dropdown
+        taskSelect.addEventListener('change', toggleValidationTab);
+    });
+
+</script>
+
+<body>
+    <button data-drawer-target="separator-sidebar" data-drawer-toggle="separator-sidebar"
+        aria-controls="separator-sidebar" type="button"
+        class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+        <span class="sr-only">Open sidebar</span>
+        <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg">
+            <path clip-rule="evenodd" fill-rule="evenodd"
+                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z">
+            </path>
+        </svg>
+    </button>
+
+    <aside id="separator-sidebar"
+        class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+        aria-label="Sidebar">
+        <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50">
+            <a href="https://huggingface.co/autotrain" target="_blank" class="flex items-center ps-2.5 mb-5">
+                <img src="https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/logo.png"
+                    class="h-6 me-3 sm:h-7" alt="AutoTrain Logo" />
+            </a>
+            <hr class="mb-2">
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <label for="autotrain_user" class="text-sm font-medium text-gray-700">Hugging Face User
+                        <button type="button" id="autotrain_user_info" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </label>
+                    <select name="autotrain_user" , id="autotrain_user"
+                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% for user in valid_users %}
+                        <option value="{{ user }}">{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                </li>
+                <li>
+                    <label for="task" class="text-sm font-medium text-gray-700">Task
+                        <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </label>
+                    <select id="task" name="task"
+                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <optgroup label="LLM Finetuning">
+                            <option value="llm:sft">LLM SFT</option>
+                            <option value="llm:orpo">LLM ORPO</option>
+                            <option value="llm:generic">LLM Generic</option>
+                            <option value="llm:dpo">LLM DPO</option>
+                            <option value="llm:reward">LLM Reward</option>
+                        </optgroup>
+                        <optgroup label="Other Text Tasks">
+                            <option value="text-classification">Text Classification</option>
+                            <option value="text-regression">Text Regression</option>
+                            <option value="seq2seq">Sequence To Sequence</option>
+                            <option value="token-classification">Token Classification</option>
+                        </optgroup>
+                        <optgroup label="Image Tasks">
+                            <option value="dreambooth">DreamBooth LoRA</option>
+                            <option value="image-classification">Image Classification</option>
+                            <option value="image-object-detection">Object Detection</option>
+                        </optgroup>
+                        <optgroup label="Tabular Tasks">
+                            <option value="tabular:classification">Tabular Classification</option>
+                            <option value="tabular:regression">Tabular Regression</option>
+                        </optgroup>
+                    </select>
+                </li>
+                <li>
+                    <label for="hardware" class="text-sm font-medium text-gray-700">Hardware
+                        <button type="button" id="hardware_info" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </label>
+                    <select id="hardware" name="hardware"
+                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% if enable_local == 1 %}
+                        <option value="local-ui">Local/Space</option>
+                        {% endif %}
+                        {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
+                        <optgroup label="Hugging Face Spaces">
+                            <option value="spaces-a10g-large">1xA10G Large</option>
+                            <option value="spaces-a10g-largex2">2xA10G Large</option>
+                            <option value="spaces-a10g-largex4">4xA10G Large</option>
+                            <option value="spaces-a100-large">A100 Large</option>
+                            <option value="spaces-a10g-small">A10G Small</option>
+                            <option value="spaces-t4-medium">T4 Medium</option>
+                            <option value="spaces-t4-small">T4 Small</option>
+                            <option value="spaces-cpu-upgrade">CPU Upgrade</option>
+                            <option value="spaces-cpu-basic">CPU (Free)</option>
+                        </optgroup>
+                        <optgroup label="Hugging Face Endpoints">
+                            <option value="ep-aws-useast1-m">1xA10G</option>
+                            <option value="ep-aws-useast1-xl">1xA100</option>
+                            <option value="ep-aws-useast1-2xl">2xA100</option>
+                            <option value="ep-aws-useast1-4xl">4xA100</option>
+                            <option value="ep-aws-useast1-8xl">8xA100</option>
+                        </optgroup>
+                        {% endif %}
+                        {% if enable_ngc == 1 %}
+                        <optgroup label="NVIDIA DGX Cloud">
+                            <option value="dgx-a100">1xA100 DGX</option>
+                            <option value="dgx-2a100">2xA100 DGX</option>
+                            <option value="dgx-4a100">4xA100 DGX</option>
+                            <option value="dgx-8a100">8xA100 DGX</option>
+                        </optgroup>
+                        {% endif %}
+                        {% if enable_nvcf == 1 %}
+                        <optgroup label="NVIDIA Cloud Functions">
+                            <option value="nvcf-l40sx1">1xL40S</option>
+                            <option value="nvcf-h100x1">1xH100</option>
+                            <option value="nvcf-h100x2">2xH100</option>
+                            <option value="nvcf-h100x4">4xH100</option>
+                            <option value="nvcf-h100x8">8xH100</option>
+                        </optgroup>
+                        {% endif %}
+                    </select>
+                </li>
+                <li>
+                    <label for="parameter_mode" class="text-sm font-medium text-gray-700">Parameter Mode
+                        <button type="button" id="parameter_mode_info" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </label>
+                    <select id="parameter_mode" name="parameter_mode"
+                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="basic">Basic</option>
+                        <option value="full">Full</option>
+                    </select>
+                </li>
+            </ul>
+            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
+                <li>
+                    <a href="#" id="button_logs"
+                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 20 18">
+                            <path d="M18 0H6a2 2 0 0 0-2 2h14v12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Z" />
+                            <path
+                                d="M14 4H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2ZM2 16v-6h12v6H2Z" />
+                        </svg>
+                        <span class="ms-3">Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://huggingface.co/docs/autotrain" target="_blank"
+                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 16 20">
+                            <path
+                                d="M16 14V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v15a3 3 0 0 0 3 3h12a1 1 0 0 0 0-2h-1v-2a2 2 0 0 0 2-2ZM4 2h2v12H4V2Zm8 16H3a1 1 0 0 1 0-2h9v2Z" />
+                        </svg>
+                        <span class="ms-3">Documentation</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://huggingface.co/docs/autotrain/faq" target="_blank"
+                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 21 21">
+                            <path
+                                d="m5.4 2.736 3.429 3.429A5.046 5.046 0 0 1 10.134 6c.356.01.71.06 1.056.147l3.41-3.412c.136-.133.287-.248.45-.344A9.889 9.889 0 0 0 10.269 1c-1.87-.041-3.713.44-5.322 1.392a2.3 2.3 0 0 1 .454.344Zm11.45 1.54-.126-.127a.5.5 0 0 0-.706 0l-2.932 2.932c.029.023.049.054.078.077.236.194.454.41.65.645.034.038.078.067.11.107l2.927-2.927a.5.5 0 0 0 0-.707Zm-2.931 9.81c-.024.03-.057.052-.081.082a4.963 4.963 0 0 1-.633.639c-.041.036-.072.083-.115.117l2.927 2.927a.5.5 0 0 0 .707 0l.127-.127a.5.5 0 0 0 0-.707l-2.932-2.931Zm-1.442-4.763a3.036 3.036 0 0 0-1.383-1.1l-.012-.007a2.955 2.955 0 0 0-1-.213H10a2.964 2.964 0 0 0-2.122.893c-.285.29-.509.634-.657 1.013l-.01.016a2.96 2.96 0 0 0-.21 1 2.99 2.99 0 0 0 .489 1.716c.009.014.022.026.032.04a3.04 3.04 0 0 0 1.384 1.1l.012.007c.318.129.657.2 1 .213.392.015.784-.05 1.15-.192.012-.005.02-.013.033-.018a3.011 3.011 0 0 0 1.676-1.7v-.007a2.89 2.89 0 0 0 0-2.207 2.868 2.868 0 0 0-.27-.515c-.007-.012-.02-.025-.03-.039Zm6.137-3.373a2.53 2.53 0 0 1-.35.447L14.84 9.823c.112.428.166.869.16 1.311-.01.356-.06.709-.147 1.054l3.413 3.412c.132.134.249.283.347.444A9.88 9.88 0 0 0 20 11.269a9.912 9.912 0 0 0-1.386-5.319ZM14.6 19.264l-3.421-3.421c-.385.1-.781.152-1.18.157h-.134c-.356-.01-.71-.06-1.056-.147l-3.41 3.412a2.503 2.503 0 0 1-.443.347A9.884 9.884 0 0 0 9.732 21H10a9.9 9.9 0 0 0 5.044-1.388 2.519 2.519 0 0 1-.444-.348ZM1.735 15.6l3.426-3.426a4.608 4.608 0 0 1-.013-2.367L1.735 6.4a2.507 2.507 0 0 1-.35-.447 9.889 9.889 0 0 0 0 10.1c.1-.164.217-.316.35-.453Zm5.101-.758a4.957 4.957 0 0 1-.651-.645c-.033-.038-.077-.067-.11-.107L3.15 17.017a.5.5 0 0 0 0 .707l.127.127a.5.5 0 0 0 .706 0l2.932-2.933c-.03-.018-.05-.053-.078-.076ZM6.08 7.914c.03-.037.07-.063.1-.1.183-.22.384-.423.6-.609.047-.04.082-.092.129-.13L3.983 4.149a.5.5 0 0 0-.707 0l-.127.127a.5.5 0 0 0 0 .707L6.08 7.914Z" />
+                        </svg>
+                        <span class="ms-3">FAQs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://github.com/huggingface/autotrain-advanced" target="_blank"
+                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.727-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.084-.729.084-.729 1.205.084 1.838 1.238 1.838 1.238 1.07 1.835 2.809 1.304 3.495.998.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.333-5.466-5.931 0-1.31.47-2.381 1.236-3.221-.123-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.004-.404 1.02.005 2.047.138 3.005.404 2.29-1.553 3.297-1.23 3.297-1.23.653 1.653.241 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.61-2.803 5.625-5.474 5.921.43.37.823 1.096.823 2.21v3.293c0 .322.218.694.824.576 4.765-1.589 8.199-6.084 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                        <span class="ms-3">GitHub Repo</span>
+                    </a>
+                </li>
+            </ul>
+            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
+                <div class="block text-xs text-gray-400 text-center">{{version}}
+                </div>
+            </ul>
         </div>
-      </div>
-      <div class="col-span-2">
-        <button type="submit" id="start-training-button"
-          class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
-          Training
-        </button>
-        <button type="button" id="stop-training-button"
-          class="hidden w-full px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:bg-red-700">Stop
-          Training
-        </button>
-        <div class="columns-2 mb-2 mt-2">
-          <p class="text-sm text-gray-700" id="num_accelerators">Accelerators: Fetching...</p>
-          <p class="text-sm text-gray-700 font-bold text-right" id="is_model_training">Fetching training
-            status...
-          </p>
+    </aside>
+
+    <div class="p-4 sm:ml-64">
+        <div class="columns-2 mb-2">
+            <div>
+                <p class="text-sm text-gray-700 font-bold text-left" id="num_accelerators">Accelerators: Fetching...
+                </p>
+                <p class="text-sm text-gray-700 font-bold text-left" id="is_model_training">Fetching training
+                    status...
+                </p>
+            </div>
+            <div class="flex items-end justify-end">
+                <button type="button" id="start-training-button"
+                    class="px-2 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
+                    Training
+                </button>
+                <button type="button" id="stop-training-button"
+                    class="hidden px-2 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:bg-red-700">Stop
+                    Training
+                </button>
+            </div>
         </div>
-      </div>
-    </form>
+        <div class="p-4">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p for="project_name" class="text-xl text-gray-800 mb-2 mt-2">
+                                Project Name
+                            </p>
+                            <input type="text" name="project_name" id="project_name"
+                                class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
+                                Base Model
+                            </p>
+                            <select name="base_model" id="base_model"
+                                class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p for="dataset_source" class="text-xl text-gray-800 mb-2 mt-2">Dataset Source
+                            </p>
+                            <select id="dataset_source" name="dataset_source"
+                                class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="local">Local</option>
+                                <option value="hub">Hugging Face Hub</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="items-stretch justify-center h-48 rounded">
+                        <div id="hub-data-tab-content" class="w-full px-4">
+                            <label for="hub_dataset" class="text-sm font-medium text-gray-700">Hub dataset path
+                            </label>
+                            <input type="text" name="hub_dataset" id="hub_dataset"
+                                class="mt-1 block w-full border border-gray-300 px-3 py-2.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <div class="columns-2 mb-2 mt-2">
+                                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
+                                </label>
+                                <input type="text" name="train_split" id="train_split"
+                                    class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split
+                                    (optional)
+                                </label>
+                                <input type="text" name="valid_split" id="valid_split"
+                                    class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <div id="upload-data-tabs" class="w-full px-4">
+                            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
+                                data-tabs-toggle="#upload-data-tab-content" role="tablist">
+                                <li class="me-2" role="presentation">
+                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="training-data-tab"
+                                        data-tabs-target="#training-data" type="button" role="tab"
+                                        aria-controls="training-data" aria-selected="false">Training Data</button>
+                                </li>
+                                <li class="me-2" role="presentation">
+                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="valid-data-tab"
+                                        data-tabs-target="#valid-data" type="button" role="tab"
+                                        aria-controls="valid-data" aria-selected="false">Validation Data
+                                        (optional)</button>
+                                </li>
+                            </ul>
+                        </div>
+                        <div id="upload-data-tab-content" class="w-full px-4">
+                            <div class="hidden p-4" id="training-data" role="tabpanel"
+                                aria-labelledby="training-data-tab">
+                                <div class="flex items-center justify-center w-full h-20">
+                                    <label for="data_files_training"
+                                        class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                <path stroke="currentColor" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                            </svg>
+                                            <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training
+                                                    File(s)
+                                                    <p class="text-xs text-gray-700" id="file-container-training"></p>
+                                        </div>
+                                        <input id="data_files_training" name="data_files_training" type="file" multiple
+                                            class="hidden" />
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="hidden p-4" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
+                                <div class="flex items-center justify-center w-full h-20">
+                                    <label for="data_files_valid"
+                                        class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                <path stroke="currentColor" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                            </svg>
+                                            <p class="text-sm text-gray-700"><span class="font-semibold">Upload
+                                                    Validation
+                                                    File(s)
+                                                    <p class="text-xs text-gray-700" id="file-container-valid"></p>
+                                        </div>
+                                        <input id="data_files_valid" name="data_files_valid" type="file" multiple
+                                            class="hidden" />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="items-center justify-center h-24">
+                        <div class="w-full px-4">
+                            <p class="text-xl text-gray-800 mb-2 mt-2">
+                                Column Mapping
+                            </p>
+                            <div id="div_cmap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="items-center justify-center h-96">
+                        <div class="w-full px-4">
+                            <p class="text-xl text-gray-800 mb-2 mt-2">
+                                Parameters
+                            </p>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" class="sr-only peer" id="show-json-parameters">
+                                <div
+                                    class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
+                                </div>
+                                <span class="ms-3 text-sm font-medium text-gray-900">JSON</span>
+                            </label>
+                            <div id="dynamic-ui"></div>
+                            <div id="json-parameters" class="hidden">
+                                <textarea id="params_json" name="params_json" placeholder="Loading..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="json-error-message" style="color: red;"></div>
     <div id="error-message" style="color: red;"></div>
     <div id="success-message" style="color: green;"></div>
-    <div id="loadingSpinner" role="status" class="hidden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2">
-      <!-- <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/><path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/></svg> -->
-      <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      <span class="sr-only">Loading...</span>
+    <div id="loadingSpinner" role="status"
+        class="hidden absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex flex-col items-center">
+        <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-400"></div>
+        <span class="sr-only mt-4 text-blue-500">Loading...</span>
     </div>
     <div class="hidden justify-center items-center">
-      <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
     <div id="confirmation-modal" tabindex="-1"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-      <div class="relative p-4 w-full max-w-md max-h-full">
-        <div class="relative bg-white rounded-lg shadow-2xl">
-          <div class="p-4 md:p-5 text-center">
-            <h3 class="mb-5 text-sm font-normal text-gray-800">AutoTrain is a paid offering and you will be
-              charged for
-              this action. You can ignore this message if you are running AutoTrain on a local hardware.
-              Are you sure
-              you want to continue?</h3>
-            <button data-modal-hide="confirmation-modal" type="button"
-              class="confirm text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">
-              Yes, I'm sure
-            </button>
-            <button data-modal-hide="confirmation-modal" type="button"
-              class="cancel text-white bg-red-600 hover:bg-red-100 focus:ring-4 focus:outline-none focus:ring-red-200 rounded-lg border border-red-200 text-sm font-medium px-5 py-2.5 hover:text-red-900 focus:z-10">No,
-              cancel</button>
-          </div>
+        class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+        <div class="relative w-full max-w-md p-4">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <div class="p-6 text-center">
+                    <h3 class="mb-5 text-lg font-medium text-gray-900">AutoTrain is a paid offering and you will be
+                        charged for this action. You can ignore this message if you are running AutoTrain on a local
+                        hardware.
+                        Are you sure you want to continue?</h3>
+                    <div class="flex justify-center space-x-4">
+                        <button data-modal-hide="confirmation-modal" type="button"
+                            class="confirm text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
+                            Yes, I'm sure
+                        </button>
+                        <button data-modal-hide="confirmation-modal" type="button"
+                            class="cancel text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:ring-gray-300 rounded-lg text-sm font-medium px-5 py-2.5 focus:outline-none">
+                            No, cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
     <div id="logs-modal" tabindex="-1"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-      <div class="relative p-4 w-full max-w-5xl max-h-full">
-        <div class="relative bg-white rounded-lg shadow-2xl">
-          <button type="button"
-            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            data-modal-hide="logs-modal">
-            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-            </svg>
-            <span class="sr-only">Close</span>
-          </button>
-          <div class="p-4 md:p-5 text-center">
-            <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
-            <div id="logContent" class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)]">
-              <!-- Logs will be appended here -->
+        class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+        <div class="relative w-full max-w-5xl p-4">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <button type="button"
+                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
+                    data-modal-hide="logs-modal">
+                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-6 md:p-8 text-center">
+                    <h3 class="mb-5 text-lg font-medium text-gray-900">Logs</h3>
+                    <div id="logContent"
+                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 pt-4">
+                        <!-- Logs will be appended here -->
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
     <div id="final-modal" tabindex="-1"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-      <div class="relative p-4 w-full max-w-md max-h-full">
-        <div class="relative bg-white rounded-lg shadow-2xl">
-          <button type="button"
-            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            data-modal-hide="final-modal">
-            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-            </svg>
-            <span class="sr-only">Close</span>
-          </button>
-          <div class="p-4 md:p-5 text-center">
-            <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
-          </div>
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    data-modal-hide="final-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
     <div id="help-modal" tabindex="-1"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-      <div class="relative p-4 w-full max-w-md max-h-full">
-        <div class="relative bg-white rounded-lg shadow-2xl">
-          <br>
-          <button type="button"
-            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            data-modal-hide="help-modal">
-            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-            </svg>
-            <span class="sr-only">Close</span>
-          </button>
-          <div class="p-4 md:p-5 text-center">
-            <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
-          </div>
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-2xl">
+                <br>
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    data-modal-hide="help-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-    <hr class="h-px my-1 bg-gray-200 border-b-2 dark:bg-gray-700">
-    <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/autotrain" target="_blank"
-        class="text-gray-700">Powered by 🤗 Hugging Face</a>.
-    </div>
-    <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
-        target="_blank" class="text-blue-600">Docs</a> | <a href="https://github.com/huggingface/autotrain-advanced"
-        target="_blank" class="text-blue-600">GitHub</a>
-    </div>
-    <div class="text-sm font-normal text-center mb-2">
-      <button type="button" id="button_logs"
-        class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-xs px-3 py-1.5 text-center inline-flex items-center">
-        <svg class="w-3 h-3 me-1 -ms-1 text-[#626890]" aria-hidden="true" focusable="false" data-prefix="fas"
-          data-icon="terminal" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-          <path fill="currentColor"
-            d="M624 64H304a48 48 0 0 0-48 48v352a48 48 0 0 0 48 48h320a48 48 0 0 0 48-48V112a48 48 0 0 0-48-48zM328 120h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm144 0h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm0 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm-72 48h320a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H304a8 8 0 0 1-8-8v-16a8 8 0 0 1 8-8zm0 112v-48h320v48zm-8-128h336v96H312z">
-          </path>
-        </svg>
-        Logs
-      </button>
-    </div>
-    <div class="block text-xs font-normal text-gray-400 text-center">{{version}}
-    </div>
-  </div>
-  </div>
+    <script>
+        var autotrain_local_value = {{ enable_local }};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </body>
-<script>
-  window.addEventListener("load", function () {
-    // Get references to the radio buttons and the tab content elements
-    const hubDatasetRadio = document.getElementById("hub-dataset-radio");
-    const uploadDatasetRadio = document.getElementById("upload-dataset-radio");
-    const uploadDataTabContent = document.getElementById("upload-data-tab-content");
-    const hubDataTabContent = document.getElementById("hub-data-tab-content");
-    const uploadDataTabs = document.getElementById("upload-data-tabs");
-
-    // Function to handle radio button click events
-    function handleRadioButtonClick() {
-      if (hubDatasetRadio.checked) {
-        uploadDataTabContent.style.display = "none";
-        uploadDataTabs.style.display = "none";
-        hubDataTabContent.style.display = "block";
-      } else if (uploadDatasetRadio.checked) {
-        uploadDataTabContent.style.display = "block";
-        uploadDataTabs.style.display = "block";
-        hubDataTabContent.style.display = "none";
-      }
-    }
-
-    // Attach event listeners to radio buttons
-    hubDatasetRadio.addEventListener("click", handleRadioButtonClick);
-    uploadDatasetRadio.addEventListener("click", handleRadioButtonClick);
-
-    // Trigger initial click event to ensure correct display on page load
-    uploadDatasetRadio.click();
-  });
-</script>
-<script>
-  window.addEventListener('load', function () {
-    const stopTrainingButton = document.getElementById('stop-training-button');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-
-    stopTrainingButton.addEventListener('click', function () {
-      loadingSpinner.classList.remove('hidden');
-
-      fetch('/ui/stop_training', {
-        method: 'GET'
-      })
-        .then(response => response.text())
-        .then(data => {
-          console.log(data);
-          loadingSpinner.classList.add('hidden');
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          loadingSpinner.classList.add('hidden');
-        });
-    });
-  });
-</script>
-<script>
-  async function openHelpModal(contentId) {
-    const modal = document.getElementById('help-modal');
-    var helpModalContent = document.querySelector('#help-modal .text-center');
-
-    try {
-      const response = await fetch(`/ui/help/${contentId}`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-
-      helpModalContent.innerHTML = data.message;
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    } catch (error) {
-      console.error('There has been a problem with your fetch operation:', error);
-    }
-  }
-
-  document.getElementById('autotrain_user_info').addEventListener('click', function () {
-    openHelpModal('autotrain_user_info');
-  });
-
-  document.getElementById('project_name_info').addEventListener('click', function () {
-    openHelpModal('project_name_info');
-  });
-
-  document.getElementById('hardware_info').addEventListener('click', function () {
-    openHelpModal('hardware_info');
-  });
-
-  document.getElementById('task_info').addEventListener('click', function () {
-    openHelpModal('task_info');
-  });
-
-  document.getElementById('base_model_info').addEventListener('click', function () {
-    openHelpModal('base_model_info');
-  });
-
-  document.getElementById('column_mapping_info').addEventListener('click', function () {
-    openHelpModal('column_mapping_info');
-  });
-
-  document.getElementById('params_info').addEventListener('click', function () {
-    openHelpModal('params_info');
-  });
-
-  // Close modal functionality
-  document.querySelector('[data-modal-hide="help-modal"]').addEventListener('click', function () {
-    document.getElementById('help-modal').classList.add('hidden');
-  });
-
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var taskSelect = document.getElementById('task');
-    var columnMappingInput = document.getElementById('column_mapping');
-
-    // Function to update the placeholder based on the selected task
-    function updateColumnMapping() {
-      var selectedTask = taskSelect.value;
-      var placeholderText = '';
-      var isDisabled = false;
-
-      switch (selectedTask) {
-        case 'llm:sft':
-          placeholderText = '{"text": "text"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = true;
-          break;
-        case 'llm:generic':
-          placeholderText = '{"text": "text"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = true;
-          break;
-        case 'llm:dpo':
-          placeholderText = '{"prompt": "prompt", "text": "text", "rejected_text": "rejected_text"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = true;
-          break;
-        case 'llm:reward':
-          placeholderText = '{"text": "text", "rejected_text": "rejected_text"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = true;
-          break;
-        case 'llm:orpo':
-          placeholderText = '{"prompt": "prompt", "text": "text", "rejected_text": "rejected_text"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = true;
-          break;
-        case 'text-classification':
-          placeholderText = '{"text": "text", "label": "target"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'text-regression':
-          placeholderText = '{"text": "text", "label": "target"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'token-classification':
-          placeholderText = '{"text": "tokens", "label": "tags"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'seq2seq':
-          placeholderText = '{"text": "text", "label": "target"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'dreambooth':
-          placeholderText = '{"image": "image"}';
-          isDisabled = true;
-          document.getElementById("upload-dataset-radio").checked = true;
-          document.getElementById("hub-dataset-radio").disabled = true;
-          document.getElementById("upload-dataset-radio").click();
-          break;
-        case 'image-classification':
-          placeholderText = '{"image": "image", "label": "label"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'image-object-detection':
-          placeholderText = '{"image": "image", "objects": "objects"}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'tabular:classification':
-          placeholderText = '{"id": "id", "label": ["target"]}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        case 'tabular:regression':
-          placeholderText = '{"id": "id", "label": ["target"]}';
-          document.getElementById("hub-dataset-radio").disabled = false;
-          document.getElementById("valid_split").disabled = false;
-          break;
-        default:
-          placeholderText = 'Enter column mapping...';
-      }
-
-      columnMappingInput.value = placeholderText;
-      columnMappingInput.disabled = isDisabled;
-    }
-
-    taskSelect.addEventListener('change', function () {
-      updateColumnMapping();
-    });
-    updateColumnMapping();
-  });
-
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const taskSelect = document.getElementById('task');
-    const validDataTab = document.getElementById('valid-data-tab');
-
-    function toggleValidationTab() {
-      const task = taskSelect.value;
-      // Check if the selected task is DreamBooth or any LLM task
-      if (task === 'dreambooth' || task.includes('llm:')) {
-        validDataTab.style.display = 'none'; // Hide the tab
-      } else {
-        validDataTab.style.display = 'block'; // Show the tab
-      }
-    }
-
-    // Initialize the state of the validation tab
-    toggleValidationTab();
-
-    // Add event listener for changes in the task dropdown
-    taskSelect.addEventListener('change', toggleValidationTab);
-  });
-
-</script>
-<script>
-  // Function to hide all tab contents
-  function hideAllTabContents() {
-    document.querySelectorAll('#upload-data-tab-content > div').forEach(function (tabContent) {
-      tabContent.classList.add('hidden');
-    });
-  }
-
-  // Function to deactivate all tabs
-  function deactivateAllTabs() {
-    document.querySelectorAll('#upload-data-tab > li > button').forEach(function (tabButton) {
-      tabButton.classList.remove('border-b-2', 'rounded-t-lg');
-      tabButton.setAttribute('aria-selected', 'false');
-    });
-  }
-
-  // Function to activate a tab
-  function activateTab(tabButton, tabContent) {
-    // Hide all tab contents and deactivate all tabs
-    hideAllTabContents();
-    deactivateAllTabs();
-
-    // Show the selected tab content and activate the tab
-    tabContent.classList.remove('hidden');
-    tabButton.classList.add('border-b-2', 'rounded-t-lg');
-    tabButton.setAttribute('aria-selected', 'true');
-  }
-
-  // Event listeners for tab buttons
-  document.querySelector('#training-data-tab').addEventListener('click', function () {
-    activateTab(this, document.querySelector('#training-data'));
-  });
-
-  document.querySelector('#valid-data-tab').addEventListener('click', function () {
-    activateTab(this, document.querySelector('#valid-data'));
-  });
-
-  // Initialize by showing the first tab
-  activateTab(document.querySelector('#training-data-tab'), document.querySelector('#training-data'));
-
-</script>
-<script type="module">
-  import { uploadFiles, createRepo } from 'https://cdn.jsdelivr.net/npm/@huggingface/hub@0.12.1/+esm'
-  document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById('success-message').textContent = '';
-    document.getElementById('error-message').textContent = '';
-    // Select the form element
-    const form = document.querySelector('form');
-    // Select the loading spinner
-    const loadingSpinner = document.getElementById('loadingSpinner');
-
-    // Function to show the modal
-    function showFinalModal() {
-      const modal = document.getElementById('final-modal');
-      modal.classList.add('flex');
-      modal.classList.remove('hidden');
-    }
-
-    // Function to hide the modal
-    function hideFinalModal() {
-      const modal = document.getElementById('final-modal');
-      modal.classList.remove('flex');
-      modal.classList.add('hidden');
-    }
-
-    // Function to show the modal
-    function showModal() {
-      const modal = document.getElementById('confirmation-modal');
-      modal.classList.add('flex');
-      modal.classList.remove('hidden');
-    }
-
-    function showLogsModal() {
-      const modal = document.getElementById('logs-modal');
-      modal.classList.add('flex');
-      modal.classList.remove('hidden');
-    }
-
-    function hideLogsModal() {
-      const modal = document.getElementById('logs-modal');
-      modal.classList.remove('flex');
-      modal.classList.add('hidden');
-    }
-
-    // Function to hide the modal
-    function hideModal() {
-      const modal = document.getElementById('confirmation-modal');
-      modal.classList.remove('flex');
-      modal.classList.add('hidden');
-    }
-
-    // Add an event listener for the form submission
-    form.addEventListener('submit', async function (event) {
-      // Prevent the default form submission
-      event.preventDefault();
-      showModal();
-    });
-
-    document.querySelector('#confirmation-modal .confirm').addEventListener('click', async function () {
-      hideModal();
-      loadingSpinner.classList.remove('hidden');
-
-      // Confirmation dialog
-      // const userConfirmed = window.confirm("AutoTrain is a paid service and you will be charged. Confirm to continue!");
-      // if (!userConfirmed) {
-      //     return; // Stop the function if the user did not confirm
-      // }
-
-      // Show the loading spinner
-      loadingSpinner.classList.remove('hidden');
-
-      // Get form data
-      const formData = new FormData(form);
-
-      // Send request to internal API
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/ui/create_project', true);
-
-      // Handle the response
-      xhr.onload = function () {
-        // Hide the loading spinner
-        loadingSpinner.classList.add('hidden');
-        var finalModalContent = document.querySelector('#final-modal .text-center');
-
-        if (xhr.status === 200) {
-          console.log('Response:', xhr.responseText);
-          var responseObj = JSON.parse(xhr.responseText);
-          var monitorURL = responseObj.monitor_url;
-          if (monitorURL.startsWith('http')) {
-            finalModalContent.innerHTML = '<p>Success!</p>' +
-              '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
-          } else {
-            finalModalContent.innerHTML = '<p>Success!</p>' +
-              '<p>' + monitorURL + '</p>';
-          }
-
-          showFinalModal();
-        } else {
-          // Error logic here
-          finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
-          console.error('Error:', xhr.status, xhr.statusText);
-          showFinalModal();
-        }
-      };
-
-      // Send the request with the FormData object
-      xhr.send(formData);
-    });
-    document.querySelector('#confirmation-modal .cancel').addEventListener('click', function () {
-      hideModal();
-    });
-    document.querySelector('#final-modal button').addEventListener('click', function () {
-      hideFinalModal();
-    });
-    document.querySelector('#button_logs').addEventListener('click', function () {
-      showLogsModal();
-    });
-    document.querySelector('[data-modal-hide="logs-modal"]').addEventListener('click', function () {
-      hideLogsModal();
-    });
-  });
-</script>
-<script>
-  document.getElementById('data_files_training').addEventListener('change', function () {
-    var fileContainer = document.getElementById('file-container-training');
-    var files = this.files;
-    var fileText = '';
-
-    for (var i = 0; i < files.length; i++) {
-      fileText += files[i].name + ' ';
-    }
-
-    fileContainer.innerHTML = fileText;
-  });
-  document.getElementById('data_files_valid').addEventListener('change', function () {
-    var fileContainer = document.getElementById('file-container-valid');
-    var files = this.files;
-    var fileText = '';
-
-    for (var i = 0; i < files.length; i++) {
-      fileText += files[i].name + ' ';
-    }
-
-    fileContainer.innerHTML = fileText;
-  });
-</script>
-<script>
-  // Function to generate a random alphanumeric string
-  function generateRandomString(length) {
-    let result = '';
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-  }
-
-  // Function to set a random project name
-  function setRandomProjectName() {
-    // Generate parts of the string
-    const part1 = generateRandomString(5);
-    const part2 = generateRandomString(5);
-
-    // Combine parts with hyphens
-    const randomName = `autotrain-${part1}-${part2}`;
-
-    // Set the value of the project_name input field
-    document.getElementById('project_name').value = randomName;
-  }
-
-  // Call the function on page load
-  window.onload = setRandomProjectName;
-</script>
 
 </html>

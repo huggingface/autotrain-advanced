@@ -2,6 +2,7 @@ import json
 import os
 import signal
 import sys
+import time
 from typing import List
 
 import torch
@@ -39,6 +40,236 @@ MODEL_CHOICE = fetch_models()
 ui_router = APIRouter()
 templates_path = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_path)
+
+UI_PARAMS = {
+    "mixed_precision": {
+        "type": "dropdown",
+        "label": "Mixed precision",
+        "options": ["fp16", "bf16", "none"],
+    },
+    "optimizer": {
+        "type": "dropdown",
+        "label": "Optimizer",
+        "options": ["adamw_torch", "adamw", "adam", "sgd"],
+    },
+    "scheduler": {
+        "type": "dropdown",
+        "label": "Scheduler",
+        "options": ["linear", "cosine", "cosine_warmup", "constant"],
+    },
+    "evaluation_strategy": {
+        "type": "dropdown",
+        "label": "Evaluation strategy",
+        "options": ["epoch", "steps"],
+    },
+    "logging_steps": {
+        "type": "number",
+        "label": "Logging steps",
+    },
+    "save_total_limit": {
+        "type": "number",
+        "label": "Save total limit",
+    },
+    "auto_find_batch_size": {
+        "type": "dropdown",
+        "label": "Auto find batch size",
+        "options": [True, False],
+    },
+    "warmup_ratio": {
+        "type": "number",
+        "label": "Warmup proportion",
+    },
+    "max_grad_norm": {
+        "type": "number",
+        "label": "Max grad norm",
+    },
+    "weight_decay": {
+        "type": "number",
+        "label": "Weight decay",
+    },
+    "epochs": {
+        "type": "number",
+        "label": "Epochs",
+    },
+    "batch_size": {
+        "type": "number",
+        "label": "Batch size",
+    },
+    "lr": {
+        "type": "number",
+        "label": "Learning rate",
+    },
+    "seed": {
+        "type": "number",
+        "label": "Seed",
+    },
+    "gradient_accumulation": {
+        "type": "number",
+        "label": "Gradient accumulation",
+    },
+    "block_size": {
+        "type": "number",
+        "label": "Block size",
+    },
+    "model_max_length": {
+        "type": "number",
+        "label": "Model max length",
+    },
+    "add_eos_token": {
+        "type": "dropdown",
+        "label": "Add EOS token",
+        "options": [True, False],
+    },
+    "disable_gradient_checkpointing": {
+        "type": "dropdown",
+        "label": "Disable GC",
+        "options": [True, False],
+    },
+    "use_flash_attention_2": {
+        "type": "dropdown",
+        "label": "Use flash attention",
+        "options": [True, False],
+    },
+    "log": {
+        "type": "dropdown",
+        "label": "Logging",
+        "options": ["tensorboard", "none"],
+    },
+    "quantization": {
+        "type": "dropdown",
+        "label": "Quantization",
+        "options": ["int4", "int8", "none"],
+    },
+    "target_modules": {
+        "type": "string",
+        "label": "Target modules",
+    },
+    "merge_adapter": {
+        "type": "dropdown",
+        "label": "Merge adapter",
+        "options": [True, False],
+    },
+    "peft": {
+        "type": "dropdown",
+        "label": "PEFT/LoRA",
+        "options": [True, False],
+    },
+    "lora_r": {
+        "type": "number",
+        "label": "Lora r",
+    },
+    "lora_alpha": {
+        "type": "number",
+        "label": "Lora alpha",
+    },
+    "lora_dropout": {
+        "type": "number",
+        "label": "Lora dropout",
+    },
+    "model_ref": {
+        "type": "string",
+        "label": "Reference model",
+    },
+    "dpo_beta": {
+        "type": "number",
+        "label": "DPO beta",
+    },
+    "max_prompt_length": {
+        "type": "number",
+        "label": "Prompt length",
+    },
+    "max_completion_length": {
+        "type": "number",
+        "label": "Completion length",
+    },
+    "chat_template": {
+        "type": "dropdown",
+        "label": "Chat template",
+        "options": ["none", "zephyr", "chatml", "tokenizer"],
+    },
+    "padding": {
+        "type": "dropdown",
+        "label": "Padding side",
+        "options": ["right", "left", "none"],
+    },
+    "max_seq_length": {
+        "type": "number",
+        "label": "Max sequence length",
+    },
+    "early_stopping_patience": {
+        "type": "number",
+        "label": "Early stopping patience",
+    },
+    "early_stopping_threshold": {
+        "type": "number",
+        "label": "Early stopping threshold",
+    },
+    "max_target_length": {
+        "type": "number",
+        "label": "Max target length",
+    },
+    "categorical_columns": {
+        "type": "string",
+        "label": "Categorical columns",
+    },
+    "numerical_columns": {
+        "type": "string",
+        "label": "Numerical columns",
+    },
+    "num_trials": {
+        "type": "number",
+        "label": "Number of trials",
+    },
+    "time_limit": {
+        "type": "number",
+        "label": "Time limit",
+    },
+    "categorical_imputer": {
+        "type": "dropdown",
+        "label": "Categorical imputer",
+        "options": ["most_frequent", "none"],
+    },
+    "numerical_imputer": {
+        "type": "dropdown",
+        "label": "Numerical imputer",
+        "options": ["mean", "median", "none"],
+    },
+    "numeric_scaler": {
+        "type": "dropdown",
+        "label": "Numeric scaler",
+        "options": ["standard", "minmax", "maxabs", "robust", "none"],
+    },
+    "vae_model": {
+        "type": "string",
+        "label": "VAE model",
+    },
+    "prompt": {
+        "type": "string",
+        "label": "Prompt",
+    },
+    "resolution": {
+        "type": "number",
+        "label": "Resolution",
+    },
+    "num_steps": {
+        "type": "number",
+        "label": "Number of steps",
+    },
+    "checkpointing_steps": {
+        "type": "number",
+        "label": "Checkpointing steps",
+    },
+    "use_8bit_adam": {
+        "type": "dropdown",
+        "label": "Use 8-bit Adam",
+        "options": [True, False],
+    },
+    "xformers": {
+        "type": "dropdown",
+        "label": "xFormers",
+        "options": [True, False],
+    },
+}
 
 
 def graceful_exit(signum, frame):
@@ -109,6 +340,7 @@ async def load_index(request: Request, token: str = Depends(user_authentication)
         "enable_nvcf": ENABLE_NVCF,
         "enable_local": AUTOTRAIN_LOCAL,
         "version": __version__,
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     return templates.TemplateResponse("index.html", context)
 
@@ -135,7 +367,16 @@ async def fetch_params(task: str, param_type: str, authenticated: bool = Depends
     task_params = get_task_params(task, param_type)
     if len(task_params) == 0:
         return {"error": "Task not found"}
-    return task_params
+    ui_params = {}
+    for param in task_params:
+        if param in UI_PARAMS:
+            ui_params[param] = UI_PARAMS[param]
+            ui_params[param]["default"] = task_params[param]
+        else:
+            logger.info(f"Param {param} not found in UI_PARAMS")
+
+    ui_params = dict(sorted(ui_params.items(), key=lambda x: (x[1]["type"], x[1]["label"])))
+    return ui_params
 
 
 @ui_router.get("/model_choices/{task}", response_class=JSONResponse)
@@ -248,6 +489,10 @@ async def handle_form(
         )
 
     params = json.loads(params)
+    # convert "null" to None
+    for key in params:
+        if params[key] == "null":
+            params[key] = None
     column_mapping = json.loads(column_mapping)
 
     training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
@@ -314,6 +559,11 @@ async def handle_form(
             elif task == "seq2seq":
                 dset_task = "seq2seq"
             elif task.startswith("tabular"):
+                if "," in column_mapping["label"]:
+                    column_mapping["label"] = column_mapping["label"].split(",")
+                else:
+                    column_mapping["label"] = [column_mapping["label"]]
+                column_mapping["label"] = [col.strip() for col in column_mapping["label"]]
                 subtask = task.split(":")[-1].lower()
                 if len(column_mapping["label"]) > 1 and subtask == "classification":
                     dset_task = "tabular_multi_label_classification"
@@ -396,6 +646,8 @@ async def available_accelerators(authenticated: bool = Depends(user_authenticati
     This function is used to fetch the number of available accelerators
     :return: JSONResponse
     """
+    if AUTOTRAIN_LOCAL == 0:
+        return {"accelerators": "Not available in cloud mode."}
     cuda_available = torch.cuda.is_available()
     mps_available = torch.backends.mps.is_available()
     if cuda_available:
@@ -413,6 +665,8 @@ async def is_model_training(authenticated: bool = Depends(user_authentication)):
     This function is used to fetch the number of running jobs
     :return: JSONResponse
     """
+    if AUTOTRAIN_LOCAL == 0:
+        return {"model_training": "Not available in cloud mode."}
     running_jobs = get_running_jobs(DB)
     if running_jobs:
         return {"model_training": True, "pids": running_jobs}
@@ -436,11 +690,7 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     logs = logs.split("\n")
     logs = logs[::-1]
     # remove lines containing /is_model_training & /accelerators
-    logs = [
-        log
-        for log in logs
-        if "/ui/is_model_training" not in log and "/ui/accelerators" not in log and "/ui/logs" not in log
-    ]
+    logs = [log for log in logs if "/ui/" not in log and "/static/" not in log and "nvidia-ml-py" not in log]
 
     cuda_available = torch.cuda.is_available()
     if cuda_available:
