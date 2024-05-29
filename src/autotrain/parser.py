@@ -10,6 +10,7 @@ from autotrain.cli.utils import (
     img_clf_munge_data,
     img_obj_detect_munge_data,
     llm_munge_data,
+    sent_transformers_munge_data,
     seq2seq_munge_data,
     tabular_munge_data,
     text_clf_munge_data,
@@ -22,6 +23,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
+from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -56,6 +58,7 @@ class AutoTrainConfigParser:
             "text_multi_class_classification": TextClassificationParams,
             "text_single_column_regression": TextRegressionParams,
             "text_token_classification": TokenClassificationParams,
+            "sentence_transformers": SentenceTransformersParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
@@ -67,6 +70,7 @@ class AutoTrainConfigParser:
             "text_multi_class_classification": text_clf_munge_data,
             "text_token_classification": token_clf_munge_data,
             "text_single_column_regression": text_reg_munge_data,
+            "sentence_transformers": sent_transformers_munge_data,
         }
         self.task_aliases = {
             "llm": "lm_training",
@@ -96,6 +100,16 @@ class AutoTrainConfigParser:
             "image-object-detection": "image_object_detection",
             "object_detection": "image_object_detection",
             "object-detection": "image_object_detection",
+            "st:pair": "sentence_transformers",
+            "st:pair_class": "sentence_transformers",
+            "st:pair_score": "sentence_transformers",
+            "st:triplet": "sentence_transformers",
+            "st:qa": "sentence_transformers",
+            "sentence-transformers:pair": "sentence_transformers",
+            "sentence-transformers:pair_class": "sentence_transformers",
+            "sentence-transformers:pair_score": "sentence_transformers",
+            "sentence-transformers:triplet": "sentence_transformers",
+            "sentence-transformers:qa": "sentence_transformers",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)
@@ -132,6 +146,9 @@ class AutoTrainConfigParser:
                     params["trainer"] = "default"
                 if params["trainer"] not in ["sft", "orpo", "dpo", "reward", "default"]:
                     raise ValueError("Invalid LLM training task")
+
+        if self.task == "sentence_transformers":
+            params["trainer"] = self.config["task"].split(":")[1]
 
         if self.task != "dreambooth":
             for k, v in self.config["data"]["column_mapping"].items():

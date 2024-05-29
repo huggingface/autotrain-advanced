@@ -9,6 +9,7 @@ from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
+from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -138,7 +139,11 @@ def launch_command(params):
             "--training_config",
             os.path.join(params.project_name, "training_params.json"),
         ]
-    elif isinstance(params, TextClassificationParams) or isinstance(params, TextRegressionParams):
+    elif (
+        isinstance(params, TextClassificationParams)
+        or isinstance(params, TextRegressionParams)
+        or isinstance(params, SentenceTransformersParams)
+    ):
         if num_gpus == 0:
             cmd = [
                 "accelerate",
@@ -179,6 +184,15 @@ def launch_command(params):
                 [
                     "-m",
                     "autotrain.trainers.text_regression",
+                    "--training_config",
+                    os.path.join(params.project_name, "training_params.json"),
+                ]
+            )
+        elif isinstance(params, SentenceTransformersParams):
+            cmd.extend(
+                [
+                    "-m",
+                    "autotrain.trainers.sent_transformers",
                     "--training_config",
                     os.path.join(params.project_name, "training_params.json"),
                 ]

@@ -27,6 +27,8 @@
 - sections:
   - local: text_classification
     title: Text Classification
+  - local: sentence_transformer
+    title: Sentence Transformer
   - local: text_regression
     title: Text Regression
   - local: llm_finetuning

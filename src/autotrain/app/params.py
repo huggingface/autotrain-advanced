@@ -6,6 +6,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
+from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -57,6 +58,9 @@ HIDDEN_PARAMS = [
     "tokens_column",
     "tags_column",
     "objects_column",
+    "sentence1_column",
+    "sentence2_column",
+    "sentence3_column",
 ]
 
 
@@ -75,6 +79,10 @@ PARAMS["llm"] = LLMTrainingParams(
 ).model_dump()
 
 PARAMS["text-classification"] = TextClassificationParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
+PARAMS["st"] = SentenceTransformersParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
@@ -158,6 +166,8 @@ class AppParams:
             return self._munge_params_token_clf()
         elif self.task == "text-regression":
             return self._munge_params_text_reg()
+        elif self.task.startswith("st:"):
+            return self._munge_params_sent_transformers()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -170,6 +180,34 @@ class AppParams:
         _params["data_path"] = self.data_path
         _params["username"] = self.username
         return _params
+
+    def _munge_params_sent_transformers(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["sentence1_column"] = "autotrain_sentence1"
+            _params["sentence2_column"] = "autotrain_sentence2"
+            _params["sentence3_column"] = "autotrain_sentence3"
+            _params["target_column"] = "autotrain_target"
+            _params["valid_split"] = "validation"
+        else:
+            _params["sentence1_column"] = self.column_mapping.get(
+                "sentence1" if not self.api else "sentence1_column", "sentence1"
+            )
+            _params["sentence2_column"] = self.column_mapping.get(
+                "sentence2" if not self.api else "sentence2_column", "sentence2"
+            )
+            _params["sentence3_column"] = self.column_mapping.get(
+                "sentence3" if not self.api else "sentence3_column", "sentence3"
+            )
+            _params["target_column"] = self.column_mapping.get("target" if not self.api else "target_column", "target")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+
+        trainer = self.task.split(":")[1]
+        _params["trainer"] = trainer.lower()
+        return SentenceTransformersParams(**_params)
 
     def _munge_params_llm(self):
         _params = self._munge_common_params()
@@ -344,6 +382,10 @@ def get_task_params(task, param_type):
         trainer = task.split(":")[1].lower()
         task = task.split(":")[0].lower()
 
+    if task.startswith("st:"):
+        trainer = task.split(":")[1].lower()
+        task = task.split(":")[0].lower()
+
     if task.startswith("tabular"):
         task = "tabular"
 
@@ -403,6 +445,20 @@ def get_task_params(task, param_type):
             )
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "text-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "st" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",

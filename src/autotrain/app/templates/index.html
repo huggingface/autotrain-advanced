@@ -38,6 +38,26 @@
                     fields = ['text', 'rejected_text'];
                     fieldNames = ['chosen', 'rejected'];
                     break;
+                case 'st:pair':
+                    fields = ['sentence1', 'sentence2'];
+                    fieldNames = ['anchor', 'positive'];
+                    break;
+                case 'st:pair_class':
+                    fields = ['sentence1', 'sentence2', 'target'];
+                    fieldNames = ['premise', 'hypothesis', 'label'];
+                    break;
+                case 'st:pair_score':
+                    fields = ['sentence1', 'sentence2', 'target'];
+                    fieldNames = ['sentence1', 'sentence2', 'score'];
+                    break;
+                case 'st:triplet':
+                    fields = ['sentence1', 'sentence2', 'sentence3'];
+                    fieldNames = ['anchor', 'positive', 'negative'];
+                    break;
+                case 'st:qa':
+                    fields = ['sentence1', 'sentence2'];
+                    fieldNames = ['query', 'answer'];
+                    break;
                 case 'text-classification':
                 case 'seq2seq':
                 case 'text-regression':
@@ -163,6 +183,13 @@
                             <option value="llm:generic">LLM Generic</option>
                             <option value="llm:dpo">LLM DPO</option>
                             <option value="llm:reward">LLM Reward</option>
+                        </optgroup>
+                        <optgroup label="Sentence Transformers">
+                            <option value="st:pair">ST Pair</option>
+                            <option value="st:pair_class">ST Pair Classification</option>
+                            <option value="st:pair_score">ST Pair Scoring</option>
+                            <option value="st:triplet">ST Triplet</option>
+                            <option value="st:qa">ST Question Answering</option>
                         </optgroup>
                         <optgroup label="Other Text Tasks">
                             <option value="text-classification">Text Classification</option>

@@ -1,0 +1,29 @@
+task: sentence-transformers:pair_class
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-st-pair-class
+log: tensorboard
+backend: local
+
+data:
+  path: sentence-transformers/all-nli
+  train_split: pair-class:dev
+  valid_split: pair-class:test
+  column_mapping:
+    sentence1_column: premise
+    sentence2_column: hypothesis
+    target_column: label
+
+params:
+  max_seq_length: 512
+  epochs: 5
+  batch_size: 8
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: false

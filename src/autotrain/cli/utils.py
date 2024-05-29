@@ -483,3 +483,45 @@ def img_obj_detect_munge_data(params, local):
         params.image_column = "autotrain_image"
         params.objects_column = "autotrain_objects"
     return params
+
+
+def sent_transformers_munge_data(params, local):
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            task="sentence_transformers",
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping={
+                "sentence1": params.sentence1_column,
+                "sentence2": params.sentence2_column,
+                "sentence3": params.sentence3_column,
+                "target": params.target_column,
+            },
+            percent_valid=None,  # TODO: add to UI
+            local=local,
+            convert_to_class_label=True if params.trainer == "pair_class" else False,
+            ext=ext_to_use,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.sentence1_column = "autotrain_sentence1"
+        params.sentence2_column = "autotrain_sentence2"
+        params.sentence3_column = "autotrain_sentence3"
+        params.target_column = "autotrain_target"
+    return params

@@ -17,6 +17,7 @@ from autotrain.preprocessor.tabular import (
 )
 from autotrain.preprocessor.text import (
     LLMPreprocessor,
+    SentenceTransformersPreprocessor,
     Seq2SeqPreprocessor,
     TextBinaryClassificationPreprocessor,
     TextMultiClassClassificationPreprocessor,
@@ -405,6 +406,29 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 local=self.local,
+            )
+            return preprocessor.prepare()
+
+        elif self.task == "sentence_transformers":
+            sentence1_column = self.column_mapping["sentence1"]
+            sentence2_column = self.column_mapping["sentence2"]
+            sentence3_column = self.column_mapping.get("sentence3")
+            target_column = self.column_mapping.get("target")
+
+            preprocessor = SentenceTransformersPreprocessor(
+                train_data=self.train_df,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+                local=self.local,
+                sentence1_column=sentence1_column,
+                sentence2_column=sentence2_column,
+                sentence3_column=sentence3_column,
+                target_column=target_column,
+                convert_to_class_label=self.convert_to_class_label,
             )
             return preprocessor.prepare()
 
