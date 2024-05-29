@@ -84,3 +84,26 @@ If you want to merge weights with base models, you can use `autotrain tools`. Pl
 Yes, autotrain supports multi-gpu training. 
 AutoTrain will determine on its own if the user is running the command on a multi-gpu setup and will use 
 multi-gpu ddp if number of gpus is greater than 1 and less than 4 and deepspeed if number of gpus is greater than or equal to 4.
+
+
+## How can i use a hub dataset with multiple configs?
+
+If your hub dataset has multiple configs, you can use `train_split` parameter to specify the both the config and the split.
+For example, in this dataset [here](https://huggingface.co/datasets/timdettmers/openassistant-guanaco),
+there are multiple configs: `pair`, `pair-class`, `pair-score` and `triplet`.
+
+If i want to use `train` split of `pair-class` config, i can use write `pair-class:train` as `train_split` in the UI or the CLI / config.
+
+An example config is shown below:
+
+```yaml
+data:
+  path: sentence-transformers/all-nli
+  train_split: pair-class:train
+  valid_split: pair-class:test
+  column_mapping:
+    sentence1_column: premise
+    sentence2_column: hypothesis
+    target_column: label
+
+```

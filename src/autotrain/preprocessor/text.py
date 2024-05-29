@@ -426,3 +426,102 @@ class Seq2SeqPreprocessor:
         if self.local:
             return f"{self.project_name}/autotrain-data"
         return f"{self.username}/autotrain-data-{self.project_name}"
+
+
+@dataclass
+class SentenceTransformersPreprocessor:
+    train_data: pd.DataFrame
+    username: str
+    project_name: str
+    token: str
+    valid_data: Optional[pd.DataFrame] = None
+    test_size: Optional[float] = 0.2
+    seed: Optional[int] = 42
+    local: Optional[bool] = False
+    sentence1_column: Optional[str] = "sentence1"
+    sentence2_column: Optional[str] = "sentence2"
+    sentence3_column: Optional[str] = "sentence3"
+    target_column: Optional[str] = "target"
+    convert_to_class_label: Optional[bool] = False
+
+    def __post_init__(self):
+        # make sure no reserved columns are in train_data or valid_data
+        for column in RESERVED_COLUMNS + LLM_RESERVED_COLUMNS:
+            if column in self.train_data.columns:
+                raise ValueError(f"{column} is a reserved column name")
+            if self.valid_data is not None:
+                if column in self.valid_data.columns:
+                    raise ValueError(f"{column} is a reserved column name")
+
+    def split(self):
+        if self.valid_data is not None:
+            return self.train_data, self.valid_data
+        else:
+            train_df, valid_df = train_test_split(
+                self.train_data,
+                test_size=self.test_size,
+                random_state=self.seed,
+            )
+            train_df = train_df.reset_index(drop=True)
+            valid_df = valid_df.reset_index(drop=True)
+            return train_df, valid_df
+
+    def prepare_columns(self, train_df, valid_df):
+        drop_cols = [self.sentence1_column, self.sentence2_column]
+        train_df.loc[:, "autotrain_sentence1"] = train_df[self.sentence1_column]
+        train_df.loc[:, "autotrain_sentence2"] = train_df[self.sentence2_column]
+        valid_df.loc[:, "autotrain_sentence1"] = valid_df[self.sentence1_column]
+        valid_df.loc[:, "autotrain_sentence2"] = valid_df[self.sentence2_column]
+
+        if self.sentence3_column is not None:
+            drop_cols.append(self.sentence3_column)
+            train_df.loc[:, "autotrain_sentence3"] = train_df[self.sentence3_column]
+            valid_df.loc[:, "autotrain_sentence3"] = valid_df[self.sentence3_column]
+
+        if self.target_column is not None:
+            drop_cols.append(self.target_column)
+            train_df.loc[:, "autotrain_target"] = train_df[self.target_column]
+            valid_df.loc[:, "autotrain_target"] = valid_df[self.target_column]
+
+        train_df = train_df.drop(columns=drop_cols)
+        valid_df = valid_df.drop(columns=drop_cols)
+        return train_df, valid_df
+
+    def prepare(self):
+        train_df, valid_df = self.split()
+        train_df, valid_df = self.prepare_columns(train_df, valid_df)
+
+        if self.convert_to_class_label:
+            label_names = sorted(set(train_df["autotrain_target"].unique().tolist()))
+
+        train_df = Dataset.from_pandas(train_df)
+        valid_df = Dataset.from_pandas(valid_df)
+
+        if self.convert_to_class_label:
+            train_df = train_df.cast_column("autotrain_target", ClassLabel(names=label_names))
+            valid_df = valid_df.cast_column("autotrain_target", ClassLabel(names=label_names))
+
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"

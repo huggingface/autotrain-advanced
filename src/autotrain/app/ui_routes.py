@@ -414,6 +414,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["text-classification"]
     elif task.startswith("llm"):
         hub_models = MODEL_CHOICE["llm"]
+    elif task.startswith("st:"):
+        hub_models = MODEL_CHOICE["sentence-transformers"]
     elif task == "image-classification":
         hub_models = MODEL_CHOICE["image-classification"]
     elif task == "dreambooth":
@@ -555,6 +557,8 @@ async def handle_form(
         else:
             if task.startswith("llm"):
                 dset_task = "lm_training"
+            elif task.startswith("st:"):
+                dset_task = "sentence_transformers"
             elif task == "text-classification":
                 dset_task = "text_multi_class_classification"
             elif task == "text-regression":

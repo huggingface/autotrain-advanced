@@ -146,6 +146,42 @@ For image classification, the column mapping should be as follows:
 Image classification requires column mapping only when you are using a dataset from Hugging Face Hub.
 For uploaded datasets, leave column mapping as it is.
 
+# Sentence Transformers
+
+For all sentence transformers tasks, one needs to map columns to `sentence1`, `sentence2`, `sentence3` & `target` column.
+Not all columns need to be mapped for all trainers of sentence transformers.
+
+## `pair`:
+
+```
+{"sentence1": "anchor", "sentence2": "positive"}
+```
+
+## `pair_label`:
+
+```
+{"sentence1": "premise", "sentence2": "hypothesis", "target": "label"}
+```
+
+## `pair_score`:
+
+```
+{"sentence1": "sentence1", "sentence2": "sentence2", "target": "score"}
+```
+
+## `triplet`:
+
+```
+{"sentence1": "anchor", "sentence2": "positive", "sentence3": "negative"}
+```
+
+## `qa`:
+
+```
+{"sentence1": "query", "sentence2": "answer"}
+```
+
+
 ## Ensuring Accurate Mapping
 
 To ensure your model trains correctly:

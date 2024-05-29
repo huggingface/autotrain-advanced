@@ -13,6 +13,7 @@ from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
@@ -84,6 +85,7 @@ TabularRegressionParamsAPI = create_api_base_model(TabularParams, "TabularRegres
 TextClassificationParamsAPI = create_api_base_model(TextClassificationParams, "TextClassificationParamsAPI")
 TextRegressionParamsAPI = create_api_base_model(TextRegressionParams, "TextRegressionParamsAPI")
 TokenClassificationParamsAPI = create_api_base_model(TokenClassificationParams, "TokenClassificationParamsAPI")
+SentenceTransformersParamsAPI = create_api_base_model(SentenceTransformersParams, "SentenceTransformersParamsAPI")
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -150,6 +152,34 @@ class TokenClassificationColumnMapping(BaseModel):
     tags_column: str
 
 
+class STPairColumnMapping(BaseModel):
+    sentence1_column: str
+    sentence2_column: str
+
+
+class STPairClassColumnMapping(BaseModel):
+    sentence1_column: str
+    sentence2_column: str
+    target_column: str
+
+
+class STPairScoreColumnMapping(BaseModel):
+    sentence1_column: str
+    sentence2_column: str
+    target_column: str
+
+
+class STTripletColumnMapping(BaseModel):
+    sentence1_column: str
+    sentence2_column: str
+    sentence3_column: str
+
+
+class STQAColumnMapping(BaseModel):
+    sentence1_column: str
+    sentence2_column: str
+
+
 class APICreateProjectModel(BaseModel):
     project_name: str
     task: Literal[
@@ -158,6 +188,11 @@ class APICreateProjectModel(BaseModel):
         "llm:orpo",
         "llm:generic",
         "llm:reward",
+        "st:pair",
+        "st:pair_class",
+        "st:pair_score",
+        "st:triplet",
+        "st:qa",
         "image-classification",
         "dreambooth",
         "seq2seq",
@@ -188,6 +223,7 @@ class APICreateProjectModel(BaseModel):
         LLMORPOTrainingParamsAPI,
         LLMGenericTrainingParamsAPI,
         LLMRewardTrainingParamsAPI,
+        SentenceTransformersParamsAPI,
         DreamBoothTrainingParamsAPI,
         ImageClassificationParamsAPI,
         Seq2SeqParamsAPI,
@@ -213,6 +249,11 @@ class APICreateProjectModel(BaseModel):
             TextClassificationColumnMapping,
             TextRegressionColumnMapping,
             TokenClassificationColumnMapping,
+            STPairColumnMapping,
+            STPairClassColumnMapping,
+            STPairScoreColumnMapping,
+            STTripletColumnMapping,
+            STQAColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -321,6 +362,52 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("tags_column"):
                 raise ValueError("tags_column is required for token-classification")
             values["column_mapping"] = TokenClassificationColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "st:pair":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for st:pair")
+            if not values.get("column_mapping").get("sentence1_column"):
+                raise ValueError("sentence1_column is required for st:pair")
+            if not values.get("column_mapping").get("sentence2_column"):
+                raise ValueError("sentence2_column is required for st:pair")
+            values["column_mapping"] = STPairColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "st:pair_class":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for st:pair_class")
+            if not values.get("column_mapping").get("sentence1_column"):
+                raise ValueError("sentence1_column is required for st:pair_class")
+            if not values.get("column_mapping").get("sentence2_column"):
+                raise ValueError("sentence2_column is required for st:pair_class")
+            if not values.get("column_mapping").get("target_column"):
+                raise ValueError("target_column is required for st:pair_class")
+            values["column_mapping"] = STPairClassColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "st:pair_score":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for st:pair_score")
+            if not values.get("column_mapping").get("sentence1_column"):
+                raise ValueError("sentence1_column is required for st:pair_score")
+            if not values.get("column_mapping").get("sentence2_column"):
+                raise ValueError("sentence2_column is required for st:pair_score")
+            if not values.get("column_mapping").get("target_column"):
+                raise ValueError("target_column is required for st:pair_score")
+            values["column_mapping"] = STPairScoreColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "st:triplet":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for st:triplet")
+            if not values.get("column_mapping").get("sentence1_column"):
+                raise ValueError("sentence1_column is required for st:triplet")
+            if not values.get("column_mapping").get("sentence2_column"):
+                raise ValueError("sentence2_column is required for st:triplet")
+            if not values.get("column_mapping").get("sentence3_column"):
+                raise ValueError("sentence3_column is required for st:triplet")
+            values["column_mapping"] = STTripletColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "st:qa":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for st:qa")
+            if not values.get("column_mapping").get("sentence1_column"):
+                raise ValueError("sentence1_column is required for st:qa")
+            if not values.get("column_mapping").get("sentence2_column"):
+                raise ValueError("sentence2_column is required for st:qa")
+            values["column_mapping"] = STQAColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -352,6 +439,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = TextRegressionParamsAPI(**values["params"])
         elif values.get("task") == "token-classification":
             values["params"] = TokenClassificationParamsAPI(**values["params"])
+        elif values.get("task").startswith("st:"):
+            values["params"] = SentenceTransformersParamsAPI(**values["params"])
         return values
 
 
@@ -398,6 +487,10 @@ async def api_create_project(project: APICreateProjectModel, token: bool = Depen
     task = project.task
     if task.startswith("llm"):
         params = PARAMS["llm"]
+        trainer = task.split(":")[1]
+        params.update({"trainer": trainer})
+    elif task.startswith("st:"):
+        params = PARAMS["st"]
         trainer = task.split(":")[1]
         params.update({"trainer": trainer})
     elif task.startswith("tabular"):

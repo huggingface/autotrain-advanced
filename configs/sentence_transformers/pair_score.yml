@@ -1,0 +1,29 @@
+task: sentence-transformers:pair_score
+base_model: microsoft/mpnet-base
+project_name: autotrain-st-pair-score
+log: tensorboard
+backend: local
+
+data:
+  path: sentence-transformers/all-nli
+  train_split: pair-score:train
+  valid_split: pair-score:dev
+  column_mapping:
+    sentence1_column: sentence1
+    sentence2_column: sentence2
+    target_column: score
+
+params:
+  max_seq_length: 512
+  epochs: 5
+  batch_size: 8
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
