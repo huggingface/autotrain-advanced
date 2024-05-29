@@ -180,16 +180,16 @@ def train(config):
     if config.valid_split is not None:
         if config.trainer == "pair_score":
             evaluator = EmbeddingSimilarityEvaluator(
-                sentences1=valid_data[config.sentence1_column],
-                sentences2=valid_data[config.sentence2_column],
-                scores=valid_data[config.target_column],
+                sentences1=valid_data["sentence1"],
+                sentences2=valid_data["sentence2"],
+                scores=valid_data["score"],
                 name=config.valid_split,
             )
         elif config.trainer == "triplet":
             evaluator = TripletEvaluator(
-                anchors=valid_data[config.sentence1_column],
-                positives=valid_data[config.sentence2_column],
-                negatives=valid_data[config.sentence3_column],
+                anchors=valid_data["anchor"],
+                positives=valid_data["positive"],
+                negatives=valid_data["negative"],
             )
 
     logger.info("Setting up training arguments...")

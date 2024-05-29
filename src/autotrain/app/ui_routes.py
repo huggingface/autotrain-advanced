@@ -600,7 +600,7 @@ async def handle_form(
                 local=hardware.lower() == "local-ui",
                 ext=file_extension,
             )
-            if task in ("text-classification", "token-classification"):
+            if task in ("text-classification", "token-classification", "st:pair_class"):
                 dset_args["convert_to_class_label"] = True
             dset = AutoTrainDataset(**dset_args)
         data_path = dset.prepare()

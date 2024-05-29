@@ -42,7 +42,7 @@
                     fields = ['sentence1', 'sentence2'];
                     fieldNames = ['anchor', 'positive'];
                     break;
-                case 'st:pair_label':
+                case 'st:pair_class':
                     fields = ['sentence1', 'sentence2', 'target'];
                     fieldNames = ['premise', 'hypothesis', 'label'];
                     break;
@@ -186,8 +186,8 @@
                         </optgroup>
                         <optgroup label="Sentence Transformers">
                             <option value="st:pair">ST Pair</option>
-                            <option value="st:pair_label">ST Pair Label</option>
-                            <option value="st:pair_score">ST Pair Score</option>
+                            <option value="st:pair_class">ST Pair Classification</option>
+                            <option value="st:pair_score">ST Pair Scoring</option>
                             <option value="st:triplet">ST Triplet</option>
                             <option value="st:qa">ST Question Answering</option>
                         </optgroup>

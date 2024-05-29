@@ -5,7 +5,7 @@ This task lets you easily train or fine-tune a Sentence Transformer model on you
 AutoTrain supports the following types of sentence transformer finetuning:
 
 - `pair`: dataset with two sentences: anchor and positive 
-- `pair_classes`: dataset with two sentences: premise and hypothesis and a target label
+- `pair_class`: dataset with two sentences: premise and hypothesis and a target label
 - `pair_score`: dataset with two sentences: sentence1 and sentence2 and a target score
 - `triplet`: dataset with three sentences: anchor, positive and negative
 - `qa`: dataset with two sentences: query and answer
@@ -25,9 +25,9 @@ For `pair` training, the data should be in the following format:
 | What is your name? | My name is Abhishek |
 | Which is the best programming language? | Python |
 
-### `pair_classes`
+### `pair_class`
 
-For `pair_classes` training, the data should be in the following format:
+For `pair_class` training, the data should be in the following format:
 
 | premise | hypothesis | label |
 |---------|------------|-------|

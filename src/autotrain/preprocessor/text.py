@@ -467,24 +467,25 @@ class SentenceTransformersPreprocessor:
             return train_df, valid_df
 
     def prepare_columns(self, train_df, valid_df):
-        drop_cols = [self.sentence1_column, self.sentence2_column]
         train_df.loc[:, "autotrain_sentence1"] = train_df[self.sentence1_column]
         train_df.loc[:, "autotrain_sentence2"] = train_df[self.sentence2_column]
         valid_df.loc[:, "autotrain_sentence1"] = valid_df[self.sentence1_column]
         valid_df.loc[:, "autotrain_sentence2"] = valid_df[self.sentence2_column]
+        keep_cols = ["autotrain_sentence1", "autotrain_sentence2"]
 
         if self.sentence3_column is not None:
-            drop_cols.append(self.sentence3_column)
             train_df.loc[:, "autotrain_sentence3"] = train_df[self.sentence3_column]
             valid_df.loc[:, "autotrain_sentence3"] = valid_df[self.sentence3_column]
+            keep_cols.append("autotrain_sentence3")
 
         if self.target_column is not None:
-            drop_cols.append(self.target_column)
             train_df.loc[:, "autotrain_target"] = train_df[self.target_column]
             valid_df.loc[:, "autotrain_target"] = valid_df[self.target_column]
+            keep_cols.append("autotrain_target")
 
-        train_df = train_df.drop(columns=drop_cols)
-        valid_df = valid_df.drop(columns=drop_cols)
+        train_df = train_df[keep_cols]
+        valid_df = valid_df[keep_cols]
+
         return train_df, valid_df
 
     def prepare(self):
