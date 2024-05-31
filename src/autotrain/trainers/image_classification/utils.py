@@ -34,7 +34,7 @@ MODEL_CARD = """
 ---
 tags:
 - autotrain
-- image-classification
+- image-classification{base_model}
 widget:
 - src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg
   example_title: Tiger
@@ -135,8 +135,14 @@ def create_model_card(config, trainer, num_classes):
     else:
         dataset_tag = f"\ndatasets:\n- {config.data_path}"
 
+    if os.path.isdir(config.model):
+        base_model = ""
+    else:
+        base_model = f"\nbase_model: {config.model}"
+
     model_card = MODEL_CARD.format(
         dataset_tag=dataset_tag,
         validation_metrics=eval_scores,
+        base_model=base_model,
     )
     return model_card

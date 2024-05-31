@@ -5,11 +5,19 @@ from autotrain import logger
 
 MODEL_CARD = """
 ---
+library_name: sentence-transformers
 tags:
-- autotrain
 - sentence-transformers
+- sentence-similarity
+- feature-extraction
+- autotrain{base_model}
 widget:
-- text: "I love AutoTrain"{dataset_tag}
+- source_sentence: 'search_query: i love autotrain'
+  sentences:
+  - 'search_query: huggingface auto train'
+  - 'search_query: hugging face auto train'
+  - 'search_query: i love autotrain'
+pipeline_tag: sentence-similarity{dataset_tag}
 ---
 
 # Model Trained Using AutoTrain
@@ -18,6 +26,36 @@ widget:
 
 ## Validation Metrics
 {validation_metrics}
+
+## Usage
+
+### Direct Usage (Sentence Transformers)
+
+First install the Sentence Transformers library:
+
+```bash
+pip install -U sentence-transformers
+```
+
+Then you can load this model and run inference.
+```python
+from sentence_transformers import SentenceTransformer
+
+# Download from the Hugging Face Hub
+model = SentenceTransformer("sentence_transformers_model_id")
+# Run inference
+sentences = [
+    'search_query: autotrain',
+    'search_query: auto train',
+    'search_query: i love autotrain',
+]
+embeddings = model.encode(sentences)
+print(embeddings.shape)
+
+# Get the similarity scores for the embeddings
+similarities = model.similarity(embeddings, embeddings)
+print(similarities.shape)
+```
 """
 
 
@@ -78,8 +116,14 @@ def create_model_card(config, trainer):
     else:
         dataset_tag = f"\ndatasets:\n- {config.data_path}"
 
+    if os.path.isdir(config.model):
+        base_model = ""
+    else:
+        base_model = f"\nbase_model: {config.model}"
+
     model_card = MODEL_CARD.format(
         dataset_tag=dataset_tag,
         validation_metrics=eval_scores,
+        base_model=base_model,
     )
     return model_card
