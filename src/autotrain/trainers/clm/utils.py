@@ -44,7 +44,7 @@ tags:
 - autotrain
 - text-generation-inference
 - text-generation{peft}
-library_name: transformers
+library_name: transformers{base_model}
 widget:
   - messages:
       - role: user
@@ -203,9 +203,15 @@ def create_model_card(config):
     else:
         dataset_tag = f"\ndatasets:\n- {config.data_path}"
 
+    if os.path.isdir(config.model):
+        base_model = ""
+    else:
+        base_model = f"\nbase_model: {config.model}"
+
     model_card = MODEL_CARD.format(
         dataset_tag=dataset_tag,
         peft=peft,
+        base_model=base_model,
     )
     return model_card.strip()
 
