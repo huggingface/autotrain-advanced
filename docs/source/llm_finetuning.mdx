@@ -27,9 +27,9 @@ An example dataset for this format can be found here: https://huggingface.co/dat
 
 For SFT/Generic training, your dataset must have a `text` column
 
-### Data Format For Reward/ORPO Trainer
+### Data Format For Reward Trainer
 
-For Reward/ORPO Trainer, the data should be in the following format:
+For Reward Trainer, the data should be in the following format:
 
 | text                                                          | rejected_text                                                     |
 |---------------------------------------------------------------|-------------------------------------------------------------------|
@@ -40,9 +40,9 @@ For Reward/ORPO Trainer, the data should be in the following format:
 
 For Reward Trainer, your dataset must have a `text` column (aka chosen text) and a `rejected_text` column.
 
-### Data Format For DPO Trainer
+### Data Format For DPO/ORPO Trainer
 
-For DPO Trainer, the data should be in the following format:
+For DPO/ORPO Trainer, the data should be in the following format:
 
 | prompt                                  | text                | rejected_text      |
 |-----------------------------------------|---------------------|--------------------|
@@ -54,7 +54,7 @@ For DPO Trainer, the data should be in the following format:
 | Which is the best programming language? | Python              | C++                |
 | Which is the best programming language? | Java                | C++                |
 
-For DPO Trainer, your dataset must have a `prompt` column, a `text` column (aka chosen text) and a `rejected_text` column.
+For DPO/ORPO Trainer, your dataset must have a `prompt` column, a `text` column (aka chosen text) and a `rejected_text` column.
 
 
 For all tasks, you can use both CSV and JSONL files!
