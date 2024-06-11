@@ -273,6 +273,11 @@ UI_PARAMS = {
         "type": "number",
         "label": "Image square size",
     },
+    "unsloth": {
+        "type": "dropdown",
+        "label": "Unsloth",
+        "options": [True, False],
+    },
 }
 
 

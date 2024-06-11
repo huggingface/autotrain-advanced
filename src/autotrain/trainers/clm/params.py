@@ -66,3 +66,6 @@ class LLMTrainingParams(AutoTrainParams):
     push_to_hub: bool = Field(False, title="Push to hub")
     username: Optional[str] = Field(None, title="Hugging Face Username")
     token: Optional[str] = Field(None, title="Huggingface token")
+
+    # unsloth
+    unsloth: bool = Field(False, title="Use unsloth")
