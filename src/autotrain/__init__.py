@@ -51,3 +51,12 @@ def is_colab():
         return True
     except ImportError:
         return False
+
+
+def is_unsloth_available():
+    try:
+        from unsloth import FastLanguageModel
+
+        return True
+    except ImportError:
+        return False

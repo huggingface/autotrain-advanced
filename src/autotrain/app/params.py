@@ -396,7 +396,7 @@ def get_task_params(task, param_type):
     task_params = {k: v for k, v in task_params.items() if k not in HIDDEN_PARAMS}
     if task == "llm":
         more_hidden_params = []
-        if trainer in ("sft", "reward"):
+        if trainer == "sft":
             more_hidden_params = [
                 "model_ref",
                 "dpo_beta",
@@ -404,11 +404,21 @@ def get_task_params(task, param_type):
                 "max_prompt_length",
                 "max_completion_length",
             ]
+        elif trainer == "reward":
+            more_hidden_params = [
+                "model_ref",
+                "dpo_beta",
+                "add_eos_token",
+                "max_prompt_length",
+                "max_completion_length",
+                "unsloth",
+            ]
         elif trainer == "orpo":
             more_hidden_params = [
                 "model_ref",
                 "dpo_beta",
                 "add_eos_token",
+                "unsloth",
             ]
         elif trainer == "generic":
             more_hidden_params = [
@@ -420,6 +430,7 @@ def get_task_params(task, param_type):
         elif trainer == "dpo":
             more_hidden_params = [
                 "add_eos_token",
+                "unsloth",
             ]
         if param_type == "basic":
             more_hidden_params.extend(

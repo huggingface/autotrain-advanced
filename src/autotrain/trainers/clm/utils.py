@@ -8,10 +8,10 @@ import torch
 from accelerate.state import PartialState
 from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-from autotrain import logger
+from autotrain import is_unsloth_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -557,3 +557,138 @@ def get_callbacks(config):
         if config.valid_split is not None:
             callbacks.append(LoadBestPeftModelCallback)
     return callbacks
+
+
+def get_model(config, tokenizer):
+    model_config = AutoConfig.from_pretrained(
+        config.model,
+        token=config.token,
+        trust_remote_code=ALLOW_REMOTE_CODE,
+    )
+    model_type = model_config.model_type
+    unsloth_target_modules = None
+    can_use_unloth = config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft")
+    if model_type in ("llama", "mistral", "gemma", "qwen2"):
+        if config.target_modules.strip().lower() == "all-linear":
+            unsloth_target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        else:
+            unsloth_target_modules = get_target_modules(config)
+    else:
+        can_use_unloth = False
+
+    if can_use_unloth:
+        from unsloth import FastLanguageModel
+
+        load_in_4bit = False
+        load_in_8bit = False
+        if config.peft and config.quantization == "int4":
+            load_in_4bit = True
+        elif config.peft and config.quantization == "int8":
+            load_in_8bit = True
+
+        dtype = None
+        if config.mixed_precision == "fp16":
+            dtype = torch.float16
+        elif config.mixed_precision == "bf16":
+            dtype = torch.bfloat16
+
+        model, _ = FastLanguageModel.from_pretrained(
+            model_name=config.model,
+            token=config.token,
+            trust_remote_code=ALLOW_REMOTE_CODE,
+            load_in_4bit=load_in_4bit,
+            load_in_8bit=load_in_8bit,
+            max_seq_length=config.block_size,
+            dtype=dtype,
+        )
+        if config.peft:
+            model = FastLanguageModel.get_peft_model(
+                model,
+                r=config.lora_r,
+                target_modules=unsloth_target_modules,
+                lora_alpha=config.lora_alpha,
+                lora_dropout=config.lora_dropout,
+                bias="none",
+                use_gradient_checkpointing="unsloth",
+                random_state=config.seed,
+                max_seq_length=config.block_size,
+                use_rslora=False,
+                loftq_config=None,
+            )
+        return model
+    else:
+        logger.warning("Unsloth not available, continuing without it...")
+
+    logger.info("loading model config...")
+    model_config = AutoConfig.from_pretrained(
+        config.model,
+        token=config.token,
+        trust_remote_code=ALLOW_REMOTE_CODE,
+        use_cache=config.disable_gradient_checkpointing,
+    )
+
+    logger.info("loading model...")
+    if config.peft:
+        if config.quantization == "int4":
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=False,
+            )
+        elif config.quantization == "int8":
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            bnb_config = None
+
+        model = AutoModelForCausalLM.from_pretrained(
+            config.model,
+            config=model_config,
+            token=config.token,
+            quantization_config=bnb_config,
+            trust_remote_code=ALLOW_REMOTE_CODE,
+            use_flash_attention_2=config.use_flash_attention_2,
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            config.model,
+            config=model_config,
+            token=config.token,
+            trust_remote_code=ALLOW_REMOTE_CODE,
+            use_flash_attention_2=config.use_flash_attention_2,
+        )
+
+    logger.info(f"model dtype: {model.dtype}")
+    model.resize_token_embeddings(len(tokenizer))
+
+    if config.trainer != "default":
+        return model
+
+    if config.peft:
+        logger.info("preparing peft model...")
+        if config.quantization is not None:
+            gradient_checkpointing_kwargs = {}
+            if not config.disable_gradient_checkpointing:
+                if config.quantization in ("int4", "int8"):
+                    gradient_checkpointing_kwargs = {"use_reentrant": True}
+                else:
+                    gradient_checkpointing_kwargs = {"use_reentrant": False}
+            model = prepare_model_for_kbit_training(
+                model,
+                use_gradient_checkpointing=not config.disable_gradient_checkpointing,
+                gradient_checkpointing_kwargs=gradient_checkpointing_kwargs,
+            )
+        else:
+            model.enable_input_require_grads()
+
+        peft_config = LoraConfig(
+            r=config.lora_r,
+            lora_alpha=config.lora_alpha,
+            lora_dropout=config.lora_dropout,
+            bias="none",
+            task_type="CAUSAL_LM",
+            target_modules=get_target_modules(config),
+        )
+        model = get_peft_model(model, peft_config)
+
+    return model

@@ -79,4 +79,5 @@ RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     pip install -U flash-attn --no-build-isolation && \
     pip install -U deepspeed && \
+    pip install "unsloth[cu121-ampere-torch230] @ git+https://github.com/unslothai/unsloth.git" --no-deps && \
     pip cache purge
