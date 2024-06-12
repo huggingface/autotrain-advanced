@@ -38,7 +38,7 @@ def _fetch_text_classification_models():
         list_models(
             task="fill-mask",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
