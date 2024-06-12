@@ -38,7 +38,7 @@ def _fetch_text_classification_models():
         list_models(
             task="fill-mask",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -68,7 +68,7 @@ def _fetch_llm_models():
         list_models(
             task="text-generation",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -98,7 +98,7 @@ def _fetch_image_classification_models():
         list_models(
             task="image-classification",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -130,7 +130,7 @@ def _fetch_image_object_detection_models():
         list_models(
             task="object-detection",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -172,7 +172,7 @@ def _fetch_dreambooth_models():
     trending_models1 = list(
         list_models(
             task="text-to-image",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -182,7 +182,7 @@ def _fetch_dreambooth_models():
     trending_models2 = list(
         list_models(
             task="text-to-image",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -214,7 +214,7 @@ def _fetch_seq2seq_models():
         list_models(
             task="text2text-generation",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -255,7 +255,7 @@ def _fetch_token_classification_models():
         list_models(
             task="fill-mask",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -298,7 +298,7 @@ def _fetch_st_models():
         list_models(
             task="sentence-similarity",
             library="sentence-transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
