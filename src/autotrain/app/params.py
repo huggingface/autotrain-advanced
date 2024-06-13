@@ -5,6 +5,7 @@ from typing import Optional
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -126,6 +127,10 @@ PARAMS["text-regression"] = TextRegressionParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
+PARAMS["image-regression"] = ImageRegressionParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+).model_dump()
 
 
 @dataclass
@@ -168,6 +173,8 @@ class AppParams:
             return self._munge_params_text_reg()
         elif self.task.startswith("st:"):
             return self._munge_params_sent_transformers()
+        elif self.task == "image-regression":
+            return self._munge_params_img_reg()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -314,6 +321,22 @@ class AppParams:
             _params["valid_split"] = self.valid_split
 
         return ImageClassificationParams(**_params)
+
+    def _munge_params_img_reg(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["image_column"] = "autotrain_image"
+            _params["target_column"] = "autotrain_label"
+            _params["valid_split"] = "validation"
+        else:
+            _params["image_column"] = self.column_mapping.get("image" if not self.api else "image_column", "image")
+            _params["target_column"] = self.column_mapping.get("target" if not self.api else "target_column", "target")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+
+        return ImageRegressionParams(**_params)
 
     def _munge_params_img_obj_det(self):
         _params = self._munge_common_params()
@@ -498,6 +521,20 @@ def get_task_params(task, param_type):
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "image-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "evaluation_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "image-regression" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",

@@ -13,6 +13,7 @@ from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
@@ -86,6 +87,7 @@ TextClassificationParamsAPI = create_api_base_model(TextClassificationParams, "T
 TextRegressionParamsAPI = create_api_base_model(TextRegressionParams, "TextRegressionParamsAPI")
 TokenClassificationParamsAPI = create_api_base_model(TokenClassificationParams, "TokenClassificationParamsAPI")
 SentenceTransformersParamsAPI = create_api_base_model(SentenceTransformersParams, "SentenceTransformersParamsAPI")
+ImageRegressionParamsAPI = create_api_base_model(ImageRegressionParams, "ImageRegressionParamsAPI")
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -118,6 +120,11 @@ class DreamBoothColumnMapping(BaseModel):
 
 
 class ImageClassificationColumnMapping(BaseModel):
+    image_column: str
+    target_column: str
+
+
+class ImageRegressionColumnMapping(BaseModel):
     image_column: str
     target_column: str
 
@@ -201,6 +208,7 @@ class APICreateProjectModel(BaseModel):
         "text-regression",
         "tabular-classification",
         "tabular-regression",
+        "image-regression",
     ]
     base_model: str
     hardware: Literal[
@@ -232,6 +240,7 @@ class APICreateProjectModel(BaseModel):
         TextClassificationParamsAPI,
         TextRegressionParamsAPI,
         TokenClassificationParamsAPI,
+        ImageRegressionParamsAPI,
     ]
     username: str
     column_mapping: Optional[
@@ -254,6 +263,7 @@ class APICreateProjectModel(BaseModel):
             STPairScoreColumnMapping,
             STTripletColumnMapping,
             STQAColumnMapping,
+            ImageRegressionColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -408,6 +418,14 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("sentence2_column"):
                 raise ValueError("sentence2_column is required for st:qa")
             values["column_mapping"] = STQAColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "image-regression":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for image-regression")
+            if not values.get("column_mapping").get("image_column"):
+                raise ValueError("image_column is required for image-regression")
+            if not values.get("column_mapping").get("target_column"):
+                raise ValueError("target_column is required for image-regression")
+            values["column_mapping"] = ImageRegressionColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -441,6 +459,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = TokenClassificationParamsAPI(**values["params"])
         elif values.get("task").startswith("st:"):
             values["params"] = SentenceTransformersParamsAPI(**values["params"])
+        elif values.get("task") == "image-regression":
+            values["params"] = ImageRegressionParamsAPI(**values["params"])
         return values
 
 

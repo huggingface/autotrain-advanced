@@ -5,6 +5,7 @@ from autotrain.cli.run_api import RunAutoTrainAPICommand
 from autotrain.cli.run_app import RunAutoTrainAppCommand
 from autotrain.cli.run_dreambooth import RunAutoTrainDreamboothCommand
 from autotrain.cli.run_image_classification import RunAutoTrainImageClassificationCommand
+from autotrain.cli.run_image_regression import RunAutoTrainImageRegressionCommand
 from autotrain.cli.run_llm import RunAutoTrainLLMCommand
 from autotrain.cli.run_object_detection import RunAutoTrainObjectDetectionCommand
 from autotrain.cli.run_sent_tranformers import RunAutoTrainSentenceTransformersCommand
@@ -45,6 +46,7 @@ def main():
     RunAutoTrainTextRegressionCommand.register_subcommand(commands_parser)
     RunAutoTrainObjectDetectionCommand.register_subcommand(commands_parser)
     RunAutoTrainSentenceTransformersCommand.register_subcommand(commands_parser)
+    RunAutoTrainImageRegressionCommand.register_subcommand(commands_parser)
 
     args = parser.parse_args()
 

@@ -8,6 +8,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -250,7 +251,11 @@ def launch_command(params):
                 os.path.join(params.project_name, "training_params.json"),
             ]
         )
-    elif isinstance(params, ImageClassificationParams) or isinstance(params, ObjectDetectionParams):
+    elif (
+        isinstance(params, ImageClassificationParams)
+        or isinstance(params, ObjectDetectionParams)
+        or isinstance(params, ImageRegressionParams)
+    ):
         if num_gpus == 0:
             cmd = [
                 "accelerate",
@@ -291,6 +296,15 @@ def launch_command(params):
                 [
                     "-m",
                     "autotrain.trainers.object_detection",
+                    "--training_config",
+                    os.path.join(params.project_name, "training_params.json"),
+                ]
+            )
+        elif isinstance(params, ImageRegressionParams):
+            cmd.extend(
+                [
+                    "-m",
+                    "autotrain.trainers.image_regression",
                     "--training_config",
                     os.path.join(params.project_name, "training_params.json"),
                 ]

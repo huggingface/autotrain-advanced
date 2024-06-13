@@ -9,6 +9,7 @@ from autotrain.cli.utils import (
     dreambooth_munge_data,
     img_clf_munge_data,
     img_obj_detect_munge_data,
+    img_reg_munge_data,
     llm_munge_data,
     sent_transformers_munge_data,
     seq2seq_munge_data,
@@ -22,6 +23,7 @@ from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -59,6 +61,7 @@ class AutoTrainConfigParser:
             "text_single_column_regression": TextRegressionParams,
             "text_token_classification": TokenClassificationParams,
             "sentence_transformers": SentenceTransformersParams,
+            "image_single_column_regression": ImageRegressionParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
@@ -71,6 +74,7 @@ class AutoTrainConfigParser:
             "text_token_classification": token_clf_munge_data,
             "text_single_column_regression": text_reg_munge_data,
             "sentence_transformers": sent_transformers_munge_data,
+            "image_single_column_regression": img_reg_munge_data,
         }
         self.task_aliases = {
             "llm": "lm_training",
@@ -110,6 +114,11 @@ class AutoTrainConfigParser:
             "sentence-transformers:pair_score": "sentence_transformers",
             "sentence-transformers:triplet": "sentence_transformers",
             "sentence-transformers:qa": "sentence_transformers",
+            "image_single_column_regression": "image_single_column_regression",
+            "image-single-column-regression": "image_single_column_regression",
+            "image_regression": "image_single_column_regression",
+            "image-regression": "image_single_column_regression",
+            "image-scoring": "image_single_column_regression",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)

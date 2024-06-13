@@ -6,6 +6,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -68,6 +69,7 @@ class BaseBackend:
         TextRegressionParams,
         ObjectDetectionParams,
         SentenceTransformersParams,
+        ImageRegressionParams,
     ]
     backend: str
 
@@ -110,6 +112,8 @@ class BaseBackend:
             self.task_id = 29
         elif isinstance(self.params, SentenceTransformersParams):
             self.task_id = 30
+        elif isinstance(self.params, ImageRegressionParams):
+            self.task_id = 24
         else:
             raise NotImplementedError
 

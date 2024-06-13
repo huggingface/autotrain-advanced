@@ -21,6 +21,7 @@ from autotrain.dataset import (
     AutoTrainDataset,
     AutoTrainDreamboothDataset,
     AutoTrainImageClassificationDataset,
+    AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
 )
 from autotrain.help import get_app_help
@@ -437,6 +438,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["text-regression"]
     elif task == "image-object-detection":
         hub_models = MODEL_CHOICE["image-object-detection"]
+    elif task == "image-regression":
+        hub_models = MODEL_CHOICE["image-regression"]
     else:
         raise NotImplementedError
 
@@ -531,6 +534,16 @@ async def handle_form(
         file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
         if task == "image-classification":
             dset = AutoTrainImageClassificationDataset(
+                train_data=training_files[0],
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                valid_data=validation_files[0] if validation_files else None,
+                percent_valid=None,  # TODO: add to UI
+                local=hardware.lower() == "local-ui",
+            )
+        elif task == "image-regression":
+            dset = AutoTrainImageRegressionDataset(
                 train_data=training_files[0],
                 token=token,
                 project_name=project_name,
