@@ -77,7 +77,8 @@ COPY --chown=1000:1000 . /app/
 
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
-    FLASH_ATTENTION_SKIP_CUDA_BUILD=TRUE pip install -U flash-attn --no-build-isolation && \
+    pip install -U ninja && \
+    pip install -U flash-attn --no-build-isolation && \
     pip install -U deepspeed && \
     pip install "unsloth[cu121-ampere-torch230] @ git+https://github.com/unslothai/unsloth.git" --no-deps && \
     pip cache purge
