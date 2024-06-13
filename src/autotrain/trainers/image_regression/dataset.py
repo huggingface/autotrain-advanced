@@ -13,7 +13,7 @@ class ImageRegressionDataset:
 
     def __getitem__(self, item):
         image = self.data[item][self.config.image_column]
-        target = int(self.data[item][self.config.target_column])
+        target = self.data[item][self.config.target_column]
 
         image = self.transforms(image=np.array(image.convert("RGB")))["image"]
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
