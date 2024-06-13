@@ -567,6 +567,7 @@ def get_model(config, tokenizer):
     )
     model_type = model_config.model_type
     unsloth_target_modules = None
+    logger.info(f"Unsloth available: {is_unsloth_available()}")
     can_use_unloth = config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft")
     if model_type in ("llama", "mistral", "gemma", "qwen2"):
         if config.target_modules.strip().lower() == "all-linear":
@@ -575,7 +576,7 @@ def get_model(config, tokenizer):
             unsloth_target_modules = get_target_modules(config)
     else:
         can_use_unloth = False
-
+    logger.info(f"Can use unsloth: {can_use_unloth}")
     if can_use_unloth:
         from unsloth import FastLanguageModel
 
