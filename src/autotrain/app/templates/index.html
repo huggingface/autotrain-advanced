@@ -76,6 +76,10 @@
                     fields = ['image', 'label'];
                     fieldNames = ['image', 'label'];
                     break;
+                case 'image-regression':
+                    fields = ['image', 'label'];
+                    fieldNames = ['image', 'target'];
+                    break;
                 case 'image-object-detection':
                     fields = ['image', 'objects'];
                     fieldNames = ['image', 'objects'];
@@ -200,6 +204,7 @@
                         <optgroup label="Image Tasks">
                             <option value="dreambooth">DreamBooth LoRA</option>
                             <option value="image-classification">Image Classification</option>
+                            <option value="image-regression">Image Scoring/Regression</option>
                             <option value="image-object-detection">Object Detection</option>
                         </optgroup>
                         <optgroup label="Tabular Tasks">

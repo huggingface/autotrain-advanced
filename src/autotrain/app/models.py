@@ -316,6 +316,7 @@ def fetch_models():
     _mc["text-classification"] = _fetch_text_classification_models()
     _mc["llm"] = _fetch_llm_models()
     _mc["image-classification"] = _fetch_image_classification_models()
+    _mc["image-regression"] = _fetch_image_classification_models()
     _mc["dreambooth"] = _fetch_dreambooth_models()
     _mc["seq2seq"] = _fetch_seq2seq_models()
     _mc["token-classification"] = _fetch_token_classification_models()

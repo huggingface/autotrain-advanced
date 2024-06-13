@@ -35,6 +35,8 @@
     title: LLM Finetuning
   - local: image_classification
     title: Image Classification
+  - local: image_regression
+    title: Image Scoring/Regression
   - local: object_detection
     title: Object Detection
   - local: dreambooth
@@ -53,6 +55,8 @@
     title: LLM Finetuning
   - local: image_classification_params
     title: Image Classification
+  - local: image_regression_params
+    title: Image Scoring/Regression
   - local: object_detection_params
     title: Object Detection
   - local: dreambooth_params

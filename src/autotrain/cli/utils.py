@@ -6,6 +6,7 @@ from autotrain.dataset import (
     AutoTrainDataset,
     AutoTrainDreamboothDataset,
     AutoTrainImageClassificationDataset,
+    AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
 )
 
@@ -524,4 +525,26 @@ def sent_transformers_munge_data(params, local):
         params.sentence2_column = "autotrain_sentence2"
         params.sentence3_column = "autotrain_sentence3"
         params.target_column = "autotrain_target"
+    return params
+
+
+def img_reg_munge_data(params, local):
+    train_data_path = f"{params.data_path}/{params.train_split}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}"
+    else:
+        valid_data_path = None
+    if os.path.isdir(train_data_path):
+        dset = AutoTrainImageRegressionDataset(
+            train_data=train_data_path,
+            valid_data=valid_data_path,
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            local=local,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.image_column = "autotrain_image"
+        params.target_column = "autotrain_label"
     return params

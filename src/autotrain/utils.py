@@ -7,6 +7,7 @@ from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
@@ -45,6 +46,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = ObjectDetectionParams(**params)
     elif task_id == 30:
         params = SentenceTransformersParams(**params)
+    elif task_id == 24:
+        params = ImageRegressionParams(**params)
     else:
         raise NotImplementedError
 

@@ -6,8 +6,8 @@ from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from transformers import (
     AutoConfig,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
+    AutoImageProcessor,
+    AutoModelForImageClassification,
     EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
@@ -25,9 +25,8 @@ from autotrain.trainers.common import (
     remove_autotrain_data,
     save_training_params,
 )
-from autotrain.trainers.text_regression import utils
-from autotrain.trainers.text_regression.dataset import TextRegressionDataset
-from autotrain.trainers.text_regression.params import TextRegressionParams
+from autotrain.trainers.image_regression import utils
+from autotrain.trainers.image_regression.params import ImageRegressionParams
 
 
 def parse_args():
@@ -40,34 +39,29 @@ def parse_args():
 @monitor
 def train(config):
     if isinstance(config, dict):
-        config = TextRegressionParams(**config)
+        config = ImageRegressionParams(**config)
 
-    train_data = None
     valid_data = None
-    # check if config.train_split.csv exists in config.data_path
-    if config.train_split is not None:
-        if config.data_path == f"{config.project_name}/autotrain-data":
-            logger.info("loading dataset from disk")
-            train_data = load_from_disk(config.data_path)[config.train_split]
+    if config.data_path == f"{config.project_name}/autotrain-data":
+        train_data = load_from_disk(config.data_path)[config.train_split]
+    else:
+        if ":" in config.train_split:
+            dataset_config_name, split = config.train_split.split(":")
+            train_data = load_dataset(
+                config.data_path,
+                name=dataset_config_name,
+                split=split,
+                token=config.token,
+            )
         else:
-            if ":" in config.train_split:
-                dataset_config_name, split = config.train_split.split(":")
-                train_data = load_dataset(
-                    config.data_path,
-                    name=dataset_config_name,
-                    split=split,
-                    token=config.token,
-                )
-            else:
-                train_data = load_dataset(
-                    config.data_path,
-                    split=config.train_split,
-                    token=config.token,
-                )
+            train_data = load_dataset(
+                config.data_path,
+                split=config.train_split,
+                token=config.token,
+            )
 
     if config.valid_split is not None:
         if config.data_path == f"{config.project_name}/autotrain-data":
-            logger.info("loading dataset from disk")
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
             if ":" in config.valid_split:
@@ -85,6 +79,9 @@ def train(config):
                     token=config.token,
                 )
 
+    logger.info(f"Train data: {train_data}")
+    logger.info(f"Valid data: {valid_data}")
+
     model_config = AutoConfig.from_pretrained(
         config.model,
         num_labels=1,
@@ -97,7 +94,7 @@ def train(config):
     model_config.id2label = {v: k for k, v in label2id.items()}
 
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(
+        model = AutoModelForImageClassification.from_pretrained(
             config.model,
             config=model_config,
             trust_remote_code=ALLOW_REMOTE_CODE,
@@ -105,7 +102,7 @@ def train(config):
             ignore_mismatched_sizes=True,
         )
     except OSError:
-        model = AutoModelForSequenceClassification.from_pretrained(
+        model = AutoModelForImageClassification.from_pretrained(
             config.model,
             config=model_config,
             from_tf=True,
@@ -114,10 +111,12 @@ def train(config):
             ignore_mismatched_sizes=True,
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE)
-    train_data = TextRegressionDataset(data=train_data, tokenizer=tokenizer, config=config)
-    if config.valid_split is not None:
-        valid_data = TextRegressionDataset(data=valid_data, tokenizer=tokenizer, config=config)
+    image_processor = AutoImageProcessor.from_pretrained(
+        config.model,
+        token=config.token,
+        trust_remote_code=ALLOW_REMOTE_CODE,
+    )
+    train_data, valid_data = utils.process_data(train_data, valid_data, image_processor, config)
 
     if config.logging_steps == -1:
         if config.valid_split is not None:
@@ -178,7 +177,7 @@ def train(config):
         args=args,
         model=model,
         callbacks=callbacks_to_use,
-        compute_metrics=utils.single_column_regression_metrics,
+        compute_metrics=utils.image_regression_metrics,
     )
 
     trainer = Trainer(
@@ -191,7 +190,7 @@ def train(config):
 
     logger.info("Finished training, saving model...")
     trainer.save_model(config.project_name)
-    tokenizer.save_pretrained(config.project_name)
+    image_processor.save_pretrained(config.project_name)
 
     model_card = utils.create_model_card(config, trainer)
 
@@ -209,9 +208,7 @@ def train(config):
                 repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
             )
             api.upload_folder(
-                folder_path=config.project_name,
-                repo_id=f"{config.username}/{config.project_name}",
-                repo_type="model",
+                folder_path=config.project_name, repo_id=f"{config.username}/{config.project_name}", repo_type="model"
             )
 
     if PartialState().process_index == 0:
@@ -219,7 +216,7 @@ def train(config):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    training_config = json.load(open(args.training_config))
-    config = TextRegressionParams(**training_config)
-    train(config)
+    _args = parse_args()
+    training_config = json.load(open(_args.training_config))
+    _config = ImageRegressionParams(**training_config)
+    train(_config)
