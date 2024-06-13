@@ -78,7 +78,7 @@ COPY --chown=1000:1000 . /app/
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     pip install -U ninja && \
-    pip install -U flash-attn --no-build-isolation && \
+    pip install -U https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.3cxx11abiFALSE-cp310-cp310-linux_x86_64.whl && \
     pip install -U deepspeed && \
     pip install "unsloth[cu121-ampere-torch230] @ git+https://github.com/unslothai/unsloth.git" --no-deps && \
     pip cache purge
