@@ -569,12 +569,10 @@ def get_model(config, tokenizer):
     unsloth_target_modules = None
     is_unsloth_available = False
     can_use_unloth = False
-    try:
-        from unsloth import FastLanguageModel
+    from unsloth import FastLanguageModel
 
-        is_unsloth_available = True
-    except ImportError:
-        pass
+    is_unsloth_available = True
+
     logger.info(f"Unsloth available: {is_unsloth_available}")
 
     if config.unsloth and is_unsloth_available and config.trainer in ("default", "sft"):
