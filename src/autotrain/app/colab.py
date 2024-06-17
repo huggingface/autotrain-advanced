@@ -339,7 +339,7 @@ def colab_app():
             params_val = json.loads(parameters.value)
             if task_dropdown.value.startswith("llm") or task_dropdown.value.startswith("sentence-transformers"):
                 params_val["trainer"] = task_dropdown.value.split(":")[1]
-                params_val = {k: v for k, v in params_val.items() if k != "trainer"}
+                # params_val = {k: v for k, v in params_val.items() if k != "trainer"}
 
             chat_template = params_val.get("chat_template")
             if chat_template is not None:
