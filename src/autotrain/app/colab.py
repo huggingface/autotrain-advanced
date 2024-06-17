@@ -341,6 +341,10 @@ def colab_app():
                 params_val["trainer"] = task_dropdown.value.split(":")[1]
                 params_val = {k: v for k, v in params_val.items() if k != "trainer"}
 
+            chat_template = params_val.get("chat_template")
+            if chat_template is not None:
+                params_val = {k: v for k, v in params_val.items() if k != "chat_template"}
+
             if TASK_MAP[task_dropdown.value] == "dreambooth":
                 prompt = params_val.get("prompt")
                 if prompt is None:
@@ -375,6 +379,8 @@ def colab_app():
                         "push_to_hub": push_to_hub,
                     },
                 }
+                if task_dropdown.value.startswith("llm"):
+                    config["data"]["chat_template"] = chat_template
             else:
                 config = {
                     "task": TASK_MAP[task_dropdown.value],

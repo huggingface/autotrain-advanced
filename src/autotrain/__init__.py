@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
 warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub")
 
 logger = Logger().get_logger()
-__version__ = "0.7.121"
+__version__ = "0.7.122"
 
 
 def is_colab():
