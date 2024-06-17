@@ -34,6 +34,7 @@ def colab_app():
         "Token Classification",
         "DreamBooth LoRA",
         "Image Classification",
+        "Image Regression",
         "Object Detection",
         "Tabular Classification",
         "Tabular Regression",
@@ -56,6 +57,7 @@ def colab_app():
         "Token Classification": "token-classification",
         "DreamBooth LoRA": "dreambooth",
         "Image Classification": "image-classification",
+        "Image Regression": "image-regression",
         "Object Detection": "image-object-detection",
         "Tabular Classification": "tabular:classification",
         "Tabular Regression": "tabular:regression",
@@ -267,6 +269,10 @@ def colab_app():
             col_mapping.value = '{"image": "image", "label": "label"}'
             dataset_source_dropdown.disabled = False
             valid_split.disabled = False
+        elif task == "image-regression":
+            col_mapping.value = '{"image": "image", "label": "target"}'
+            dataset_source_dropdown.disabled = False
+            valid_split.disabled = False
         elif task == "image-object-detection":
             col_mapping.value = '{"image": "image", "objects": "objects"}'
             dataset_source_dropdown.disabled = False
@@ -379,8 +385,10 @@ def colab_app():
                         "push_to_hub": push_to_hub,
                     },
                 }
-                if task_dropdown.value.startswith("llm"):
+                if TASK_MAP[task_dropdown.value].startswith("llm"):
                     config["data"]["chat_template"] = chat_template
+                    if config["data"]["chat_template"] == "none":
+                        config["data"]["chat_template"] = None
             else:
                 config = {
                     "task": TASK_MAP[task_dropdown.value],
