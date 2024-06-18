@@ -29,7 +29,7 @@ class Seq2SeqParams(AutoTrainParams):
     weight_decay: float = Field(0.0, title="Weight decay")
     max_grad_norm: float = Field(1.0, title="Max gradient norm")
     logging_steps: int = Field(-1, title="Logging steps")
-    evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
+    eval_strategy: str = Field("epoch", title="Evaluation strategy")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")
     mixed_precision: Optional[str] = Field(None, title="fp16, bf16, or None")
     save_total_limit: int = Field(1, title="Save total limit")

@@ -462,7 +462,7 @@ def get_task_params(task, param_type):
                     "use_flash_attention_2",
                     "disable_gradient_checkpointing",
                     "logging_steps",
-                    "evaluation_strategy",
+                    "eval_strategy",
                     "save_total_limit",
                     "auto_find_batch_size",
                     "warmup_ratio",
@@ -487,7 +487,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -501,7 +501,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -515,7 +515,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -529,7 +529,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -543,7 +543,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -557,7 +557,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
@@ -571,7 +571,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "quantization",
             "lora_r",
             "lora_alpha",
@@ -590,7 +590,7 @@ def get_task_params(task, param_type):
             "logging_steps",
             "auto_find_batch_size",
             "save_total_limit",
-            "evaluation_strategy",
+            "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
