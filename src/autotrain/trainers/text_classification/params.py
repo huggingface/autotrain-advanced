@@ -30,7 +30,7 @@ class TextClassificationParams(AutoTrainParams):
     save_total_limit: int = Field(1, title="Save total limit")
     token: Optional[str] = Field(None, title="Hub Token")
     push_to_hub: bool = Field(False, title="Push to hub")
-    evaluation_strategy: str = Field("epoch", title="Evaluation strategy")
+    eval_strategy: str = Field("epoch", title="Evaluation strategy")
     username: Optional[str] = Field(None, title="Hugging Face Username")
     log: str = Field("none", title="Logging using experiment tracking")
     early_stopping_patience: int = Field(5, title="Early stopping patience")

@@ -58,7 +58,7 @@ UI_PARAMS = {
         "label": "Scheduler",
         "options": ["linear", "cosine", "cosine_warmup", "constant"],
     },
-    "evaluation_strategy": {
+    "eval_strategy": {
         "type": "dropdown",
         "label": "Evaluation strategy",
         "options": ["epoch", "steps"],

@@ -140,12 +140,12 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--logging-steps"],
             },
             {
-                "arg": "--evaluation_strategy",
+                "arg": "--eval_strategy",
                 "help": "Choose how frequently to evaluate the model's performance, with 'epoch' as the default, meaning at the end of each training epoch",
                 "required": False,
                 "type": str,
                 "default": "epoch",
-                "alias": ["--evaluation-strategy"],
+                "alias": ["--eval-strategy"],
                 "choices": ["epoch", "steps", "no"],
             },
             {

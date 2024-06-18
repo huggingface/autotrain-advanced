@@ -68,7 +68,7 @@ usage: autotrain <command> [<args>] text-regression [-h] [--train] [--deploy] [-
                                                         [--log {none,wandb,tensorboard}] [--text-column TEXT_COLUMN] [--target-column TARGET_COLUMN]
                                                         [--max-seq-length MAX_SEQ_LENGTH] [--warmup-ratio WARMUP_RATIO] [--optimizer OPTIMIZER]
                                                         [--scheduler SCHEDULER] [--weight-decay WEIGHT_DECAY] [--max-grad-norm MAX_GRAD_NORM]
-                                                        [--logging-steps LOGGING_STEPS] [--evaluation-strategy {steps,epoch,no}]
+                                                        [--logging-steps LOGGING_STEPS] [--eval-strategy {steps,epoch,no}]
                                                         [--save-total-limit SAVE_TOTAL_LIMIT]
                                                         [--auto-find-batch-size] [--mixed-precision {fp16,bf16,None}]
 
@@ -132,7 +132,7 @@ options:
   --logging-steps LOGGING_STEPS
                         Determine how often to log training progress. Set this to the number of steps between each log output. -1 determines logging
                         steps automatically. Default is -1.
-  --evaluation-strategy {steps,epoch,no}
+  --eval-strategy {steps,epoch,no}
                         Specify how often to evaluate the model performance. Options include 'no', 'steps', 'epoch'. 'epoch' evaluates at the end of
                         each training epoch by default.
   --save-total-limit SAVE_TOTAL_LIMIT
