@@ -145,7 +145,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "type": str,
                 "default": "epoch",
-                "alias": ["--evaluation-strategy"],
+                "alias": ["--eval-strategy"],
                 "choices": ["epoch", "steps", "no"],
             },
             {

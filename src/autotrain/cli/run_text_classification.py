@@ -80,7 +80,7 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "default": -1,
             },
             {
-                "arg": "--evaluation-strategy",
+                "arg": "--eval-strategy",
                 "help": "Specify how often to evaluate the model performance. Options include 'no', 'steps', 'epoch'. 'epoch' evaluates at the end of each training epoch by default.",
                 "required": False,
                 "type": str,
