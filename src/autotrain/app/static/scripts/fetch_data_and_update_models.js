@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     option.textContent = model.name; // Assuming each model has a 'name'
                     baseModelSelect.appendChild(option);
                 });
-            })gi
+            })
             .catch(error => console.error('Error:', error));
     }
     document.getElementById('task').addEventListener('change', fetchDataAndUpdateModels);
