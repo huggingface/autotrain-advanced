@@ -371,9 +371,19 @@
                             <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
                                 Base Model
                             </p>
-                            <select name="base_model" id="base_model"
-                                class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            </select>
+                            <div class="flex items-center">
+                                <select name="base_model" id="base_model"
+                                    class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                </select>
+                                <input type="text" id="base_model_input"
+                                    class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 hidden">
+                                <div class="flex items-center ps-4 rounded">
+                                    <input id="base_model_checkbox" type="checkbox" value="" name="base_model_checkbox"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                                    <label for="base_model_checkbox"
+                                        class="w-full py-4 ms-2 text-sm font-medium text-gray-700">Custom</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="items-center justify-center h-24">
@@ -622,6 +632,21 @@
                         loadingSpinner.classList.add('hidden');
                     });
             });
+        });
+    </script>
+    <script>
+        document.getElementById('base_model_checkbox').addEventListener('change', function () {
+            const selectElement = document.getElementById('base_model');
+            const baseModelInput = document.getElementById('base_model_input');
+
+            if (this.checked) {
+                baseModelInput.placeholder = selectElement.options[selectElement.selectedIndex].text;
+                selectElement.classList.add('hidden');
+                baseModelInput.classList.remove('hidden');
+            } else {
+                selectElement.classList.remove('hidden');
+                baseModelInput.classList.add('hidden');
+            }
         });
     </script>
 </body>

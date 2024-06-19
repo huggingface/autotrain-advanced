@@ -83,9 +83,13 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             params = paramsJsonElement.value;
         }
+        const baseModelValue = document.getElementById('base_model_checkbox').checked
+            ? document.getElementById('base_model_input').value
+            : document.getElementById('base_model').value;
+
+        formData.append('base_model', baseModelValue);
         formData.append('project_name', document.getElementById('project_name').value);
         formData.append('task', document.getElementById('task').value);
-        formData.append('base_model', document.getElementById('base_model').value);
         formData.append('hardware', document.getElementById('hardware').value);
         formData.append('params', params);
         formData.append('autotrain_user', document.getElementById('autotrain_user').value);
