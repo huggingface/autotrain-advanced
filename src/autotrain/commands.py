@@ -326,7 +326,7 @@ def launch_command(params):
                 "launch",
                 "--cpu",
             ]
-        if num_gpus == 1:
+        elif num_gpus == 1:
             cmd = [
                 "accelerate",
                 "launch",
