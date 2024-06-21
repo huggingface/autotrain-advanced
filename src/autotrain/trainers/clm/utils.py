@@ -11,7 +11,7 @@ from huggingface_hub import HfApi
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-from autotrain import logger
+from autotrain import is_unsloth_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -567,17 +567,9 @@ def get_model(config, tokenizer):
     )
     model_type = model_config.model_type
     unsloth_target_modules = None
-    is_unsloth_available = False
     can_use_unloth = False
-    try:
-        from unsloth import FastLanguageModel
 
-        is_unsloth_available = True
-    except ImportError:
-        pass
-    logger.info(f"Unsloth available: {is_unsloth_available}")
-
-    if config.unsloth and is_unsloth_available and config.trainer in ("default", "sft"):
+    if config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft"):
         can_use_unloth = True
 
     if model_type in ("llama", "mistral", "gemma", "qwen2") and config.unsloth:
@@ -590,6 +582,8 @@ def get_model(config, tokenizer):
 
     logger.info(f"Can use unsloth: {can_use_unloth}")
     if can_use_unloth:
+        from unsloth import FastLanguageModel
+
         load_in_4bit = False
         load_in_8bit = False
         if config.peft and config.quantization == "int4":

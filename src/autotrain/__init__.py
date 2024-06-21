@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="accelerate")
 warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub")
 
 logger = Logger().get_logger()
-__version__ = "0.7.128"
+__version__ = "0.7.129"
 
 
 def is_colab():
@@ -50,4 +50,15 @@ def is_colab():
 
         return True
     except ImportError:
+        return False
+
+
+def is_unsloth_available():
+    try:
+        from unsloth import FastLanguageModel
+
+        return True
+    except Exception as e:
+        logger.warning("Unsloth not available, continuing without it")
+        logger.warning(e)
         return False
