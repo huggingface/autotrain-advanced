@@ -359,6 +359,7 @@ class AppParams:
 
     def _munge_params_tabular(self):
         _params = self._munge_common_params()
+        _params["model"] = self.base_model
         if not self.using_hub_dataset:
             _params["id_column"] = "autotrain_id"
             _params["valid_split"] = "validation"
