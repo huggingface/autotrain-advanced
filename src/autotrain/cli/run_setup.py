@@ -37,7 +37,7 @@ class RunSetupCommand(BaseAutoTrainCommand):
         if self.colab:
             cmd = "pip install -U xformers==0.0.24"
         else:
-            cmd = "pip uninstall -U xformers"
+            cmd = "pip uninstall -y xformers"
         cmd = cmd.split()
         pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info("Installing latest xformers")
