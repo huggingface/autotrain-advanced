@@ -14,7 +14,7 @@ env:
 jobs:
   ecr:
     name: Amazon ECR
-    runs-on: [single-gpu, nvidia-gpu, a10, ci]
+    runs-on: [self-hosted, intel-cpu, 8-cpu, ci]
     steps:
       - name: Checkout
         uses: actions/checkout@v4

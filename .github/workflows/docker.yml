@@ -8,7 +8,7 @@ on:
 jobs:
   dockerhub:
     name: Docker Hub
-    runs-on: [single-gpu, nvidia-gpu, a10, ci]
+    runs-on: [self-hosted, intel-cpu, 8-cpu, ci]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

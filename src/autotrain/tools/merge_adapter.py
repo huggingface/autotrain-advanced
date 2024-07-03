@@ -9,7 +9,6 @@ from autotrain.trainers.common import ALLOW_REMOTE_CODE
 def merge_llm_adapter(
     base_model_path, adapter_path, token, output_folder=None, pad_to_multiple_of=None, push_to_hub=False
 ):
-
     if output_folder is None and push_to_hub is False:
         raise ValueError("You must specify either --output_folder or --push_to_hub")
 

@@ -194,7 +194,6 @@ class UploadLogs(TrainerCallback):
                 )
 
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-
         if self.config.push_to_hub is False:
             return control
 

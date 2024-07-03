@@ -75,7 +75,6 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         self.colab = colab
 
     def run(self):
-
         if self.colab:
             from IPython.display import display
 
