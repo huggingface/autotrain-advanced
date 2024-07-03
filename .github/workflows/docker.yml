@@ -17,10 +17,24 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          sha=$(git rev-parse --short ${{ github.sha }})
+          echo "SHA=$sha" >> $GITHUB_ENV
+
+      - name: SHA
+        run: echo ${{ env.SHA }}
+
       - name: Build and Push Docker Image
-        run: make docker
+        run: |
+        docker build -t autotrain-advanced:latest .
+	      docker tag autotrain-advanced:latest huggingface/autotrain-advanced:latest
+        docker tag autotrain-advanced:latest huggingface/autotrain-advanced:${{ env.SHA }}
+	      docker push huggingface/autotrain-advanced:latest
+        docker push huggingface/autotrain-advanced:${{ env.SHA }}
