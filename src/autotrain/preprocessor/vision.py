@@ -62,7 +62,7 @@ class ImageClassificationPreprocessor:
             if train_subfolders != valid_subfolders:
                 raise ValueError(f"{self.valid_data} should have the same subfolders as {self.train_data}.")
 
-            if len(subfolders) < 2:
+            if len(subfolders) <= 2:
                 raise ValueError(f"{self.valid_data} should contain at least 2 subfolders.")
 
             # Check if each subfolder contains at least 5 image files in jpeg, png or jpg format only
