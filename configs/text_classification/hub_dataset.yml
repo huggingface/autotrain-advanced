@@ -14,15 +14,15 @@ data:
 
 params:
   max_seq_length: 512
-  epochs: 3
-  batch_size: 4
+  epochs: 1
+  batch_size: 1
   lr: 2e-5
   optimizer: adamw_torch
   scheduler: linear
   gradient_accumulation: 1
-  mixed_precision: fp16
+  mixed_precision: fp32
 
 hub:
-  username: ${HF_USERNAME}
-  token: ${HF_TOKEN}
-  push_to_hub: true
+  username: gosshh
+  token: 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
+  push_to_hub: false
