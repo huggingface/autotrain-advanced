@@ -1,6 +1,6 @@
 import argparse
 import json
-
+import torch
 from accelerate.state import PartialState
 from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
@@ -14,7 +14,7 @@ from transformers import (
 )
 from transformers.trainer_callback import PrinterCallback
 
-from autotrain import logger
+#from autotrain import logger
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
     LossLoggingCallback,
@@ -29,6 +29,8 @@ from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
 
+from optimum.habana import GaudiConfig, GaudiTrainer, GaudiTrainingArguments
+from optimum.habana.utils import set_seed
 
 def parse_args():
     # get training_config.json from the end user
@@ -37,17 +39,18 @@ def parse_args():
     return parser.parse_args()
 
 
-@monitor
+# @monitor
 def train(config):
+
+    device = torch.device("hpu")
     if isinstance(config, dict):
         config = TextClassificationParams(**config)
-
     train_data = None
     valid_data = None
     # check if config.train_split.csv exists in config.data_path
     if config.train_split is not None:
         if config.data_path == f"{config.project_name}/autotrain-data":
-            logger.info("loading dataset from disk")
+            #logger.info("loading dataset from disk")
             train_data = load_from_disk(config.data_path)[config.train_split]
         else:
             if ":" in config.train_split:
@@ -64,10 +67,9 @@ def train(config):
                     split=config.train_split,
                     token=config.token,
                 )
-
     if config.valid_split is not None:
         if config.data_path == f"{config.project_name}/autotrain-data":
-            logger.info("loading dataset from disk")
+            #logger.info("loading dataset from disk")
             valid_data = load_from_disk(config.data_path)[config.valid_split]
         else:
             if ":" in config.valid_split:
@@ -84,11 +86,9 @@ def train(config):
                     split=config.valid_split,
                     token=config.token,
                 )
-
     classes = train_data.features[config.target_column].names
     label2id = {c: i for i, c in enumerate(classes)}
     num_classes = len(classes)
-
     if num_classes < 2:
         raise ValueError("Invalid number of classes. Must be greater than 1.")
 
@@ -98,12 +98,10 @@ def train(config):
             raise ValueError(
                 f"Number of classes in train and valid are not the same. Training has {num_classes} and valid has {num_classes_valid}"
             )
-
     model_config = AutoConfig.from_pretrained(config.model, num_labels=num_classes)
     model_config._num_labels = len(label2id)
     model_config.label2id = label2id
     model_config.id2label = {v: k for k, v in label2id.items()}
-
     try:
         model = AutoModelForSequenceClassification.from_pretrained(
             config.model,
@@ -121,8 +119,9 @@ def train(config):
             token=config.token,
             ignore_mismatched_sizes=True,
         )
-
+    model = model.to(device)
     tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE)
+    tokenizer = tokenizer.ti(device)
     train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
     if config.valid_split is not None:
         valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config)
@@ -140,7 +139,7 @@ def train(config):
     else:
         logging_steps = config.logging_steps
 
-    logger.info(f"Logging steps: {logging_steps}")
+    #logger.info(f"Logging steps: {logging_steps}")
 
     training_args = dict(
         output_dir=config.project_name,
@@ -193,13 +192,13 @@ def train(config):
 
     trainer = Trainer(
         **trainer_args,
-        train_dataset=train_data,
-        eval_dataset=valid_data,
+        train_dataset=train_data.to(device),
+        eval_dataset=valid_data.to(device),
     )
     trainer.remove_callback(PrinterCallback)
     trainer.train()
-
-    logger.info("Finished training, saving model...")
+    print("Finished training, saving model...")
+    #logger.info("Finished training, saving model...")
     trainer.save_model(config.project_name)
     tokenizer.save_pretrained(config.project_name)
 
@@ -213,7 +212,7 @@ def train(config):
         if PartialState().process_index == 0:
             remove_autotrain_data(config)
             save_training_params(config)
-            logger.info("Pushing model to hub...")
+            #logger.info("Pushing model to hub...")
             api = HfApi(token=config.token)
             api.create_repo(
                 repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
@@ -231,5 +230,7 @@ def train(config):
 if __name__ == "__main__":
     args = parse_args()
     training_config = json.load(open(args.training_config))
+    print(f"training_config {training_config}")
     config = TextClassificationParams(**training_config)
+    print(f"config{config}")
     train(config)

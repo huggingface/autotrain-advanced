@@ -1,0 +1,6 @@
+{
+    "use_fused_adam": true,
+    "use_fused_clip_norm": true,
+    "use_torch_autocast": true
+  }
+  
