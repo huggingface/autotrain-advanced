@@ -2,12 +2,13 @@ import torch
 
 
 class TextClassificationDataset:
-    def __init__(self, data, tokenizer, config):
+    def __init__(self, data, tokenizer, config, device=None):
         self.data = data
         self.tokenizer = tokenizer
         self.config = config
         self.text_column = self.config.text_column
         self.target_column = self.config.target_column
+        self.device = torch.device("hpu")
 
     def __len__(self):
         return len(self.data)
@@ -33,13 +34,13 @@ class TextClassificationDataset:
 
         if token_type_ids is not None:
             return {
-                "input_ids": torch.tensor(ids, dtype=torch.long),
-                "attention_mask": torch.tensor(mask, dtype=torch.long),
-                "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
-                "labels": torch.tensor(target, dtype=torch.long),
+                "input_ids": torch.tensor(ids, dtype=torch.long, device=self.device),
+                "attention_mask": torch.tensor(mask, dtype=torch.long, device=self.device),
+                "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long, device=self.device),
+                "labels": torch.tensor(target, dtype=torch.long, device=self.device),
             }
         return {
-            "input_ids": torch.tensor(ids, dtype=torch.long),
-            "attention_mask": torch.tensor(mask, dtype=torch.long),
-            "labels": torch.tensor(target, dtype=torch.long),
+            "input_ids": torch.tensor(ids, dtype=torch.long, device=self.device),
+            "attention_mask": torch.tensor(mask, dtype=torch.long, device=self.device),
+            "labels": torch.tensor(target, dtype=torch.long, device=self.device),
         }

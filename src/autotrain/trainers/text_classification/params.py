@@ -6,7 +6,7 @@ from autotrain.trainers.common import AutoTrainParams
 
 
 class TextClassificationParams(AutoTrainParams):
-    data_path: str = Field(None, title="Data path")
+    data_path: str = Field("stanfordnlp/imdb", title="Data path")
     model: str = Field("bert-base-uncased", title="Model name")
     lr: float = Field(5e-5, title="Learning rate")
     epochs: int = Field(3, title="Number of training epochs")
@@ -22,7 +22,7 @@ class TextClassificationParams(AutoTrainParams):
     train_split: str = Field("train", title="Train split")
     valid_split: Optional[str] = Field(None, title="Validation split")
     text_column: str = Field("text", title="Text column")
-    target_column: str = Field("target", title="Target column")
+    target_column: str = Field("label", title="Target column")
     logging_steps: int = Field(-1, title="Logging steps")
     project_name: str = Field("project-name", title="Output directory")
     auto_find_batch_size: bool = Field(False, title="Auto find batch size")

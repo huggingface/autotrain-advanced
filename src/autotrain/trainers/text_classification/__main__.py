@@ -13,7 +13,7 @@ from transformers import (
     TrainingArguments,
 )
 from transformers.trainer_callback import PrinterCallback
-
+import habana_frameworks.torch.hpu as hthpu
 #from autotrain import logger
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -41,7 +41,7 @@ def parse_args():
 
 # @monitor
 def train(config):
-
+    print(hthpu.is_available())
     device = torch.device("hpu")
     if isinstance(config, dict):
         config = TextClassificationParams(**config)
@@ -86,6 +86,7 @@ def train(config):
                     split=config.valid_split,
                     token=config.token,
                 )
+    print("train data", train_data)
     classes = train_data.features[config.target_column].names
     label2id = {c: i for i, c in enumerate(classes)}
     num_classes = len(classes)
@@ -121,10 +122,10 @@ def train(config):
         )
     model = model.to(device)
     tokenizer = AutoTokenizer.from_pretrained(config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE)
-    tokenizer = tokenizer.ti(device)
-    train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config)
+    #tokenizer = tokenizer.to(device)
+    train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=config, device = device)
     if config.valid_split is not None:
-        valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config)
+        valid_data = TextClassificationDataset(data=valid_data, tokenizer=tokenizer, config=config, device = device)
 
     if config.logging_steps == -1:
         if config.valid_split is not None:
@@ -147,7 +148,7 @@ def train(config):
         per_device_eval_batch_size=2 * config.batch_size,
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        eval_strategy=config.eval_strategy if config.valid_split is not None else "no",
+        #eval_strategy=config.eval_strategy if config.valid_split is not None else "no",
         logging_steps=logging_steps,
         save_total_limit=config.save_total_limit,
         save_strategy=config.eval_strategy if config.valid_split is not None else "no",
@@ -179,7 +180,8 @@ def train(config):
         callbacks_to_use = []
 
     callbacks_to_use.extend([UploadLogs(config=config), LossLoggingCallback(), TrainStartCallback()])
-
+    print("training_args", training_args)
+    
     args = TrainingArguments(**training_args)
     trainer_args = dict(
         args=args,
@@ -189,11 +191,25 @@ def train(config):
             utils._binary_classification_metrics if num_classes == 2 else utils._multi_class_classification_metrics
         ),
     )
-
+    # del training_args['output_dir']
+    # del training_args['per_device_train_batch_size']
+    # del training_args['per_device_eval_batch_size']
+    # gaudi_config = GaudiConfig.from_pretrained(
+    #     "Habana/bert-large-uncased-whole-word-masking",
+    #     cache_dir=None,
+    #     revision="main",
+    #     token=None,
+    # )
+    # trainer = GaudiTrainer(
+    #     gaudi_config=gaudi_config,
+    #     **training_args,
+    #     train_dataset=train_data,
+    #     eval_dataset=valid_data,
+    # )
     trainer = Trainer(
         **trainer_args,
-        train_dataset=train_data.to(device),
-        eval_dataset=valid_data.to(device),
+        train_dataset=train_data,
+        eval_dataset=valid_data,
     )
     trainer.remove_callback(PrinterCallback)
     trainer.train()
@@ -232,5 +248,6 @@ if __name__ == "__main__":
     training_config = json.load(open(args.training_config))
     print(f"training_config {training_config}")
     config = TextClassificationParams(**training_config)
+    #config["data_path"] = "stanfordnlp/imdb"
     print(f"config{config}")
     train(config)
