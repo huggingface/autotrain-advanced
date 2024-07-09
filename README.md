@@ -12,6 +12,20 @@ AutoTrain Advanced: faster and easier training and deployments of state-of-the-a
 
 NOTE: AutoTrain is free! You only pay for the resources you use in case you decide to run AutoTrain on Hugging Face Spaces. When running locally, you only pay for the resources you use on your own infrastructure.
 
+## What are Intel Gaudi AI Accelerators (HPUs)?
+
+HPUs offer fast model training and inference as well as a great price-performance ratio.
+Check out [this blog post about BLOOM inference](https://huggingface.co/blog/habana-gaudi-2-bloom) and [this post benchmarking Intel Gaudi 2 and NVIDIA A100 GPUs for BridgeTower training](https://huggingface.co/blog/bridgetower) for concrete examples.
+
+
+## Gaudi Setup
+
+Please refer to the Intel Gaudi AI Accelerator official [installation guide](https://docs.habana.ai/en/latest/Installation_Guide/index.html).
+
+> Tests should be run in a Docker container based on Intel Gaudi Docker images.
+>
+> The current version has been validated for SynapseAI 1.16.
+
 ## Local Installation
 
 You can Install AutoTrain-Advanced python package via PIP. Please note you will need python >= 3.10 for AutoTrain Advanced to work properly.
