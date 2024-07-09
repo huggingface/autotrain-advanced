@@ -41,7 +41,7 @@ The best way to run autotrain is in a conda environment. You can create a new co
     conda create -n autotrain python=3.10
     conda activate autotrain
     pip install autotrain-advanced
-    conda install pytorch torchvision torchaudi
+    conda install pytorch torchvision torchaudio
 
 Once done, you can start the application using:
 
