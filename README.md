@@ -1,20 +1,30 @@
-# 🤗 AutoTrain Advanced
+<a href="https://github.com/huggingface/optimum-habana#gh-light-mode-only">
+  <img src="https://github.com/huggingface/optimum-habana/blob/main/readme_logo_light.png"/>
+</a>
 
-AutoTrain Advanced: faster and easier training and deployments of state-of-the-art machine learning models. AutoTrain Advanced is a no-code solution that allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct format for project to be created. For help regarding proper data format and pricing, check out the documentation. 
+<a href="https://github.com/huggingface/optimum-habana#gh-dark-mode-only">
+  <img src="https://github.com/huggingface/optimum-habana/blob/main/readme_logo_dark.png"/>
+</a>
+
+# 🤗 AutoTrain Advanced for Intel Gaudi
+
+AutoTrain Advanced is a no-code solution that allows you to train machine learning models in just a few clicks. We take the AutoTrain Advanced from HuggingFace and extend it for Intel's Gaudi products. Please note that you must upload data in correct format for project to be created. For help regarding proper data format and pricing, check out the documentation.
 
 NOTE: AutoTrain is free! You only pay for the resources you use in case you decide to run AutoTrain on Hugging Face Spaces. When running locally, you only pay for the resources you use on your own infrastructure.
 
+## What are Intel Gaudi AI Accelerators (HPUs)?
 
-## Run on Colab or Hugging Face Spaces
-
-- Run AutoTrain on Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
-
-
-- Deploy AutoTrain on Hugging Face Spaces: [![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-md.svg)](https://huggingface.co/login?next=%2Fspaces%2Fautotrain-projects%2Fautotrain-advanced%3Fduplicate%3Dtrue)
+HPUs offer fast model training and inference as well as a great price-performance ratio.
+Check out [this blog post about BLOOM inference](https://huggingface.co/blog/habana-gaudi-2-bloom) and [this post benchmarking Intel Gaudi 2 and NVIDIA A100 GPUs for BridgeTower training](https://huggingface.co/blog/bridgetower) for concrete examples.
 
 
-- Run AutoTrain UI on Colab via ngrok: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_ngrok.ipynb)
+## Gaudi Setup
 
+Please refer to the Intel Gaudi AI Accelerator official [installation guide](https://docs.habana.ai/en/latest/Installation_Guide/index.html).
+
+> Tests should be run in a Docker container based on Intel Gaudi Docker images.
+>
+> The current version has been validated for SynapseAI 1.16.
 
 ## Local Installation
 
@@ -31,8 +41,7 @@ The best way to run autotrain is in a conda environment. You can create a new co
     conda create -n autotrain python=3.10
     conda activate autotrain
     pip install autotrain-advanced
-    conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-    conda install -c "nvidia/label/cuda-12.1.0" cuda-nvcc
+    conda install pytorch torchvision torchaudio
 
 Once done, you can start the application using:
 
@@ -48,14 +57,7 @@ To use config file for training, you can use the following command:
 
 You can find sample config files in the `configs` directory of this repository.
 
-## Colabs
-
-| Task | Colab Link |
-| --- | --- |
-| LLM Fine Tuning | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_LLM.ipynb) |
-| DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
-
 
 ## Documentation
 
-Documentation is available at https://hf.co/docs/autotrain/
+Documentation is available at 
