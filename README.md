@@ -1,3 +1,11 @@
+<a href="https://github.com/huggingface/optimum-habana#gh-light-mode-only">
+  <img src="https://github.com/huggingface/optimum-habana/blob/main/readme_logo_light.png"/>
+</a>
+
+<a href="https://github.com/huggingface/optimum-habana#gh-dark-mode-only">
+  <img src="https://github.com/huggingface/optimum-habana/blob/main/readme_logo_dark.png"/>
+</a>
+
 # 🤗 AutoTrain Advanced
 
 AutoTrain Advanced: faster and easier training and deployments of state-of-the-art machine learning models. AutoTrain Advanced is a no-code solution that allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct format for project to be created. For help regarding proper data format and pricing, check out the documentation. 
