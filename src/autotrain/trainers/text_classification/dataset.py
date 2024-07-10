@@ -6,16 +6,16 @@ class TextClassificationDataset:
         self.data = data
         self.tokenizer = tokenizer
         self.config = config
-        self.text_column = self.config.text_column
-        self.target_column = self.config.target_column
+        self.column_mapping_text_column = self.config.column_mapping_text_column
+        self.column_mapping_target_column = self.config.column_mapping_target_column
         self.device = torch.device("hpu")
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, item):
-        text = str(self.data[item][self.text_column])
-        target = self.data[item][self.target_column]
+        text = str(self.data[item][self.column_mapping_text_column])
+        target = self.data[item][self.column_mapping_target_column]
         target = int(target)
         inputs = self.tokenizer(
             text,
