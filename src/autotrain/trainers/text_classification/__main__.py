@@ -274,8 +274,8 @@ class ModelArguments:
 def train(config):
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, GaudiTrainingArguments))
     model_args, data_args, gaudi_training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[2]))
-    print("model_args", model_args)
-    print("data_args", data_args)
+    # print("model_args", model_args)
+    # print("data_args", data_args)
     print("training_args", gaudi_training_args)
     print(hthpu.is_available())
     device = torch.device("hpu")
@@ -323,7 +323,14 @@ def train(config):
                     split=data_args.valid_split,
                     token=model_args.token,
                 )
-    print("train data", train_data)
+
+    # padding = "max_length" if data_args.pad_to_max_length else False
+
+    # if model.config.pad_token_id is None and tokenizer.pad_token is None:
+    #     tokenizer.pad_token = tokenizer.eos_token
+    #     model.config.pad_token_id = tokenizer.eos_token_id
+
+    #print("train data", train_data)
     classes = train_data.features[data_args.column_mapping_target_column].names
     label2id = {c: i for i, c in enumerate(classes)}
     num_classes = len(classes)
@@ -358,7 +365,8 @@ def train(config):
             ignore_mismatched_sizes=True,
         )
     model = model.to(device)
-    tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, token=model_args.token, trust_remote_code=ALLOW_REMOTE_CODE)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, token=model_args.token, trust_remote_code=ALLOW_REMOTE_CODE)  
     #tokenizer = tokenizer.to(device)
     train_data = TextClassificationDataset(data=train_data, tokenizer=tokenizer, config=data_args, device = device)
     if data_args.valid_split is not None:
@@ -441,7 +449,7 @@ def train(config):
         revision="main",
         token=None,
     )
-    print("gaudi_training_args",gaudi_training_args)
+    #print("gaudi_training_args",gaudi_training_args)
     trainer = GaudiTrainer(
         model=model,
         gaudi_config=gaudi_config,
@@ -458,6 +466,7 @@ def train(config):
     #     train_dataset=train_data,
     #     eval_dataset=valid_data,
     # )
+
     trainer.remove_callback(PrinterCallback)
     trainer.train()
     print("Finished training, saving model...")
@@ -494,7 +503,7 @@ def train(config):
 if __name__ == "__main__":
     args = parse_args()
     training_config = json.load(open(args.training_config))
-    print(f"training_config {training_config}")
+    #print(f"training_config {training_config}")
     #config = TextClassificationParams(**training_config)
     #config["data_path"] = "stanfordnlp/imdb"
     #print(f"config{config}")
