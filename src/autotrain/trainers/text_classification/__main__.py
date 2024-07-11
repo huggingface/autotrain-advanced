@@ -79,12 +79,6 @@ task_to_keys = {
 def parse_args():
     # get training_config.json from the end user
     parser = argparse.ArgumentParser()
-    parser.add_argument("--training_config", type=str, required=True)
-    parser.add_argument("--output_dir", type=str, required=False)
-    #parser.add_argument("--model_name_or_path", type=str, required=False)
-    #parser.add_argument("--dataset_name", type=str, required=False)
-    parser.add_argument("--use_habana", type=str, required=False)
-    parser.add_argument("--hub_token", type=str, required=False)
     return parser.parse_args()
 
 @dataclass
@@ -279,11 +273,12 @@ def train(config):
     print("training_args", gaudi_training_args)
     print(hthpu.is_available())
     device = torch.device("hpu")
-    if isinstance(config, dict):
-        config = TextClassificationParams(**config)
+    # if isinstance(config, dict):
+    #     config = TextClassificationParams(**config)
     train_data = None
     valid_data = None
     # check if config.train_split.csv exists in config.data_path
+    
     if data_args.train_split is not None:
         if data_args.dataset_name == f"autotrain-data":
             #logger.info("loading dataset from disk")
@@ -347,6 +342,7 @@ def train(config):
     model_config._num_labels = len(label2id)
     model_config.label2id = label2id
     model_config.id2label = {v: k for k, v in label2id.items()}
+    
     try:
         model = AutoModelForSequenceClassification.from_pretrained(
             model_args.model_name_or_path,
@@ -442,7 +438,16 @@ def train(config):
     # del training_args['per_device_train_batch_size']
     # del training_args['per_device_eval_batch_size']
     
-    # training_config.json add "Habana/bert-large-uncased-whole-word-masking",
+    # args = TrainingArguments(**training_args)
+    # trainer_args = dict(
+    #     args=args,
+    #     model=model,
+    #     callbacks=callbacks_to_use,
+    #     compute_metrics=(
+    #         utils._binary_classification_metrics if num_classes == 2 else utils._multi_class_classification_metrics
+    #     ),
+    # )
+   
     gaudi_config = GaudiConfig.from_pretrained(
         "Habana/bert-large-uncased-whole-word-masking",
         cache_dir=None,
@@ -455,7 +460,7 @@ def train(config):
         gaudi_config=gaudi_config,
         args=gaudi_training_args,
         train_dataset=train_data,
-        eval_dataset=valid_data,
+        eval_dataset=test_data,
         #compute_metrics=compute_metrics,
         tokenizer=tokenizer,
         #data_collator=data_collator,
@@ -502,9 +507,5 @@ def train(config):
 
 if __name__ == "__main__":
     args = parse_args()
-    training_config = json.load(open(args.training_config))
-    #print(f"training_config {training_config}")
-    #config = TextClassificationParams(**training_config)
-    #config["data_path"] = "stanfordnlp/imdb"
-    #print(f"config{config}")
+    training_config = json.load(open(args.training_config)
     train(training_config)
