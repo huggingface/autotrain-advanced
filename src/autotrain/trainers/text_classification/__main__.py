@@ -264,7 +264,7 @@ class ModelArguments:
     ) 
 
 
-# @monitor
+@monitor
 def train(config):
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, GaudiTrainingArguments))
     model_args, data_args, gaudi_training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[2]))
@@ -507,5 +507,5 @@ def train(config):
 
 if __name__ == "__main__":
     args = parse_args()
-    training_config = json.load(open(args.training_config)
+    training_config = json.load(open(args.training_config))
     train(training_config)
