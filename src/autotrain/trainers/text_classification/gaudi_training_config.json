@@ -15,7 +15,7 @@
     "gradient_accumulation_steps": 1,
     "mixed_precision": "fp32",
     "username": "gosshh",
-    "token": "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",
+    "token": "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",
     "push_to_hub": false,
     "use_habana": true,
     "output_dir": "./",

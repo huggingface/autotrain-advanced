@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Reques
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
-from nvitop import Device
+#from nvitop import Device
 
 from autotrain import __version__, logger
 from autotrain.app.db import AutoTrainDB
