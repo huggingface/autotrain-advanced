@@ -157,14 +157,16 @@ class AutoTrainParams(BaseModel):
         """
         super().__init__(**data)
 
-        if len(self.project_name) > 0:
-            # make sure project_name is always alphanumeric but can have hyphens. if not, raise ValueError
-            if not self.project_name.replace("-", "").isalnum():
-                raise ValueError("project_name must be alphanumeric but can contain hyphens")
+        # TODO: find better fix for normalizing existing classes to Gaudi compatible classes
+        if hasattr(self, "project_name"):
+            if len(self.project_name) > 0:
+                # make sure project_name is always alphanumeric but can have hyphens. if not, raise ValueError
+                if not self.project_name.replace("-", "").isalnum():
+                    raise ValueError("project_name must be alphanumeric but can contain hyphens")
 
-        # project name cannot be more than 50 characters
-        if len(self.project_name) > 50:
-            raise ValueError("project_name cannot be more than 50 characters")
+            # project name cannot be more than 50 characters
+            if len(self.project_name) > 50:
+                raise ValueError("project_name cannot be more than 50 characters")
 
         # Parameters not supplied by the user
         defaults = set(self.model_fields.keys())
