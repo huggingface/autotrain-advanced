@@ -469,9 +469,7 @@ async def fetch_params(task: str, param_type: str, authenticated: bool = Depends
         return {"error": "Task not found"}
     ui_params = {}
     for param in task_params:
-        print("task-param: ", param)
         if param in UI_PARAMS:
-            print("ui-param: ", param)
             ui_params[param] = UI_PARAMS[param]
             ui_params[param]["default"] = task_params[param]
         else:
