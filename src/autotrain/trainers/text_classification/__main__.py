@@ -408,9 +408,11 @@ def train(config):
     # )
 
     if model_args.mixed_precision == "fp16":
-        training_args["fp16"] = True
+        pass
+        #training_args["fp16"] = True
     if model_args.mixed_precision == "bf16":
-        training_args["bf16"] = True
+        pass
+        #training_args["bf16"] = True
 
     if data_args.valid_split is not None:
         early_stop = EarlyStoppingCallback(
