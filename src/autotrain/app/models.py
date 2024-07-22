@@ -4,7 +4,7 @@ from huggingface_hub import list_models
 
 
 def get_sorted_models(hub_models):
-    hub_models = [{"id": m.modelId, "downloads": m.downloads} for m in hub_models if m.private is False]
+    hub_models = [{"id": m.id, "downloads": m.downloads} for m in hub_models if m.private is False]
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
     hub_models = [m["id"] for m in hub_models]
     return hub_models
