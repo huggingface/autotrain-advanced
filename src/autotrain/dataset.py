@@ -29,6 +29,7 @@ from autotrain.preprocessor.vision import (
     ImageRegressionPreprocessor,
     ObjectDetectionPreprocessor,
 )
+from autotrain.preprocessor.vlm import VLMPreprocessor
 
 
 def remove_non_image_files(folder):
@@ -232,6 +233,84 @@ class AutoTrainObjectDetectionDataset:
             project_name=self.project_name,
             username=self.username,
             local=self.local,
+        )
+        return preprocessor.prepare()
+
+
+@dataclass
+class AutoTrainVLMDataset:
+    train_data: str
+    token: str
+    project_name: str
+    username: str
+    column_mapping: Dict[str, str]
+    valid_data: Optional[str] = None
+    percent_valid: Optional[float] = None
+    local: bool = False
+
+    def __str__(self) -> str:
+        info = f"Dataset: {self.project_name} ({self.task})\n"
+        info += f"Train data: {self.train_data}\n"
+        info += f"Valid data: {self.valid_data}\n"
+        return info
+
+    def __post_init__(self):
+        self.task = "vlm"
+        if not self.valid_data and self.percent_valid is None:
+            self.percent_valid = 0.2
+        elif self.valid_data and self.percent_valid is not None:
+            raise ValueError("You can only specify one of valid_data or percent_valid")
+        elif self.valid_data:
+            self.percent_valid = 0.0
+
+    def prepare(self):
+        valid_dir = None
+        if not isinstance(self.train_data, str):
+            cache_dir = os.environ.get("HF_HOME")
+            if not cache_dir:
+                cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
+
+            random_uuid = uuid.uuid4()
+            train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
+            os.makedirs(train_dir, exist_ok=True)
+            self.train_data.seek(0)
+            content = self.train_data.read()
+            bytes_io = io.BytesIO(content)
+
+            zip_ref = zipfile.ZipFile(bytes_io, "r")
+            zip_ref.extractall(train_dir)
+            # remove the __MACOSX directory
+            macosx_dir = os.path.join(train_dir, "__MACOSX")
+            if os.path.exists(macosx_dir):
+                os.system(f"rm -rf {macosx_dir}")
+            remove_non_image_files(train_dir)
+            if self.valid_data:
+                random_uuid = uuid.uuid4()
+                valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
+                os.makedirs(valid_dir, exist_ok=True)
+                self.valid_data.seek(0)
+                content = self.valid_data.read()
+                bytes_io = io.BytesIO(content)
+                zip_ref = zipfile.ZipFile(bytes_io, "r")
+                zip_ref.extractall(valid_dir)
+                # remove the __MACOSX directory
+                macosx_dir = os.path.join(valid_dir, "__MACOSX")
+                if os.path.exists(macosx_dir):
+                    os.system(f"rm -rf {macosx_dir}")
+                remove_non_image_files(valid_dir)
+        else:
+            train_dir = self.train_data
+            if self.valid_data:
+                valid_dir = self.valid_data
+
+        preprocessor = VLMPreprocessor(
+            train_data=train_dir,
+            valid_data=valid_dir,
+            token=self.token,
+            project_name=self.project_name,
+            username=self.username,
+            local=self.local,
+            column_mapping=self.column_mapping,
         )
         return preprocessor.prepare()
 

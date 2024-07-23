@@ -15,6 +15,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
+from autotrain.trainers.vlm.params import VLMTrainingParams
 
 
 ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
@@ -48,6 +49,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = SentenceTransformersParams(**params)
     elif task_id == 24:
         params = ImageRegressionParams(**params)
+    elif task_id == 31:
+        params = VLMTrainingParams(**params)
     else:
         raise NotImplementedError
 
