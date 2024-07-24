@@ -23,6 +23,7 @@ from autotrain.dataset import (
     AutoTrainImageClassificationDataset,
     AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
+    AutoTrainVLMDataset,
 )
 from autotrain.help import get_app_help
 from autotrain.project import AutoTrainProject
@@ -440,6 +441,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["image-object-detection"]
     elif task == "image-regression":
         hub_models = MODEL_CHOICE["image-regression"]
+    elif task.startswith("vlm:"):
+        hub_models = MODEL_CHOICE["vlm"]
     else:
         raise NotImplementedError
 
@@ -571,7 +574,17 @@ async def handle_form(
                 username=autotrain_user,
                 local=hardware.lower() == "local-ui",
             )
-
+        elif task.startswith("vlm:"):
+            dset = AutoTrainVLMDataset(
+                train_data=training_files[0],
+                token=token,
+                project_name=project_name,
+                username=autotrain_user,
+                column_mapping=column_mapping,
+                valid_data=validation_files[0] if validation_files else None,
+                percent_valid=None,  # TODO: add to UI
+                local=hardware.lower() == "local-ui",
+            )
         else:
             if task.startswith("llm"):
                 dset_task = "lm_training"

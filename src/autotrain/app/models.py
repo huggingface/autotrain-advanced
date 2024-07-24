@@ -311,6 +311,58 @@ def _fetch_st_models():
     return hub_models
 
 
+def _fetch_vlm_models():
+    hub_models1 = list(
+        list_models(
+            task="image-text-to-text",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+            filter=["paligemma"],
+        )
+    )
+    hub_models2 = list(
+        list_models(
+            task="image-text-to-text",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+            filter=["florence2"],
+        )
+    )
+    hub_models = list(hub_models1) + list(hub_models2)
+    hub_models = get_sorted_models(hub_models)
+
+    trending_models1 = list(
+        list_models(
+            task="image-text-to-text",
+            sort="likes7d",
+            direction=-1,
+            limit=30,
+            full=False,
+            filter=["paligemma"],
+        )
+    )
+    trending_models2 = list(
+        list_models(
+            task="image-text-to-text",
+            sort="likes7d",
+            direction=-1,
+            limit=30,
+            full=False,
+            filter=["florence2"],
+        )
+    )
+    trending_models = list(trending_models1) + list(trending_models2)
+    if len(trending_models) > 0:
+        trending_models = get_sorted_models(trending_models)
+        hub_models = [m for m in hub_models if m not in trending_models]
+        hub_models = trending_models + hub_models
+    return hub_models
+
+
 def fetch_models():
     _mc = collections.defaultdict(list)
     _mc["text-classification"] = _fetch_text_classification_models()
@@ -323,6 +375,7 @@ def fetch_models():
     _mc["text-regression"] = _fetch_text_classification_models()
     _mc["image-object-detection"] = _fetch_image_object_detection_models()
     _mc["sentence-transformers"] = _fetch_st_models()
+    _mc["vlm"] = _fetch_vlm_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [
