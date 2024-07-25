@@ -294,6 +294,8 @@ def post_training_steps(config, trainer):
     if config.peft and config.merge_adapter:
         logger.info("Merging adapter weights...")
         try:
+            del trainer
+            torch.cuda.empty_cache()
             merge_adapter(
                 base_model_path=config.model,
                 target_model_path=config.project_name,
