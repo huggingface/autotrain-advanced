@@ -184,7 +184,7 @@ class AppParams:
             return self._munge_params_sent_transformers()
         elif self.task == "image-regression":
             return self._munge_params_img_reg()
-        elif self.task == "vlm":
+        elif self.task.startswith("vlm"):
             return self._munge_params_vlm()
         else:
             raise ValueError(f"Unknown task: {self.task}")
@@ -262,6 +262,7 @@ class AppParams:
             _params["text_column"] = "autotrain_text"
             _params["prompt_text_column"] = "autotrain_prompt"
             _params["image_column"] = "autotrain_image"
+            _params["valid_split"] = "validation"
         else:
             _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
             _params["prompt_text_column"] = self.column_mapping.get(

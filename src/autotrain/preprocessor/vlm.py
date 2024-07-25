@@ -30,7 +30,7 @@ class VLMPreprocessor:
         if "file_name" not in metadata.columns:
             raise ValueError(f"{data_path}/metadata.jsonl should contain 'file_name' column.")
 
-        col_names = list(self.column_mapping.keys())
+        col_names = list(self.column_mapping.values())
 
         for col in col_names:
             if col not in metadata.columns:
@@ -104,19 +104,17 @@ class VLMPreprocessor:
                 features[col_map] = Value(dtype="string")
 
             dataset = load_dataset("imagefolder", data_dir=data_dir, features=features)
-            dataset = dataset.rename_columns(
-                {
-                    "image": "autotrain_image",
-                }
-            )
+
+            rename_dict = {
+                "image": "autotrain_image",
+            }
             for col, col_map in self.column_mapping.items():
                 if col == "text_column":
-                    rename = "autotrain_text"
+                    rename_dict[col_map] = "autotrain_text"
                 elif col == "prompt_text_column":
-                    rename = "autotrain_prompt"
-                else:
-                    raise ValueError(f"Invalid column mapping: {col}")
-                dataset = dataset.rename_columns({col_map: rename})
+                    rename_dict[col_map] = "autotrain_prompt"
+
+            dataset = dataset.rename_columns(rename_dict)
 
             if self.local:
                 dataset.save_to_disk(f"{self.project_name}/autotrain-data")
@@ -168,19 +166,17 @@ class VLMPreprocessor:
                 features[col_map] = Value(dtype="string")
 
             dataset = load_dataset("imagefolder", data_dir=data_dir, features=features)
-            dataset = dataset.rename_columns(
-                {
-                    "image": "autotrain_image",
-                }
-            )
+
+            rename_dict = {
+                "image": "autotrain_image",
+            }
             for col, col_map in self.column_mapping.items():
                 if col == "text_column":
-                    rename = "autotrain_text"
+                    rename_dict[col_map] = "autotrain_text"
                 elif col == "prompt_text_column":
-                    rename = "autotrain_prompt"
-                else:
-                    raise ValueError(f"Invalid column mapping: {col}")
-                dataset = dataset.rename_columns({col_map: rename})
+                    rename_dict[col_map] = "autotrain_prompt"
+
+            dataset = dataset.rename_columns(rename_dict)
 
             if self.local:
                 dataset.save_to_disk(f"{self.project_name}/autotrain-data")
