@@ -3,7 +3,7 @@ import os
 import torch
 from accelerate import PartialState
 from huggingface_hub import HfApi
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoConfig, BitsAndBytesConfig, PaliGemmaForConditionalGeneration
 
 from autotrain import logger
@@ -264,6 +264,22 @@ def get_model(config):
     return model
 
 
+def merge_adapter(base_model_path, target_model_path, adapter_path):
+    logger.info("Loading adapter...")
+    model = PaliGemmaForConditionalGeneration.from_pretrained(
+        base_model_path,
+        torch_dtype=torch.float16,
+        low_cpu_mem_usage=True,
+        trust_remote_code=ALLOW_REMOTE_CODE,
+    )
+
+    model = PeftModel.from_pretrained(model, adapter_path)
+    model = model.merge_and_unload()
+
+    logger.info("Saving target model...")
+    model.save_pretrained(target_model_path)
+
+
 def post_training_steps(config, trainer):
     logger.info("Finished training, saving model...")
     trainer.model.config.use_cache = True
@@ -275,21 +291,21 @@ def post_training_steps(config, trainer):
     with open(f"{config.project_name}/README.md", "w", encoding="utf-8") as f:
         f.write(model_card)
 
-    # if config.peft and config.merge_adapter:
-    #     logger.info("Merging adapter weights...")
-    #     try:
-    #         merge_adapter(
-    #             base_model_path=config.model,
-    #             target_model_path=config.project_name,
-    #             adapter_path=config.project_name,
-    #         )
-    #         # remove adapter weights: adapter_*
-    #         for file in os.listdir(config.project_name):
-    #             if file.startswith("adapter_"):
-    #                 os.remove(f"{config.project_name}/{file}")
-    #     except Exception as e:
-    #         logger.warning(f"Failed to merge adapter weights: {e}")
-    #         logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
+    if config.peft and config.merge_adapter:
+        logger.info("Merging adapter weights...")
+        try:
+            merge_adapter(
+                base_model_path=config.model,
+                target_model_path=config.project_name,
+                adapter_path=config.project_name,
+            )
+            # remove adapter weights: adapter_*
+            for file in os.listdir(config.project_name):
+                if file.startswith("adapter_"):
+                    os.remove(f"{config.project_name}/{file}")
+        except Exception as e:
+            logger.warning(f"Failed to merge adapter weights: {e}")
+            logger.warning("Skipping adapter merge. Only adapter weights will be saved.")
 
     if config.push_to_hub:
         if PartialState().process_index == 0:

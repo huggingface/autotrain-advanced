@@ -37,7 +37,7 @@ class VLMTrainingParams(AutoTrainParams):
     # peft
     quantization: Optional[str] = Field("int4", title="int4, int8, or None")
     target_modules: Optional[str] = Field("all-linear", title="Target modules")
-    # TODO: merge_adapter: bool = Field(False, title="Merge adapter")
+    merge_adapter: bool = Field(False, title="Merge adapter")
     peft: bool = Field(False, title="Use PEFT")
     lora_r: int = Field(16, title="Lora r")
     lora_alpha: int = Field(32, title="Lora alpha")
