@@ -20,6 +20,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
+from autotrain.trainers.vlm.params import VLMTrainingParams
 
 
 FIELDS_TO_EXCLUDE = HIDDEN_PARAMS + ["push_to_hub"]
@@ -88,6 +89,7 @@ TextRegressionParamsAPI = create_api_base_model(TextRegressionParams, "TextRegre
 TokenClassificationParamsAPI = create_api_base_model(TokenClassificationParams, "TokenClassificationParamsAPI")
 SentenceTransformersParamsAPI = create_api_base_model(SentenceTransformersParams, "SentenceTransformersParamsAPI")
 ImageRegressionParamsAPI = create_api_base_model(ImageRegressionParams, "ImageRegressionParamsAPI")
+VLMTrainingParamsAPI = create_api_base_model(VLMTrainingParams, "VLMTrainingParamsAPI")
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -187,6 +189,12 @@ class STQAColumnMapping(BaseModel):
     sentence2_column: str
 
 
+class VLMColumnMapping(BaseModel):
+    image_column: str
+    text_column: str
+    prompt_text_column: str
+
+
 class APICreateProjectModel(BaseModel):
     project_name: str
     task: Literal[
@@ -209,6 +217,8 @@ class APICreateProjectModel(BaseModel):
         "tabular-classification",
         "tabular-regression",
         "image-regression",
+        "vlm:captioning",
+        "vlm:vqa",
     ]
     base_model: str
     hardware: Literal[
@@ -241,6 +251,7 @@ class APICreateProjectModel(BaseModel):
         TextRegressionParamsAPI,
         TokenClassificationParamsAPI,
         ImageRegressionParamsAPI,
+        VLMTrainingParamsAPI,
     ]
     username: str
     column_mapping: Optional[
@@ -264,6 +275,7 @@ class APICreateProjectModel(BaseModel):
             STTripletColumnMapping,
             STQAColumnMapping,
             ImageRegressionColumnMapping,
+            VLMColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -426,6 +438,26 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("target_column"):
                 raise ValueError("target_column is required for image-regression")
             values["column_mapping"] = ImageRegressionColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "vlm:captioning":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for vlm:captioning")
+            if not values.get("column_mapping").get("image_column"):
+                raise ValueError("image_column is required for vlm:captioning")
+            if not values.get("column_mapping").get("text_column"):
+                raise ValueError("text_column is required for vlm:captioning")
+            if not values.get("column_mapping").get("prompt_text_column"):
+                raise ValueError("prompt_text_column is required for vlm:captioning")
+            values["column_mapping"] = VLMColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "vlm:vqa":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for vlm:vqa")
+            if not values.get("column_mapping").get("image_column"):
+                raise ValueError("image_column is required for vlm:vqa")
+            if not values.get("column_mapping").get("text_column"):
+                raise ValueError("text_column is required for vlm:vqa")
+            if not values.get("column_mapping").get("prompt_text_column"):
+                raise ValueError("prompt_text_column is required for vlm:vqa")
+            values["column_mapping"] = VLMColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -461,6 +493,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = SentenceTransformersParamsAPI(**values["params"])
         elif values.get("task") == "image-regression":
             values["params"] = ImageRegressionParamsAPI(**values["params"])
+        elif values.get("task").startswith("vlm:"):
+            values["params"] = VLMTrainingParamsAPI(**values["params"])
         return values
 
 
@@ -511,6 +545,10 @@ async def api_create_project(project: APICreateProjectModel, token: bool = Depen
         params.update({"trainer": trainer})
     elif task.startswith("st:"):
         params = PARAMS["st"]
+        trainer = task.split(":")[1]
+        params.update({"trainer": trainer})
+    elif task.startswith("vlm:"):
+        params = PARAMS["vlm"]
         trainer = task.split(":")[1]
         params.update({"trainer": trainer})
     elif task.startswith("tabular"):

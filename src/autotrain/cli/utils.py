@@ -8,6 +8,7 @@ from autotrain.dataset import (
     AutoTrainImageClassificationDataset,
     AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
+    AutoTrainVLMDataset,
 )
 
 
@@ -547,4 +548,31 @@ def img_reg_munge_data(params, local):
         params.valid_split = "validation"
         params.image_column = "autotrain_image"
         params.target_column = "autotrain_label"
+    return params
+
+
+def vlm_munge_data(params, local):
+    train_data_path = f"{params.data_path}/{params.train_split}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        col_map = {"text": params.text_column}
+        if params.prompt_text_column is not None:
+            col_map["prompt"] = params.prompt_text_column
+        dset = AutoTrainVLMDataset(
+            train_data=train_data_path,
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping=col_map,
+            valid_data=valid_data_path if valid_data_path is not None else None,
+            percent_valid=None,  # TODO: add to UI
+            local=local,
+        )
+        params.data_path = dset.prepare()
+        params.text_column = "autotrain_text"
+        params.image_column = "autotrain_image"
+        params.prompt_text_column = "autotrain_prompt"
     return params

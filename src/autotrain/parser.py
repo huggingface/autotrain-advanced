@@ -17,6 +17,7 @@ from autotrain.cli.utils import (
     text_clf_munge_data,
     text_reg_munge_data,
     token_clf_munge_data,
+    vlm_munge_data,
 )
 from autotrain.project import AutoTrainProject
 from autotrain.tasks import TASKS
@@ -31,6 +32,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
+from autotrain.trainers.vlm.params import VLMTrainingParams
 
 
 @dataclass
@@ -62,6 +64,7 @@ class AutoTrainConfigParser:
             "text_token_classification": TokenClassificationParams,
             "sentence_transformers": SentenceTransformersParams,
             "image_single_column_regression": ImageRegressionParams,
+            "vlm": VLMTrainingParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
@@ -75,6 +78,7 @@ class AutoTrainConfigParser:
             "text_single_column_regression": text_reg_munge_data,
             "sentence_transformers": sent_transformers_munge_data,
             "image_single_column_regression": img_reg_munge_data,
+            "vlm": vlm_munge_data,
         }
         self.task_aliases = {
             "llm": "lm_training",
@@ -119,6 +123,8 @@ class AutoTrainConfigParser:
             "image_regression": "image_single_column_regression",
             "image-regression": "image_single_column_regression",
             "image-scoring": "image_single_column_regression",
+            "vlm:captioning": "vlm",
+            "vlm:vqa": "vlm",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)
@@ -157,6 +163,9 @@ class AutoTrainConfigParser:
                     raise ValueError("Invalid LLM training task")
 
         if self.task == "sentence_transformers":
+            params["trainer"] = self.config["task"].split(":")[1]
+
+        if self.task == "vlm":
             params["trainer"] = self.config["task"].split(":")[1]
 
         if self.task != "dreambooth":

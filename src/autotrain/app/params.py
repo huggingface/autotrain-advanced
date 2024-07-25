@@ -13,6 +13,7 @@ from autotrain.trainers.tabular.params import TabularParams
 from autotrain.trainers.text_classification.params import TextClassificationParams
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
+from autotrain.trainers.vlm.params import VLMTrainingParams
 
 
 HIDDEN_PARAMS = [
@@ -131,6 +132,14 @@ PARAMS["image-regression"] = ImageRegressionParams(
     mixed_precision="fp16",
     log="tensorboard",
 ).model_dump()
+PARAMS["vlm"] = VLMTrainingParams(
+    mixed_precision="fp16",
+    target_modules="all-linear",
+    log="tensorboard",
+    quantization="int4",
+    peft=True,
+    epochs=3,
+).model_dump()
 
 
 @dataclass
@@ -175,6 +184,8 @@ class AppParams:
             return self._munge_params_sent_transformers()
         elif self.task == "image-regression":
             return self._munge_params_img_reg()
+        elif self.task.startswith("vlm"):
+            return self._munge_params_vlm()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -243,6 +254,35 @@ class AppParams:
                 _params["quantization"] = None
 
         return LLMTrainingParams(**_params)
+
+    def _munge_params_vlm(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["prompt_text_column"] = "autotrain_prompt"
+            _params["image_column"] = "autotrain_image"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["prompt_text_column"] = self.column_mapping.get(
+                "prompt" if not self.api else "prompt_text_column", "prompt"
+            )
+            _params["image_column"] = self.column_mapping.get(
+                "image" if not self.api else "rejected_text_column", "image"
+            )
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+        _params["log"] = "tensorboard"
+
+        trainer = self.task.split(":")[1]
+        _params["trainer"] = trainer.lower()
+
+        if "quantization" in _params:
+            if _params["quantization"] in ("none", "no"):
+                _params["quantization"] = None
+
+        return VLMTrainingParams(**_params)
 
     def _munge_params_text_clf(self):
         _params = self._munge_common_params()
@@ -409,6 +449,10 @@ def get_task_params(task, param_type):
         trainer = task.split(":")[1].lower()
         task = task.split(":")[0].lower()
 
+    if task.startswith("vlm:"):
+        trainer = task.split(":")[1].lower()
+        task = task.split(":")[0].lower()
+
     if task.startswith("tabular"):
         task = "tabular"
 
@@ -504,6 +548,24 @@ def get_task_params(task, param_type):
             "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "vlm" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "eval_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+            "quantization",
+            "lora_r",
+            "lora_alpha",
+            "lora_dropout",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "text-regression" and param_type == "basic":

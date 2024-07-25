@@ -38,6 +38,14 @@
                     fields = ['text', 'rejected_text'];
                     fieldNames = ['chosen', 'rejected'];
                     break;
+                case 'vlm:captioning':
+                    fields = ['image', 'text'];
+                    fieldNames = ['image', 'caption'];
+                    break;
+                case 'vlm:vqa':
+                    fields = ['image', 'prompt', 'text'];
+                    fieldNames = ['image', 'question', 'answer'];
+                    break;
                 case 'st:pair':
                     fields = ['sentence1', 'sentence2'];
                     fieldNames = ['anchor', 'positive'];
@@ -187,6 +195,10 @@
                             <option value="llm:generic">LLM Generic</option>
                             <option value="llm:dpo">LLM DPO</option>
                             <option value="llm:reward">LLM Reward</option>
+                        </optgroup>
+                        <optgroup label="VLM Finetuning">
+                            <option value="vlm:captioning">VLM Captioning</option>
+                            <option value="vlm:vqa">VLM VQA</option>
                         </optgroup>
                         <optgroup label="Sentence Transformers">
                             <option value="st:pair">ST Pair</option>

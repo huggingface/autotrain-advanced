@@ -1,0 +1,30 @@
+task: vlm:vqa
+base_model: google/paligemma-3b-pt-224
+project_name: autotrain-paligemma-finetuned-vqa
+log: tensorboard
+backend: local
+
+data:
+  path: abhishek/vqa_small
+  train_split: train
+  valid_split: validation
+  column_mapping:
+    image_column: image
+    text_column: multiple_choice_answer
+    prompt_text_column: question
+
+params:
+  epochs: 3
+  batch_size: 2
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 4
+  mixed_precision: fp16
+  peft: true
+  quantization: int4
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
