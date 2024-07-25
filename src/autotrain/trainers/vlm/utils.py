@@ -4,7 +4,7 @@ import torch
 from accelerate import PartialState
 from huggingface_hub import HfApi
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig, PaliGemmaForConditionalGeneration
+from transformers import AutoConfig, BitsAndBytesConfig, PaliGemmaForConditionalGeneration
 
 from autotrain import logger
 from autotrain.trainers.common import (
@@ -22,7 +22,7 @@ TARGET_MODULES = {}
 
 SUPPORTED_MODELS = [
     "PaliGemmaForConditionalGeneration",
-    "Florence2ForConditionalGeneration",
+    # "Florence2ForConditionalGeneration", support later
 ]
 
 MODEL_CARD = """
@@ -42,6 +42,41 @@ This model was trained using AutoTrain. For more information, please visit [Auto
 
 # Usage
 
+```python
+# you will need to adjust code if you didnt use peft
+
+from PIL import Image
+from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor
+import torch
+import requests
+from peft import PeftModel
+
+base_model_id = BASE_MODEL_ID
+peft_model_id = THIS_MODEL_ID
+max_new_tokens = 100
+text = "Whats on the flower?"
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/bee.JPG?download=true"
+image = Image.open(requests.get(img_url, stream=True).raw)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+base_model = PaliGemmaForConditionalGeneration.from_pretrained(base_model_id)
+processor = PaliGemmaProcessor.from_pretrained(base_model_id)
+
+model = PeftModel.from_pretrained(base_model, peft_model_id)
+model.merge_and_unload()
+
+model = model.eval().to(device)
+
+inputs = processor(text=text, images=image, return_tensors="pt").to(device)
+with torch.inference_mode():
+    generated_ids = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+    )
+result = processor.batch_decode(generated_ids, skip_special_tokens=True)
+print(result)
+```
 """
 
 

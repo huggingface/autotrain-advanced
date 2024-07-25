@@ -21,7 +21,6 @@ def collate_fn(examples, config, processor):
         padding="longest",
         tokenize_newline_separately=False,
     )
-    # tokens = tokens.to(torch.bfloat16).to(device)
     return tokens
 
 
