@@ -71,7 +71,8 @@ RUN conda install pytorch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 pytorch-c
     conda clean -ya && \
     conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya && \
     conda install xformers -c xformers && conda clean -ya
-# conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit && conda clean -ya
+
+RUN pip install torch_xla[tpu]~=2.3.0 -f https://storage.googleapis.com/libtpu-releases/index.html
 
 COPY --chown=1000:1000 . /app/
 
