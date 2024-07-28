@@ -75,7 +75,6 @@ RUN conda install pytorch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 pytorch-c
 COPY --chown=1000:1000 . /app/
 
 RUN pip install -e . && \
-    pip install torch_xla~=2.3.0 && \
     python -m nltk.downloader punkt && \
     pip install -U ninja && \
     pip install -U flash-attn --no-build-isolation && \
