@@ -8,7 +8,8 @@ on:
 jobs:
   dockerhub:
     name: Docker Hub
-    runs-on: [self-hosted, intel-cpu, 8-cpu, ci]
+    runs-on:
+      group: 'aws-general-8-plus'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

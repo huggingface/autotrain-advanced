@@ -14,7 +14,8 @@ on:
 jobs:
   tests:
     name: Run unit tests
-    runs-on: [single-gpu, nvidia-gpu, a10, ci]
+    runs-on:
+      group: aws-g6-4xlarge-plus
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
