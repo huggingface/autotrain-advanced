@@ -260,6 +260,13 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "alias": ["--padding"],
                 "choices": ["left", "right", None],
             },
+            {
+                "arg": "--unsloth",
+                "help": "Enable Unsloth",
+                "required": False,
+                "action": "store_true",
+                "alias": ["--use-unsloth"],
+            },
         ]
         arg_list = common_args() + arg_list
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
@@ -300,6 +307,7 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
             "merge_adapter",
             "use_flash_attention_2",
             "disable_gradient_checkpointing",
+            "unsloth",
         ]
         for arg_name in store_true_arg_names:
             if getattr(self.args, arg_name) is None:
