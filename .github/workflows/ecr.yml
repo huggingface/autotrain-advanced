@@ -14,7 +14,8 @@ env:
 jobs:
   ecr:
     name: Amazon ECR
-    runs-on: [self-hosted, intel-cpu, 8-cpu, ci]
+    runs-on:
+      group: 'aws-general-8-plus'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
