@@ -1,7 +1,6 @@
 from peft import LoraConfig
-from transformers import TrainingArguments
 from transformers.trainer_callback import PrinterCallback
-from trl import SFTTrainer
+from trl import SFTConfig, SFTTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -20,7 +19,10 @@ def train(config):
     training_args = utils.configure_training_args(config, logging_steps)
     config = utils.configure_block_size(config, tokenizer)
 
-    args = TrainingArguments(**training_args)
+    training_args["dataset_text_field"] = config.text_column
+    training_args["max_seq_length"] = config.block_size
+    training_args["packing"] = True
+    args = SFTConfig(**training_args)
 
     model = utils.get_model(config, tokenizer)
 
@@ -46,10 +48,7 @@ def train(config):
         train_dataset=train_data,
         eval_dataset=valid_data if config.valid_split is not None else None,
         peft_config=peft_config if config.peft else None,
-        dataset_text_field=config.text_column,
-        max_seq_length=config.block_size,
         tokenizer=tokenizer,
-        packing=True,
     )
 
     trainer.remove_callback(PrinterCallback)
