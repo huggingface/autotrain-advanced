@@ -74,8 +74,6 @@ RUN conda install pytorch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 pytorch-c
 
 COPY --chown=1000:1000 . /app/
 
-SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
-
 RUN pip install -e . && \
     python -m nltk.downloader punkt && \
     pip install -U ninja && \
