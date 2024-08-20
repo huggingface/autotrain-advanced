@@ -35,12 +35,21 @@ class RunAutoTrainVLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend",
+                "required": False,
+                "type": str,
+                "default": "local",
+            },
         ] + arg_list
         run_image_regression_parser = parser.add_parser("vlm", description="✨ Run AutoTrain VLM")
         for arg in arg_list:
+            names = [arg["arg"]] + arg.get("alias", [])
             if "action" in arg:
                 run_image_regression_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     action=arg.get("action"),
@@ -48,7 +57,8 @@ class RunAutoTrainVLMCommand(BaseAutoTrainCommand):
                 )
             else:
                 run_image_regression_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),
