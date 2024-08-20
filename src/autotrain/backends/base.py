@@ -4,6 +4,7 @@ from typing import Union
 
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -72,6 +73,7 @@ class BaseBackend:
         SentenceTransformersParams,
         ImageRegressionParams,
         VLMTrainingParams,
+        ExtractiveQuestionAnsweringParams,
     ]
     backend: str
 
@@ -118,6 +120,8 @@ class BaseBackend:
             self.task_id = 24
         elif isinstance(self.params, VLMTrainingParams):
             self.task_id = 31
+        elif isinstance(self.params, ExtractiveQuestionAnsweringParams):
+            self.task_id = 5
         else:
             raise NotImplementedError
 

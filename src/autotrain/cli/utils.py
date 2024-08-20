@@ -576,3 +576,43 @@ def vlm_munge_data(params, local):
         params.image_column = "autotrain_image"
         params.prompt_text_column = "autotrain_prompt"
     return params
+
+
+def ext_qa_munge_data(params, local):
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            task="text_extractive_question_answering",
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping={
+                "text": params.text_column,
+                "question": params.question_column,
+                "answer": params.answer_column,
+            },
+            percent_valid=None,  # TODO: add to UI
+            local=local,
+            convert_to_class_label=True,
+            ext=ext_to_use,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.text_column = "autotrain_text"
+        params.question_column = "autotrain_question"
+        params.answer_column = "autotrain_answer"
+    return params

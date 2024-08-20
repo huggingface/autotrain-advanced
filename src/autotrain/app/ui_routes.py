@@ -280,6 +280,10 @@ UI_PARAMS = {
         "label": "Unsloth",
         "options": [True, False],
     },
+    "max_doc_stride": {
+        "type": "number",
+        "label": "Max doc stride",
+    },
 }
 
 
@@ -443,6 +447,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["image-regression"]
     elif task.startswith("vlm:"):
         hub_models = MODEL_CHOICE["vlm"]
+    elif task == "extractive-qa":
+        hub_models = MODEL_CHOICE["extractive-qa"]
     else:
         raise NotImplementedError
 
@@ -615,6 +621,8 @@ async def handle_form(
                     raise NotImplementedError
             elif task == "token-classification":
                 dset_task = "text_token_classification"
+            elif task == "extractive-qa":
+                dset_task = "text_extractive_question_answering"
             else:
                 raise NotImplementedError
             logger.info(f"Task: {dset_task}")

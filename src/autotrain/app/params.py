@@ -4,6 +4,7 @@ from typing import Optional
 
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
@@ -63,6 +64,8 @@ HIDDEN_PARAMS = [
     "sentence1_column",
     "sentence2_column",
     "sentence3_column",
+    "question_column",
+    "answer_column",
 ]
 
 
@@ -140,6 +143,12 @@ PARAMS["vlm"] = VLMTrainingParams(
     peft=True,
     epochs=3,
 ).model_dump()
+PARAMS["extractive-qa"] = ExtractiveQuestionAnsweringParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+    max_seq_length=512,
+    max_doc_stride=128,
+).model_dump()
 
 
 @dataclass
@@ -186,6 +195,8 @@ class AppParams:
             return self._munge_params_img_reg()
         elif self.task.startswith("vlm"):
             return self._munge_params_vlm()
+        elif self.task == "extractive-qa":
+            return self._munge_params_extractive_qa()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -298,6 +309,25 @@ class AppParams:
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
         return TextClassificationParams(**_params)
+
+    def _munge_params_extractive_qa(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["text_column"] = "autotrain_text"
+            _params["question_column"] = "autotrain_question"
+            _params["answer_column"] = "autotrain_answer"
+            _params["valid_split"] = "validation"
+        else:
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["question_column"] = self.column_mapping.get(
+                "question" if not self.api else "question_column", "question"
+            )
+            _params["answer_column"] = self.column_mapping.get("answer" if not self.api else "answer_column", "answer")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+        return ExtractiveQuestionAnsweringParams(**_params)
 
     def _munge_params_text_reg(self):
         _params = self._munge_common_params()
@@ -523,6 +553,20 @@ def get_task_params(task, param_type):
             )
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "text-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "eval_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "extractive-qa" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",

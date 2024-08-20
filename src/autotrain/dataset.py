@@ -20,6 +20,7 @@ from autotrain.preprocessor.text import (
     SentenceTransformersPreprocessor,
     Seq2SeqPreprocessor,
     TextBinaryClassificationPreprocessor,
+    TextExtractiveQuestionAnsweringPreprocessor,
     TextMultiClassClassificationPreprocessor,
     TextSingleColumnRegressionPreprocessor,
     TextTokenClassificationPreprocessor,
@@ -588,6 +589,25 @@ class AutoTrainDataset:
                 sentence3_column=sentence3_column,
                 target_column=target_column,
                 convert_to_class_label=self.convert_to_class_label,
+            )
+            return preprocessor.prepare()
+
+        elif self.task == "text_extractive_question_answering":
+            text_column = self.column_mapping["text"]
+            question_column = self.column_mapping["question"]
+            answer_column = self.column_mapping["answer"]
+            preprocessor = TextExtractiveQuestionAnsweringPreprocessor(
+                train_data=self.train_df,
+                text_column=text_column,
+                question_column=question_column,
+                answer_column=answer_column,
+                username=self.username,
+                project_name=self.project_name,
+                valid_data=self.valid_df,
+                test_size=self.percent_valid,
+                token=self.token,
+                seed=42,
+                local=self.local,
             )
             return preprocessor.prepare()
 

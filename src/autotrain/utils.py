@@ -5,6 +5,7 @@ import subprocess
 from autotrain.commands import launch_command
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -51,6 +52,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = ImageRegressionParams(**params)
     elif task_id == 31:
         params = VLMTrainingParams(**params)
+    elif task_id == 5:
+        params = ExtractiveQuestionAnsweringParams(**params)
     else:
         raise NotImplementedError
 
