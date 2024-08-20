@@ -27,4 +27,4 @@ params:
 hub:
   username: ${HF_USERNAME}
   token: ${HF_TOKEN}
-  push_to_hub: false
+  push_to_hub: true
