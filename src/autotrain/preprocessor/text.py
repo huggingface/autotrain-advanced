@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from autotrain import logger
 
 
-RESERVED_COLUMNS = ["autotrain_text", "autotrain_label"]
+RESERVED_COLUMNS = ["autotrain_text", "autotrain_label", "autotrain_question", "autotrain_answer"]
 LLM_RESERVED_COLUMNS = [
     "autotrain_prompt",
     "autotrain_context",
@@ -501,6 +501,130 @@ class SentenceTransformersPreprocessor:
         if self.convert_to_class_label:
             train_df = train_df.cast_column("autotrain_target", ClassLabel(names=label_names))
             valid_df = valid_df.cast_column("autotrain_target", ClassLabel(names=label_names))
+
+        if self.local:
+            dataset = DatasetDict(
+                {
+                    "train": train_df,
+                    "validation": valid_df,
+                }
+            )
+            dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+        else:
+            train_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="train",
+                private=True,
+                token=self.token,
+            )
+            valid_df.push_to_hub(
+                f"{self.username}/autotrain-data-{self.project_name}",
+                split="validation",
+                private=True,
+                token=self.token,
+            )
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
+
+
+@dataclass
+class TextExtractiveQuestionAnsweringPreprocessor:
+    train_data: pd.DataFrame
+    text_column: str
+    question_column: str
+    answer_column: str
+    username: str
+    project_name: str
+    token: str
+    valid_data: Optional[pd.DataFrame] = None
+    test_size: Optional[float] = 0.2
+    seed: Optional[int] = 42
+    local: Optional[bool] = False
+
+    def __post_init__(self):
+        # check if text_column, question_column, and answer_column are in train_data
+        if self.text_column not in self.train_data.columns:
+            raise ValueError(f"{self.text_column} not in train data")
+        if self.question_column not in self.train_data.columns:
+            raise ValueError(f"{self.question_column} not in train data")
+        if self.answer_column not in self.train_data.columns:
+            raise ValueError(f"{self.answer_column} not in train data")
+        # check if text_column, question_column, and answer_column are in valid_data
+        if self.valid_data is not None:
+            if self.text_column not in self.valid_data.columns:
+                raise ValueError(f"{self.text_column} not in valid data")
+            if self.question_column not in self.valid_data.columns:
+                raise ValueError(f"{self.question_column} not in valid data")
+            if self.answer_column not in self.valid_data.columns:
+                raise ValueError(f"{self.answer_column} not in valid data")
+
+        # make sure no reserved columns are in train_data or valid_data
+        for column in RESERVED_COLUMNS:
+            if column in self.train_data.columns:
+                raise ValueError(f"{column} is a reserved column name")
+            if self.valid_data is not None:
+                if column in self.valid_data.columns:
+                    raise ValueError(f"{column} is a reserved column name")
+
+        # convert answer_column to dict
+        try:
+            self.train_data.loc[:, self.answer_column] = self.train_data[self.answer_column].apply(
+                lambda x: ast.literal_eval(x)
+            )
+        except ValueError:
+            logger.warning("Unable to do ast.literal_eval on train_data[answer_column]")
+            logger.warning("assuming answer_column is already a dict")
+
+        if self.valid_data is not None:
+            try:
+                self.valid_data.loc[:, self.answer_column] = self.valid_data[self.answer_column].apply(
+                    lambda x: ast.literal_eval(x)
+                )
+            except ValueError:
+                logger.warning("Unable to do ast.literal_eval on valid_data[answer_column]")
+                logger.warning("assuming answer_column is already a dict")
+
+    def split(self):
+        if self.valid_data is not None:
+            return self.train_data, self.valid_data
+        else:
+            train_df, valid_df = train_test_split(
+                self.train_data,
+                test_size=self.test_size,
+                random_state=self.seed,
+            )
+            train_df = train_df.reset_index(drop=True)
+            valid_df = valid_df.reset_index(drop=True)
+            return train_df, valid_df
+
+    def prepare_columns(self, train_df, valid_df):
+        train_df.loc[:, "autotrain_text"] = train_df[self.text_column]
+        train_df.loc[:, "autotrain_question"] = train_df[self.question_column]
+        train_df.loc[:, "autotrain_answer"] = train_df[self.answer_column]
+        valid_df.loc[:, "autotrain_text"] = valid_df[self.text_column]
+        valid_df.loc[:, "autotrain_question"] = valid_df[self.question_column]
+        valid_df.loc[:, "autotrain_answer"] = valid_df[self.answer_column]
+
+        # drop all other columns
+        train_df = train_df.drop(
+            columns=[
+                x for x in train_df.columns if x not in ["autotrain_text", "autotrain_question", "autotrain_answer"]
+            ]
+        )
+        valid_df = valid_df.drop(
+            columns=[
+                x for x in valid_df.columns if x not in ["autotrain_text", "autotrain_question", "autotrain_answer"]
+            ]
+        )
+        return train_df, valid_df
+
+    def prepare(self):
+        train_df, valid_df = self.split()
+        train_df, valid_df = self.prepare_columns(train_df, valid_df)
+
+        train_df = Dataset.from_pandas(train_df)
+        valid_df = Dataset.from_pandas(valid_df)
 
         if self.local:
             dataset = DatasetDict(

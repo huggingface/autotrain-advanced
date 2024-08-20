@@ -7,6 +7,7 @@ import yaml
 from autotrain import logger
 from autotrain.cli.utils import (
     dreambooth_munge_data,
+    ext_qa_munge_data,
     img_clf_munge_data,
     img_obj_detect_munge_data,
     img_reg_munge_data,
@@ -23,6 +24,7 @@ from autotrain.project import AutoTrainProject
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
@@ -65,6 +67,7 @@ class AutoTrainConfigParser:
             "sentence_transformers": SentenceTransformersParams,
             "image_single_column_regression": ImageRegressionParams,
             "vlm": VLMTrainingParams,
+            "text_extractive_question_answering": ExtractiveQuestionAnsweringParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
@@ -79,6 +82,7 @@ class AutoTrainConfigParser:
             "sentence_transformers": sent_transformers_munge_data,
             "image_single_column_regression": img_reg_munge_data,
             "vlm": vlm_munge_data,
+            "text_extractive_question_answering": ext_qa_munge_data,
         }
         self.task_aliases = {
             "llm": "lm_training",
@@ -125,6 +129,10 @@ class AutoTrainConfigParser:
             "image-scoring": "image_single_column_regression",
             "vlm:captioning": "vlm",
             "vlm:vqa": "vlm",
+            "extractive_question_answering": "text_extractive_question_answering",
+            "ext_qa": "text_extractive_question_answering",
+            "ext-qa": "text_extractive_question_answering",
+            "extractive-qa": "text_extractive_question_answering",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)

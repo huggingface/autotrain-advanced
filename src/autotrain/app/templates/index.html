@@ -97,6 +97,10 @@
                     fields = ['id', 'label'];
                     fieldNames = ['id', 'target'];
                     break;
+                case 'extractive-qa':
+                    fields = ['text', 'question', 'answer'];
+                    fieldNames = ['context', 'question', 'answers'];
+                    break;
                 default:
                     return; // Do nothing if task is not recognized
             }
@@ -210,6 +214,7 @@
                         <optgroup label="Other Text Tasks">
                             <option value="text-classification">Text Classification</option>
                             <option value="text-regression">Text Regression</option>
+                            <option value="extractive-qa">Extractive Question Answering</option>
                             <option value="seq2seq">Sequence To Sequence</option>
                             <option value="token-classification">Token Classification</option>
                         </optgroup>

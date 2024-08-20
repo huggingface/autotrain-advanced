@@ -12,6 +12,7 @@ from autotrain.app.utils import token_verification
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
@@ -90,6 +91,9 @@ TokenClassificationParamsAPI = create_api_base_model(TokenClassificationParams, 
 SentenceTransformersParamsAPI = create_api_base_model(SentenceTransformersParams, "SentenceTransformersParamsAPI")
 ImageRegressionParamsAPI = create_api_base_model(ImageRegressionParams, "ImageRegressionParamsAPI")
 VLMTrainingParamsAPI = create_api_base_model(VLMTrainingParams, "VLMTrainingParamsAPI")
+ExtractiveQuestionAnsweringParamsAPI = create_api_base_model(
+    ExtractiveQuestionAnsweringParams, "ExtractiveQuestionAnsweringParamsAPI"
+)
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -195,6 +199,12 @@ class VLMColumnMapping(BaseModel):
     prompt_text_column: str
 
 
+class ExtractiveQuestionAnsweringColumnMapping(BaseModel):
+    text_column: str
+    question_column: str
+    answer_column: str
+
+
 class APICreateProjectModel(BaseModel):
     project_name: str
     task: Literal[
@@ -219,6 +229,7 @@ class APICreateProjectModel(BaseModel):
         "image-regression",
         "vlm:captioning",
         "vlm:vqa",
+        "extractive-question-answering",
     ]
     base_model: str
     hardware: Literal[
@@ -252,6 +263,7 @@ class APICreateProjectModel(BaseModel):
         TokenClassificationParamsAPI,
         ImageRegressionParamsAPI,
         VLMTrainingParamsAPI,
+        ExtractiveQuestionAnsweringParamsAPI,
     ]
     username: str
     column_mapping: Optional[
@@ -276,6 +288,7 @@ class APICreateProjectModel(BaseModel):
             STQAColumnMapping,
             ImageRegressionColumnMapping,
             VLMColumnMapping,
+            ExtractiveQuestionAnsweringColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -458,6 +471,16 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("prompt_text_column"):
                 raise ValueError("prompt_text_column is required for vlm:vqa")
             values["column_mapping"] = VLMColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "extractive-question-answering":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for extractive-question-answering")
+            if not values.get("column_mapping").get("text_column"):
+                raise ValueError("text_column is required for extractive-question-answering")
+            if not values.get("column_mapping").get("question_column"):
+                raise ValueError("question_column is required for extractive-question-answering")
+            if not values.get("column_mapping").get("answer_column"):
+                raise ValueError("answer_column is required for extractive-question-answering")
+            values["column_mapping"] = ExtractiveQuestionAnsweringColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -495,6 +518,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = ImageRegressionParamsAPI(**values["params"])
         elif values.get("task").startswith("vlm:"):
             values["params"] = VLMTrainingParamsAPI(**values["params"])
+        elif values.get("task") == "extractive-question-answering":
+            values["params"] = ExtractiveQuestionAnsweringParamsAPI(**values["params"])
         return values
 
 

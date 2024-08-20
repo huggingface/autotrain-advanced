@@ -6,6 +6,7 @@ import torch
 from autotrain import logger
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
+from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -145,6 +146,7 @@ def launch_command(params):
         isinstance(params, TextClassificationParams)
         or isinstance(params, TextRegressionParams)
         or isinstance(params, SentenceTransformersParams)
+        or isinstance(params, ExtractiveQuestionAnsweringParams)
     ):
         if num_gpus == 0:
             cmd = [
@@ -195,6 +197,15 @@ def launch_command(params):
                 [
                     "-m",
                     "autotrain.trainers.sent_transformers",
+                    "--training_config",
+                    os.path.join(params.project_name, "training_params.json"),
+                ]
+            )
+        elif isinstance(params, ExtractiveQuestionAnsweringParams):
+            cmd.extend(
+                [
+                    "-m",
+                    "autotrain.trainers.extractive_question_answering",
                     "--training_config",
                     os.path.join(params.project_name, "training_params.json"),
                 ]

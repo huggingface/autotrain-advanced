@@ -27,6 +27,8 @@
 - sections:
   - local: text_classification
     title: Text Classification
+  - local: extractive_qa
+    title: Extractive QA
   - local: sentence_transformer
     title: Sentence Transformer
   - local: text_regression
@@ -51,6 +53,8 @@
 - sections:
   - local: text_classification_params
     title: Text Classification & Regression
+  - local: extractive_qa_params
+    title: Extractive QA
   - local: llm_finetuning_params
     title: LLM Finetuning
   - local: image_classification_params

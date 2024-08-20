@@ -1,0 +1,30 @@
+task: extractive-qa
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-ex-qa1
+log: tensorboard
+backend: local
+
+data:
+  path: lhoestq/squad
+  train_split: train
+  valid_split: validation
+  column_mapping:
+    text_column: context
+    question_column: question
+    answer_column: answers
+
+params:
+  max_seq_length: 512
+  max_doc_stride: 128
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: false

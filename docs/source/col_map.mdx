@@ -182,6 +182,17 @@ Not all columns need to be mapped for all trainers of sentence transformers.
 ```
 
 
+# Extractive Question Answering
+
+For extractive question answering, the column mapping should be as follows:
+
+```
+{"text": "context", "question": "question", "answer": "answers"}
+```
+
+where `answer` is a dictionary with keys `text` and `answer_start`.
+
+
 ## Ensuring Accurate Mapping
 
 To ensure your model trains correctly:

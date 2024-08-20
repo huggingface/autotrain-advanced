@@ -378,6 +378,7 @@ def fetch_models():
     _mc["image-object-detection"] = _fetch_image_object_detection_models()
     _mc["sentence-transformers"] = _fetch_st_models()
     _mc["vlm"] = _fetch_vlm_models()
+    _mc["extractive-qa"] = _fetch_text_classification_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [
