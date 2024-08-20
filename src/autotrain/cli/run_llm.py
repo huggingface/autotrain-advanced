@@ -35,7 +35,25 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend",
+                "required": False,
+                "type": str,
+                "default": "local",
+            },
         ] + arg_list
+        arg_list = [arg for arg in arg_list if arg["arg"] != "--block-size"]
+        arg_list.append(
+            {
+                "arg": "--block_size",
+                "help": "Block size",
+                "required": False,
+                "type": str,
+                "default": "1024",
+                "alias": ["--block-size"],
+            }
+        )
         run_llm_parser = parser.add_parser("llm", description="✨ Run AutoTrain LLM")
         for arg in arg_list:
             names = [arg["arg"]] + arg.get("alias", [])

@@ -35,15 +35,23 @@ class RunAutoTrainExtractiveQACommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend to use for training",
+                "required": False,
+                "default": "local",
+            },
         ] + arg_list
         arg_list = [arg for arg in arg_list if arg["arg"] != "--disable-gradient-checkpointing"]
         run_extractive_qa_parser = parser.add_parser(
             "extractive-qa", description="✨ Run AutoTrain Extractive Question Answering"
         )
         for arg in arg_list:
+            names = [arg["arg"]] + arg.get("alias", [])
             if "action" in arg:
                 run_extractive_qa_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     action=arg.get("action"),
@@ -51,7 +59,8 @@ class RunAutoTrainExtractiveQACommand(BaseAutoTrainCommand):
                 )
             else:
                 run_extractive_qa_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),

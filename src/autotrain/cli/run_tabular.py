@@ -35,14 +35,23 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend",
+                "required": False,
+                "type": str,
+                "default": "local",
+            },
         ] + arg_list
         remove_args = ["--disable_gradient_checkpointing", "--gradient_accumulation", "--epochs", "--log", "--lr"]
         arg_list = [arg for arg in arg_list if arg["arg"] not in remove_args]
         run_tabular_parser = parser.add_parser("tabular", description="✨ Run AutoTrain Tabular Data Training")
         for arg in arg_list:
+            names = [arg["arg"]] + arg.get("alias", [])
             if "action" in arg:
                 run_tabular_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     action=arg.get("action"),
@@ -50,7 +59,8 @@ class RunAutoTrainTabularCommand(BaseAutoTrainCommand):
                 )
             else:
                 run_tabular_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),

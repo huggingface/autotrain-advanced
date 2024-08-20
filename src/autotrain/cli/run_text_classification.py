@@ -35,15 +35,24 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 "required": False,
                 "action": "store_true",
             },
+            {
+                "arg": "--backend",
+                "help": "Backend",
+                "required": False,
+                "type": str,
+                "default": "local",
+            },
         ] + arg_list
         arg_list = [arg for arg in arg_list if arg["arg"] != "--disable-gradient-checkpointing"]
         run_text_classification_parser = parser.add_parser(
             "text-classification", description="✨ Run AutoTrain Text Classification"
         )
         for arg in arg_list:
+            names = [arg["arg"]] + arg.get("alias", [])
             if "action" in arg:
                 run_text_classification_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     action=arg.get("action"),
@@ -51,7 +60,8 @@ class RunAutoTrainTextClassificationCommand(BaseAutoTrainCommand):
                 )
             else:
                 run_text_classification_parser.add_argument(
-                    arg["arg"],
+                    *names,
+                    dest=arg["arg"].replace("--", "").replace("-", "_"),
                     help=arg["help"],
                     required=arg.get("required", False),
                     type=arg.get("type"),
