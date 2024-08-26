@@ -1,4 +1,5 @@
 import ast
+import gc
 import os
 from enum import Enum
 from itertools import chain
@@ -295,6 +296,9 @@ def post_training_steps(config, trainer):
         f.write(model_card)
 
     if config.peft and config.merge_adapter:
+        del trainer
+        gc.collect()
+        torch.cuda.empty_cache()
         logger.info("Merging adapter weights...")
         try:
             merge_adapter(

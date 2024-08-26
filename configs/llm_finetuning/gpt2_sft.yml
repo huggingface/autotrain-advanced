@@ -24,8 +24,9 @@ params:
   scheduler: linear
   gradient_accumulation: 4
   mixed_precision: fp16
+  merge_adapter: true
 
 hub:
   username: ${HF_USERNAME}
   token: ${HF_TOKEN}
-  push_to_hub: true
+  push_to_hub: false
