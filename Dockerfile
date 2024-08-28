@@ -67,7 +67,7 @@ RUN conda create -p /app/env -y python=3.10
 
 SHELL ["conda", "run","--no-capture-output", "-p","/app/env", "/bin/bash", "-c"]
 
-RUN conda install pytorch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 pytorch-cuda=12.1 -c pytorch -c nvidia && \
+RUN conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.1 -c pytorch -c nvidia && \
     conda clean -ya && \
     conda install -c "nvidia/label/cuda-12.1.1" cuda-nvcc && conda clean -ya && \
     conda install xformers -c xformers && conda clean -ya
