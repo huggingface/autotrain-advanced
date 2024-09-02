@@ -1,10 +1,18 @@
 <!doctype html>
-<html>
+<html class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Toggle dark mode based on user's system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 </head>
 
 <script>
@@ -14,30 +22,32 @@
     }
 </script>
 
-<body>
-    <header class="bg-white-800 text-white p-4">
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <header class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
-            <img src="/static/logo.png" alt="AutoTrain" , class="w-32">
+            <img src="/static/logo.png" alt="AutoTrain" class="w-32">
         </div>
     </header>
 
-    <div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-2xl">
-        <p class="text-gray-500 text-xl mb-3 text-center">Please <a href="javascript:void(0);"
-                onclick="redirectToLogin()">login</a> to use
+    <div class="form-container max-w-lg mx-auto mt-10 p-6 shadow-2xl bg-white dark:bg-gray-800 rounded-lg">
+        <p class="text-gray-500 dark:text-gray-400 text-xl mb-3 text-center">Please <a href="javascript:void(0);"
+                onclick="redirectToLogin()" class="text-blue-500 dark:text-blue-400 hover:underline">login</a> to use
             AutoTrain</p>
         <div class="flex justify-center items-center">
             <a href="javascript:void(0);" onclick="redirectToLogin()">
                 <img src="https://huggingface.co/datasets/huggingface/badges/resolve/main/sign-in-with-huggingface-xl.svg"
-                    alt="Login using Hugging Face">
+                    alt="Login using Hugging Face" class="hover:opacity-75 transition-opacity duration-300">
             </a>
         </div>
-        <p class="text-gray-500 text-xs mt-10 text-center">Alternatively, if you face login issues, you can add your
+        <p class="text-gray-500 dark:text-gray-400 text-xs mt-10 text-center">Alternatively, if you face login issues,
+            you can add your
             Hugging Face Write Token to this space as a secret in space settings. Note: The name of secret must be
             HF_TOKEN and the value must be your Hugging Face WRITE token! You can find your tokens in user settings.</p>
-        <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
-                target="_blank" class="text-blue-600">Docs</a> | <a
-                href="https://github.com/huggingface/autotrain-advanced" target="_blank"
-                class="text-blue-600">GitHub</a>
+        <div class="block text-sm font-normal text-gray-700 dark:text-gray-300 text-center mt-4">
+            <a href="https://hf.co/docs/autotrain" target="_blank"
+                class="text-blue-500 dark:text-blue-400 hover:underline">Docs</a> |
+            <a href="https://github.com/huggingface/autotrain-advanced" target="_blank"
+                class="text-blue-500 dark:text-blue-400 hover:underline">GitHub</a>
         </div>
     </div>
 </body>

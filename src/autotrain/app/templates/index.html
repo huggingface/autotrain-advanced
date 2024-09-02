@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html class="dark:bg-gray-900 dark:text-gray-100">
 
 <head>
     <meta charset="UTF-8">
@@ -109,10 +109,10 @@
                 const fieldDiv = document.createElement('div');
                 fieldDiv.className = 'mb-2';
                 fieldDiv.innerHTML = `
-  <label class="block text-gray-600 text-sm font-bold mb-1" for="col_map_${field}">
+  <label class="block text-gray-600 dark:text-gray-300 text-sm font-bold mb-1" for="col_map_${field}">
     ${field}:
   </label>
-  <input type="text" id="col_map_${field}" name="col_map_${field}" value="${fieldNames[index]}" class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+  <input type="text" id="col_map_${field}" name="col_map_${field}" value="${fieldNames[index]}" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
 `;
                 colMapDiv.appendChild(fieldDiv);
             });
@@ -149,10 +149,10 @@
 
 </script>
 
-<body>
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
     <button data-drawer-target="separator-sidebar" data-drawer-toggle="separator-sidebar"
         aria-controls="separator-sidebar" type="button"
-        class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+        class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 dark:text-gray-400 rounded-lg sm:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-600">
         <span class="sr-only">Open sidebar</span>
         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg">
@@ -165,34 +165,37 @@
     <aside id="separator-sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar">
-        <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50">
+        <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
             <a href="https://huggingface.co/autotrain" target="_blank" class="flex items-center ps-2.5 mb-5">
                 <img src="https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/logo.png"
                     class="h-6 me-3 sm:h-7" alt="AutoTrain Logo" />
             </a>
-            <hr class="mb-2">
+            <hr class="mb-2 border-gray-200 dark:border-gray-700">
             <ul class="space-y-2 font-medium">
                 <li>
-                    <label for="autotrain_user" class="text-sm font-medium text-gray-700">Hugging Face User
-                        <button type="button" id="autotrain_user_info" class="text-gray-500 hover:text-gray-700">
+                    <label for="autotrain_user" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hugging
+                        Face User
+                        <button type="button" id="autotrain_user_info"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </label>
-                    <select name="autotrain_user" , id="autotrain_user"
-                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <select name="autotrain_user" id="autotrain_user"
+                        class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         {% for user in valid_users %}
                         <option value="{{ user }}">{{ user }}</option>
                         {% endfor %}
                     </select>
                 </li>
                 <li>
-                    <label for="task" class="text-sm font-medium text-gray-700">Task
-                        <button type="button" id="task_info" class="text-gray-500 hover:text-gray-700">
+                    <label for="task" class="text-sm font-medium text-gray-700 dark:text-gray-300">Task
+                        <button type="button" id="task_info"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </label>
                     <select id="task" name="task"
-                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         <optgroup label="LLM Finetuning">
                             <option value="llm:sft">LLM SFT</option>
                             <option value="llm:orpo">LLM ORPO</option>
@@ -231,13 +234,14 @@
                     </select>
                 </li>
                 <li>
-                    <label for="hardware" class="text-sm font-medium text-gray-700">Hardware
-                        <button type="button" id="hardware_info" class="text-gray-500 hover:text-gray-700">
+                    <label for="hardware" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hardware
+                        <button type="button" id="hardware_info"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </label>
                     <select id="hardware" name="hardware"
-                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         {% if enable_local == 1 %}
                         <option value="local-ui">Local/Space</option>
                         {% endif %}
@@ -281,23 +285,25 @@
                     </select>
                 </li>
                 <li>
-                    <label for="parameter_mode" class="text-sm font-medium text-gray-700">Parameter Mode
-                        <button type="button" id="parameter_mode_info" class="text-gray-500 hover:text-gray-700">
+                    <label for="parameter_mode" class="text-sm font-medium text-gray-700 dark:text-gray-300">Parameter
+                        Mode
+                        <button type="button" id="parameter_mode_info"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </label>
                     <select id="parameter_mode" name="parameter_mode"
-                        class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="basic">Basic</option>
                         <option value="full">Full</option>
                     </select>
                 </li>
             </ul>
-            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
+            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
                 <li>
                     <a href="#" id="button_logs"
-                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
-                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                        class="flex items-center p-2 text-gray-900 dark:text-gray-100 transition duration-75 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400 transition duration-75 group-hover:text-gray-900 dark:group-hover:text-gray-100"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 20 18">
                             <path d="M18 0H6a2 2 0 0 0-2 2h14v12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Z" />
@@ -309,8 +315,8 @@
                 </li>
                 <li>
                     <a href="https://huggingface.co/docs/autotrain" target="_blank"
-                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
-                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                        class="flex items-center p-2 text-gray-900 dark:text-gray-100 transition duration-75 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400 transition duration-75 group-hover:text-gray-900 dark:group-hover:text-gray-100"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 16 20">
                             <path
@@ -321,8 +327,8 @@
                 </li>
                 <li>
                     <a href="https://huggingface.co/docs/autotrain/faq" target="_blank"
-                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
-                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                        class="flex items-center p-2 text-gray-900 dark:text-gray-100 transition duration-75 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400 transition duration-75 group-hover:text-gray-900 dark:group-hover:text-gray-100"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 21 21">
                             <path
@@ -333,8 +339,8 @@
                 </li>
                 <li>
                     <a href="https://github.com/huggingface/autotrain-advanced" target="_blank"
-                        class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 group">
-                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                        class="flex items-center p-2 text-gray-900 dark:text-gray-100 transition duration-75 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <svg class="flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400 transition duration-75 group-hover:text-gray-900 dark:group-hover:text-gray-100"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 24 24">
                             <path
@@ -344,8 +350,8 @@
                     </a>
                 </li>
             </ul>
-            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
-                <div class="block text-xs text-gray-400 text-center">{{version}}
+            <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
+                <div class="block text-xs text-gray-400 dark:text-gray-500 text-center">{{version}}
                 </div>
             </ul>
         </div>
@@ -354,9 +360,11 @@
     <div class="p-4 sm:ml-64">
         <div class="columns-2 mb-2">
             <div>
-                <p class="text-sm text-gray-700 font-bold text-left" id="num_accelerators">Accelerators: Fetching...
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-bold text-left" id="num_accelerators">
+                    Accelerators: Fetching...
                 </p>
-                <p class="text-sm text-gray-700 font-bold text-left" id="is_model_training">Fetching training
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-bold text-left" id="is_model_training">Fetching
+                    training
                     status...
                 </p>
             </div>
@@ -376,39 +384,40 @@
                 <div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="project_name" class="text-xl text-gray-800 mb-2 mt-2">
+                            <p for="project_name" class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">
                                 Project Name
                             </p>
                             <input type="text" name="project_name" id="project_name"
-                                class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="base_model" class="text-xl text-gray-800 mb-2 mt-2">
+                            <p for="base_model" class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">
                                 Base Model
                             </p>
                             <div class="flex items-center">
                                 <select name="base_model" id="base_model"
-                                    class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 </select>
                                 <input type="text" id="base_model_input"
-                                    class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 hidden">
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 hidden">
                                 <div class="flex items-center ps-4 rounded">
                                     <input id="base_model_checkbox" type="checkbox" value="" name="base_model_checkbox"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
                                     <label for="base_model_checkbox"
-                                        class="w-full py-4 ms-2 text-sm font-medium text-gray-700">Custom</label>
+                                        class="w-full py-4 ms-2 text-sm font-medium text-gray-700 dark:text-gray-300">Custom</label>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p for="dataset_source" class="text-xl text-gray-800 mb-2 mt-2">Dataset Source
+                            <p for="dataset_source" class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">Dataset
+                                Source
                             </p>
                             <select id="dataset_source" name="dataset_source"
-                                class="mt-1 block w-full border py-2 px-3 border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="local">Local</option>
                                 <option value="hub">Hugging Face Hub</option>
                             </select>
@@ -416,42 +425,47 @@
                     </div>
                     <div class="items-stretch justify-center h-48 rounded">
                         <div id="hub-data-tab-content" class="w-full px-4">
-                            <label for="hub_dataset" class="text-sm font-medium text-gray-700">Hub dataset path</label>
+                            <label for="hub_dataset" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hub
+                                dataset path</label>
                             <div class="mt-1 flex items-center">
                                 <input type="text" name="hub_dataset" id="hub_dataset"
-                                    class="block w-full border border-gray-300 px-3 py-2.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    class="block w-full border border-gray-300 dark:border-gray-600 px-3 py-2.5 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <button type="button" id="dataset-viewer"
-                                    class="ml-2 p-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500"
-                                        viewBox="0 0 24 24" fill="currentColor">
+                                    class="ml-2 p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24"
+                                        fill="currentColor">
                                         <path
                                             d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 13c-3.04 0-5.5-2.46-5.5-5.5S8.96 6.5 12 6.5s5.5 2.46 5.5 5.5-2.46 5.5-5.5 5.5zm0-9c-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5 3.5-1.57 3.5-3.5-1.57-3.5-3.5-3.5z" />
                                     </svg>
                                 </button>
                             </div>
                             <div class="columns-2 mb-2 mt-2">
-                                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
+                                <label for="train_split"
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300">Train split
                                 </label>
                                 <input type="text" name="train_split" id="train_split"
-                                    class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <label for="valid_split"
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300">Valid split
                                     (optional)
                                 </label>
                                 <input type="text" name="valid_split" id="valid_split"
-                                    class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
                         <div id="upload-data-tabs" class="w-full px-4">
                             <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
                                 data-tabs-toggle="#upload-data-tab-content" role="tablist">
                                 <li class="me-2" role="presentation">
-                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="training-data-tab"
-                                        data-tabs-target="#training-data" type="button" role="tab"
-                                        aria-controls="training-data" aria-selected="false">Training Data</button>
+                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        id="training-data-tab" data-tabs-target="#training-data" type="button"
+                                        role="tab" aria-controls="training-data" aria-selected="false">Training
+                                        Data</button>
                                 </li>
                                 <li class="me-2" role="presentation">
-                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="valid-data-tab"
-                                        data-tabs-target="#valid-data" type="button" role="tab"
+                                    <button class="p-4 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        id="valid-data-tab" data-tabs-target="#valid-data" type="button" role="tab"
                                         aria-controls="valid-data" aria-selected="false">Validation Data
                                         (optional)</button>
                                 </li>
@@ -464,15 +478,18 @@
                                     <label for="data_files_training"
                                         class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
                                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                            <svg class="w-8 h-8 mb-4 text-gray-700 dark:text-gray-300"
+                                                aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 20 16">
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                     stroke-linejoin="round" stroke-width="2"
                                                     d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                             </svg>
-                                            <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training
+                                            <p class="text-sm text-gray-700 dark:text-gray-300"><span
+                                                    class="font-semibold">Upload Training
                                                     File(s)
-                                                    <p class="text-xs text-gray-700" id="file-container-training"></p>
+                                                    <p class="text-xs text-gray-700 dark:text-gray-300"
+                                                        id="file-container-training"></p>
                                         </div>
                                         <input id="data_files_training" name="data_files_training" type="file" multiple
                                             class="hidden" />
@@ -484,16 +501,19 @@
                                     <label for="data_files_valid"
                                         class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
                                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                            <svg class="w-8 h-8 mb-4 text-gray-700 dark:text-gray-300"
+                                                aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 20 16">
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                     stroke-linejoin="round" stroke-width="2"
                                                     d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                             </svg>
-                                            <p class="text-sm text-gray-700"><span class="font-semibold">Upload
+                                            <p class="text-sm text-gray-700 dark:text-gray-300"><span
+                                                    class="font-semibold">Upload
                                                     Validation
                                                     File(s)
-                                                    <p class="text-xs text-gray-700" id="file-container-valid"></p>
+                                                    <p class="text-xs text-gray-700 dark:text-gray-300"
+                                                        id="file-container-valid"></p>
                                         </div>
                                         <input id="data_files_valid" name="data_files_valid" type="file" multiple
                                             class="hidden" />
@@ -504,7 +524,7 @@
                     </div>
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
-                            <p class="text-xl text-gray-800 mb-2 mt-2">
+                            <p class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">
                                 Column Mapping
                             </p>
                             <div id="div_cmap"></div>
@@ -514,19 +534,20 @@
                 <div>
                     <div class="items-center justify-center h-96">
                         <div class="w-full px-4">
-                            <p class="text-xl text-gray-800 mb-2 mt-2">
+                            <p class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">
                                 Parameters
                             </p>
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" value="" class="sr-only peer" id="show-json-parameters">
                                 <div
-                                    class="relative w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
+                                    class="relative w-14 h-7 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600">
                                 </div>
-                                <span class="ms-3 text-sm font-medium text-gray-900">JSON</span>
+                                <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">JSON</span>
                             </label>
                             <div id="dynamic-ui"></div>
                             <div id="json-parameters" class="hidden">
-                                <textarea id="params_json" name="params_json" placeholder="Loading..."></textarea>
+                                <textarea id="params_json" name="params_json" placeholder="Loading..."
+                                    class="p-2.5 w-full text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border-white dark:border-gray-700 border-transparent focus:border-transparent focus:ring-0"></textarea>
                             </div>
                         </div>
                     </div>
@@ -548,9 +569,10 @@
     <div id="confirmation-modal" tabindex="-1"
         class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
         <div class="relative w-full max-w-md p-4">
-            <div class="relative bg-white rounded-lg shadow-2xl">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl">
                 <div class="p-6 text-center">
-                    <h3 class="mb-5 text-lg font-medium text-gray-900">AutoTrain is a paid offering and you will be
+                    <h3 class="mb-5 text-lg font-medium text-gray-900 dark:text-gray-100">AutoTrain is a paid offering
+                        and you will be
                         charged for this action. You can ignore this message if you are running AutoTrain on a local
                         hardware.
                         Are you sure you want to continue?</h3>
@@ -571,9 +593,9 @@
     <div id="logs-modal" tabindex="-1"
         class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
         <div class="relative w-full max-w-5xl p-4">
-            <div class="relative bg-white rounded-lg shadow-2xl">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl">
                 <button type="button"
-                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
+                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
                     data-modal-hide="logs-modal">
                     <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -583,9 +605,9 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-6 md:p-8 text-center">
-                    <h3 class="mb-5 text-lg font-medium text-gray-900">Logs</h3>
+                    <h3 class="mb-5 text-lg font-medium text-gray-900 dark:text-gray-100">Logs</h3>
                     <div id="logContent"
-                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 pt-4">
+                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 dark:border-gray-700 pt-4">
                         <!-- Logs will be appended here -->
                     </div>
                 </div>
@@ -595,9 +617,9 @@
     <div id="final-modal" tabindex="-1"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-md max-h-full">
-            <div class="relative bg-white rounded-lg shadow-2xl">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl">
                 <button type="button"
-                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                     data-modal-hide="final-modal">
                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -607,7 +629,7 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-4 md:p-5 text-center">
-                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                    <h3 class="mb-5 text-sm font-normal text-gray-800 dark:text-gray-200"></h3>
                 </div>
             </div>
         </div>
@@ -615,10 +637,10 @@
     <div id="help-modal" tabindex="-1"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-md max-h-full">
-            <div class="relative bg-white rounded-lg shadow-2xl">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl">
                 <br>
                 <button type="button"
-                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                     data-modal-hide="help-modal">
                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -628,7 +650,7 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-4 md:p-5 text-center">
-                    <h3 class="mb-5 text-sm font-normal text-gray-800"></h3>
+                    <h3 class="mb-5 text-sm font-normal text-gray-800 dark:text-gray-200"></h3>
                 </div>
             </div>
         </div>
@@ -636,9 +658,9 @@
     <div id="dataset-viewer-modal" tabindex="-1"
         class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
         <div class="relative w-full max-w-5xl p-4">
-            <div class="relative bg-white rounded-lg shadow-2xl">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl">
                 <button type="button"
-                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
+                    class="absolute top-3 right-3 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
                     data-modal-hide="dataset-viewer-modal">
                     <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
@@ -648,9 +670,9 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-6 md:p-8 text-center">
-                    <h3 class="mb-5 text-lg font-medium text-gray-900">Dataset Viewer</h3>
+                    <h3 class="mb-5 text-lg font-medium text-gray-900 dark:text-gray-100">Dataset Viewer</h3>
                     <div id="datasetViewerContent"
-                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 pt-4">
+                        class="text-xs font-normal text-left overflow-y-auto max-h-[calc(100vh-400px)] border-t border-gray-200 dark:border-gray-700 pt-4">
                         <!-- dataset will be appended here -->
                     </div>
                 </div>
@@ -698,33 +720,6 @@
                 baseModelInput.classList.add('hidden');
             }
         });
-    </script>
-    <script>
-        // Get modal elements
-        var modal = document.getElementById("dataset-viewer-modal");
-        var closeButton = document.querySelector("[data-modal-hide='dataset-viewer-modal']");
-        var viewButton = document.getElementById("dataset-viewer");
-        var input = document.getElementById("hub_dataset");
-        var viewerContent = document.getElementById("datasetViewerContent");
-
-        // When the button is clicked
-        viewButton.onclick = function () {
-            var datasetPath = input.value;
-            viewerContent.innerHTML = '<iframe src="https://huggingface.co/datasets/' + datasetPath + '/embed/viewer" frameborder="0" width="100%" height="560px"></iframe>';
-            modal.classList.remove("hidden");
-        }
-
-        // When the close button is clicked
-        closeButton.onclick = function () {
-            modal.classList.add("hidden");
-        }
-
-        // When clicking outside the modal
-        window.onclick = function (event) {
-            if (event.target == modal) {
-                modal.classList.add("hidden");
-            }
-        }
     </script>
 </body>
 

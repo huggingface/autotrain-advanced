@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
             params[key] = el.value;
         });
         paramsTextarea.value = JSON.stringify(params, null, 2);
-        paramsTextarea.className = 'p-2.5 w-full text-sm text-gray-600 border-white border-transparent focus:border-transparent focus:ring-0'
+        //paramsTextarea.className = 'p-2.5 w-full text-sm text-gray-600 border-white border-transparent focus:border-transparent focus:ring-0'
         paramsTextarea.style.height = '600px';
     };
     const observeParamChanges = () => {
@@ -75,33 +75,33 @@ document.addEventListener('DOMContentLoaded', function () {
         switch (config.type) {
             case 'number':
                 element = `<div>
-                    <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
+                    <label for="param_${param}" class="text-sm font-medium text-gray-700 dark:text-gray-300">${config.label}</label>
                     <input type="number" name="param_${param}" id="param_${param}" value="${config.default}"
-                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 </div>`;
                 break;
             case 'dropdown':
                 let options = config.options.map(option => `<option value="${option}" ${option === config.default ? 'selected' : ''}>${option}</option>`).join('');
                 element = `<div>
-                    <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
+                    <label for="param_${param}" class="text-sm font-medium text-gray-700 dark:text-gray-300">${config.label}</label>
                     <select name="param_${param}" id="param_${param}"
-                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         ${options}
                     </select>
                 </div>`;
                 break;
             case 'checkbox':
                 element = `<div>
-                    <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
+                    <label for="param_${param}" class="text-sm font-medium text-gray-700 dark:text-gray-300">${config.label}</label>
                     <input type="checkbox" name="param_${param}" id="param_${param}" ${config.default ? 'checked' : ''}
-                        class="mt-1 text-xs font-medium border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 text-xs font-medium border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 </div>`;
                 break;
             case 'string':
                 element = `<div>
-                    <label for="param_${param}" class="text-sm font-medium text-gray-700">${config.label}</label>
+                    <label for="param_${param}" class="text-sm font-medium text-gray-700 dark:text-gray-300">${config.label}</label>
                     <input type="text" name="param_${param}" id="param_${param}" value="${config.default}"
-                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        class="mt-1 p-1 text-xs font-medium w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 </div>`;
                 break;
         }
