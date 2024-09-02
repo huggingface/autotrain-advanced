@@ -112,6 +112,7 @@ class AutoTrainConfigParser:
             "image-object-detection": "image_object_detection",
             "object_detection": "image_object_detection",
             "object-detection": "image_object_detection",
+            "st": "sentence_transformers",
             "st:pair": "sentence_transformers",
             "st:pair_class": "sentence_transformers",
             "st:pair_score": "sentence_transformers",
