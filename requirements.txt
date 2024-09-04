@@ -27,11 +27,12 @@ nvitop==1.3.2
 # latest versions
 tensorboard==2.16.2
 peft==0.12.0
-trl==0.9.6
+trl==0.10.1
 tiktoken==0.6.0
-transformers==4.44.1
+transformers==4.44.2
 
-accelerate==0.33.0
+
+accelerate==0.34.0
 diffusers==0.27.2
 bitsandbytes==0.43.3
 # extras

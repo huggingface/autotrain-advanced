@@ -21,6 +21,8 @@ op-*
 # C extensions
 *.so
 test.yml
+test.ipynb
+output.png
 
 # Distribution / packaging
 .Python
