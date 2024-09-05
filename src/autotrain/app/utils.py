@@ -59,8 +59,10 @@ def kill_process_by_pid(pid):
 def token_verification(token):
     if token.startswith("hf_oauth"):
         _api_url = config.HF_API + "/oauth/userinfo"
+        _err_msg = "/oauth/userinfo"
     else:
         _api_url = config.HF_API + "/api/whoami-v2"
+        _err_msg = "/api/whoami-v2"
     headers = {}
     cookies = {}
     if token.startswith("hf_"):
@@ -75,12 +77,12 @@ def token_verification(token):
             timeout=3,
         )
     except (requests.Timeout, ConnectionError) as err:
-        logger.error(f"Failed to request whoami-v2 - {repr(err)}")
-        raise Exception("Hugging Face Hub is unreachable, please try again later.")
+        logger.error(f"Failed to request {_err_msg} - {repr(err)}")
+        raise Exception(f"Hugging Face Hub ({_err_msg}) is unreachable, please try again later.")
 
     if response.status_code != 200:
-        logger.error(f"Failed to request whoami-v2 - {response.status_code}")
-        raise Exception("Invalid token. Please login with a write token.")
+        logger.error(f"Failed to request {_err_msg} - {response.status_code}")
+        raise Exception(f"Invalid token ({_err_msg}). Please login with a write token.")
 
     resp = response.json()
     user_info = {}
