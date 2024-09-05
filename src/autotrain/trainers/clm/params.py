@@ -11,6 +11,7 @@ class LLMTrainingParams(AutoTrainParams):
 
     # data params
     data_path: str = Field("data", title="Data path")
+    data_revision: Optional[str] = Field(None, title="Data revision")
     train_split: str = Field("train", title="Train data config")
     valid_split: Optional[str] = Field(None, title="Validation data config")
     add_eos_token: bool = Field(True, title="Add EOS token")
@@ -38,7 +39,9 @@ class LLMTrainingParams(AutoTrainParams):
     weight_decay: float = Field(0.0, title="Weight decay")
     max_grad_norm: float = Field(1.0, title="Max gradient norm")
     seed: int = Field(42, title="Seed")
-    chat_template: Optional[str] = Field(None, title="Chat template, one of: None, zephyr, chatml or tokenizer")
+    chat_template: Optional[str] = Field(
+        None, title="Chat template, one of: None, zephyr, chatml or tokenizer"
+    )
 
     # peft
     quantization: Optional[str] = Field("int4", title="int4, int8, or None")

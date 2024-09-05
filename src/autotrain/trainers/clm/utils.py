@@ -322,7 +322,10 @@ def post_training_steps(config, trainer):
             save_training_params(config)
             api = HfApi(token=config.token)
             api.create_repo(
-                repo_id=f"{config.username}/{config.project_name}", repo_type="model", private=True, exist_ok=True
+                repo_id=f"{config.username}/{config.project_name}",
+                repo_type="model",
+                private=True,
+                exist_ok=True,
             )
             api.upload_folder(
                 folder_path=config.project_name,
@@ -344,12 +347,14 @@ def process_input_data(config):
             train_data = load_dataset(
                 config.data_path,
                 name=dataset_config_name,
+                revision=config.dataset_revision,
                 split=split,
                 token=config.token,
             )
         else:
             train_data = load_dataset(
                 config.data_path,
+                revision=config.dataset_revision,
                 split=config.train_split,
                 token=config.token,
             )
@@ -357,7 +362,9 @@ def process_input_data(config):
     if config.trainer in ("dpo", "reward", "orpo"):
         if not (config.text_column == "chosen" and config.text_column in train_data.column_names):
             train_data = train_data.rename_column(config.text_column, "chosen")
-        if not (config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names):
+        if not (
+            config.rejected_text_column == "rejected" and config.rejected_text_column in train_data.column_names
+        ):
             train_data = train_data.rename_column(config.rejected_text_column, "rejected")
     if config.trainer in ("dpo", "orpo"):
         if not (config.prompt_text_column == "prompt" and config.prompt_text_column in train_data.column_names):
@@ -372,12 +379,14 @@ def process_input_data(config):
                 valid_data = load_dataset(
                     config.data_path,
                     name=dataset_config_name,
+                    revision=config.dataset_revision,
                     split=split,
                     token=config.token,
                 )
             else:
                 valid_data = load_dataset(
                     config.data_path,
+                    revision=config.dataset_revision,
                     split=config.valid_split,
                     token=config.token,
                 )
@@ -386,11 +395,14 @@ def process_input_data(config):
             if not (config.text_column == "chosen" and config.text_column in valid_data.column_names):
                 valid_data = valid_data.rename_column(config.text_column, "chosen")
             if not (
-                config.rejected_text_column == "rejected" and config.rejected_text_column in valid_data.column_names
+                config.rejected_text_column == "rejected"
+                and config.rejected_text_column in valid_data.column_names
             ):
                 valid_data = valid_data.rename_column(config.rejected_text_column, "rejected")
         if config.trainer in ("dpo", "reward"):
-            if not (config.prompt_text_column == "prompt" and config.prompt_text_column in valid_data.column_names):
+            if not (
+                config.prompt_text_column == "prompt" and config.prompt_text_column in valid_data.column_names
+            ):
                 valid_data = valid_data.rename_column(config.prompt_text_column, "prompt")
     else:
         valid_data = None
@@ -578,7 +590,15 @@ def get_model(config, tokenizer):
 
     if model_type in ("llama", "mistral", "gemma", "qwen2") and config.unsloth:
         if config.target_modules.strip().lower() == "all-linear":
-            unsloth_target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+            unsloth_target_modules = [
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
+            ]
         else:
             unsloth_target_modules = get_target_modules(config)
     else:
