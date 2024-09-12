@@ -59,6 +59,8 @@ class TextDataGenerator:
         else:
             raise NotImplementedError
 
+        self.params.save(output_dir=self.params.project_name)
+
         self.data_prompt = self.data_prompt.format(min_words=self.params.min_words)
 
     def run(self):
@@ -161,9 +163,6 @@ class TextDataGenerator:
 
         if self.params.push_to_hub:
             logger.info("Pushing the data to Hugging Face Hub.")
-            utils.push_data_to_hub(
-                dataset=hf_dataset,
-                dataset_name=self.params.project_name,
-                username=self.params.username,
-                token=self.params.token,
-            )
+            utils.push_data_to_hub(params=self.params, dataset=hf_dataset)
+
+        utils.train(params=self.params)

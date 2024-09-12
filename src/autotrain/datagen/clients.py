@@ -1,9 +1,10 @@
+import time
 from dataclasses import dataclass
 from typing import Optional
 
 from huggingface_hub import InferenceClient
+
 from autotrain import logger
-import time
 
 
 @dataclass
