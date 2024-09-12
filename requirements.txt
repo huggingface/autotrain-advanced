@@ -32,7 +32,7 @@ tiktoken==0.6.0
 transformers==4.44.2
 
 
-accelerate==0.34.0
+accelerate==0.34.1
 diffusers==0.27.2
 bitsandbytes==0.43.3
 # extras
@@ -52,4 +52,4 @@ pyyaml==6.0.1
 timm==1.0.8
 torchmetrics==1.4.0
 pycocotools==2.0.7
-sentence-transformers==3.0.1
+sentence-transformers==3.1.0
