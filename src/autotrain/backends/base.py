@@ -28,7 +28,6 @@ AVAILABLE_HARDWARE = {
     "spaces-cpu-upgrade": "cpu-upgrade",
     "spaces-cpu-basic": "cpu-basic",
     "spaces-l4x1": "l4x1",
-    
     "spaces-l4x4": "l4x4",
     "spaces-l40sx1": "l40s-x1",
     "spaces-l40sx4": "l40s-x4",
