@@ -29,9 +29,9 @@ AVAILABLE_HARDWARE = {
     "spaces-cpu-basic": "cpu-basic",
     "spaces-l4x1": "l4x1",
     "spaces-l4x4": "l4x4",
-    "spaces-l40sx1": "l40s-x1",
-    "spaces-l40sx4": "l40s-x4",
-    "spaces-l40sx8": "l40s-x8",
+    "spaces-l40sx1": "l40sx1",
+    "spaces-l40sx4": "l40sx4",
+    "spaces-l40sx8": "l40sx8",
     "spaces-a10g-largex2": "a10g-largex2",
     "spaces-a10g-largex4": "a10g-largex4",
     # ngc
