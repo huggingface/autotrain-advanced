@@ -3,17 +3,33 @@ import os
 import subprocess
 from typing import Dict, List, Optional
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, ClassLabel
 from huggingface_hub import HfApi, metadata_update
 
 from autotrain import logger
 
 
-def convert_text_dataset_to_hf(train: List[Dict[str, str]], valid: Optional[List[Dict[str, str]]] = None) -> Dataset:
+def convert_text_dataset_to_hf(
+    task, train: List[Dict[str, str]], valid: Optional[List[Dict[str, str]]] = None
+) -> Dataset:
+    if task == "text-classification":
+        for item in train:
+            item["target"] = item["target"].lower().strip()
+        label_names = list(set([item["target"] for item in train]))
+        logger.info(f"Label names: {label_names}")
+
     dataset = Dataset.from_list(train)
+
+    if task == "text-classification":
+        dataset = dataset.cast_column("target", ClassLabel(names=label_names))
+
     ddict = {"train": dataset}
     if valid is not None:
         valid_dataset = Dataset.from_list(valid)
+        if task == "text-classification":
+            for item in valid:
+                item["target"] = item["target"].lower().strip()
+            valid_dataset = valid_dataset.cast_column("target", ClassLabel(names=label_names))
         ddict["validation"] = valid_dataset
     dataset = DatasetDict(ddict)
     return dataset

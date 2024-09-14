@@ -420,9 +420,11 @@
                                 Source
                             </p>
                             <select id="dataset_source" name="dataset_source"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                style="position: relative; z-index: 10;">
                                 <option value="local">Local</option>
                                 <option value="hub">Hugging Face Hub</option>
+                                <option value="gen">Generate</option>
                             </select>
                         </div>
                     </div>
@@ -524,7 +526,30 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="gen-data-tab-content" class="w-full px-4">
+                            <div class="columns-1 mb-2 mt-2">
+                                <label for="gen_prompt"
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300">Prompt Text
+                                </label>
+                                <textarea name="gen_prompt" id="gen_prompt"
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            </div>
+                            <div class="columns-2 mb-2 mt-2">
+                                <label for="gen_model"
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300">Model Name
+                                </label>
+                                <input type="text" name="gen_model" id="gen_model"
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <label for="gen_samples"
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300">Number of Samples
+                                </label>
+                                <input type="number" name="gen_samples" id="gen_samples" value="100"
+                                    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
                     </div>
+
+
                     <div class="items-center justify-center h-24">
                         <div class="w-full px-4">
                             <p class="text-xl text-gray-800 dark:text-gray-200 mb-2 mt-2">

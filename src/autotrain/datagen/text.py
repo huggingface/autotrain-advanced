@@ -9,6 +9,7 @@ from autotrain.datagen import utils
 from autotrain.datagen.clients import Client
 from autotrain.datagen.params import AutoTrainGenParams
 
+import os
 
 TEXT_CLASSIFICATION_SYSTEM_PROMPT = """
 You are an AI bot that generates data for text classification tasks.
@@ -158,8 +159,8 @@ class TextDataGenerator:
             logger.info(f"Train data size: {len(train_data)}")
             logger.info(f"Valid data size: {len(valid_data)}")
 
-        hf_dataset = utils.convert_text_dataset_to_hf(train_data, valid_data)
-        hf_dataset.save_to_disk(self.params.project_name)
+        hf_dataset = utils.convert_text_dataset_to_hf(self.params.task, train_data, valid_data)
+        hf_dataset.save_to_disk(os.path.join(self.params.project_name, "autotrain-data"))
 
         if self.params.push_to_hub:
             logger.info("Pushing the data to Hugging Face Hub.")
