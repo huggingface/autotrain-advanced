@@ -280,6 +280,11 @@ UI_PARAMS = {
         "label": "Unsloth",
         "options": [True, False],
     },
+    "liger_kernel": {
+        "type": "dropdown",
+        "label": "Liger Kernel",
+        "options": [True, False],
+    },
     "max_doc_stride": {
         "type": "number",
         "label": "Max doc stride",

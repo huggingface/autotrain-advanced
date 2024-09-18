@@ -12,7 +12,7 @@ from huggingface_hub import HfApi
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-from autotrain import is_unsloth_available, logger
+from autotrain import is_unsloth_available, is_liger_kernel_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -666,6 +666,11 @@ def get_model(config, tokenizer):
             trust_remote_code=ALLOW_REMOTE_CODE,
             use_flash_attention_2=config.use_flash_attention_2,
         )
+
+    if config.liger_kernel and is_liger_kernel_available():
+        from liger_kernel.transformers import _apply_liger_kernel_to_instance
+
+        model = _apply_liger_kernel_to_instance(model=model)
 
     logger.info(f"model dtype: {model.dtype}")
     model.resize_token_embeddings(len(tokenizer))

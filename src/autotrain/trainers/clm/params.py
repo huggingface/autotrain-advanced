@@ -69,3 +69,6 @@ class LLMTrainingParams(AutoTrainParams):
 
     # unsloth
     unsloth: bool = Field(False, title="Use unsloth")
+
+    # liger-kernel
+    liger_kernel: bool = Field(False, title="Use Liger Kernel")
