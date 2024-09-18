@@ -667,13 +667,14 @@ def get_model(config, tokenizer):
             use_flash_attention_2=config.use_flash_attention_2,
         )
 
+
+    logger.info(f"model dtype: {model.dtype}")
+    model.resize_token_embeddings(len(tokenizer))
+
     if config.liger_kernel and is_liger_kernel_available():
         from liger_kernel.transformers import _apply_liger_kernel_to_instance
 
         model = _apply_liger_kernel_to_instance(model=model)
-
-    logger.info(f"model dtype: {model.dtype}")
-    model.resize_token_embeddings(len(tokenizer))
 
     if config.trainer != "default":
         return model
