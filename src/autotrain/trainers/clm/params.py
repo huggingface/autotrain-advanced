@@ -69,3 +69,4 @@ class LLMTrainingParams(AutoTrainParams):
 
     # unsloth
     unsloth: bool = Field(False, title="Use unsloth")
+    distributed_backend: Optional[str] = Field(None, title="Distributed backend")
