@@ -1,8 +1,8 @@
 import torch
 from peft import LoraConfig
-from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
+from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers.trainer_callback import PrinterCallback
-from trl import DPOTrainer
+from trl import DPOTrainer, DPOConfig
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -22,7 +22,7 @@ def train(config):
     training_args = utils.configure_training_args(config, logging_steps)
     config = utils.configure_block_size(config, tokenizer)
 
-    args = TrainingArguments(**training_args)
+    args = DPOConfig(**training_args)
 
     logger.info("loading model config...")
     model_config = AutoConfig.from_pretrained(
