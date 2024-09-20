@@ -3,6 +3,7 @@ import gc
 import os
 from enum import Enum
 from itertools import chain
+from functools import partial
 
 import requests
 import torch
@@ -38,6 +39,17 @@ DEFAULT_UNK_TOKEN = "</s>"
 TARGET_MODULES = {
     "Salesforce/codegen25-7b-multi": "q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
 }
+
+LIGER_KERNELS_MODEL_TYPES = [
+    "gemma",
+    "gemma2",
+    "llama",
+    "mistral",
+    "mixtral",
+    "qwen2",
+    "qwen2_vl",
+    "phi3",
+]
 
 MODEL_CARD = """
 ---
@@ -572,7 +584,11 @@ def get_model(config, tokenizer):
     model_type = model_config.model_type
     unsloth_target_modules = None
     can_use_unloth = False
-    can_use_liger_kernel = is_liger_kernel_available() and config.liger_kernel
+    can_use_liger_kernel = (
+        is_liger_kernel_available()
+        and config.liger_kernel
+        and model_type in LIGER_KERNELS_MODEL_TYPES
+    )
 
     if config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft"):
         can_use_unloth = True
@@ -585,7 +601,6 @@ def get_model(config, tokenizer):
         can_use_liger_kernel = False
     else:
         can_use_unloth = False
-
 
     logger.info(f"Can use unsloth: {can_use_unloth}")
     logger.info(f"Can use liger kernel: {can_use_liger_kernel}")
@@ -644,11 +659,17 @@ def get_model(config, tokenizer):
     if can_use_liger_kernel:
         from liger_kernel.transformers import AutoLigerKernelForCausalLM
 
-        model_provider = AutoLigerKernelForCausalLM
+        dtype = None
+        if config.mixed_precision == "fp16":
+            dtype = torch.float16
+        elif config.mixed_precision == "bf16":
+            dtype = torch.bfloat16
+
+        from_pretrained = partial(AutoLigerKernelForCausalLM.from_pretrained, dtype=dtype)
 
     else:
         logger.warning("Liger Kernel not available, continuing without it...")
-        model_provider = AutoModelForCausalLM
+        from_pretrained = AutoModelForCausalLM.from_pretrained
 
     logger.info("loading model...")
     if config.peft:
@@ -664,7 +685,7 @@ def get_model(config, tokenizer):
         else:
             bnb_config = None
 
-        model = model_provider.from_pretrained(
+        model = from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
@@ -673,14 +694,13 @@ def get_model(config, tokenizer):
             use_flash_attention_2=config.use_flash_attention_2,
         )
     else:
-        model = model_provider.from_pretrained(
+        model = from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
             trust_remote_code=ALLOW_REMOTE_CODE,
             use_flash_attention_2=config.use_flash_attention_2,
         )
-
 
     logger.info(f"model dtype: {model.dtype}")
     model.resize_token_embeddings(len(tokenizer))
