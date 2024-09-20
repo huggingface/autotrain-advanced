@@ -665,7 +665,7 @@ def get_model(config, tokenizer):
         elif config.mixed_precision == "bf16":
             dtype = torch.bfloat16
 
-        from_pretrained = partial(AutoLigerKernelForCausalLM.from_pretrained, dtype=dtype)
+        from_pretrained = partial(AutoLigerKernelForCausalLM.from_pretrained, torch_dtype=dtype)
 
     else:
         logger.warning("Liger Kernel not available, continuing without it...")
