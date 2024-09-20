@@ -65,7 +65,7 @@ def is_unsloth_available():
 
 def is_liger_kernel_available():
     try:
-        from liger_kernel.transformers import _apply_liger_kernel_to_instance
+        from liger_kernel.transformers import AutoLigerKernelForCausalLM
 
         return True
     except Exception as e:

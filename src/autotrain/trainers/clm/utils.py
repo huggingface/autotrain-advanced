@@ -572,6 +572,7 @@ def get_model(config, tokenizer):
     model_type = model_config.model_type
     unsloth_target_modules = None
     can_use_unloth = False
+    can_use_liger_kernel = is_liger_kernel_available() and config.liger_kernel
 
     if config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft"):
         can_use_unloth = True
@@ -581,10 +582,14 @@ def get_model(config, tokenizer):
             unsloth_target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         else:
             unsloth_target_modules = get_target_modules(config)
+        can_use_liger_kernel = False
     else:
         can_use_unloth = False
 
+
     logger.info(f"Can use unsloth: {can_use_unloth}")
+    logger.info(f"Can use liger kernel: {can_use_liger_kernel}")
+
     if can_use_unloth:
         from unsloth import FastLanguageModel
 
@@ -636,6 +641,15 @@ def get_model(config, tokenizer):
         use_cache=config.disable_gradient_checkpointing,
     )
 
+    if can_use_liger_kernel:
+        from liger_kernel.transformers import AutoLigerKernelForCausalLM
+
+        model_provider = AutoLigerKernelForCausalLM
+
+    else:
+        logger.warning("Liger Kernel not available, continuing without it...")
+        model_provider = AutoModelForCausalLM
+
     logger.info("loading model...")
     if config.peft:
         if config.quantization == "int4":
@@ -650,7 +664,7 @@ def get_model(config, tokenizer):
         else:
             bnb_config = None
 
-        model = AutoModelForCausalLM.from_pretrained(
+        model = model_provider.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
@@ -659,7 +673,7 @@ def get_model(config, tokenizer):
             use_flash_attention_2=config.use_flash_attention_2,
         )
     else:
-        model = AutoModelForCausalLM.from_pretrained(
+        model = model_provider.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
@@ -670,11 +684,6 @@ def get_model(config, tokenizer):
 
     logger.info(f"model dtype: {model.dtype}")
     model.resize_token_embeddings(len(tokenizer))
-
-    if config.liger_kernel and is_liger_kernel_available():
-        from liger_kernel.transformers import _apply_liger_kernel_to_instance
-
-        model = _apply_liger_kernel_to_instance(model=model)
 
     if config.trainer != "default":
         return model
