@@ -1,14 +1,14 @@
+import json
 import time
 from dataclasses import dataclass
 from typing import Optional
 
+import outlines
+import torch
+import transformers
 from huggingface_hub import InferenceClient
 
 from autotrain import logger
-import transformers
-import torch
-import outlines
-import json
 
 
 @dataclass

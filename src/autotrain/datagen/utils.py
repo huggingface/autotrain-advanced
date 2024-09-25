@@ -3,7 +3,7 @@ import os
 import subprocess
 from typing import Dict, List, Optional
 
-from datasets import Dataset, DatasetDict, ClassLabel
+from datasets import ClassLabel, Dataset, DatasetDict
 from huggingface_hub import HfApi, metadata_update
 
 from autotrain import logger

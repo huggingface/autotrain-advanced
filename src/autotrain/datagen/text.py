@@ -1,4 +1,5 @@
 import hashlib
+import os
 import random
 import time
 
@@ -9,7 +10,6 @@ from autotrain.datagen import utils
 from autotrain.datagen.clients import Client
 from autotrain.datagen.params import AutoTrainGenParams
 
-import os
 
 TEXT_CLASSIFICATION_SYSTEM_PROMPT = """
 You are an AI bot that generates data for text classification tasks.

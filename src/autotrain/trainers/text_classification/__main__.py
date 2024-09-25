@@ -15,6 +15,8 @@ from transformers import (
 from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
+from autotrain.datagen.gen import AutoTrainGen
+from autotrain.datagen.params import AutoTrainGenParams
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
     LossLoggingCallback,
@@ -28,8 +30,6 @@ from autotrain.trainers.common import (
 from autotrain.trainers.text_classification import utils
 from autotrain.trainers.text_classification.dataset import TextClassificationDataset
 from autotrain.trainers.text_classification.params import TextClassificationParams
-from autotrain.datagen.params import AutoTrainGenParams
-from autotrain.datagen.gen import AutoTrainGen
 
 
 def parse_args():
