@@ -1,6 +1,6 @@
 task: llm-sft
-base_model: meta-llama/Meta-Llama-3-8B-Instruct
-project_name: autotrain-llama3-8b-sft-liger-kernel
+base_model: meta-llama/Llama-3.2-3B-Instruct
+project_name: autotrain-llama32-3b-sft-liger-kernel
 log: tensorboard
 backend: local
 
