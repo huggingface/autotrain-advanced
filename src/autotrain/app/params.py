@@ -81,6 +81,7 @@ PARAMS["llm"] = LLMTrainingParams(
     padding="right",
     chat_template="none",
     max_completion_length=128,
+    distributed_backend="ddp",
 ).model_dump()
 
 PARAMS["text-classification"] = TextClassificationParams(

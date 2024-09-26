@@ -42,5 +42,5 @@ class SentenceTransformersParams(AutoTrainParams):
     trainer: str = Field("pair_score", title="Trainer name")
     sentence1_column: str = Field("sentence1", title="Sentence 1 column")
     sentence2_column: str = Field("sentence2", title="Sentence 2 column")
-    sentence3_column: Optional[str] = Field("sentence3", title="Sentence 3 column")
-    target_column: Optional[str] = Field("target", title="Target column")
+    sentence3_column: Optional[str] = Field(None, title="Sentence 3 column")
+    target_column: Optional[str] = Field(None, title="Target column")
