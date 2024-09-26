@@ -2,8 +2,8 @@ import ast
 import gc
 import os
 from enum import Enum
-from itertools import chain
 from functools import partial
+from itertools import chain
 
 import requests
 import torch
@@ -13,7 +13,7 @@ from huggingface_hub import HfApi
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-from autotrain import is_unsloth_available, is_liger_kernel_available, logger
+from autotrain import is_liger_kernel_available, is_unsloth_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -585,9 +585,7 @@ def get_model(config, tokenizer):
     unsloth_target_modules = None
     can_use_unloth = False
     can_use_liger_kernel = (
-        is_liger_kernel_available()
-        and config.liger_kernel
-        and model_type in LIGER_KERNELS_MODEL_TYPES
+        is_liger_kernel_available() and config.liger_kernel and model_type in LIGER_KERNELS_MODEL_TYPES
     )
 
     if config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft"):

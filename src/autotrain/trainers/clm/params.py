@@ -72,5 +72,5 @@ class LLMTrainingParams(AutoTrainParams):
 
     # liger-kernel
     liger_kernel: bool = Field(False, title="Use Liger Kernel")
-    
+
     distributed_backend: Optional[str] = Field(None, title="Distributed backend")
