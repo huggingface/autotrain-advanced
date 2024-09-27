@@ -43,6 +43,24 @@ widget:
 
 
 def image_regression_metrics(pred):
+    """
+    Calculate various regression metrics for image regression tasks.
+
+    Args:
+        pred (tuple): A tuple containing raw predictions and labels.
+                      raw_predictions should be a list of lists or a list of numpy.float32 values.
+                      labels should be a list of true values.
+
+    Returns:
+        dict: A dictionary containing the calculated metrics:
+              - 'mse': Mean Squared Error
+              - 'mae': Mean Absolute Error
+              - 'r2': R^2 Score
+              - 'rmse': Root Mean Squared Error
+              - 'explained_variance': Explained Variance Score
+
+              If an error occurs during the calculation of a metric, the value for that metric will be -999.
+    """
     raw_predictions, labels = pred
 
     try:
@@ -70,6 +88,18 @@ def image_regression_metrics(pred):
 
 
 def process_data(train_data, valid_data, image_processor, config):
+    """
+    Processes training and validation data by applying image transformations.
+
+    Args:
+        train_data (Dataset): The training dataset.
+        valid_data (Dataset or None): The validation dataset. If None, only training data is processed.
+        image_processor (ImageProcessor): An object containing image processing parameters such as size, mean, and std.
+        config (dict): Configuration dictionary containing additional parameters for the dataset.
+
+    Returns:
+        tuple: A tuple containing the processed training dataset and the processed validation dataset (or None if valid_data is None).
+    """
     if "shortest_edge" in image_processor.size:
         size = image_processor.size["shortest_edge"]
     else:
@@ -104,6 +134,19 @@ def process_data(train_data, valid_data, image_processor, config):
 
 
 def create_model_card(config, trainer):
+    """
+    Generates a model card string based on the provided configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing various settings such as
+                         valid_split, data_path, project_name, and model.
+        trainer (object): Trainer object used to evaluate the model if validation
+                          split is provided.
+
+    Returns:
+        str: A formatted model card string containing dataset information,
+             validation metrics, and base model details.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         eval_scores = [f"{k[len('eval_'):]}: {v}" for k, v in eval_scores.items() if k in VALID_METRICS]

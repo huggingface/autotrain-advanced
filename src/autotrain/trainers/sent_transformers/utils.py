@@ -60,6 +60,26 @@ print(similarities.shape)
 
 
 def process_columns(data, config):
+    """
+    Processes and renames columns in the dataset based on the trainer type specified in the configuration.
+
+    Args:
+        data (Dataset): The dataset containing the columns to be processed.
+        config (Config): Configuration object containing the trainer type and column names.
+
+    Returns:
+        Dataset: The dataset with renamed columns as per the trainer type.
+
+    Raises:
+        ValueError: If the trainer type specified in the configuration is invalid.
+
+    Trainer Types and Corresponding Columns:
+        - "pair": Renames columns to "anchor" and "positive".
+        - "pair_class": Renames columns to "premise", "hypothesis", and "label".
+        - "pair_score": Renames columns to "sentence1", "sentence2", and "score".
+        - "triplet": Renames columns to "anchor", "positive", and "negative".
+        - "qa": Renames columns to "query" and "answer".
+    """
     # trainers: pair, pair_class, pair_score, triplet, qa
     # pair: anchor, positive
     # pair_class: premise, hypothesis, label
@@ -103,6 +123,16 @@ def process_columns(data, config):
 
 
 def create_model_card(config, trainer):
+    """
+    Generates a model card string based on the provided configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing model and dataset details.
+        trainer (object): Trainer object used to evaluate the model.
+
+    Returns:
+        str: A formatted model card string containing dataset information, validation metrics, and base model details.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         logger.info(eval_scores)

@@ -115,6 +115,20 @@ class ChatmlSpecialTokens(str, Enum):
 
 
 def preprocess_reward(examples, tokenizer):
+    """
+    Preprocesses the reward data by tokenizing the chosen and rejected examples.
+
+    Args:
+        examples (dict): A dictionary containing two keys, "chosen" and "rejected", each mapping to a list of text examples.
+        tokenizer (PreTrainedTokenizer): A tokenizer instance from the Hugging Face library used to tokenize the text examples.
+
+    Returns:
+        dict: A dictionary with the following keys:
+            - "input_ids_chosen": List of tokenized input IDs for the chosen examples.
+            - "attention_mask_chosen": List of attention masks for the chosen examples.
+            - "input_ids_rejected": List of tokenized input IDs for the rejected examples.
+            - "attention_mask_rejected": List of attention masks for the rejected examples.
+    """
     new_examples = {
         "input_ids_chosen": [],
         "attention_mask_chosen": [],
@@ -134,6 +148,20 @@ def preprocess_reward(examples, tokenizer):
 
 
 def get_target_modules(config):
+    """
+    Determines the target modules based on the provided configuration.
+
+    Args:
+        config (object): Configuration object that contains the following attributes:
+            - target_modules (str or None): Specifies the target modules. It can be:
+                - None: Returns the default target modules for the model specified in the config.
+                - An empty string: Returns the default target modules for the model specified in the config.
+                - "all-linear": Returns the string "all-linear".
+                - A comma-separated string: Returns a list of target modules split by commas.
+
+    Returns:
+        list or str: A list of target modules or a specific string ("all-linear") based on the configuration.
+    """
     if config.target_modules is None:
         return TARGET_MODULES.get(config.model)
     if config.target_modules.strip() == "":
@@ -144,6 +172,17 @@ def get_target_modules(config):
 
 
 def group_texts(examples, config):
+    """
+    Groups texts into chunks of a specified block size.
+
+    Args:
+        examples (dict): A dictionary where keys are feature names and values are lists of lists containing text data.
+        config (object): A configuration object that contains the block_size attribute.
+
+    Returns:
+        dict: A dictionary with the same keys as the input examples, where each value is a list of chunks of text data.
+              Additionally, a "labels" key is added with the same value as the "input_ids" key.
+    """
     # Concatenate all texts.
     concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
     total_length = len(concatenated_examples[list(examples.keys())[0]])
@@ -163,11 +202,33 @@ def group_texts(examples, config):
 
 
 def tokenize(examples, tokenizer, config):
+    """
+    Tokenizes the input examples using the provided tokenizer and configuration.
+
+    Args:
+        examples (dict): A dictionary containing the input examples to be tokenized.
+        tokenizer (PreTrainedTokenizer): The tokenizer to be used for tokenizing the examples.
+        config (object): Configuration object that contains the text column name.
+
+    Returns:
+        dict: A dictionary containing the tokenized output.
+    """
     output = tokenizer(examples[config.text_column])
     return output
 
 
 def merge_adapter(base_model_path, target_model_path, adapter_path):
+    """
+    Merges an adapter into a base model and saves the resulting model and tokenizer.
+
+    Args:
+        base_model_path (str): Path to the base model directory.
+        target_model_path (str): Path to the directory where the merged model and tokenizer will be saved.
+        adapter_path (str): Path to the adapter model directory.
+
+    Raises:
+        RuntimeError: If resizing token embeddings fails without padding to a multiple of 8.
+    """
     logger.info("Loading adapter...")
     model = AutoModelForCausalLM.from_pretrained(
         base_model_path,
@@ -194,6 +255,19 @@ def merge_adapter(base_model_path, target_model_path, adapter_path):
 
 
 def create_model_card(config):
+    """
+    Generates a model card string based on the provided configuration.
+
+    Args:
+        config (object): Configuration object with the following attributes:
+            - peft (bool): Indicates if PEFT (Parameter-Efficient Fine-Tuning) is used.
+            - data_path (str): Path to the dataset.
+            - project_name (str): Name of the project.
+            - model (str): Path or identifier of the model.
+
+    Returns:
+        str: A formatted model card string.
+    """
     if config.peft:
         peft = "\n- peft"
     else:
@@ -218,6 +292,20 @@ def create_model_card(config):
 
 
 def pause_endpoint(params):
+    """
+    Pauses a Hugging Face endpoint using the provided parameters.
+
+    Args:
+        params (object): An object containing the necessary parameters, including:
+            - token (str): The authorization token to access the Hugging Face API.
+
+    Returns:
+        dict: The JSON response from the API call.
+
+    Raises:
+        KeyError: If the "ENDPOINT_ID" environment variable is not set.
+        requests.exceptions.RequestException: If there is an issue with the API request.
+    """
     endpoint_id = os.environ["ENDPOINT_ID"]
     username = endpoint_id.split("/")[0]
     project_name = endpoint_id.split("/")[1]
@@ -232,6 +320,23 @@ def apply_chat_template(
     tokenizer,
     config,
 ):
+    """
+    Applies a chat template to the given example based on the specified configuration.
+
+    Args:
+        example (dict): The input example containing the text data to be processed.
+        tokenizer (object): The tokenizer to be used for applying the chat template.
+        config (object): Configuration object containing the following attributes:
+            - trainer (str): Specifies the type of trainer. Can be "default", "sft", "reward", "dpo", or "orpo".
+            - text_column (str): The key in the example dict that contains the text data.
+            - chat_template (str): Specifies the chat template to be used. Relevant for "reward" and "dpo" trainers.
+
+    Returns:
+        dict: The modified example with the chat template applied.
+
+    Raises:
+        ValueError: If the required keys are not found in the example for "reward", "dpo", or "orpo" trainers.
+    """
     # kudos to Hugging Face H4 Team for this snippet
     if config.trainer in ("default", "sft"):
         messages = example[config.text_column]
@@ -285,6 +390,29 @@ def apply_chat_template(
 
 
 def post_training_steps(config, trainer):
+    """
+    Perform post-training steps including saving the model, creating a model card, merging adapter weights,
+    and optionally pushing the model to the Hugging Face Hub.
+
+    Args:
+        config (object): Configuration object containing various settings and parameters.
+        trainer (object): Trainer object used for training the model.
+
+    Steps:
+        1. Save the trained model and set `use_cache` to True.
+        2. Create a model card and save it as README.md in the output directory.
+        3. If PEFT (Parameter-Efficient Fine-Tuning) and adapter merging are enabled:
+            - Delete the trainer object and clear CUDA cache.
+            - Merge adapter weights into the base model.
+            - Remove adapter weight files from the output directory.
+        4. If pushing to the Hugging Face Hub is enabled:
+            - Remove training data folder.
+            - Push the model to the Hugging Face Hub repository.
+        5. Pause the space if the process index is 0.
+
+    Raises:
+        Exception: If merging adapter weights fails.
+    """
     logger.info("Finished training, saving model...")
     trainer.model.config.use_cache = True
     trainer.save_model(config.project_name)
@@ -335,6 +463,26 @@ def post_training_steps(config, trainer):
 
 
 def process_input_data(config):
+    """
+    Processes input data based on the provided configuration.
+
+    Args:
+        config (object): Configuration object containing the following attributes:
+            - data_path (str): Path to the dataset.
+            - project_name (str): Name of the project.
+            - train_split (str): Split name for training data.
+            - valid_split (str, optional): Split name for validation data.
+            - token (str, optional): Token for accessing the dataset.
+            - text_column (str): Name of the text column.
+            - rejected_text_column (str): Name of the rejected text column.
+            - prompt_text_column (str): Name of the prompt text column.
+            - trainer (str): Type of trainer (e.g., "dpo", "reward", "orpo").
+
+    Returns:
+        tuple: A tuple containing:
+            - train_data (Dataset): Processed training dataset.
+            - valid_data (Dataset or None): Processed validation dataset if valid_split is provided, otherwise None.
+    """
     if config.data_path == f"{config.project_name}/autotrain-data":
         logger.info("loading dataset from disk")
         train_data = load_from_disk(config.data_path)[config.train_split]
@@ -402,6 +550,20 @@ def process_input_data(config):
 
 
 def get_tokenizer(config):
+    """
+    Initializes and returns a tokenizer based on the provided configuration.
+
+    Args:
+        config (object): Configuration object containing the following attributes:
+            - chat_template (str): The chat template type, either "chatml" or "zephyr".
+            - model (str): The model identifier to load the tokenizer from.
+            - token (str): The token to use for the tokenizer.
+            - model_max_length (int): The maximum length of the model.
+            - padding (str): The padding side, either "left" or "right".
+
+    Returns:
+        tokenizer (PreTrainedTokenizer): The initialized tokenizer with the specified configuration.
+    """
     special_tokens = None
     chat_template = None
     if config.chat_template == "chatml":
@@ -445,6 +607,24 @@ def get_tokenizer(config):
 
 
 def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
+    """
+    Processes training and validation data using a specified chat template.
+
+    Args:
+        config (object): Configuration object containing settings and parameters.
+        tokenizer (object): Tokenizer object used for tokenizing the data.
+        train_data (Dataset): Training dataset to be processed.
+        valid_data (Dataset): Validation dataset to be processed.
+
+    Returns:
+        tuple: A tuple containing the processed training and validation datasets.
+
+    Notes:
+        - If `config.chat_template` is one of ("chatml", "zephyr", "tokenizer"), the chat template will be applied.
+        - Logs information about the application of the chat template.
+        - For ORPO/DPO, the `prompt` will be extracted from chosen messages.
+        - If `config.valid_split` is not None, the validation data will also be processed.
+    """
     valid_data = None
     if config.chat_template in ("chatml", "zephyr", "tokenizer"):
         logger.info("Applying chat template")
@@ -468,6 +648,22 @@ def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
 
 
 def configure_logging_steps(config, train_data, valid_data):
+    """
+    Configures the logging steps for training based on the provided configuration and data.
+
+    Parameters:
+    config (object): Configuration object containing training parameters, including `logging_steps`, `valid_split`, and `batch_size`.
+    train_data (iterable): Training dataset.
+    valid_data (iterable): Validation dataset.
+
+    Returns:
+    int: The number of logging steps to be used during training.
+
+    Notes:
+    - If `config.logging_steps` is set to -1, the function calculates logging steps based on 20% of the length of the validation data (if `valid_split` is provided) or the training data.
+    - The calculated logging steps are constrained to be between 1 and 25.
+    - If `config.logging_steps` is not -1, the function uses the provided value.
+    """
     logger.info("configuring logging steps")
     if config.logging_steps == -1:
         if config.valid_split is not None:
@@ -486,6 +682,40 @@ def configure_logging_steps(config, train_data, valid_data):
 
 
 def configure_training_args(config, logging_steps):
+    """
+    Configures the training arguments for a language model based on the provided configuration.
+
+    Args:
+        config (object): Configuration object containing various training parameters.
+        logging_steps (int): Number of steps between logging events.
+
+    Returns:
+        dict: A dictionary containing the configured training arguments.
+
+    The configuration object `config` should have the following attributes:
+        - project_name (str): The name of the project, used as the output directory.
+        - batch_size (int): Batch size for both training and evaluation.
+        - lr (float): Learning rate.
+        - epochs (int): Number of training epochs.
+        - eval_strategy (str): Evaluation strategy, e.g., "steps" or "epoch".
+        - valid_split (float or None): Validation split ratio. If None, evaluation is disabled.
+        - save_total_limit (int): Maximum number of checkpoints to save.
+        - gradient_accumulation (int): Number of gradient accumulation steps.
+        - log (str): Logging destination, e.g., "tensorboard".
+        - auto_find_batch_size (bool): Whether to automatically find the optimal batch size.
+        - scheduler (str): Learning rate scheduler type.
+        - optimizer (str): Optimizer type.
+        - warmup_ratio (float): Warmup ratio for learning rate scheduling.
+        - weight_decay (float): Weight decay for the optimizer.
+        - max_grad_norm (float): Maximum gradient norm for clipping.
+        - disable_gradient_checkpointing (bool): Whether to disable gradient checkpointing.
+        - peft (bool): Whether to use Parameter-Efficient Fine-Tuning (PEFT).
+        - quantization (str): Quantization type, e.g., "int4" or "int8".
+        - mixed_precision (str): Mixed precision type, e.g., "fp16" or "bf16".
+
+    The function also sets additional training arguments based on the provided configuration,
+    such as enabling gradient checkpointing and mixed precision training.
+    """
     logger.info("configuring training args")
     training_args = dict(
         output_dir=config.project_name,
@@ -527,6 +757,21 @@ def configure_training_args(config, logging_steps):
 
 
 def configure_block_size(config, tokenizer):
+    """
+    Configures the block size for the given configuration and tokenizer.
+
+    This function sets the `block_size` attribute in the `config` object based on the `tokenizer`'s maximum model length.
+    If `config.block_size` is -1, it is set to None. If `config.block_size` is None, it defaults to the tokenizer's
+    `model_max_length` but not exceeding 1024. If `config.block_size` is specified and exceeds the tokenizer's
+    `model_max_length`, a warning is logged and the block size is set to the tokenizer's `model_max_length`.
+
+    Args:
+        config (object): Configuration object that contains the `block_size` attribute.
+        tokenizer (object): Tokenizer object that contains the `model_max_length` attribute.
+
+    Returns:
+        object: The updated configuration object with the `block_size` attribute set.
+    """
     if config.block_size == -1:
         config.block_size = None
 
@@ -554,6 +799,19 @@ def configure_block_size(config, tokenizer):
 
 
 def get_callbacks(config):
+    """
+    Generate a list of callback instances based on the provided configuration.
+
+    This function creates a list of callback instances that are used during the training process.
+    It includes default callbacks for logging and training start, and conditionally adds callbacks
+    for saving and loading PEFT models based on the configuration and environment settings.
+
+    Args:
+        config (object): Configuration object containing training settings and parameters.
+
+    Returns:
+        list: A list of callback instances to be used during training.
+    """
     is_deepspeed_enabled = os.environ.get("ACCELERATE_USE_DEEPSPEED", "False").lower() == "true"
     callbacks = [UploadLogs(config=config), LossLoggingCallback(), TrainStartCallback()]
     if config.peft and not is_deepspeed_enabled:
@@ -564,6 +822,34 @@ def get_callbacks(config):
 
 
 def get_model(config, tokenizer):
+    """
+    Loads and configures a language model based on the provided configuration and tokenizer.
+
+    Args:
+        config (Namespace): Configuration object containing model parameters and settings.
+            - model (str): The model name or path.
+            - token (str): Token for accessing the model.
+            - unsloth (bool): Flag to determine if unsloth is used.
+            - trainer (str): Type of trainer to use.
+            - target_modules (str): Target modules for unsloth.
+            - peft (bool): Flag to determine if PEFT (Parameter-Efficient Fine-Tuning) is used.
+            - quantization (str): Quantization type, either "int4" or "int8".
+            - mixed_precision (str): Mixed precision type, either "fp16" or "bf16".
+            - block_size (int): Maximum sequence length.
+            - lora_r (int): LoRA rank.
+            - lora_alpha (int): LoRA alpha.
+            - lora_dropout (float): LoRA dropout rate.
+            - seed (int): Random seed.
+            - disable_gradient_checkpointing (bool): Flag to disable gradient checkpointing.
+            - use_flash_attention_2 (bool): Flag to use flash attention 2.
+        tokenizer (PreTrainedTokenizer): Tokenizer to use with the model.
+
+    Returns:
+        PreTrainedModel: The configured language model.
+
+    Raises:
+        ImportError: If unsloth is not available when required.
+    """
     model_config = AutoConfig.from_pretrained(
         config.model,
         token=config.token,

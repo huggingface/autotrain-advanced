@@ -6,6 +6,41 @@ from autotrain.trainers.common import AutoTrainParams
 
 
 class ObjectDetectionParams(AutoTrainParams):
+    """
+    ObjectDetectionParams is a configuration class for object detection training parameters.
+
+    Attributes:
+        data_path (str): Path to the dataset.
+        model (str): Name of the model to be used. Default is "google/vit-base-patch16-224".
+        username (Optional[str]): Hugging Face Username.
+        lr (float): Learning rate. Default is 5e-5.
+        epochs (int): Number of training epochs. Default is 3.
+        batch_size (int): Training batch size. Default is 8.
+        warmup_ratio (float): Warmup proportion. Default is 0.1.
+        gradient_accumulation (int): Gradient accumulation steps. Default is 1.
+        optimizer (str): Optimizer to be used. Default is "adamw_torch".
+        scheduler (str): Scheduler to be used. Default is "linear".
+        weight_decay (float): Weight decay. Default is 0.0.
+        max_grad_norm (float): Max gradient norm. Default is 1.0.
+        seed (int): Random seed. Default is 42.
+        train_split (str): Name of the training data split. Default is "train".
+        valid_split (Optional[str]): Name of the validation data split.
+        logging_steps (int): Number of steps between logging. Default is -1.
+        project_name (str): Name of the project for output directory. Default is "project-name".
+        auto_find_batch_size (bool): Whether to automatically find batch size. Default is False.
+        mixed_precision (Optional[str]): Mixed precision type (fp16, bf16, or None).
+        save_total_limit (int): Total number of checkpoints to save. Default is 1.
+        token (Optional[str]): Hub Token for authentication.
+        push_to_hub (bool): Whether to push the model to the Hugging Face Hub. Default is False.
+        eval_strategy (str): Evaluation strategy. Default is "epoch".
+        image_column (str): Name of the image column in the dataset. Default is "image".
+        objects_column (str): Name of the target column in the dataset. Default is "objects".
+        log (str): Logging method for experiment tracking. Default is "none".
+        image_square_size (Optional[int]): Longest size to which the image will be resized, then padded to square. Default is 600.
+        early_stopping_patience (int): Number of epochs with no improvement after which training will be stopped. Default is 5.
+        early_stopping_threshold (float): Minimum change to qualify as an improvement. Default is 0.01.
+    """
+
     data_path: str = Field(None, title="Data path")
     model: str = Field("google/vit-base-patch16-224", title="Model name")
     username: Optional[str] = Field(None, title="Hugging Face Username")

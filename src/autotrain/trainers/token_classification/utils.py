@@ -23,6 +23,22 @@ widget:
 
 
 def token_classification_metrics(pred, label_list):
+    """
+    Compute token classification metrics including precision, recall, F1 score, and accuracy.
+
+    Args:
+        pred (tuple): A tuple containing predictions and labels.
+                      Predictions should be a 3D array (batch_size, sequence_length, num_labels).
+                      Labels should be a 2D array (batch_size, sequence_length).
+        label_list (list): A list of label names corresponding to the indices used in predictions and labels.
+
+    Returns:
+        dict: A dictionary containing the following metrics:
+              - "precision": Precision score of the token classification.
+              - "recall": Recall score of the token classification.
+              - "f1": F1 score of the token classification.
+              - "accuracy": Accuracy score of the token classification.
+    """
     predictions, labels = pred
     predictions = np.argmax(predictions, axis=2)
 
@@ -45,6 +61,16 @@ def token_classification_metrics(pred, label_list):
 
 
 def create_model_card(config, trainer):
+    """
+    Generates a model card string based on the provided configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing model and dataset information.
+        trainer (object): Trainer object used to evaluate the model.
+
+    Returns:
+        str: A formatted model card string with dataset tags, validation metrics, and base model information.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         valid_metrics = ["eval_loss", "eval_precision", "eval_recall", "eval_f1", "eval_accuracy"]

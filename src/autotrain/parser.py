@@ -39,6 +39,28 @@ from autotrain.trainers.vlm.params import VLMTrainingParams
 
 @dataclass
 class AutoTrainConfigParser:
+    """
+    AutoTrainConfigParser is a class responsible for parsing and validating the yaml configuration
+    required to run various tasks in the AutoTrain framework. It supports loading configurations
+    from both local files and remote URLs, and maps task aliases to their respective parameters
+    and data munging functions.
+
+    Attributes:
+        config_path (str): Path or URL to the configuration file.
+        config (dict): Parsed configuration data.
+        task_param_map (dict): Mapping of task names to their parameter classes.
+        munge_data_map (dict): Mapping of task names to their data munging functions.
+        task_aliases (dict): Mapping of task aliases to their canonical task names.
+        task (str): The resolved task name from the configuration.
+        backend (str): The backend specified in the configuration.
+        parsed_config (dict): The parsed configuration parameters.
+
+    Methods:
+        __post_init__(): Initializes the parser, loads the configuration, and validates required fields.
+        _parse_config(): Parses the configuration and extracts relevant parameters based on the task.
+        run(): Executes the task with the parsed configuration.
+    """
+
     config_path: str
 
     def __post_init__(self):

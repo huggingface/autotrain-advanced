@@ -4,6 +4,18 @@ from autotrain.utils import run_training
 
 
 class LocalRunner(BaseBackend):
+    """
+    LocalRunner is a class that inherits from BaseBackend and is responsible for managing local training tasks.
+
+    Methods:
+        create():
+            Starts the local training process by retrieving parameters and task ID from environment variables.
+            Logs the start of the training process.
+            Runs the training with the specified parameters and task ID.
+            If the `wait` attribute is False, logs the training process ID (PID).
+            Returns the training process ID (PID).
+    """
+
     def create(self):
         logger.info("Starting local training...")
         params = self.env_vars["PARAMS"]

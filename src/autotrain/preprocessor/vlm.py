@@ -14,6 +14,38 @@ ALLOWED_EXTENSIONS = ("jpeg", "png", "jpg", "JPG", "JPEG", "PNG")
 
 @dataclass
 class VLMPreprocessor:
+    """
+    VLMPreprocessor is a class for preprocessing visual language model (VLM) datasets. It handles tasks such as
+    validating data paths, ensuring the presence of required files, splitting datasets, and preparing data for
+    training and validation.
+
+    Attributes:
+        train_data (str): Path to the training data directory.
+        username (str): Username for the Hugging Face Hub.
+        project_name (str): Name of the project.
+        token (str): Authentication token for the Hugging Face Hub.
+        column_mapping (dict): Mapping of column names.
+        valid_data (Optional[str]): Path to the validation data directory. Default is None.
+        test_size (Optional[float]): Proportion of the dataset to include in the validation split. Default is 0.2.
+        seed (Optional[int]): Random seed for dataset splitting. Default is 42.
+        local (Optional[bool]): Flag indicating whether to save data locally or push to the Hugging Face Hub. Default is False.
+
+    Methods:
+        _process_metadata(data_path):
+            Processes the metadata.jsonl file in the given data path and ensures it contains the required columns.
+
+        __post_init__():
+            Validates the existence of training and validation data paths, checks for required files, and ensures
+            the presence of a minimum number of image files.
+
+        split(df):
+            Splits the given DataFrame into training and validation sets based on the specified test size and seed.
+
+        prepare():
+            Prepares the dataset for training and validation by copying data to a cache directory, processing metadata,
+            and either saving the dataset locally or pushing it to the Hugging Face Hub.
+    """
+
     train_data: str
     username: str
     project_name: str

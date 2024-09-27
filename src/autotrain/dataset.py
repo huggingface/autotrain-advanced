@@ -34,6 +34,19 @@ from autotrain.preprocessor.vlm import VLMPreprocessor
 
 
 def remove_non_image_files(folder):
+    """
+    Remove non-image files from a specified folder and its subfolders.
+
+    This function iterates through all files in the given folder and its subfolders,
+    and removes any file that does not have an allowed image file extension. The allowed
+    extensions are: .jpg, .jpeg, .png, .JPG, .JPEG, .PNG, and .jsonl.
+
+    Args:
+        folder (str): The path to the folder from which non-image files should be removed.
+
+    Returns:
+        None
+    """
     # Define allowed image file extensions
     allowed_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG", ".jsonl"}
 
@@ -56,6 +69,31 @@ def remove_non_image_files(folder):
 
 @dataclass
 class AutoTrainDreamboothDataset:
+    """
+    AutoTrainDreamboothDataset prepares dataset for Dreambooth task.
+
+    Attributes:
+        concept_images (List[Any]): A list of images related to the concept.
+        concept_name (str): The name of the concept.
+        token (str): The token associated with the concept.
+        project_name (str): The name of the project.
+        username (Optional[str]): The username of the person associated with the project. Defaults to None.
+        local (bool): A flag indicating whether the dataset is local. Defaults to False.
+
+    Methods:
+        __str__() -> str:
+            Returns a string representation of the dataset, including the project name and task.
+
+        __post_init__():
+            Initializes the task attribute to "dreambooth".
+
+        num_samples() -> int:
+            Returns the number of samples in the concept_images list.
+
+        prepare():
+            Prepares the dataset using the DreamboothPreprocessor and returns the preprocessed data.
+    """
+
     concept_images: List[Any]
     concept_name: str
     token: str
@@ -88,6 +126,29 @@ class AutoTrainDreamboothDataset:
 
 @dataclass
 class AutoTrainImageClassificationDataset:
+    """
+    A class to handle image classification datasets for AutoTrain.
+
+    Attributes:
+        train_data (str): Path to the training data.
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (str): Username of the project owner.
+        valid_data (Optional[str]): Path to the validation data. Default is None.
+        percent_valid (Optional[float]): Percentage of training data to use for validation. Default is None.
+        local (bool): Flag to indicate if the data is local. Default is False.
+
+    Methods:
+        __str__() -> str:
+            Returns a string representation of the dataset.
+
+        __post_init__():
+            Initializes the dataset and sets default values for validation data.
+
+        prepare():
+            Prepares the dataset for training by extracting and preprocessing the data.
+    """
+
     train_data: str
     token: str
     project_name: str
@@ -164,6 +225,29 @@ class AutoTrainImageClassificationDataset:
 
 @dataclass
 class AutoTrainObjectDetectionDataset:
+    """
+    A dataset class for AutoTrain object detection tasks.
+
+    Attributes:
+        train_data (str): Path to the training data.
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (str): Username of the project owner.
+        valid_data (Optional[str]): Path to the validation data. Default is None.
+        percent_valid (Optional[float]): Percentage of training data to be used for validation. Default is None.
+        local (bool): Flag indicating if the data is local. Default is False.
+
+    Methods:
+        __str__() -> str:
+            Returns a string representation of the dataset.
+
+        __post_init__():
+            Initializes the dataset and sets default values for validation data.
+
+        prepare():
+            Prepares the dataset for training by extracting and preprocessing the data.
+    """
+
     train_data: str
     token: str
     project_name: str
@@ -240,6 +324,40 @@ class AutoTrainObjectDetectionDataset:
 
 @dataclass
 class AutoTrainVLMDataset:
+    """
+    A class to handle dataset for AutoTrain Vision-Language Model (VLM) task.
+
+    Attributes:
+    -----------
+    train_data : str
+        Path to the training data or a file-like object containing the training data.
+    token : str
+        Authentication token for accessing the dataset.
+    project_name : str
+        Name of the project.
+    username : str
+        Username of the project owner.
+    column_mapping : Dict[str, str]
+        Mapping of columns in the dataset.
+    valid_data : Optional[str], default=None
+        Path to the validation data or a file-like object containing the validation data.
+    percent_valid : Optional[float], default=None
+        Percentage of the training data to be used for validation if `valid_data` is not provided.
+    local : bool, default=False
+        Flag indicating whether the dataset is stored locally.
+
+    Methods:
+    --------
+    __str__() -> str:
+        Returns a string representation of the dataset.
+
+    __post_init__():
+        Initializes the dataset and sets default values for validation data percentage.
+
+    prepare():
+        Prepares the dataset for training by extracting and processing the data.
+    """
+
     train_data: str
     token: str
     project_name: str
@@ -318,6 +436,29 @@ class AutoTrainVLMDataset:
 
 @dataclass
 class AutoTrainImageRegressionDataset:
+    """
+    AutoTrainImageRegressionDataset is a class designed for handling image regression datasets in the AutoTrain framework.
+
+    Attributes:
+        train_data (str): Path to the training data.
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (str): Username of the project owner.
+        valid_data (Optional[str]): Path to the validation data. Default is None.
+        percent_valid (Optional[float]): Percentage of training data to be used for validation if valid_data is not provided. Default is None.
+        local (bool): Flag indicating if the data is local. Default is False.
+
+    Methods:
+        __str__() -> str:
+            Returns a string representation of the dataset information.
+
+        __post_init__():
+            Initializes the task attribute and sets the percent_valid attribute based on the presence of valid_data.
+
+        prepare():
+            Prepares the dataset for training by extracting and organizing the data, and returns a preprocessor object.
+    """
+
     train_data: str
     token: str
     project_name: str
@@ -394,6 +535,30 @@ class AutoTrainImageRegressionDataset:
 
 @dataclass
 class AutoTrainDataset:
+    """
+    AutoTrainDataset class for handling various types of datasets and preprocessing tasks.
+
+    Attributes:
+        train_data (List[str]): List of file paths or DataFrames for training data.
+        task (str): The type of task to perform (e.g., "text_binary_classification").
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (Optional[str]): Username of the project owner. Defaults to None.
+        column_mapping (Optional[Dict[str, str]]): Mapping of column names. Defaults to None.
+        valid_data (Optional[List[str]]): List of file paths or DataFrames for validation data. Defaults to None.
+        percent_valid (Optional[float]): Percentage of training data to use for validation. Defaults to None.
+        convert_to_class_label (Optional[bool]): Whether to convert labels to class labels. Defaults to False.
+        local (bool): Whether the data is local. Defaults to False.
+        ext (Optional[str]): File extension of the data files. Defaults to "csv".
+
+    Methods:
+        __str__(): Returns a string representation of the dataset.
+        __post_init__(): Initializes validation data and preprocesses the data.
+        _preprocess_data(): Preprocesses the training and validation data.
+        num_samples(): Returns the total number of samples in the dataset.
+        prepare(): Prepares the dataset for the specified task using the appropriate preprocessor.
+    """
+
     train_data: List[str]
     task: str
     token: str

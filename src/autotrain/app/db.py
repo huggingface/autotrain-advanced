@@ -2,6 +2,36 @@ import sqlite3
 
 
 class AutoTrainDB:
+    """
+    A class to manage job records in a SQLite database.
+
+    Attributes:
+    -----------
+    db_path : str
+        The path to the SQLite database file.
+    conn : sqlite3.Connection
+        The SQLite database connection object.
+    c : sqlite3.Cursor
+        The SQLite database cursor object.
+
+    Methods:
+    --------
+    __init__(db_path):
+        Initializes the database connection and creates the jobs table if it does not exist.
+
+    create_jobs_table():
+        Creates the jobs table in the database if it does not exist.
+
+    add_job(pid):
+        Adds a new job with the given process ID (pid) to the jobs table.
+
+    get_running_jobs():
+        Retrieves a list of all running job process IDs (pids) from the jobs table.
+
+    delete_job(pid):
+        Deletes the job with the given process ID (pid) from the jobs table.
+    """
+
     def __init__(self, db_path):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)

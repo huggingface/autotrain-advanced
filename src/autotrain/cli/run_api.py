@@ -12,6 +12,23 @@ def run_api_command_factory(args):
 
 
 class RunAutoTrainAPICommand(BaseAutoTrainCommand):
+    """
+    Command to run the AutoTrain API.
+
+    This command sets up and runs the AutoTrain API using the specified host and port.
+
+    Methods
+    -------
+    register_subcommand(parser: ArgumentParser)
+        Registers the 'api' subcommand and its arguments to the provided parser.
+
+    __init__(port: int, host: str, task: str)
+        Initializes the command with the specified port, host, and task.
+
+    run()
+        Runs the AutoTrain API using the uvicorn server.
+    """
+
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         run_api_parser = parser.add_parser(

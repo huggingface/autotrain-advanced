@@ -11,6 +11,28 @@ RESERVED_COLUMNS = ["autotrain_id", "autotrain_label"]
 
 @dataclass
 class TabularBinaryClassificationPreprocessor:
+    """
+    A preprocessor class for tabular binary classification tasks.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        label_column (str): The name of the label column in the training data.
+        username (str): The username for the Hugging Face Hub.
+        project_name (str): The name of the project.
+        token (str): The authentication token for the Hugging Face Hub.
+        id_column (Optional[str]): The name of the ID column in the training data. Default is None.
+        valid_data (Optional[pd.DataFrame]): The validation data. Default is None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Default is 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Default is 42.
+        local (Optional[bool]): Whether to save the dataset locally or push to the Hugging Face Hub. Default is False.
+
+    Methods:
+        __post_init__(): Validates the presence of required columns in the training and validation data.
+        split(): Splits the training data into training and validation sets if validation data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns by adding 'autotrain_id' and 'autotrain_label', and drops the original ID and label columns.
+        prepare(): Prepares the dataset by splitting, processing columns, and saving or pushing the dataset to the Hugging Face Hub.
+    """
+
     train_data: pd.DataFrame
     label_column: str
     username: str
@@ -125,6 +147,28 @@ class TabularSingleColumnRegressionPreprocessor(TabularBinaryClassificationPrepr
 
 @dataclass
 class TabularMultiLabelClassificationPreprocessor:
+    """
+    TabularMultiLabelClassificationPreprocessor is a class for preprocessing tabular data for multi-label classification tasks.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        label_column (List[str]): List of columns to be used as labels.
+        username (str): The username for the Hugging Face Hub.
+        project_name (str): The project name for the Hugging Face Hub.
+        id_column (Optional[str]): The column to be used as an identifier. Defaults to None.
+        valid_data (Optional[pd.DataFrame]): The validation data. Defaults to None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Defaults to 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Defaults to 42.
+        token (Optional[str]): The token for authentication with the Hugging Face Hub. Defaults to None.
+        local (Optional[bool]): Whether to save the dataset locally or push to the Hugging Face Hub. Defaults to False.
+
+    Methods:
+        __post_init__(): Validates the presence of id_column and label_column in train_data and valid_data, and checks for reserved column names.
+        split(): Splits the train_data into training and validation sets if valid_data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns by adding autotrain_id and autotrain_label columns, and drops the original id_column and label_column.
+        prepare(): Prepares the dataset by splitting the data, preparing the columns, and converting to Hugging Face Dataset format. Saves the dataset locally or pushes to the Hugging Face Hub.
+    """
+
     train_data: pd.DataFrame
     label_column: List[str]
     username: str

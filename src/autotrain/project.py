@@ -26,6 +26,24 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 
 @dataclass
 class AutoTrainProject:
+    """
+    A class to represent an AutoTrain project.
+
+    Attributes
+    ----------
+    params : Union[List[Union[LLMTrainingParams, TextClassificationParams, TabularParams, DreamBoothTrainingParams, Seq2SeqParams, ImageClassificationParams, TextRegressionParams, ObjectDetectionParams, TokenClassificationParams, SentenceTransformersParams, ImageRegressionParams]], LLMTrainingParams, TextClassificationParams, TabularParams, DreamBoothTrainingParams, Seq2SeqParams, ImageClassificationParams, TextRegressionParams, ObjectDetectionParams, TokenClassificationParams, SentenceTransformersParams, ImageRegressionParams]
+        The parameters for the AutoTrain project.
+    backend : str
+        The backend to be used for the AutoTrain project.
+
+    Methods
+    -------
+    __post_init__():
+        Validates the backend attribute.
+    create():
+        Creates a runner based on the backend and initializes the AutoTrain project.
+    """
+
     params: Union[
         List[
             Union[

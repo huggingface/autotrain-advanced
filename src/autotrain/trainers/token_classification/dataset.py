@@ -1,4 +1,31 @@
 class TokenClassificationDataset:
+    """
+    A dataset class for token classification tasks.
+
+    Args:
+        data (Dataset): The dataset containing the text and tags.
+        tokenizer (PreTrainedTokenizer): The tokenizer to be used for tokenizing the text.
+        config (Config): Configuration object containing necessary parameters.
+
+    Attributes:
+        data (Dataset): The dataset containing the text and tags.
+        tokenizer (PreTrainedTokenizer): The tokenizer to be used for tokenizing the text.
+        config (Config): Configuration object containing necessary parameters.
+
+    Methods:
+        __len__():
+            Returns the number of samples in the dataset.
+
+        __getitem__(item):
+            Retrieves a tokenized sample and its corresponding labels.
+
+            Args:
+                item (int): The index of the sample to retrieve.
+
+            Returns:
+                dict: A dictionary containing tokenized text and corresponding labels.
+    """
+
     def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer

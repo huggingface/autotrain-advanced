@@ -4,6 +4,15 @@ from huggingface_hub import list_models
 
 
 def get_sorted_models(hub_models):
+    """
+    Filters and sorts a list of models based on their download count.
+
+    Args:
+        hub_models (list): A list of model objects. Each model object must have the attributes 'id', 'downloads', and 'private'.
+
+    Returns:
+        list: A list of model IDs sorted by their download count in descending order. Only includes models that are not private.
+    """
     hub_models = [{"id": m.id, "downloads": m.downloads} for m in hub_models if m.private is False]
     hub_models = sorted(hub_models, key=lambda x: x["downloads"], reverse=True)
     hub_models = [m["id"] for m in hub_models]
@@ -11,6 +20,18 @@ def get_sorted_models(hub_models):
 
 
 def _fetch_text_classification_models():
+    """
+    Fetches and sorts text classification models from the Hugging Face model hub.
+
+    This function retrieves models for the tasks "fill-mask" and "text-classification"
+    from the Hugging Face model hub, sorts them by the number of downloads, and combines
+    them into a single list. Additionally, it fetches trending models based on the number
+    of likes in the past 7 days, sorts them, and places them at the beginning of the list
+    if they are not already included.
+
+    Returns:
+        list: A sorted list of model identifiers from the Hugging Face model hub.
+    """
     hub_models1 = list(
         list_models(
             task="fill-mask",
