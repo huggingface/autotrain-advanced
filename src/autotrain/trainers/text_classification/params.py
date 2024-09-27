@@ -7,7 +7,7 @@ from autotrain.trainers.common import AutoTrainParams
 
 class TextClassificationParams(AutoTrainParams):
     """
-    TextClassificationParams is a configuration class for text classification training parameters.
+    [`TextClassificationParams`] is a configuration class for text classification training parameters.
 
     Attributes:
         data_path (str): Path to the dataset.

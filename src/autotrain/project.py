@@ -27,7 +27,7 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 @dataclass
 class AutoTrainProject:
     """
-    A class to represent an AutoTrain project.
+    A class to represent an AutoTrain project
 
     Attributes
     ----------
