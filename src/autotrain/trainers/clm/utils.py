@@ -445,7 +445,7 @@ def get_tokenizer(config):
 
 
 def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
-    valid_data = None
+    # valid_data = None
     if config.chat_template in ("chatml", "zephyr", "tokenizer"):
         logger.info("Applying chat template")
         logger.info("For ORPO/DPO, `prompt` will be extracted from chosen messages")
