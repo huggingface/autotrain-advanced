@@ -1,5 +1,7 @@
 # LLM Fine Tuning Parameters
 
+[[autodoc]] trainers.clm.params.LLMTrainingParams
+
 ## Task specific parameters
 
 
@@ -90,73 +92,4 @@ The length parameters used for different trainers can be different. Some require
                     Used only for `orpo` trainer.
 --max_completion_length MAX_COMPLETION_LENGTH, --max-completion-length MAX_COMPLETION_LENGTH
                     Completion length to use, for orpo: encoder-decoder models only
-```
-
-
-## Common parameters
-```
---batch-size BATCH_SIZE, --train-batch-size BATCH_SIZE
-                    Training batch size to use
---seed SEED           Random seed for reproducibility
---epochs EPOCHS       Number of training epochs
---gradient_accumulation GRADIENT_ACCUMULATION, --gradient-accumulation GRADIENT_ACCUMULATION
-                    Gradient accumulation steps
---disable_gradient_checkpointing, --disable-gradient-checkpointing, --disable-gc
-                    Disable gradient checkpointing
---lr LR               Learning rate
---log {none,wandb,tensorboard}
-                    Use experiment tracking
---warmup_ratio WARMUP_RATIO, --warmup-ratio WARMUP_RATIO
-                    Set the proportion of training allocated to warming up the learning rate, which can enhance model stability and performance
-                    at the start of training. Default is 0.1
---optimizer OPTIMIZER
-                    Choose the optimizer algorithm for training the model. Different optimizers can affect the training speed and model
-                    performance. 'adamw_torch' is used by default.
---scheduler SCHEDULER
-                    Select the learning rate scheduler to adjust the learning rate based on the number of epochs. 'linear' decreases the
-                    learning rate linearly from the initial lr set. Default is 'linear'. Try 'cosine' for a cosine annealing schedule.
---weight_decay WEIGHT_DECAY, --weight-decay WEIGHT_DECAY
-                    Define the weight decay rate for regularization, which helps prevent overfitting by penalizing larger weights. Default is
-                    0.0
---max_grad_norm MAX_GRAD_NORM, --max-grad-norm MAX_GRAD_NORM
-                    Set the maximum norm for gradient clipping, which is critical for preventing gradients from exploding during
-                    backpropagation. Default is 1.0.
---peft, --use-peft    Enable LoRA-PEFT
---lora_r LORA_R, --lora-r LORA_R
-                    Set the 'r' parameter for Low-Rank Adaptation (LoRA). Default is 16.
---lora_alpha LORA_ALPHA, --lora-alpha LORA_ALPHA
-                    Specify the 'alpha' parameter for LoRA. Default is 32.
---lora_dropout LORA_DROPOUT, --lora-dropout LORA_DROPOUT
-                    Set the dropout rate within the LoRA layers to help prevent overfitting during adaptation. Default is 0.05.
---logging_steps LOGGING_STEPS, --logging-steps LOGGING_STEPS
-                    Determine how often to log training progress in terms of steps. Setting it to '-1' determines logging steps automatically.
---eval_strategy {epoch,steps,no}, --eval-strategy {epoch,steps,no}
-                    Choose how frequently to evaluate the model's performance, with 'epoch' as the default, meaning at the end of each training
-                    epoch
---save_total_limit SAVE_TOTAL_LIMIT, --save-total-limit SAVE_TOTAL_LIMIT
-                    Limit the total number of saved model checkpoints to manage disk usage effectively. Default is to save only the latest
-                    checkpoint
---auto_find_batch_size, --auto-find-batch-size
-                    Automatically determine the optimal batch size based on system capabilities to maximize efficiency.
---mixed_precision {fp16,bf16,None}, --mixed-precision {fp16,bf16,None}
-                    Choose the precision mode for training to optimize performance and memory usage. Options are 'fp16', 'bf16', or None for
-                    default precision. Default is None.
---quantization {int4,int8,None}, --quantization {int4,int8,None}
-                    Choose the quantization level to reduce model size and potentially increase inference speed. Options include 'int4', 'int8',
-                    or None. Enabling requires --peft
---trainer {default,dpo,sft,orpo,reward}
-                    Trainer type to use
---target_modules TARGET_MODULES, --target-modules TARGET_MODULES
-                    Identify specific modules within the model architecture to target with adaptations or optimizations, such as LoRA. Comma
-                    separated list of module names. Default is 'all-linear'.
---merge_adapter, --merge-adapter
-                    Use this flag to merge PEFT adapter with the model
---use_flash_attention_2, --use-flash-attention-2, --use-fa2
-                    Use flash attention 2
---chat_template {tokenizer,chatml,zephyr,None}, --chat-template {tokenizer,chatml,zephyr,None}
-                    Apply a specific template for chat-based interactions, with options including 'tokenizer', 'chatml', 'zephyr', or None. This
-                    setting can shape the model's conversational behavior.
---padding {left,right,None}, --padding {left,right,None}
-                    Specify the padding direction for sequences, critical for models sensitive to input alignment. Options include 'left',
-                    'right', or None
 ```
