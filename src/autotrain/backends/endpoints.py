@@ -7,6 +7,33 @@ ENDPOINTS_URL = "https://api.endpoints.huggingface.cloud/v2/endpoint/"
 
 
 class EndpointsRunner(BaseBackend):
+    """
+    EndpointsRunner is responsible for creating and managing endpoint instances.
+
+    Methods
+    -------
+    create():
+        Creates an endpoint instance with the specified hardware and model parameters.
+
+    create() Method
+    ---------------
+    Creates an endpoint instance with the specified hardware and model parameters.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    str
+        The name of the created endpoint instance.
+
+    Raises
+    ------
+    requests.exceptions.RequestException
+        If there is an issue with the HTTP request.
+    """
+
     def create(self):
         hardware = self.available_hardware[self.backend]
         accelerator = hardware.split("_")[2]

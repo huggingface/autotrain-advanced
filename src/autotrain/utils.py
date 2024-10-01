@@ -23,6 +23,21 @@ ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true
 
 
 def run_training(params, task_id, local=False, wait=False):
+    """
+    Run the training process based on the provided parameters and task ID.
+
+    Args:
+        params (str): JSON string of the parameters required for training.
+        task_id (int): Identifier for the type of task to be performed.
+        local (bool, optional): Flag to indicate if the training should be run locally. Defaults to False.
+        wait (bool, optional): Flag to indicate if the function should wait for the process to complete. Defaults to False.
+
+    Returns:
+        int: Process ID of the launched training process.
+
+    Raises:
+        NotImplementedError: If the task_id does not match any of the predefined tasks.
+    """
     params = json.loads(params)
     if isinstance(params, str):
         params = json.loads(params)

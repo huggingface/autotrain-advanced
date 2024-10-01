@@ -11,6 +11,17 @@ from . import BaseAutoTrainCommand
 
 
 def handle_output(stream, log_file):
+    """
+    Continuously reads lines from a given stream and writes them to both
+    standard output and a log file until the stream is exhausted.
+
+    Args:
+        stream (io.TextIOBase): The input stream to read lines from.
+        log_file (io.TextIOBase): The log file to write lines to.
+
+    Returns:
+        None
+    """
     while True:
         line = stream.readline()
         if not line:
@@ -26,6 +37,25 @@ def run_app_command_factory(args):
 
 
 class RunAutoTrainAppCommand(BaseAutoTrainCommand):
+    """
+    Command to run the AutoTrain application.
+
+    This command sets up and runs the AutoTrain application with the specified
+    configuration options such as port, host, number of workers, and sharing options.
+
+    Methods
+    -------
+    register_subcommand(parser: ArgumentParser):
+        Registers the subcommand and its arguments to the provided parser.
+
+    __init__(port: int, host: str, share: bool, workers: int, colab: bool):
+        Initializes the command with the specified parameters.
+
+    run():
+        Executes the command to run the AutoTrain application. Handles different
+        modes such as running in Colab or sharing via ngrok.
+    """
+
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         run_app_parser = parser.add_parser(

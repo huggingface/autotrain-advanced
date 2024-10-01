@@ -11,6 +11,26 @@ from autotrain import logger
 
 @dataclass
 class DreamboothPreprocessor:
+    """
+    DreamboothPreprocessor is a class responsible for preparing concept images and prompts data for DreamBooth Task.
+
+    Attributes:
+        concept_images (List[Any]): A list of concept images to be processed.
+        concept_name (str): The name of the concept.
+        username (str): The username of the person creating the project.
+        project_name (str): The name of the project.
+        token (str): The authentication token for accessing the repository.
+        local (bool): A flag indicating whether the processing is local or remote.
+
+    Methods:
+        __post_init__(): Initializes the repository name and creates a remote repository if not local.
+        _upload_concept_images(file, api): Uploads a concept image to the remote repository.
+        _upload_concept_prompts(api): Uploads the concept prompts to the remote repository.
+        _save_concept_images(file): Saves a concept image locally.
+        _save_concept_prompts(): Saves the concept prompts locally.
+        prepare(): Prepares the concept images and prompts by either saving them locally or uploading them to a remote repository.
+    """
+
     concept_images: List[Any]
     concept_name: str
     username: str

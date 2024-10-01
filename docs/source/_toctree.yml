@@ -25,50 +25,50 @@
     title: AutoTrain API
   title: Miscellaneous
 - sections:
-  - local: text_classification
+  - local: tasks/text_classification
     title: Text Classification
-  - local: extractive_qa
+  - local: tasks/extractive_qa
     title: Extractive QA
-  - local: sentence_transformer
+  - local: tasks/sentence_transformer
     title: Sentence Transformer
-  - local: text_regression
+  - local: tasks/text_regression
     title: Text Regression
-  - local: llm_finetuning
+  - local: tasks/llm_finetuning
     title: LLM Finetuning
-  - local: image_classification
+  - local: tasks/image_classification
     title: Image Classification
-  - local: image_regression
+  - local: tasks/image_regression
     title: Image Scoring/Regression
-  - local: object_detection
+  - local: tasks/object_detection
     title: Object Detection
-  - local: dreambooth
+  - local: tasks/dreambooth
     title: DreamBooth
-  - local: seq2seq
+  - local: tasks/seq2seq
     title: Seq2Seq
-  - local: token_classification
+  - local: tasks/token_classification
     title: Token Classification
-  - local: tabular
+  - local: tasks/tabular
     title: Tabular
   title: Data Formats
 - sections:
-  - local: text_classification_params
+  - local: params/text_classification_params
     title: Text Classification & Regression
-  - local: extractive_qa_params
+  - local: params/extractive_qa_params
     title: Extractive QA
-  - local: llm_finetuning_params
+  - local: params/llm_finetuning_params
     title: LLM Finetuning
-  - local: image_classification_params
+  - local: params/image_classification_params
     title: Image Classification
-  - local: image_regression_params
+  - local: params/image_regression_params
     title: Image Scoring/Regression
-  - local: object_detection_params
+  - local: params/object_detection_params
     title: Object Detection
-  - local: dreambooth_params
+  - local: params/dreambooth_params
     title: DreamBooth
-  - local: seq2seq_params
+  - local: params/seq2seq_params
     title: Seq2Seq
-  - local: token_classification_params
+  - local: params/token_classification_params
     title: Token Classification
-  - local: tabular_params
+  - local: params/tabular_params
     title: Tabular
   title: Parameters

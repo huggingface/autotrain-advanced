@@ -28,6 +28,23 @@ FIELDS_TO_EXCLUDE = HIDDEN_PARAMS + ["push_to_hub"]
 
 
 def create_api_base_model(base_class, class_name):
+    """
+    Creates a new Pydantic model based on a given base class and class name,
+    excluding specified fields.
+
+    Args:
+        base_class (Type): The base Pydantic model class to extend.
+        class_name (str): The name of the new model class to create.
+
+    Returns:
+        Type: A new Pydantic model class with the specified modifications.
+
+    Notes:
+        - The function uses type hints from the base class to define the new model's fields.
+        - Certain fields are excluded from the new model based on the class name.
+        - The function supports different sets of hidden parameters for different class names.
+        - The new model's configuration is set to have no protected namespaces.
+    """
     annotations = get_type_hints(base_class)
     if class_name in ("LLMSFTTrainingParamsAPI", "LLMRewardTrainingParamsAPI"):
         more_hidden_params = [
@@ -206,6 +223,32 @@ class ExtractiveQuestionAnsweringColumnMapping(BaseModel):
 
 
 class APICreateProjectModel(BaseModel):
+    """
+    APICreateProjectModel is a Pydantic model that defines the schema for creating a project.
+
+    Attributes:
+        project_name (str): The name of the project.
+        task (Literal): The type of task for the project. Supported tasks include various LLM tasks,
+            image classification, dreambooth, seq2seq, token classification, text classification,
+            text regression, tabular classification, tabular regression, image regression, VLM tasks,
+            and extractive question answering.
+        base_model (str): The base model to be used for the project.
+        hardware (Literal): The type of hardware to be used for the project. Supported hardware options
+            include various configurations of spaces and local.
+        params (Union): The training parameters for the project. The type of parameters depends on the
+            task selected.
+        username (str): The username of the person creating the project.
+        column_mapping (Optional[Union]): The column mapping for the project. The type of column mapping
+            depends on the task selected.
+        hub_dataset (str): The dataset to be used for the project.
+        train_split (str): The training split of the dataset.
+        valid_split (Optional[str]): The validation split of the dataset.
+
+    Methods:
+        validate_column_mapping(cls, values): Validates the column mapping based on the task selected.
+        validate_params(cls, values): Validates the training parameters based on the task selected.
+    """
+
     project_name: str
     task: Literal[
         "llm:sft",
@@ -530,6 +573,18 @@ api_router = APIRouter()
 
 
 def api_auth(request: Request):
+    """
+    Authenticates the API request using a Bearer token.
+
+    Args:
+        request (Request): The incoming HTTP request object.
+
+    Returns:
+        str: The verified Bearer token if authentication is successful.
+
+    Raises:
+        HTTPException: If the token is invalid, expired, or missing.
+    """
     authorization = request.headers.get("Authorization")
     if authorization:
         schema, _, token = authorization.partition(" ")
@@ -553,9 +608,24 @@ def api_auth(request: Request):
 @api_router.post("/create_project", response_class=JSONResponse)
 async def api_create_project(project: APICreateProjectModel, token: bool = Depends(api_auth)):
     """
-    This function is used to create a new project
-    :param project: APICreateProjectModel
-    :return: JSONResponse
+    Asynchronously creates a new project based on the provided parameters.
+
+    Args:
+        project (APICreateProjectModel): The model containing the project details and parameters.
+        token (bool, optional): The authentication token. Defaults to Depends(api_auth).
+
+    Returns:
+        dict: A dictionary containing a success message, the job ID of the created project, and a success status.
+
+    Raises:
+        HTTPException: If there is an error during project creation.
+
+    Notes:
+        - The function determines the hardware type based on the project hardware attribute.
+        - It logs the provided parameters and column mapping.
+        - It sets the appropriate parameters based on the task type.
+        - It updates the parameters with the provided ones and creates an AppParams instance.
+        - The function then creates an AutoTrainProject instance and initiates the project creation process.
     """
     provided_params = project.params.model_dump()
     if project.hardware == "local":
@@ -609,8 +679,13 @@ async def api_create_project(project: APICreateProjectModel, token: bool = Depen
 @api_router.get("/version", response_class=JSONResponse)
 async def api_version():
     """
-    This function is used to get the version of the API
-    :return: JSONResponse
+    Returns the current version of the API.
+
+    This asynchronous function retrieves the version of the API from the
+    __version__ variable and returns it in a dictionary.
+
+    Returns:
+        dict: A dictionary containing the API version.
     """
     return {"version": __version__}
 
@@ -618,9 +693,14 @@ async def api_version():
 @api_router.get("/logs", response_class=JSONResponse)
 async def api_logs(job_id: str, token: bool = Depends(api_auth)):
     """
-    This function is used to get the logs of a project
-    :param job_id: str
-    :return: JSONResponse
+    Fetch logs for a specific job.
+
+    Args:
+        job_id (str): The ID of the job for which logs are to be fetched.
+        token (bool, optional): Authentication token, defaults to the result of api_auth dependency.
+
+    Returns:
+        dict: A dictionary containing the logs, success status, and a message.
     """
     # project = AutoTrainProject(job_id=job_id, token=token)
     # logs = project.get_logs()
@@ -630,9 +710,22 @@ async def api_logs(job_id: str, token: bool = Depends(api_auth)):
 @api_router.get("/stop_training", response_class=JSONResponse)
 async def api_stop_training(job_id: str, token: bool = Depends(api_auth)):
     """
-    This function is used to stop the training of a project
-    :param job_id: str
-    :return: JSONResponse
+    Stops the training job with the given job ID.
+
+    This asynchronous function pauses the training job identified by the provided job ID.
+    It uses the Hugging Face API to pause the space associated with the job.
+
+    Args:
+        job_id (str): The ID of the job to stop.
+        token (bool, optional): The authentication token, provided by dependency injection.
+
+    Returns:
+        dict: A dictionary containing a message and a success flag. If the training job
+        was successfully stopped, the message indicates success and the success flag is True.
+        If there was an error, the message contains the error details and the success flag is False.
+
+    Raises:
+        Exception: If there is an error while attempting to stop the training job.
     """
     hf_api = HfApi(token=token)
     try:

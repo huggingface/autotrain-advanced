@@ -47,6 +47,22 @@ widget:
 
 
 def _binary_classification_metrics(pred):
+    """
+    Calculate various binary classification metrics.
+
+    Args:
+        pred (tuple): A tuple containing raw predictions and true labels.
+                      - raw_predictions (numpy.ndarray): The raw prediction scores from the model.
+                      - labels (numpy.ndarray): The true labels.
+
+    Returns:
+        dict: A dictionary containing the following metrics:
+              - "f1" (float): The F1 score.
+              - "precision" (float): The precision score.
+              - "recall" (float): The recall score.
+              - "auc" (float): The Area Under the ROC Curve (AUC) score.
+              - "accuracy" (float): The accuracy score.
+    """
     raw_predictions, labels = pred
     predictions = np.argmax(raw_predictions, axis=1)
     result = {
@@ -60,6 +76,27 @@ def _binary_classification_metrics(pred):
 
 
 def _multi_class_classification_metrics(pred):
+    """
+    Compute various classification metrics for multi-class classification.
+
+    Args:
+        pred (tuple): A tuple containing raw predictions and true labels.
+                      - raw_predictions (numpy.ndarray): The raw prediction scores for each class.
+                      - labels (numpy.ndarray): The true labels.
+
+    Returns:
+        dict: A dictionary containing the following metrics:
+              - "f1_macro": F1 score with macro averaging.
+              - "f1_micro": F1 score with micro averaging.
+              - "f1_weighted": F1 score with weighted averaging.
+              - "precision_macro": Precision score with macro averaging.
+              - "precision_micro": Precision score with micro averaging.
+              - "precision_weighted": Precision score with weighted averaging.
+              - "recall_macro": Recall score with macro averaging.
+              - "recall_micro": Recall score with micro averaging.
+              - "recall_weighted": Recall score with weighted averaging.
+              - "accuracy": Accuracy score.
+    """
     raw_predictions, labels = pred
     predictions = np.argmax(raw_predictions, axis=1)
     results = {
@@ -78,6 +115,17 @@ def _multi_class_classification_metrics(pred):
 
 
 def create_model_card(config, trainer, num_classes):
+    """
+    Generates a model card for a text classification model.
+
+    Args:
+        config (object): Configuration object containing various settings and paths.
+        trainer (object): Trainer object used for evaluating the model.
+        num_classes (int): Number of classes in the classification task.
+
+    Returns:
+        str: A formatted string representing the model card.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         valid_metrics = (
@@ -108,6 +156,19 @@ def create_model_card(config, trainer, num_classes):
 
 
 def pause_endpoint(params):
+    """
+    Pauses a Hugging Face endpoint using the provided parameters.
+
+    This function constructs an API URL using the endpoint ID from the environment
+    variables, and sends a POST request to pause the specified endpoint.
+
+    Args:
+        params (object): An object containing the following attribute:
+            - token (str): The authorization token required to authenticate the API request.
+
+    Returns:
+        dict: The JSON response from the API call.
+    """
     endpoint_id = os.environ["ENDPOINT_ID"]
     username = endpoint_id.split("/")[0]
     project_name = endpoint_id.split("/")[1]

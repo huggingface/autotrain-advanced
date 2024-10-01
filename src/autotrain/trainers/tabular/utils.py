@@ -87,6 +87,42 @@ REGRESSION_TASKS = ("single_column_regression", "multi_column_regression")
 
 @dataclass
 class TabularMetrics:
+    """
+    A class to calculate various metrics for different types of tabular tasks.
+
+    Attributes:
+    -----------
+    sub_task : str
+        The type of sub-task. It can be one of the following:
+        - "binary_classification"
+        - "multi_class_classification"
+        - "single_column_regression"
+        - "multi_column_regression"
+        - "multi_label_classification"
+    labels : Optional[List], optional
+        The list of labels for multi-class classification tasks (default is None).
+
+    Methods:
+    --------
+    __post_init__():
+        Initializes the valid metrics based on the sub-task type.
+
+    calculate(y_true, y_pred):
+        Calculates the metrics based on the true and predicted values.
+
+        Parameters:
+        -----------
+        y_true : array-like
+            True labels or values.
+        y_pred : array-like
+            Predicted labels or values.
+
+        Returns:
+        --------
+        dict
+            A dictionary with metric names as keys and their calculated values as values.
+    """
+
     sub_task: str
     labels: Optional[List] = None
 
@@ -167,6 +203,28 @@ class TabularMetrics:
 
 
 class TabularModel:
+    """
+    A class used to represent a Tabular Model for AutoTrain training.
+
+    Attributes
+    ----------
+    model : str
+        The name of the model to be used.
+    preprocessor : object
+        The preprocessor to be applied to the data.
+    sub_task : str
+        The sub-task type, either classification or regression.
+    params : dict
+        The parameters to be passed to the model.
+    use_predict_proba : bool
+        A flag indicating whether to use the predict_proba method.
+
+    Methods
+    -------
+    _get_model():
+        Retrieves the appropriate model based on the sub-task and model name.
+    """
+
     def __init__(self, model, preprocessor, sub_task, params):
         self.model = model
         self.preprocessor = preprocessor
@@ -349,6 +407,23 @@ def get_params(trial, model, task):
 
 
 def get_imputer(imputer_name):
+    """
+    Returns an imputer object based on the specified imputer name.
+
+    Parameters:
+    imputer_name (str): The name of the imputer to use. Can be one of the following:
+                        - "median": Uses the median value for imputation.
+                        - "mean": Uses the mean value for imputation.
+                        - "most_frequent": Uses the most frequent value for imputation.
+                        If None, returns None.
+
+    Returns:
+    impute.SimpleImputer or None: An instance of SimpleImputer with the specified strategy,
+                                  or None if imputer_name is None.
+
+    Raises:
+    ValueError: If an invalid imputer_name is provided.
+    """
     if imputer_name is None:
         return None
     if imputer_name == "median":
@@ -361,6 +436,21 @@ def get_imputer(imputer_name):
 
 
 def get_scaler(scaler_name):
+    """
+    Returns a scaler object based on the provided scaler name.
+
+    Parameters:
+    scaler_name (str): The name of the scaler to be returned.
+                       Possible values are "standard", "minmax", "robust", and "normal".
+                       If None, returns None.
+
+    Returns:
+    scaler: An instance of the corresponding scaler from sklearn.preprocessing.
+            If the scaler_name is None, returns None.
+
+    Raises:
+    ValueError: If the scaler_name is not one of the expected values.
+    """
     if scaler_name is None:
         return None
     if scaler_name == "standard":
@@ -375,6 +465,25 @@ def get_scaler(scaler_name):
 
 
 def get_metric_direction(sub_task):
+    """
+    Determines the appropriate metric and its optimization direction based on the given sub-task.
+
+    Parameters:
+    sub_task (str): The type of sub-task. Must be one of the following:
+                    - "binary_classification"
+                    - "multi_class_classification"
+                    - "single_column_regression"
+                    - "multi_label_classification"
+                    - "multi_column_regression"
+
+    Returns:
+    tuple: A tuple containing:
+           - str: The metric to be used (e.g., "logloss", "mlogloss", "rmse").
+           - str: The direction of optimization ("minimize").
+
+    Raises:
+    ValueError: If the provided sub_task is not one of the recognized types.
+    """
     if sub_task == "binary_classification":
         return "logloss", "minimize"
     if sub_task == "multi_class_classification":
@@ -389,14 +498,44 @@ def get_metric_direction(sub_task):
 
 
 def get_categorical_columns(df):
+    """
+    Extracts the names of categorical columns from a DataFrame.
+
+    Parameters:
+    df (pandas.DataFrame): The DataFrame from which to extract categorical columns.
+
+    Returns:
+    list: A list of column names that are of categorical data type (either 'category' or 'object').
+    """
     return list(df.select_dtypes(include=["category", "object"]).columns)
 
 
 def get_numerical_columns(df):
+    """
+    Extracts and returns a list of numerical column names from a given DataFrame.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame from which to extract numerical columns.
+
+    Returns:
+        list: A list of column names that have numerical data types.
+    """
     return list(df.select_dtypes(include=["number"]).columns)
 
 
 def create_model_card(config, sub_task, best_params, best_metrics):
+    """
+    Generates a markdown formatted model card with the given configuration, sub-task, best parameters, and best metrics.
+
+    Args:
+        config (object): Configuration object containing task and data path information.
+        sub_task (str): The specific sub-task for which the model card is being created.
+        best_params (dict): Dictionary containing the best hyperparameters for the model.
+        best_metrics (dict): Dictionary containing the best performance metrics for the model.
+
+    Returns:
+        str: A string containing the formatted model card in markdown.
+    """
     best_metrics = "\n".join([f"- {k}: {v}" for k, v in best_metrics.items()])
     best_params = "\n".join([f"- {k}: {v}" for k, v in best_params.items()])
     return MARKDOWN.format(

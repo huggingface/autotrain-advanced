@@ -23,6 +23,15 @@ DB = AutoTrainDB("autotrain.db")
 
 
 def graceful_exit(signum, frame):
+    """
+    Handles the SIGTERM signal to perform cleanup and exit the program gracefully.
+
+    Args:
+        signum (int): The signal number.
+        frame (FrameType): The current stack frame (or None).
+
+    Logs a message indicating that SIGTERM was received and then exits the program with status code 0.
+    """
     logger.info("SIGTERM received. Performing cleanup...")
     sys.exit(0)
 
@@ -31,6 +40,15 @@ signal.signal(signal.SIGTERM, graceful_exit)
 
 
 class BackgroundRunner:
+    """
+    A class to handle background running tasks.
+
+    Methods
+    -------
+    run_main():
+        Continuously checks for running jobs and shuts down the server if no jobs are found.
+    """
+
     async def run_main(self):
         while True:
             running_jobs = get_running_jobs(DB)
@@ -45,6 +63,21 @@ runner = BackgroundRunner()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Manages the lifespan of the FastAPI application.
+
+    This function is responsible for starting the training process and
+    managing a background task runner. It logs the process ID of the
+    training job, adds the job to the database, and ensures the background
+    task is properly cancelled when the application shuts down.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Yields:
+        None: This function is a generator that yields control back to the
+        FastAPI application lifecycle.
+    """
     process_pid = run_training(params=PARAMS, task_id=TASK_ID)
     logger.info(f"Started training with PID {process_pid}")
     DB.add_job(process_pid)
