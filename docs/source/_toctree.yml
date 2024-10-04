@@ -27,8 +27,8 @@
 - sections:
   - local: tasks/llm_finetuning
     title: LLM Finetuning
-  - local: tasks/text_classification
-    title: Text Classification
+  - local: tasks/text_classification_regression
+    title: Text Classification/Regression
   - local: tasks/extractive_qa
     title: Extractive QA
   - local: tasks/sentence_transformer

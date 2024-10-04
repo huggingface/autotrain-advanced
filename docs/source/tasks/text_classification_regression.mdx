@@ -1,18 +1,21 @@
-# Text Classification
+# Text Classification & Regression
 
-Training a text classification model with AutoTrain is super-easy! Get your data ready in
+Training a text classification/regression model with AutoTrain is super-easy! Get your data ready in
 proper format and then with just a few clicks, your state-of-the-art model will be ready to
 be used in production.
 
 Config file task names:
-- `text_classification``
+- `text_classification`
 - `text-classification`
+- `text_regression`
+- `text-regression`
 
-# Data Format
+## Data Format
 
-Text classification supports datasets in both CSV and JSONL formats.
+Text classification/regression supports datasets in both CSV and JSONL formats.
 
-## CSV Format
+### CSV Format
+
 Let's train a model for classifying the sentiment of a movie review. The data should be
 in the following CSV format:
 
@@ -29,8 +32,18 @@ As you can see, we have two columns in the CSV file. One column is the text and 
 is the label. The label can be any string. In this example, we have two labels: `positive`
 and `negative`. You can have as many labels as you want.
 
+And if you would like to train a model for scoring a movie review on a scale of 1-5. The data can be as follows:
 
-## JSONL Format
+```csv
+text,target
+"this movie is great",4.9
+"this movie is bad",1.5
+.
+.
+.
+```
+
+### JSONL Format
 Instead of CSV you can also use JSONL format. The JSONL format should be as follows:
 
 ```json
@@ -41,21 +54,27 @@ Instead of CSV you can also use JSONL format. The JSONL format should be as foll
 .
 ```
 
-## Columns
+and for regression:
+
+```json
+{"text": "this movie is great", "target": 4.9}
+{"text": "this movie is bad", "target": 1.5}
+
+### Column Mapping / Names
 
 Your CSV dataset must have two columns: `text` and `target`.
 If your column names are different than `text` and `target`, you can map the dataset column to AutoTrain column names.
 
-# Training
+## Training
 
-## Local Training
+### Local Training
 
-To train a text classification model locally, you can use the `autotrain --config config.yaml` command.
+To train a text classification/regression model locally, you can use the `autotrain --config config.yaml` command.
 
 Here is an example of a `config.yaml` file for training a text classification model:
 
 ```yaml
-task: text_classification
+task: text_classification # or text_regression
 base_model: google-bert/bert-base-uncased
 project_name: autotrain-bert-imdb-finetuned
 log: tensorboard
@@ -109,7 +128,9 @@ To train the model, run the following command:
 $ autotrain --config config.yaml
 ```
 
-## Training on Hugging Face Spaces
+You can find example config files for text classification and regression in the [here](https://github.com/huggingface/autotrain-advanced/tree/main/configs/text_classification) and [here](https://github.com/huggingface/autotrain-advanced/tree/main/configs/text_regression) respectively.
+
+### Training on Hugging Face Spaces
 
 The parameters for training on Hugging Face Spaces are the same as for local training. 
 If you are using your own dataset, select "Local" as dataset source and upload your dataset.
@@ -117,6 +138,10 @@ In the following screenshot, we are training a text classification model using t
 
 ![AutoTrain Text Classification on Hugging Face Spaces](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/autotrain_text_classification.png)
 
-# Parameters
+For text regression, all you need to do is select "Text Regression" as the task and everything else remains the same (except the data, of course).
+
+## Training Parameters
+
+Training parameters for text classification and regression are the same.
 
 [[autodoc]] trainers.text_classification.params.TextClassificationParams
