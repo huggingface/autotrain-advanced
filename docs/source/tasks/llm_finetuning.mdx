@@ -43,7 +43,31 @@ To train a chatbot, your data will have `content` and `role`. Some models suppor
 Here is an example of a chatbot dataset (single sample):
 
 ```
-[ { "content": "Help write a letter of 100 -200 words to my future self for Kyra, reflecting on her goals and aspirations.", "role": "user" }, { "content": "Dear Future Self,\n\nI hope you're happy and proud of what you've achieved. As I write this, I'm excited to think about our goals and how far you've come. One goal was to be a machine learning engineer. I hope you've worked hard and become skilled in this field. Keep learning and innovating. Traveling was important to us. I hope you've seen different places and enjoyed the beauty of our world. Remember the memories and lessons. Starting a family mattered to us. If you have kids, treasure every moment. Be patient, loving, and grateful for your family.\n\nTake care of yourself. Rest, reflect, and cherish the time you spend with loved ones. Remember your dreams and celebrate what you've achieved. Your determination brought you here. I'm excited to see the person you've become, the impact you've made, and the love and joy in your life. Embrace opportunities and keep dreaming big.\n\nWith love,\nKyra", "role": "assistant" } ]
+[{'content': 'Help write a letter of 100 -200 words to my future self for '
+             'Kyra, reflecting on her goals and aspirations.',
+  'role': 'user'},
+ {'content': 'Dear Future Self,\n'
+             '\n'
+             "I hope you're happy and proud of what you've achieved. As I "
+             "write this, I'm excited to think about our goals and how far "
+             "you've come. One goal was to be a machine learning engineer. I "
+             "hope you've worked hard and become skilled in this field. Keep "
+             'learning and innovating. Traveling was important to us. I hope '
+             "you've seen different places and enjoyed the beauty of our "
+             'world. Remember the memories and lessons. Starting a family '
+             'mattered to us. If you have kids, treasure every moment. Be '
+             'patient, loving, and grateful for your family.\n'
+             '\n'
+             'Take care of yourself. Rest, reflect, and cherish the time you '
+             'spend with loved ones. Remember your dreams and celebrate what '
+             "you've achieved. Your determination brought you here. I'm "
+             "excited to see the person you've become, the impact you've made, "
+             'and the love and joy in your life. Embrace opportunities and '
+             'keep dreaming big.\n'
+             '\n'
+             'With love,\n'
+             'Kyra',
+  'role': 'assistant'}]
 ```
 
 As you can see, the data has `content` and `role` columns. The `role` column can be `user` or `assistant` or `system`.
@@ -77,13 +101,11 @@ If you dont want to format the data using `--chat-template`, you can format the 
 
 A sample multi-line dataset is shown below:
 
-```
-| text                                                          |
-|---------------------------------------------------------------|
-| <|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nhello<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nhi nice to meet you<|eot_id|> |
-| <|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nhow are you<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nI am fine<|eot_id|> |
-| <|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhat is your name?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nMy name is Mary<|eot_id|> |
-| <|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhich is the best programming language?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nPython<|eot_id|> |
+```json
+[{"text": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nhello<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nhi nice to meet you<|eot_id|>"}]
+[{"text": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nhow are you<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nI am fine<|eot_id|>"}]
+[{"text": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhat is your name?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nMy name is Mary<|eot_id|>"}]
+[{"text": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 03 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhich is the best programming language?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\nPython<|eot_id|>"}]
 .
 .
 .
@@ -118,3 +140,80 @@ Chat models can be trained using the following trainers:
 The only difference between the data format for reward trainer and DPO/ORPO trainer is that the reward trainer requires only `text` and `rejected_text` columns, while the DPO/ORPO trainer requires an additional `prompt` column.
 
 
+## Training
+
+### Local Training
+
+Locally the training can be performed by using `autotrain --config config.yaml` command. The `config.yaml` file should contain the following parameters:
+
+```yaml
+task: llm-orpo
+base_model: meta-llama/Meta-Llama-3-8B-Instruct
+project_name: autotrain-llama3-8b-orpo
+log: tensorboard
+backend: local
+
+data:
+  path: argilla/distilabel-capybara-dpo-7k-binarized
+  train_split: train
+  valid_split: null
+  chat_template: chatml
+  column_mapping:
+    text_column: chosen
+    rejected_text_column: rejected
+    prompt_text_column: prompt
+
+params:
+  block_size: 1024
+  model_max_length: 8192
+  max_prompt_length: 512
+  epochs: 3
+  batch_size: 2
+  lr: 3e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
+  padding: right
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 4
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
+```
+
+In the above config file, we are training a model using the ORPO trainer. 
+The model is trained on the `meta-llama/Meta-Llama-3-8B-Instruct` model. 
+The data is `argilla/distilabel-capybara-dpo-7k-binarized` dataset. The `chat_template` parameter is set to `chatml`. 
+The `column_mapping` parameter is used to map the columns in the dataset to the required columns for the ORPO trainer. 
+The `params` section contains the training parameters such as `block_size`, `model_max_length`, `epochs`, `batch_size`, `lr`, `peft`, `quantization`, `target_modules`, `padding`, `optimizer`, `scheduler`, `gradient_accumulation`, and `mixed_precision`. 
+The `hub` section contains the username and token for the Hugging Face account and the `push_to_hub` parameter is set to `true` to push the trained model to the Hugging Face Hub.
+
+If you have training file locally, you can change data part to:
+
+```yaml
+data:
+  path: path/to/training/file
+  train_split: train # name of the training file
+  valid_split: null
+  chat_template: chatml
+  column_mapping:
+    text_column: chosen
+    rejected_text_column: rejected
+    prompt_text_column: prompt
+```
+
+The above assumes you have `train.csv` or `train.jsonl` in the `path/to/training/file` directory and you will be applying `chatml` template to the data.
+
+### Training in Hugging Face Spaces
+
+If you are training in Hugging Face Spaces, everything is the same as local training:
+
+![llm-finetuning](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/llm_orpo_example.png)
+
+In the UI, you need to make sure you select the right model, the dataset and the splits. Special care should be taken for `column_mapping`.
+
+Once you are happy with the parameters, you can click on the `Start Training` button to start the training process.
