@@ -4,8 +4,15 @@ Training a text classification model with AutoTrain is super-easy! Get your data
 proper format and then with just a few clicks, your state-of-the-art model will be ready to
 be used in production.
 
-## Data Format
+Config file task names:
+- `text_classification``
+- `text-classification`
 
+# Data Format
+
+Text classification supports datasets in both CSV and JSONL formats.
+
+## CSV Format
 Let's train a model for classifying the sentiment of a movie review. The data should be
 in the following CSV format:
 
@@ -22,25 +29,8 @@ As you can see, we have two columns in the CSV file. One column is the text and 
 is the label. The label can be any string. In this example, we have two labels: `positive`
 and `negative`. You can have as many labels as you want.
 
-If your CSV is huge, you can divide it into multiple CSV files and upload them separately.
-Please make sure that the column names are the same in all CSV files.
 
-One way to divide the CSV file using pandas is as follows:
-
-```python
-import pandas as pd
-
-# Set the chunk size
-chunk_size = 1000
-i = 1
-
-# Open the CSV file and read it in chunks
-for chunk in pd.read_csv('example.csv', chunksize=chunk_size):
-    # Save each chunk to a new file
-    chunk.to_csv(f'chunk_{i}.csv', index=False)
-    i += 1
-```
-
+## JSONL Format
 Instead of CSV you can also use JSONL format. The JSONL format should be as follows:
 
 ```json
@@ -54,3 +44,79 @@ Instead of CSV you can also use JSONL format. The JSONL format should be as foll
 ## Columns
 
 Your CSV dataset must have two columns: `text` and `target`.
+If your column names are different than `text` and `target`, you can map the dataset column to AutoTrain column names.
+
+# Training
+
+## Local Training
+
+To train a text classification model locally, you can use the `autotrain --config config.yaml` command.
+
+Here is an example of a `config.yaml` file for training a text classification model:
+
+```yaml
+task: text_classification
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-imdb-finetuned
+log: tensorboard
+backend: local
+
+data:
+  path: stanfordnlp/imdb
+  train_split: train
+  valid_split: test
+  column_mapping:
+    text_column: text
+    target_column: label
+
+params:
+  max_seq_length: 512
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
+```
+
+In this example, we are training a text classification model using the `google-bert/bert-base-uncased` model on the IMDB dataset. 
+We are using the `stanfordnlp/imdb` dataset, which is already available on Hugging Face Hub. 
+We are training the model for 3 epochs with a batch size of 4 and a learning rate of `2e-5`. 
+We are using the `adamw_torch` optimizer and the `linear` scheduler. 
+We are also using mixed precision training with a gradient accumulation of 1.
+
+If you want to use a local CSV/JSONL dataset, you can change the `data` section to:
+
+```yaml
+data:
+  path: data/ # this must be the path to the directory containing the train and valid files
+  train_split: train # this must be either train.csv or train.json
+  valid_split: valid # this must be either valid.csv or valid.json
+  column_mapping:
+    text_column: text # this must be the name of the column containing the text
+    target_column: label # this must be the name of the column containing the target
+```
+
+To train the model, run the following command:
+
+```bash
+$ autotrain --config config.yaml
+```
+
+## Training on Hugging Face Spaces
+
+The parameters for training on Hugging Face Spaces are the same as for local training. 
+If you are using your own dataset, select "Local" as dataset source and upload your dataset.
+In the following screenshot, we are training a text classification model using the `google-bert/bert-base-uncased` model on the IMDB dataset.
+
+![AutoTrain Text Classification on Hugging Face Spaces](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/autotrain_text_classification.png)
+
+# Parameters
+
+[[autodoc]] trainers.text_classification.params.TextClassificationParams

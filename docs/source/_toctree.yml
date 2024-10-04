@@ -25,6 +25,8 @@
     title: AutoTrain API
   title: Miscellaneous
 - sections:
+  - local: tasks/llm_finetuning
+    title: LLM Finetuning
   - local: tasks/text_classification
     title: Text Classification
   - local: tasks/extractive_qa
@@ -33,8 +35,6 @@
     title: Sentence Transformer
   - local: tasks/text_regression
     title: Text Regression
-  - local: tasks/llm_finetuning
-    title: LLM Finetuning
   - local: tasks/image_classification
     title: Image Classification
   - local: tasks/image_regression
@@ -51,8 +51,6 @@
     title: Tabular
   title: Tasks
 - sections:
-  - local: params/text_classification_params
-    title: Text Classification & Regression
   - local: params/extractive_qa_params
     title: Extractive QA
   - local: params/image_classification_params

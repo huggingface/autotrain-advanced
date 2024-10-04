@@ -5,13 +5,19 @@ You can use AutoTrain to finetune LLMs for a variety of tasks, such as text gene
 and text summarization. You can also use AutoTrain to finetune LLMs for specific use cases, such as chatbots, 
 question-answering systems, and code generation and even basic fine-tuning tasks like classic text generation.
 
+Config file task names:
+- `llm`: generic trainer
+- `llm-sft`: SFT trainer
+- `llm-reward`: Reward trainer
+- `llm-dpo`: DPO trainer
+- `llm-orpo`: ORPO trainer
 
-## Data Preparation
+# Data Preparation
 
 LLM finetuning accepts data in CSV and JSONL formats. JSONL is the preferred format.
 How data is formatted depends on the task you are training the LLM for.
 
-### Classic Text Generation
+## Classic Text Generation
 
 For text generation, the data should be in the following format:
 
@@ -32,7 +38,7 @@ Compatible trainers:
 - SFT Trainer
 - Generic Trainer
 
-### Chatbot / question-answering / code generation / function calling
+## Chatbot / question-answering / code generation / function calling
 
 For this task, you can use CSV or JSONL data. If you are formatting the data yourself (adding start, end tokens, etc.), you can use CSV or JSONL format.
 If you do not want to format the data yourself and want `--chat-template` parameter to format the data for you, you must use JSONL format.
@@ -140,9 +146,9 @@ Chat models can be trained using the following trainers:
 The only difference between the data format for reward trainer and DPO/ORPO trainer is that the reward trainer requires only `text` and `rejected_text` columns, while the DPO/ORPO trainer requires an additional `prompt` column.
 
 
-## Training
+# Training
 
-### Local Training
+## Local Training
 
 Locally the training can be performed by using `autotrain --config config.yaml` command. The `config.yaml` file should contain the following parameters:
 
@@ -208,7 +214,15 @@ data:
 
 The above assumes you have `train.csv` or `train.jsonl` in the `path/to/training/file` directory and you will be applying `chatml` template to the data.
 
-### Training in Hugging Face Spaces
+You can run the training using the following command:
+
+```bash
+$ autotrain --config config.yaml
+```
+
+More example config files for finetuning different types of lllm and different tasks can be found in the [here](https://github.com/huggingface/autotrain-advanced/tree/main/configs/llm_finetuning).
+
+## Training in Hugging Face Spaces
 
 If you are training in Hugging Face Spaces, everything is the same as local training:
 
@@ -218,13 +232,13 @@ In the UI, you need to make sure you select the right model, the dataset and the
 
 Once you are happy with the parameters, you can click on the `Start Training` button to start the training process.
 
-## Parameters
+# Parameters
 
-# LLM Fine Tuning Parameters
+## LLM Fine Tuning Parameters
 
 [[autodoc]] trainers.clm.params.LLMTrainingParams
 
-## Task specific parameters
+##  Task specific parameters
 
 
 The length parameters used for different trainers can be different. Some require more context than others.
