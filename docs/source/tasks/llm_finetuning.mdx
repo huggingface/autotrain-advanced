@@ -217,3 +217,101 @@ If you are training in Hugging Face Spaces, everything is the same as local trai
 In the UI, you need to make sure you select the right model, the dataset and the splits. Special care should be taken for `column_mapping`.
 
 Once you are happy with the parameters, you can click on the `Start Training` button to start the training process.
+
+## Parameters
+
+# LLM Fine Tuning Parameters
+
+[[autodoc]] trainers.clm.params.LLMTrainingParams
+
+## Task specific parameters
+
+
+The length parameters used for different trainers can be different. Some require more context than others.
+
+- block_size: This is the maximum sequence length or length of one block of text. Setting to -1 determines block size automatically. Default is -1.
+- model_max_length: Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage. Default is 1024
+- max_prompt_length: Specify the maximum length for prompts used in training, particularly relevant for tasks requiring initial contextual input. Used only for `orpo` and `dpo` trainer.
+- max_completion_length: Completion length to use, for orpo: encoder-decoder models only. For dpo, it is the length of the completion text.
+
+**NOTE**:
+    - block size cannot be greater than model_max_length!
+    - max_prompt_length cannot be greater than model_max_length!
+    - max_prompt_length cannot be greater than block_size!
+    - max_completion_length cannot be greater than model_max_length!
+    - max_completion_length cannot be greater than block_size!
+
+**NOTE**: Not following these constraints will result in an error / nan losses.
+
+### Generic Trainer
+
+```
+--add_eos_token, --add-eos-token
+                    Toggle whether to automatically add an End Of Sentence (EOS) token at the end of texts, which can be critical for certain
+                    types of models like language models. Only used for `default` trainer
+--block_size BLOCK_SIZE, --block-size BLOCK_SIZE
+                    Specify the block size for processing sequences. This is maximum sequence length or length of one block of text. Setting to
+                    -1 determines block size automatically. Default is -1.
+--model_max_length MODEL_MAX_LENGTH, --model-max-length MODEL_MAX_LENGTH
+                    Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage.
+                    Default is 1024
+```
+
+### SFT Trainer
+
+```
+--block_size BLOCK_SIZE, --block-size BLOCK_SIZE
+                    Specify the block size for processing sequences. This is maximum sequence length or length of one block of text. Setting to
+                    -1 determines block size automatically. Default is -1.
+--model_max_length MODEL_MAX_LENGTH, --model-max-length MODEL_MAX_LENGTH
+                    Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage.
+                    Default is 1024
+```
+
+### Reward Trainer
+
+```
+--block_size BLOCK_SIZE, --block-size BLOCK_SIZE
+                    Specify the block size for processing sequences. This is maximum sequence length or length of one block of text. Setting to
+                    -1 determines block size automatically. Default is -1.
+--model_max_length MODEL_MAX_LENGTH, --model-max-length MODEL_MAX_LENGTH
+                    Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage.
+                    Default is 1024
+```
+
+### DPO Trainer
+
+```
+--dpo-beta DPO_BETA, --dpo-beta DPO_BETA
+                    Beta for DPO trainer
+
+--model-ref MODEL_REF
+                    Reference model to use for DPO when not using PEFT
+--block_size BLOCK_SIZE, --block-size BLOCK_SIZE
+                    Specify the block size for processing sequences. This is maximum sequence length or length of one block of text. Setting to
+                    -1 determines block size automatically. Default is -1.
+--model_max_length MODEL_MAX_LENGTH, --model-max-length MODEL_MAX_LENGTH
+                    Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage.
+                    Default is 1024
+--max_prompt_length MAX_PROMPT_LENGTH, --max-prompt-length MAX_PROMPT_LENGTH
+                    Specify the maximum length for prompts used in training, particularly relevant for tasks requiring initial contextual input.
+                    Used only for `orpo` trainer.
+--max_completion_length MAX_COMPLETION_LENGTH, --max-completion-length MAX_COMPLETION_LENGTH
+                    Completion length to use, for orpo: encoder-decoder models only
+```
+
+### ORPO Trainer
+
+```
+--block_size BLOCK_SIZE, --block-size BLOCK_SIZE
+                    Specify the block size for processing sequences. This is maximum sequence length or length of one block of text. Setting to
+                    -1 determines block size automatically. Default is -1.
+--model_max_length MODEL_MAX_LENGTH, --model-max-length MODEL_MAX_LENGTH
+                    Set the maximum length for the model to process in a single batch, which can affect both performance and memory usage.
+                    Default is 1024
+--max_prompt_length MAX_PROMPT_LENGTH, --max-prompt-length MAX_PROMPT_LENGTH
+                    Specify the maximum length for prompts used in training, particularly relevant for tasks requiring initial contextual input.
+                    Used only for `orpo` trainer.
+--max_completion_length MAX_COMPLETION_LENGTH, --max-completion-length MAX_COMPLETION_LENGTH
+                    Completion length to use, for orpo: encoder-decoder models only
+```

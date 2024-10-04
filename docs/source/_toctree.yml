@@ -49,14 +49,12 @@
     title: Token Classification
   - local: tasks/tabular
     title: Tabular
-  title: Data Formats
+  title: Tasks
 - sections:
   - local: params/text_classification_params
     title: Text Classification & Regression
   - local: params/extractive_qa_params
     title: Extractive QA
-  - local: params/llm_finetuning_params
-    title: LLM Finetuning
   - local: params/image_classification_params
     title: Image Classification
   - local: params/image_regression_params
