@@ -33,8 +33,6 @@
     title: Extractive QA
   - local: tasks/sentence_transformer
     title: Sentence Transformer
-  - local: tasks/text_regression
-    title: Text Regression
   - local: tasks/image_classification
     title: Image Classification
   - local: tasks/image_regression
