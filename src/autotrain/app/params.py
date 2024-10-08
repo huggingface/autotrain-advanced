@@ -561,6 +561,7 @@ def get_task_params(task, param_type):
                 "max_prompt_length",
                 "max_completion_length",
                 "unsloth",
+                "liger_kernel",
             ]
         elif trainer == "orpo":
             more_hidden_params = [
@@ -568,6 +569,7 @@ def get_task_params(task, param_type):
                 "dpo_beta",
                 "add_eos_token",
                 "unsloth",
+                "liger_kernel",
             ]
         elif trainer == "generic":
             more_hidden_params = [
@@ -580,6 +582,7 @@ def get_task_params(task, param_type):
             more_hidden_params = [
                 "add_eos_token",
                 "unsloth",
+                "liger_kernel",
             ]
         if param_type == "basic":
             more_hidden_params.extend(

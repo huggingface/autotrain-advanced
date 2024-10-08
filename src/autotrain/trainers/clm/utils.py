@@ -740,6 +740,7 @@ def configure_training_args(config, logging_steps):
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
         remove_unused_columns=False,
+        use_liger_kernel=config.liger_kernel
     )
 
     if not config.disable_gradient_checkpointing:
