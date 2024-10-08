@@ -499,6 +499,8 @@ def configure_logging_steps(config, train_data, valid_data):
 
 def configure_training_args(config, logging_steps):
     logger.info("configuring training args")
+    can_use_liger_kernel = is_liger_kernel_available() and config.liger_kernel
+    logger.info(f"Can use liger kernel: {can_use_liger_kernel}")
     training_args = dict(
         output_dir=config.project_name,
         per_device_train_batch_size=config.batch_size,
@@ -522,6 +524,7 @@ def configure_training_args(config, logging_steps):
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
         remove_unused_columns=False,
+        use_liger_kernel=can_use_liger_kernel
     )
 
     if not config.disable_gradient_checkpointing:
@@ -584,9 +587,6 @@ def get_model(config, tokenizer):
     model_type = model_config.model_type
     unsloth_target_modules = None
     can_use_unloth = False
-    can_use_liger_kernel = (
-        is_liger_kernel_available() and config.liger_kernel and model_type in LIGER_KERNELS_MODEL_TYPES
-    )
 
     if config.unsloth and is_unsloth_available() and config.trainer in ("default", "sft"):
         can_use_unloth = True
@@ -596,12 +596,10 @@ def get_model(config, tokenizer):
             unsloth_target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         else:
             unsloth_target_modules = get_target_modules(config)
-        can_use_liger_kernel = False
     else:
         can_use_unloth = False
 
     logger.info(f"Can use unsloth: {can_use_unloth}")
-    logger.info(f"Can use liger kernel: {can_use_liger_kernel}")
 
     if can_use_unloth:
         from unsloth import FastLanguageModel
@@ -654,21 +652,6 @@ def get_model(config, tokenizer):
         use_cache=config.disable_gradient_checkpointing,
     )
 
-    if can_use_liger_kernel:
-        from liger_kernel.transformers import AutoLigerKernelForCausalLM
-
-        dtype = None
-        if config.mixed_precision == "fp16":
-            dtype = torch.float16
-        elif config.mixed_precision == "bf16":
-            dtype = torch.bfloat16
-
-        from_pretrained = partial(AutoLigerKernelForCausalLM.from_pretrained, torch_dtype=dtype)
-
-    else:
-        logger.warning("Liger Kernel not available, continuing without it...")
-        from_pretrained = AutoModelForCausalLM.from_pretrained
-
     logger.info("loading model...")
     if config.peft:
         if config.quantization == "int4":
@@ -683,7 +666,7 @@ def get_model(config, tokenizer):
         else:
             bnb_config = None
 
-        model = from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
@@ -692,7 +675,7 @@ def get_model(config, tokenizer):
             use_flash_attention_2=config.use_flash_attention_2,
         )
     else:
-        model = from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             config.model,
             config=model_config,
             token=config.token,
