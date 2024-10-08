@@ -62,14 +62,3 @@ def is_unsloth_available():
         logger.warning("Unsloth not available, continuing without it")
         logger.warning(e)
         return False
-
-
-def is_liger_kernel_available():
-    try:
-        from liger_kernel.transformers import AutoLigerKernelForCausalLM
-
-        return True
-    except Exception as e:
-        logger.warning("Liger Kernel not available, continuing without it")
-        logger.warning(e)
-        return False

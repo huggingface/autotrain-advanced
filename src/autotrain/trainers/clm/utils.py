@@ -13,7 +13,7 @@ from huggingface_hub import HfApi
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-from autotrain import is_liger_kernel_available, is_unsloth_available, logger
+from autotrain import is_unsloth_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
@@ -39,17 +39,6 @@ DEFAULT_UNK_TOKEN = "</s>"
 TARGET_MODULES = {
     "Salesforce/codegen25-7b-multi": "q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
 }
-
-LIGER_KERNELS_MODEL_TYPES = [
-    "gemma",
-    "gemma2",
-    "llama",
-    "mistral",
-    "mixtral",
-    "qwen2",
-    "qwen2_vl",
-    "phi3",
-]
 
 MODEL_CARD = """
 ---
@@ -499,8 +488,6 @@ def configure_logging_steps(config, train_data, valid_data):
 
 def configure_training_args(config, logging_steps):
     logger.info("configuring training args")
-    can_use_liger_kernel = is_liger_kernel_available() and config.liger_kernel
-    logger.info(f"Can use liger kernel: {can_use_liger_kernel}")
     training_args = dict(
         output_dir=config.project_name,
         per_device_train_batch_size=config.batch_size,
@@ -524,7 +511,7 @@ def configure_training_args(config, logging_steps):
         ddp_find_unused_parameters=False,
         gradient_checkpointing=not config.disable_gradient_checkpointing,
         remove_unused_columns=False,
-        use_liger_kernel=can_use_liger_kernel
+        use_liger_kernel=config.liger_kernel
     )
 
     if not config.disable_gradient_checkpointing:
@@ -600,7 +587,6 @@ def get_model(config, tokenizer):
         can_use_unloth = False
 
     logger.info(f"Can use unsloth: {can_use_unloth}")
-
     if can_use_unloth:
         from unsloth import FastLanguageModel
 
