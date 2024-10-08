@@ -2,6 +2,27 @@ import torch
 
 
 class TextRegressionDataset:
+    """
+    A custom dataset class for text regression tasks for AutoTrain.
+
+    Args:
+        data (list of dict): The dataset containing text and target values.
+        tokenizer (PreTrainedTokenizer): The tokenizer to preprocess the text data.
+        config (object): Configuration object containing dataset parameters.
+
+    Attributes:
+        data (list of dict): The dataset containing text and target values.
+        tokenizer (PreTrainedTokenizer): The tokenizer to preprocess the text data.
+        config (object): Configuration object containing dataset parameters.
+        text_column (str): The column name for text data in the dataset.
+        target_column (str): The column name for target values in the dataset.
+        max_len (int): The maximum sequence length for tokenized inputs.
+
+    Methods:
+        __len__(): Returns the number of samples in the dataset.
+        __getitem__(item): Returns a dictionary containing tokenized inputs and target value for a given index.
+    """
+
     def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer

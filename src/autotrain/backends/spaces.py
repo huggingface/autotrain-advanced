@@ -18,6 +18,21 @@ _DOCKERFILE = _DOCKERFILE.replace("\n", " ").replace("  ", "\n").strip()
 
 
 class SpaceRunner(BaseBackend):
+    """
+    SpaceRunner is a backend class responsible for creating and managing training jobs on Hugging Face Spaces.
+
+    Methods
+    -------
+    _create_readme():
+        Creates a README.md file content for the space.
+
+    _add_secrets(api, space_id):
+        Adds necessary secrets to the space repository.
+
+    create():
+        Creates a new space repository, adds secrets, and uploads necessary files.
+    """
+
     def _create_readme(self):
         _readme = "---\n"
         _readme += f"title: {self.params.project_name}\n"

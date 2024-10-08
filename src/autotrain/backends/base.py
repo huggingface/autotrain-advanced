@@ -62,6 +62,24 @@ AVAILABLE_HARDWARE = {
 
 @dataclass
 class BaseBackend:
+    """
+    BaseBackend class is responsible for initializing and validating backend configurations
+    for various training parameters. It supports multiple types of training parameters
+    including text classification, image classification, LLM training, and more.
+
+    Attributes:
+        params (Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams,
+                      GenericParams, TabularParams, DreamBoothTrainingParams, Seq2SeqParams,
+                      TokenClassificationParams, TextRegressionParams, ObjectDetectionParams,
+                      SentenceTransformersParams, ImageRegressionParams, VLMTrainingParams,
+                      ExtractiveQuestionAnsweringParams]): Training parameters.
+        backend (str): Backend type.
+
+    Methods:
+        __post_init__(): Initializes the backend configuration, validates parameters,
+                         sets task IDs, and prepares environment variables.
+    """
+
     params: Union[
         TextClassificationParams,
         ImageClassificationParams,

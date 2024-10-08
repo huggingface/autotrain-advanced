@@ -33,13 +33,26 @@ widget:
 
 
 def single_column_regression_metrics(pred):
-    raw_predictions, labels = pred
+    """
+    Computes various regression metrics for a single column of predictions.
 
-    # try:
-    #     raw_predictions = [r for preds in raw_predictions for r in preds]
-    # except TypeError as err:
-    #     if "numpy.float32" not in str(err):
-    #         raise Exception(err)
+    Args:
+        pred (tuple): A tuple containing raw predictions and true labels.
+                      The first element is an array-like of raw predictions,
+                      and the second element is an array-like of true labels.
+
+    Returns:
+        dict: A dictionary containing the computed regression metrics:
+            - "mse": Mean Squared Error
+            - "mae": Mean Absolute Error
+            - "r2": R-squared Score
+            - "rmse": Root Mean Squared Error
+            - "explained_variance": Explained Variance Score
+
+    Notes:
+        If any metric computation fails, the function will return a default value of -999 for that metric.
+    """
+    raw_predictions, labels = pred
 
     def safe_compute(metric_func, default=-999):
         try:
@@ -63,6 +76,20 @@ def single_column_regression_metrics(pred):
 
 
 def create_model_card(config, trainer):
+    """
+    Generates a model card string based on the provided configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing the following attributes:
+            - valid_split (optional): Validation split to evaluate the model.
+            - data_path (str): Path to the dataset.
+            - project_name (str): Name of the project.
+            - model (str): Path or identifier of the model.
+        trainer (object): Trainer object used to evaluate the model.
+
+    Returns:
+        str: A formatted model card string containing dataset information, validation metrics, and base model details.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         eval_scores = [

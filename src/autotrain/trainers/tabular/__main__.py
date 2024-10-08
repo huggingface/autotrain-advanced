@@ -26,6 +26,24 @@ def parse_args():
 
 
 def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, task, preprocessor):
+    """
+    Optimize the model based on the given trial and parameters.
+
+    Parameters:
+    trial (dict or optuna.trial.Trial): The trial object or dictionary containing hyperparameters.
+    model_name (str): The name of the model to be used (e.g., "xgboost").
+    xtrain (pd.DataFrame or np.ndarray): Training features.
+    xvalid (pd.DataFrame or np.ndarray): Validation features.
+    ytrain (pd.Series or np.ndarray): Training labels.
+    yvalid (pd.Series or np.ndarray): Validation labels.
+    eval_metric (str): The evaluation metric to be used for optimization.
+    task (str): The type of task (e.g., "binary_classification", "multi_class_classification", "single_column_regression").
+    preprocessor (object): The preprocessor object to be applied to the data.
+
+    Returns:
+    float or tuple: If trial is a dictionary, returns a tuple containing the models, preprocessor, and metric dictionary.
+                    Otherwise, returns the loss value based on the evaluation metric.
+    """
     if isinstance(trial, dict):
         params = trial
     else:
@@ -127,6 +145,29 @@ def optimize(trial, model_name, xtrain, xvalid, ytrain, yvalid, eval_metric, tas
 
 @monitor
 def train(config):
+    """
+    Train a tabular model based on the provided configuration.
+
+    Args:
+        config (dict or TabularParams): Configuration parameters for training. If a dictionary is provided, it will be converted to a TabularParams object.
+
+    Raises:
+        Exception: If `valid_data` is None, indicating that a valid split for tabular training was not provided.
+
+    The function performs the following steps:
+    1. Loads the training and validation datasets from disk or a specified data path.
+    2. Identifies and processes categorical and numerical columns.
+    3. Encodes target columns for classification tasks.
+    4. Constructs preprocessing pipelines for numerical and categorical data.
+    5. Determines the sub-task (e.g., binary classification, multi-class classification, regression).
+    6. Optimizes the model using Optuna for hyperparameter tuning.
+    7. Saves the best model and target encoders to disk.
+    8. Creates and saves a model card.
+    9. Optionally pushes the model to the Hugging Face Hub.
+
+    Note:
+        The function expects the configuration to contain various parameters such as `data_path`, `train_split`, `valid_split`, `categorical_columns`, `numerical_columns`, `model`, `task`, `num_trials`, `time_limit`, `project_name`, `token`, `username`, and `push_to_hub`.
+    """
     if isinstance(config, dict):
         config = TabularParams(**config)
 

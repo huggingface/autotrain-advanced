@@ -1,8 +1,8 @@
 import torch
 from peft import LoraConfig
-from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
+from transformers import AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers.trainer_callback import PrinterCallback
-from trl import DPOTrainer
+from trl import DPOConfig, DPOTrainer
 
 from autotrain import logger
 from autotrain.trainers.clm import utils
@@ -22,7 +22,11 @@ def train(config):
     training_args = utils.configure_training_args(config, logging_steps)
     config = utils.configure_block_size(config, tokenizer)
 
-    args = TrainingArguments(**training_args)
+    training_args["max_length"] = config.block_size
+    training_args["max_prompt_length"] = config.max_prompt_length
+    training_args["max_target_length"] = config.max_completion_length
+    training_args["beta"] = config.dpo_beta
+    args = DPOConfig(**training_args)
 
     logger.info("loading model config...")
     model_config = AutoConfig.from_pretrained(
@@ -103,13 +107,9 @@ def train(config):
     trainer = DPOTrainer(
         **trainer_args,
         ref_model=model_ref,
-        beta=config.dpo_beta,
         train_dataset=train_data,
         eval_dataset=valid_data if config.valid_split is not None else None,
         tokenizer=tokenizer,
-        max_length=config.block_size,
-        max_prompt_length=config.max_prompt_length,
-        max_target_length=config.max_completion_length,
         peft_config=peft_config if config.peft else None,
     )
 

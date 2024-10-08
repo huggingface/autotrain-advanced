@@ -18,6 +18,34 @@ NGC_TEAM = os.environ.get("NGC_TEAM")
 
 
 class NGCRunner(BaseBackend):
+    """
+    NGCRunner class for managing NGC backend trainings.
+
+    Methods:
+        _user_authentication_ngc():
+            Authenticates the user with NGC and retrieves an authentication token.
+            Returns:
+                str: The authentication token.
+            Raises:
+                Exception: If an HTTP error or connection error occurs during the request.
+
+        _create_ngc_job(token, url, payload):
+            Creates a job on NGC using the provided token, URL, and payload.
+            Args:
+                token (str): The authentication token.
+                url (str): The URL for the NGC API endpoint.
+                payload (dict): The payload containing job details.
+            Returns:
+                str: The ID of the created job.
+            Raises:
+                Exception: If an HTTP error or connection error occurs during the request.
+
+        create():
+            Creates a job on NGC with the specified parameters.
+            Returns:
+                str: The ID of the created job.
+    """
+
     def _user_authentication_ngc(self):
         logger.info("Authenticating NGC user...")
         scope = "group/ngc"

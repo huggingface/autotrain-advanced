@@ -2,6 +2,30 @@ import numpy as np
 
 
 class ObjectDetectionDataset:
+    """
+    A dataset class for object detection tasks.
+
+    Args:
+        data (list): A list of data entries where each entry is a dictionary containing image and object information.
+        transforms (callable): A function or transform to apply to the images and bounding boxes.
+        image_processor (callable): A function or processor to convert images and annotations into the desired format.
+        config (object): A configuration object containing column names for images and objects.
+
+    Attributes:
+        data (list): The dataset containing image and object information.
+        transforms (callable): The transform function to apply to the images and bounding boxes.
+        image_processor (callable): The processor to convert images and annotations into the desired format.
+        config (object): The configuration object with column names for images and objects.
+
+    Methods:
+        __len__(): Returns the number of items in the dataset.
+        __getitem__(item): Retrieves and processes the image and annotations for the given index.
+
+    Example:
+        dataset = ObjectDetectionDataset(data, transforms, image_processor, config)
+        image_data = dataset[0]
+    """
+
     def __init__(self, data, transforms, image_processor, config):
         self.data = data
         self.transforms = transforms

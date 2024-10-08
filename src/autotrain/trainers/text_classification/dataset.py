@@ -2,6 +2,26 @@ import torch
 
 
 class TextClassificationDataset:
+    """
+    A dataset class for text classification tasks.
+
+    Args:
+        data (list): The dataset containing text and target columns.
+        tokenizer (PreTrainedTokenizer): The tokenizer to preprocess the text data.
+        config (object): Configuration object containing dataset parameters.
+
+    Attributes:
+        data (list): The dataset containing text and target columns.
+        tokenizer (PreTrainedTokenizer): The tokenizer to preprocess the text data.
+        config (object): Configuration object containing dataset parameters.
+        text_column (str): The name of the column containing text data.
+        target_column (str): The name of the column containing target labels.
+
+    Methods:
+        __len__(): Returns the number of samples in the dataset.
+        __getitem__(item): Returns a dictionary containing tokenized input ids, attention mask, token type ids (if available), and target labels for the given item index.
+    """
+
     def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer

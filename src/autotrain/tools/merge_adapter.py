@@ -9,6 +9,23 @@ from autotrain.trainers.common import ALLOW_REMOTE_CODE
 def merge_llm_adapter(
     base_model_path, adapter_path, token, output_folder=None, pad_to_multiple_of=None, push_to_hub=False
 ):
+    """
+    Merges a language model adapter into a base model and optionally saves or pushes the merged model.
+
+    Args:
+        base_model_path (str): Path to the base model.
+        adapter_path (str): Path to the adapter model.
+        token (str): Authentication token for accessing the models.
+        output_folder (str, optional): Directory to save the merged model. Defaults to None.
+        pad_to_multiple_of (int, optional): If specified, pad the token embeddings to a multiple of this value. Defaults to None.
+        push_to_hub (bool, optional): If True, push the merged model to the Hugging Face Hub. Defaults to False.
+
+    Raises:
+        ValueError: If neither `output_folder` nor `push_to_hub` is specified.
+
+    Returns:
+        None
+    """
     if output_folder is None and push_to_hub is False:
         raise ValueError("You must specify either --output_folder or --push_to_hub")
 

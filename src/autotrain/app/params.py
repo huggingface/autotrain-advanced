@@ -154,6 +154,42 @@ PARAMS["extractive-qa"] = ExtractiveQuestionAnsweringParams(
 
 @dataclass
 class AppParams:
+    """
+    AppParams class is responsible for managing and processing parameters for various machine learning tasks.
+
+    Attributes:
+        job_params_json (str): JSON string containing job parameters.
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (str): Username of the project owner.
+        task (str): Type of task to be performed.
+        data_path (str): Path to the dataset.
+        base_model (str): Base model to be used.
+        column_mapping (dict): Mapping of columns for the dataset.
+        train_split (Optional[str]): Name of the training split. Default is None.
+        valid_split (Optional[str]): Name of the validation split. Default is None.
+        using_hub_dataset (Optional[bool]): Flag indicating if a hub dataset is used. Default is False.
+        api (Optional[bool]): Flag indicating if API is used. Default is False.
+
+    Methods:
+        __post_init__(): Validates the parameters after initialization.
+        munge(): Processes the parameters based on the task type.
+        _munge_common_params(): Processes common parameters for all tasks.
+        _munge_params_sent_transformers(): Processes parameters for sentence transformers task.
+        _munge_params_llm(): Processes parameters for large language model task.
+        _munge_params_vlm(): Processes parameters for vision-language model task.
+        _munge_params_text_clf(): Processes parameters for text classification task.
+        _munge_params_extractive_qa(): Processes parameters for extractive question answering task.
+        _munge_params_text_reg(): Processes parameters for text regression task.
+        _munge_params_token_clf(): Processes parameters for token classification task.
+        _munge_params_seq2seq(): Processes parameters for sequence-to-sequence task.
+        _munge_params_img_clf(): Processes parameters for image classification task.
+        _munge_params_img_reg(): Processes parameters for image regression task.
+        _munge_params_img_obj_det(): Processes parameters for image object detection task.
+        _munge_params_tabular(): Processes parameters for tabular data task.
+        _munge_params_dreambooth(): Processes parameters for DreamBooth training task.
+    """
+
     job_params_json: str
     token: str
     project_name: str
@@ -472,6 +508,21 @@ class AppParams:
 
 
 def get_task_params(task, param_type):
+    """
+    Retrieve task-specific parameters while filtering out hidden parameters based on the task and parameter type.
+
+    Args:
+        task (str): The task identifier, which can include prefixes like "llm", "st:", "vlm:", etc.
+        param_type (str): The type of parameters to retrieve, typically "basic" or other types.
+
+    Returns:
+        dict: A dictionary of task-specific parameters with hidden parameters filtered out.
+
+    Notes:
+        - The function handles various task prefixes and adjusts the task and trainer variables accordingly.
+        - Hidden parameters are filtered out based on the task and parameter type.
+        - Additional hidden parameters are defined for specific tasks and trainers.
+    """
     if task.startswith("llm"):
         trainer = task.split(":")[1].lower()
         task = task.split(":")[0].lower()

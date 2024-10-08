@@ -38,15 +38,22 @@ SINGLE_GPU_COMMAND = [
 
 def get_accelerate_command(num_gpus, gradient_accumulation_steps=1, distributed_backend=None):
     """
-    Returns the accelerate command based on the number of GPUs available.
+    Generates the appropriate command to launch a training job using the `accelerate` library based on the number of GPUs
+    and the specified distributed backend.
 
     Args:
-        num_gpus: Number of GPUs available.
-        gradient_accumulation_steps: Number of gradient accumulation steps.
-        distributed_backend: Distributed backend to use: ddp, deepspeed, None.
+        num_gpus (int): The number of GPUs available for training. If 0, training will be forced on CPU.
+        gradient_accumulation_steps (int, optional): The number of gradient accumulation steps. Defaults to 1.
+        distributed_backend (str, optional): The distributed backend to use. Can be "ddp" (Distributed Data Parallel),
+                                             "deepspeed", or None. Defaults to None.
 
     Returns:
-        List: Accelerate command.
+        list or str: The command to be executed as a list of strings. If no GPU is found, returns a CPU command string.
+                     If a single GPU is found, returns a single GPU command string. Otherwise, returns a list of
+                     command arguments for multi-GPU or DeepSpeed training.
+
+    Raises:
+        ValueError: If an unsupported distributed backend is specified.
     """
     if num_gpus == 0:
         logger.warning("No GPU found. Forcing training on CPU. This will be super slow!")
@@ -91,15 +98,30 @@ def get_accelerate_command(num_gpus, gradient_accumulation_steps=1, distributed_
 
 def launch_command(params):
     """
-    Launches training command based on the given parameters.
+    Launches the appropriate training command based on the type of training parameters provided.
 
     Args:
-        params: An instance of a parameter class (LLMTrainingParams, DreamBoothTrainingParams, GenericParams, TabularParams,
-                TextClassificationParams, TextRegressionParams, TokenClassificationParams, ImageClassificationParams,
-                ObjectDetectionParams, Seq2SeqParams).
+        params (object): An instance of one of the training parameter classes. This can be one of the following:
+            - LLMTrainingParams
+            - DreamBoothTrainingParams
+            - GenericParams
+            - TabularParams
+            - TextClassificationParams
+            - TextRegressionParams
+            - SentenceTransformersParams
+            - ExtractiveQuestionAnsweringParams
+            - TokenClassificationParams
+            - ImageClassificationParams
+            - ObjectDetectionParams
+            - ImageRegressionParams
+            - Seq2SeqParams
+            - VLMTrainingParams
 
     Returns:
-        None
+        list: A list of command line arguments to be executed for training.
+
+    Raises:
+        ValueError: If the provided params type is unsupported.
     """
 
     params.project_name = shlex.split(params.project_name)[0]

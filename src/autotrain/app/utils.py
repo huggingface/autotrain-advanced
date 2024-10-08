@@ -17,6 +17,20 @@ signal.signal(signal.SIGTERM, graceful_exit)
 
 
 def get_running_jobs(db):
+    """
+    Retrieves and manages running jobs from the database.
+
+    This function fetches the list of running jobs from the provided database object.
+    For each running job, it checks the process status. If the status is "completed",
+    "error", or "zombie", it attempts to kill the process and remove the job from the
+    database. After processing, it fetches and returns the updated list of running jobs.
+
+    Args:
+        db: A database object that provides methods to get and delete running jobs.
+
+    Returns:
+        list: An updated list of running jobs from the database.
+    """
     running_jobs = db.get_running_jobs()
     if running_jobs:
         for _pid in running_jobs:
@@ -36,6 +50,18 @@ def get_running_jobs(db):
 
 
 def get_process_status(pid):
+    """
+    Retrieve the status of a process given its PID.
+
+    Args:
+        pid (int): The process ID of the process to check.
+
+    Returns:
+        str: The status of the process. If the process does not exist, returns "Completed".
+
+    Raises:
+        psutil.NoSuchProcess: If no process with the given PID is found.
+    """
     try:
         process = psutil.Process(pid)
         proc_status = process.status()
@@ -46,7 +72,19 @@ def get_process_status(pid):
 
 
 def kill_process_by_pid(pid):
-    """Kill process by PID."""
+    """
+    Kill a process by its PID (Process ID).
+
+    This function attempts to terminate a process with the given PID using the SIGTERM signal.
+    It logs the outcome of the operation, whether successful or not.
+
+    Args:
+        pid (int): The Process ID of the process to be terminated.
+
+    Raises:
+        ProcessLookupError: If no process with the given PID is found.
+        Exception: If an error occurs while attempting to send the SIGTERM signal.
+    """
     try:
         os.kill(pid, signal.SIGTERM)
         logger.info(f"Sent SIGTERM to process with PID {pid}")
@@ -57,6 +95,22 @@ def kill_process_by_pid(pid):
 
 
 def token_verification(token):
+    """
+    Verifies the provided token with the Hugging Face API and retrieves user information.
+
+    Args:
+        token (str): The token to be verified. It can be either an OAuth token (starting with "hf_oauth")
+                     or a regular token (starting with "hf_").
+
+    Returns:
+        dict: A dictionary containing user information with the following keys:
+            - id (str): The user ID.
+            - name (str): The user's preferred username.
+            - orgs (list): A list of organizations the user belongs to.
+
+    Raises:
+        Exception: If the Hugging Face Hub is unreachable or the token is invalid.
+    """
     if token.startswith("hf_oauth"):
         _api_url = config.HF_API + "/oauth/userinfo"
         _err_msg = "/oauth/userinfo"
@@ -99,6 +153,18 @@ def token_verification(token):
 
 
 def get_user_and_orgs(user_token):
+    """
+    Retrieve the username and organizations associated with the provided user token.
+
+    Args:
+        user_token (str): The token used to authenticate the user. Must be a valid write token.
+
+    Returns:
+        list: A list containing the username followed by the organizations the user belongs to.
+
+    Raises:
+        Exception: If the user token is None or an empty string.
+    """
     if user_token is None:
         raise Exception("Please login with a write token.")
 
