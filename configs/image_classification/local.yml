@@ -10,7 +10,7 @@ data:
   valid_split: null
   column_mapping:
     image_column: image
-    target_column: labels
+    target_column: label
 
 params:
   epochs: 2

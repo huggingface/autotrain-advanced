@@ -33,10 +33,8 @@
     title: Extractive QA
   - local: tasks/sentence_transformer
     title: Sentence Transformer
-  - local: tasks/image_classification
-    title: Image Classification
-  - local: tasks/image_regression
-    title: Image Scoring/Regression
+  - local: tasks/image_classification_regression
+    title: Image Classification / Regression
   - local: tasks/object_detection
     title: Object Detection
   - local: tasks/dreambooth
@@ -51,10 +49,6 @@
 - sections:
   - local: params/extractive_qa_params
     title: Extractive QA
-  - local: params/image_classification_params
-    title: Image Classification
-  - local: params/image_regression_params
-    title: Image Scoring/Regression
   - local: params/object_detection_params
     title: Object Detection
   - local: params/dreambooth_params
