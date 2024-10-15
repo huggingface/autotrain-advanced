@@ -10,20 +10,12 @@
   title: Getting Started
 - sections:
   - local: quickstart_spaces
-    title: Quickstart
-  title: AutoTrain on Hugging Face Spaces
-- sections:
+    title: Train on Spaces
   - local: quickstart
-    title: Quickstart
+    title: Train Locally
   - local: config
-    title: Configurations
-  title: Use AutoTrain Locally
-- sections:
-  - local: col_map
-    title: Understanding Column Mapping
-  - local: autotrain_api
-    title: AutoTrain API
-  title: Miscellaneous
+    title: Config File
+  title: Quickstart
 - sections:
   - local: tasks/llm_finetuning
     title: LLM Finetuning
@@ -47,16 +39,8 @@
     title: Tabular
   title: Tasks
 - sections:
-  - local: params/extractive_qa_params
-    title: Extractive QA
-  - local: params/object_detection_params
-    title: Object Detection
-  - local: params/dreambooth_params
-    title: DreamBooth
-  - local: params/seq2seq_params
-    title: Seq2Seq
-  - local: params/token_classification_params
-    title: Token Classification
-  - local: params/tabular_params
-    title: Tabular
-  title: Parameters
+  - local: col_map
+    title: Understanding Column Mapping
+  - local: autotrain_api
+    title: AutoTrain API
+  title: Miscellaneous

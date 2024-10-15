@@ -29,3 +29,58 @@ Example dataset from Hugging Face Hub: [lhoestq/squad](https://huggingface.co/da
 
 
 P.S. You can use both squad and squad v2 data format with correct column mappings.
+
+## Training Locally
+
+To train an Extractive QA model locally, you need a config file:
+
+```yaml
+task: extractive-qa
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-ex-qa1
+log: tensorboard
+backend: local
+
+data:
+  path: lhoestq/squad
+  train_split: train
+  valid_split: validation
+  column_mapping:
+    text_column: context
+    question_column: question
+    answer_column: answers
+
+params:
+  max_seq_length: 512
+  max_doc_stride: 128
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
+```
+
+To train the model, run the following command:
+
+```bash
+$ autotrain --config config.yaml
+```
+
+Here, we are training a BERT model on the SQuAD dataset using the Extractive QA task. The model is trained for 3 epochs with a batch size of 4 and a learning rate of 2e-5. The training process is logged using TensorBoard. The model is trained locally and pushed to the Hugging Face Hub after training.
+
+## Training on the Hugging Face Spaces
+
+![AutoTrain Extractive Question Answering on Hugging Face Spaces](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/ext_qa.png)
+
+As always, pay special attention to column mapping.
+
+## Parameters
+
+[[autodoc]] trainers.extractive_question_answering.params.ExtractiveQuestionAnsweringParams
