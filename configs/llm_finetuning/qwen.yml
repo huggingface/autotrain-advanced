@@ -1,0 +1,34 @@
+task: llm-sft
+base_model: Qwen/Qwen2.5-Coder-7B-Instruct
+project_name: autotrain-qwen-finetune
+log: tensorboard
+backend: local
+
+data:
+  path: HuggingFaceH4/no_robots
+  train_split: test
+  valid_split: null
+  chat_template: tokenizer
+  column_mapping:
+    text_column: messages
+
+params:
+  block_size: 2048
+  model_max_length: 4096
+  epochs: 1
+  batch_size: 1
+  lr: 1e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
+  padding: right
+  optimizer: adamw_torch
+  scheduler: cosine
+  gradient_accumulation: 1
+  mixed_precision: fp16
+  merge_adapter: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
