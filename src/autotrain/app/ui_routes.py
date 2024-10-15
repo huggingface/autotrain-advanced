@@ -284,6 +284,11 @@ UI_PARAMS = {
         "type": "number",
         "label": "Max doc stride",
     },
+    "distributed_backend": {
+        "type": "dropdown",
+        "label": "Distributed backend",
+        "options": ["ddp", "deepspeed"],
+    },
 }
 
 
