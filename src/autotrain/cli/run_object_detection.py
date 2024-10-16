@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import get_field_info, img_obj_detect_munge_data
+from autotrain.cli.utils import get_field_info
+from autotrain.process import AutoTrainDataProcessor
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.object_detection.params import ObjectDetectionParams
 
@@ -108,7 +109,7 @@ class RunAutoTrainObjectDetectionCommand(BaseAutoTrainCommand):
         logger.info("Running Object Detection")
         if self.args.train:
             params = ObjectDetectionParams(**vars(self.args))
-            params = img_obj_detect_munge_data(params, local=self.args.backend.startswith("local"))
+            params = AutoTrainDataProcessor(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")

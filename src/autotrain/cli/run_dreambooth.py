@@ -4,7 +4,8 @@ from argparse import ArgumentParser
 
 from autotrain import logger
 from autotrain.cli import BaseAutoTrainCommand
-from autotrain.cli.utils import common_args, dreambooth_munge_data
+from autotrain.cli.utils import common_args
+from autotrain.process import AutoTrainDataProcessor
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.dreambooth.utils import VALID_IMAGE_EXTENSIONS, XL_MODELS
@@ -387,7 +388,7 @@ class RunAutoTrainDreamboothCommand(BaseAutoTrainCommand):
     def run(self):
         logger.info("Running DreamBooth Training")
         params = DreamBoothTrainingParams(**vars(self.args))
-        params = dreambooth_munge_data(params, local=self.args.backend.startswith("local"))
+        params = AutoTrainDataProcessor(params, local=self.args.backend.startswith("local"))
         project = AutoTrainProject(params=params, backend=self.args.backend)
         job_id = project.create()
         logger.info(f"Job ID: {job_id}")

@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import get_field_info, token_clf_munge_data
+from autotrain.cli.utils import get_field_info
+from autotrain.process import AutoTrainDataProcessor
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 
@@ -101,7 +102,7 @@ class RunAutoTrainTokenClassificationCommand(BaseAutoTrainCommand):
         logger.info("Running Token Classification")
         if self.args.train:
             params = TokenClassificationParams(**vars(self.args))
-            params = token_clf_munge_data(params, local=self.args.backend.startswith("local"))
+            params = AutoTrainDataProcessor(params, local=self.args.backend.startswith("local"))
             project = AutoTrainProject(params=params, backend=self.args.backend)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")
