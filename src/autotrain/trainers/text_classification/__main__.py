@@ -15,6 +15,8 @@ from transformers import (
 from transformers.trainer_callback import PrinterCallback
 
 from autotrain import logger
+from autotrain.datagen.gen import AutoTrainGen
+from autotrain.datagen.params import AutoTrainGenParams
 from autotrain.trainers.common import (
     ALLOW_REMOTE_CODE,
     LossLoggingCallback,
@@ -41,6 +43,39 @@ def parse_args():
 def train(config):
     if isinstance(config, dict):
         config = TextClassificationParams(**config)
+
+    if config.gen_prompt is not None:
+        if config.gen_model is None:
+            raise ValueError("Generation model must be provided when using generation prompt")
+        gen_params = config.gen_params.split(",") if config.gen_params is not None else []
+        gen_params = {p.split("=")[0]: p.split("=")[1] for p in gen_params}
+        gen_config = AutoTrainGenParams(
+            gen_model=config.gen_model,
+            project_name=config.project_name,
+            prompt=config.gen_prompt,
+            task="text-classification",
+            token=config.token,
+            username=config.username,
+            push_to_hub=config.push_to_hub,
+            backend=gen_params.get("backend", "transformers"),
+            api=gen_params.get("api", None),
+            api_key=gen_params.get("api_key", None),
+            min_samples=config.gen_samples,
+        )
+        try:
+            AutoTrainGen(gen_config).run()
+        except Exception as e:
+            logger.error(f"Error generating data: {e}")
+            return
+        if config.push_to_hub:
+            config.data_path = f"{config.username}/{config.project_name}"
+        else:
+            config.data_path = f"{config.project_name}/autotrain-data"
+
+        config.train_split = "train"
+        config.valid_split = "validation"
+        config.target_column = "target"
+        config.text_column = "text"
 
     train_data = None
     valid_data = None

@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const uploadDataTabContent = document.getElementById("upload-data-tab-content");
     const hubDataTabContent = document.getElementById("hub-data-tab-content");
     const uploadDataTabs = document.getElementById("upload-data-tabs");
+    const genDataTabContent = document.getElementById("gen-data-tab-content");
 
     const jsonCheckbox = document.getElementById('show-json-parameters');
     const jsonParametersDiv = document.getElementById('json-parameters');
@@ -54,11 +55,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (dataSource.value === "hub") {
             uploadDataTabContent.style.display = "none";
             uploadDataTabs.style.display = "none";
+            genDataTabContent.style.display = "none";
             hubDataTabContent.style.display = "block";
         } else if (dataSource.value === "local") {
             uploadDataTabContent.style.display = "block";
             uploadDataTabs.style.display = "block";
+            genDataTabContent.style.display = "none";
             hubDataTabContent.style.display = "none";
+        }
+        else if (dataSource.value === "gen") {
+            uploadDataTabContent.style.display = "none";
+            uploadDataTabs.style.display = "none";
+            hubDataTabContent.style.display = "none";
+            genDataTabContent.style.display = "block";
         }
     }
 
