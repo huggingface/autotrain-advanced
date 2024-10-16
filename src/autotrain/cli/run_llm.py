@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import get_field_info, llm_munge_data
+from autotrain.cli.utils import get_field_info
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 
@@ -136,7 +136,6 @@ class RunAutoTrainLLMCommand(BaseAutoTrainCommand):
         logger.info("Running LLM")
         if self.args.train:
             params = LLMTrainingParams(**vars(self.args))
-            params = llm_munge_data(params, local=self.args.backend.startswith("local"))
-            project = AutoTrainProject(params=params, backend=self.args.backend)
+            project = AutoTrainProject(params=params, backend=self.args.backend, process=True)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")

@@ -16,6 +16,14 @@ You can safely remove the dataset from the Hub after training is complete.
 If uploaded, the dataset will be stored in your Hugging Face account as a private repository and will only be accessible by you
 and the training process. It is not used once the training is complete.
 
+## My training space paused for no reason mid-training
+
+AutoTrain Training Spaces will pause itself after training is done (or failed). This is done to save resources and costs.
+If your training failed, you can still see the space logs and find out what went wrong. Note: you won't be able to retrive the logs if you restart the space.
+
+Another reason for the space to pause is if the space is space's sleep time kicking in. If you have a long running training job, you must set the sleep time to a much higher value.
+The space will anyways pause itself after the training is done thus saving you costs.
+
 ## I get error `Your installed package nvidia-ml-py is corrupted. Skip patch functions`
 
 This error can be safely ignored. It is a warning from the `nvitop` library and does not affect the functionality of AutoTrain.

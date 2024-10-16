@@ -5,7 +5,8 @@ import requests
 import yaml
 
 from autotrain import logger
-from autotrain.cli.utils import (
+from autotrain.project import (
+    AutoTrainProject,
     dreambooth_munge_data,
     ext_qa_munge_data,
     img_clf_munge_data,
@@ -20,7 +21,6 @@ from autotrain.cli.utils import (
     token_clf_munge_data,
     vlm_munge_data,
 )
-from autotrain.project import AutoTrainProject
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
