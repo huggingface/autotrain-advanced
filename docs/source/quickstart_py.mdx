@@ -1,6 +1,20 @@
 # Quickstart with Python
 
-Example code:
+AutoTrain is a library that allows you to train state of the art models on Hugging Face Spaces, or locally. 
+It provides a simple and easy-to-use interface to train models for various tasks like llm finetuning, text classification, 
+image classification, object detection, and more.
+
+In this quickstart guide, we will show you how to train a model using AutoTrain in Python.
+
+## Getting Started
+
+AutoTrain can be installed using pip:
+
+```bash
+$ pip install autotrain-advanced
+```
+
+The example code below shows how to finetune an LLM model using AutoTrain in Python:
 
 ```python
 import os
@@ -30,7 +44,7 @@ params = LLMTrainingParams(
     merge_adapter=True,
     project_name="autotrain-llama32-1b-finetune",
     log="tensorboard",
-    push_to_hub=False,
+    push_to_hub=True,
     username=os.environ.get("HF_USERNAME"),
     token=os.environ.get("HF_TOKEN"),
 )
@@ -41,4 +55,57 @@ project = AutoTrainProject(params=params, backend=backend, process=True)
 project.create()
 ```
 
+In this example, we are finetuning the `meta-llama/Llama-3.2-1B-Instruct` model on the `HuggingFaceH4/no_robots` dataset.
+We are training the model for 3 epochs with a batch size of 1 and a learning rate of `1e-5`.
+We are using the `paged_adamw_8bit` optimizer and the `cosine` scheduler.
+We are also using mixed precision training with a gradient accumulation of 8.
+The final model will be pushed to the Hugging Face Hub after training.
+
+To train the model, run the following command:
+
+```bash
+$ export HF_USERNAME=<your-hf-username>
+$ export HF_TOKEN=<your-hf-write-token>
+$ python train.py
+```
+
+This will create a new project directory with the name `autotrain-llama32-1b-finetune` and start the training process.
+Once the training is complete, the model will be pushed to the Hugging Face Hub.
+
+Your HF_TOKEN and HF_USERNAME are only required if you want to push the model or if you are accessing a gated model or dataset.
+
+## AutoTrainProject Class
+
 [[autodoc]] project.AutoTrainProject
+
+## Parameters
+
+### Text Tasks
+
+[[autodoc]] trainers.clm.params.LLMTrainingParams
+
+[[autodoc]] trainers.sentence_transformers.params.SentenceTransformersParams
+
+[[autodoc]] trainers.seq2seq.params.Seq2SeqParams
+
+[[autodoc]] trainers.token_classification.params.TokenClassificationParams
+
+[[autodoc]] trainers.extractive_question_answering.params.ExtractiveQuestionAnsweringParams
+
+[[autodoc]] trainers.text_classification.params.TextClassificationParams
+
+[[autodoc]] trainers.text_classification.params.TextRegressionParams
+
+### Image Tasks
+
+[[autodoc]] trainers.image_classification.params.ImageClassificationParams
+
+[[autodoc]] trainers.image_regression.params.ImageRegressionParams
+
+[[autodoc]] trainers.object_detection.params.ObjectDetectionParams
+
+[[autodoc]] trainers.dreambooth.params.DreamBoothTrainingParams
+
+### Tabular Tasks
+
+[[autodoc]] trainers.tabular.params.TabularParams
