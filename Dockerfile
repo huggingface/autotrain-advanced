@@ -80,4 +80,5 @@ RUN pip install -e . && \
     pip install -U flash-attn --no-build-isolation && \
     pip install -U deepspeed && \
     pip install --upgrade --force-reinstall --no-cache-dir "unsloth[cu121-ampere-torch230] @ git+https://github.com/unslothai/unsloth.git" --no-deps && \
+    pip install -U liger-kernel && \
     pip cache purge

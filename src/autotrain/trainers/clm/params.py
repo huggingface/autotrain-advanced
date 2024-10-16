@@ -137,4 +137,8 @@ class LLMTrainingParams(AutoTrainParams):
 
     # unsloth
     unsloth: bool = Field(False, title="Whether to use the unsloth library")
+    # liger-kernel
+    liger_kernel: bool = Field(False, title="Whether to use liger-kernel library")
+
     distributed_backend: Optional[str] = Field(None, title="Backend to use for distributed training")
+
