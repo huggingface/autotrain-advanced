@@ -11,6 +11,8 @@
 - sections:
   - local: quickstart_spaces
     title: Train on Spaces
+  - local: quickstart_py
+    title: Python SDK
   - local: quickstart
     title: Train Locally
   - local: config
