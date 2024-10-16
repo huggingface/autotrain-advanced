@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 
 from autotrain import logger
 from autotrain.cli.utils import get_field_info
-from autotrain.process import AutoTrainDataProcessor
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.vlm.params import VLMTrainingParams
 
@@ -107,7 +106,6 @@ class RunAutoTrainVLMCommand(BaseAutoTrainCommand):
         logger.info("Running Image Regression")
         if self.args.train:
             params = VLMTrainingParams(**vars(self.args))
-            params = AutoTrainDataProcessor(params, local=self.args.backend.startswith("local"))
-            project = AutoTrainProject(params=params, backend=self.args.backend)
+            project = AutoTrainProject(params=params, backend=self.args.backend, process=True)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")

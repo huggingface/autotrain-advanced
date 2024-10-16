@@ -499,7 +499,7 @@ class AutoTrainProject:
         - spaces-a10g-largex2
         - spaces-a10g-largex4
     process : bool
-        Flag to indicate if the params and dataset should be processed. If your data format is not AutoTrain-readable, set it to True. Set it to True when in doubt.
+        Flag to indicate if the params and dataset should be processed. If your data format is not AutoTrain-readable, set it to True. Set it to True when in doubt. Defaults to False.
 
     Methods
     -------
