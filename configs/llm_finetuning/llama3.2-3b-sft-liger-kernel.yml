@@ -1,0 +1,36 @@
+task: llm-sft
+base_model: meta-llama/Llama-3.2-3B-Instruct
+project_name: autotrain-llama32-3b-sft-liger-kernel
+log: tensorboard
+backend: local
+
+data:
+  path: rishiraj/guanaco-style-metamath-40k
+  train_split: train
+  valid_split: null
+  chat_template: null
+  column_mapping:
+    text_column: text
+
+params:
+  block_size: 1024
+  model_max_length: 8192
+  max_prompt_length: 512
+  epochs: 3
+  batch_size: 2
+  lr: 3e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
+  padding: right
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 4
+  mixed_precision: fp16
+  liger_kernel: true
+  lora_dropout: 0
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
