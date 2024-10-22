@@ -55,6 +55,9 @@ You can find sample config files in the `configs` directory of this repository.
 | LLM Fine Tuning | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_LLM.ipynb) |
 | DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
 
+## Documentation
+
+Documentation is available at https://hf.co/docs/autotrain/
 
 ## Citation
 
@@ -69,8 +72,3 @@ You can find sample config files in the `configs` directory of this repository.
       url={https://arxiv.org/abs/2410.15735}, 
 }
 ```
-
-
-## Documentation
-
-Documentation is available at https://hf.co/docs/autotrain/
