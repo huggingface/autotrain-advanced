@@ -56,6 +56,19 @@ You can find sample config files in the `configs` directory of this repository.
 | DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
 
 
+## Citation
+
+@misc{thakur2024autotrainnocodetrainingstateoftheart,
+      title={AutoTrain: No-code training for state-of-the-art models}, 
+      author={Abhishek Thakur},
+      year={2024},
+      eprint={2410.15735},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2410.15735}, 
+}
+
+
 ## Documentation
 
 Documentation is available at https://hf.co/docs/autotrain/
