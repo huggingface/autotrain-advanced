@@ -58,6 +58,7 @@ You can find sample config files in the `configs` directory of this repository.
 
 ## Citation
 
+```
 @misc{thakur2024autotrainnocodetrainingstateoftheart,
       title={AutoTrain: No-code training for state-of-the-art models}, 
       author={Abhishek Thakur},
@@ -67,6 +68,7 @@ You can find sample config files in the `configs` directory of this repository.
       primaryClass={cs.AI},
       url={https://arxiv.org/abs/2410.15735}, 
 }
+```
 
 
 ## Documentation
