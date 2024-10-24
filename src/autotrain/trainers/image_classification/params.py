@@ -68,3 +68,4 @@ class ImageClassificationParams(AutoTrainParams):
     log: str = Field("none", title="Logging method for experiment tracking")
     early_stopping_patience: int = Field(5, title="Number of epochs with no improvement for early stopping")
     early_stopping_threshold: float = Field(0.01, title="Threshold for early stopping")
+    pretrain: bool = Field(False, title="Whether to pretrain the model")

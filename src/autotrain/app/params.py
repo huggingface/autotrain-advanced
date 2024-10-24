@@ -66,6 +66,8 @@ HIDDEN_PARAMS = [
     "sentence3_column",
     "question_column",
     "answer_column",
+    "distributed_backend",
+    "pretrain",
 ]
 
 

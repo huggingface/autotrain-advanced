@@ -289,6 +289,11 @@ UI_PARAMS = {
         "label": "Distributed backend",
         "options": ["ddp", "deepspeed"],
     },
+    "pretrain": {
+        "type": "dropdown",
+        "label": "Pretrain",
+        "options": [True, False],
+    },
 }
 
 

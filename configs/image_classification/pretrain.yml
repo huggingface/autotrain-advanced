@@ -1,0 +1,28 @@
+task: image_classification
+base_model: microsoft/resnet-50
+project_name: autotrain-cifar10-pretrained
+log: tensorboard
+backend: local
+
+data:
+  path: uoft-cs/cifar10
+  train_split: train
+  valid_split: test
+  column_mapping:
+    image_column: img
+    target_column: label
+
+params:
+  epochs: 2
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: null
+  pretrain: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: false

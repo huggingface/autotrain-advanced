@@ -106,24 +106,42 @@ def train(config):
     model_config._num_labels = len(label2id)
     model_config.label2id = label2id
     model_config.id2label = {v: k for k, v in label2id.items()}
-
-    try:
-        model = AutoModelForImageClassification.from_pretrained(
-            config.model,
-            config=model_config,
-            trust_remote_code=ALLOW_REMOTE_CODE,
-            token=config.token,
-            ignore_mismatched_sizes=True,
-        )
-    except OSError:
-        model = AutoModelForImageClassification.from_pretrained(
-            config.model,
-            config=model_config,
-            from_tf=True,
-            trust_remote_code=ALLOW_REMOTE_CODE,
-            token=config.token,
-            ignore_mismatched_sizes=True,
-        )
+    if config.pretrain:
+        try:
+            model = AutoModelForImageClassification.from_config(
+                config.model,
+                config=model_config,
+                trust_remote_code=ALLOW_REMOTE_CODE,
+                token=config.token,
+                ignore_mismatched_sizes=True,
+            )
+        except OSError:
+            model = AutoModelForImageClassification.from_config(
+                config.model,
+                config=model_config,
+                from_tf=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
+                token=config.token,
+                ignore_mismatched_sizes=True,
+            )
+    else:
+        try:
+            model = AutoModelForImageClassification.from_pretrained(
+                config.model,
+                config=model_config,
+                trust_remote_code=ALLOW_REMOTE_CODE,
+                token=config.token,
+                ignore_mismatched_sizes=True,
+            )
+        except OSError:
+            model = AutoModelForImageClassification.from_pretrained(
+                config.model,
+                config=model_config,
+                from_tf=True,
+                trust_remote_code=ALLOW_REMOTE_CODE,
+                token=config.token,
+                ignore_mismatched_sizes=True,
+            )
 
     image_processor = AutoImageProcessor.from_pretrained(
         config.model,
