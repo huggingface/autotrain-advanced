@@ -66,6 +66,8 @@ class LLMTrainingParams(AutoTrainParams):
 
         unsloth (bool): Whether to use the unsloth library. Default is False.
         distributed_backend (Optional[str]): Backend to use for distributed training. Default is None.
+
+        pretrain (bool): Whether to pretrain the model. Default is False. Pretraining only works with SFT or default trainer.
     """
 
     model: str = Field("gpt2", title="Model name to be used for training")
@@ -138,3 +140,6 @@ class LLMTrainingParams(AutoTrainParams):
     # unsloth
     unsloth: bool = Field(False, title="Whether to use the unsloth library")
     distributed_backend: Optional[str] = Field(None, title="Backend to use for distributed training")
+
+    # pretrain
+    pretrain: bool = Field(False, title="Whether to pretrain the model")
