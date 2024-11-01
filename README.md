@@ -6,23 +6,22 @@ NOTE: AutoTrain is free! You only pay for the resources you use in case you deci
 
 ## Supported Tasks
 
-| Task | Status | Python Notebook |
-| --- | --- | --- |
-| LLM SFT Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
-| LLM ORPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
-| LLM DPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
-| LLM Reward Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
-| LLM Generic/Default Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
-| Text Classification | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_classification.ipynb) |
-| Text Regression | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_regression.ipynb) |
-| Named Entity Recognition | ✅ | Coming Soon |
-| Token Classification | ✅ | Coming Soon |
-| Text Summarization | ✅ | Coming Soon |
-| Question Answering | ✅ | Coming Soon |
-| Image Classification | ✅ | Coming Soon |
-| Image Regression | ✅ | Coming Soon |
-| DreamBooth LoRA | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
-| VLM | 🟥 | Coming Soon |
+| Task | Status | Python Notebook | Example Configs |
+| --- | --- | --- | --- |
+| LLM SFT Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) | [llm_sft_finetune.yaml](https://github.com/huggingface/autotrain-advanced/blob/main/configs/llm_finetuning/smollm2.yml) |
+| LLM ORPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) | [llm_orpo_finetune.yaml](https://github.com/huggingface/autotrain-advanced/blob/main/configs/llm_finetuning/llama3-8b-orpo.yml) |
+| LLM DPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) | [llm_dpo_finetune.yaml](https://github.com/huggingface/autotrain-advanced/blob/main/configs/llm_finetuning/llama3-8b-dpo-qlora.yml) |
+| LLM Reward Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) | [llm_reward_finetune.yaml](https://github.com/huggingface/autotrain-advanced/blob/main/configs/llm_finetuning/llama32-1b-sft.yml) |
+| LLM Generic/Default Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) | [llm_generic_finetune.yaml](https://github.com/huggingface/autotrain-advanced/blob/main/configs/llm_finetuning/gpt2_sft.yml) |
+| Text Classification | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_classification.ipynb) | [text_classification.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/text_classification) |
+| Text Regression | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_regression.ipynb) | [text_regression.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/text_regression) |
+| Token Classification | ✅ | Coming Soon | [token_classification.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/token_classification) |
+| Seq2Seq | ✅ | Coming Soon | [seq2seq.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/seq2seq) |
+| Extractive Question Answering | ✅ | Coming Soon | [extractive_qa.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/extractive_question_answering) |
+| Image Classification | ✅ | Coming Soon | [image_classification.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_classification) |
+| Image Scoring/Regression | ✅ | Coming Soon | [image_regression.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_scoring) |
+| DreamBooth LoRA | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) | [dreambooth_lora.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/dreambooth) |
+| VLM | 🟥 | Coming Soon | [vlm.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/vlm) |
 
 
 ## Running UI on Colab or Hugging Face Spaces
