@@ -7,7 +7,7 @@ NOTE: AutoTrain is free! You only pay for the resources you use in case you deci
 ## Supported Tasks
 
 | Task | Status | Python Notebook |
-| --- | --- |
+| --- | --- | --- |
 | LLM SFT Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
 | LLM ORPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
 | LLM DPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
