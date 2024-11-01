@@ -1,12 +1,12 @@
 task: llm-sft
-base_model: Qwen/Qwen2.5-Coder-7B-Instruct
-project_name: autotrain-qwen-finetune
+base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+project_name: autotrain-smollm2-finetune
 log: tensorboard
 backend: local
 
 data:
   path: HuggingFaceH4/no_robots
-  train_split: test
+  train_split: train
   valid_split: null
   chat_template: tokenizer
   column_mapping:
@@ -15,17 +15,17 @@ data:
 params:
   block_size: 2048
   model_max_length: 4096
-  epochs: 1
+  epochs: 2
   batch_size: 1
   lr: 1e-5
   peft: true
   quantization: int4
   target_modules: all-linear
   padding: right
-  optimizer: adamw_torch
+  optimizer: paged_adamw_8bit
   scheduler: linear
-  gradient_accumulation: 1
-  mixed_precision: fp16
+  gradient_accumulation: 8
+  mixed_precision: bf16
   merge_adapter: true
 
 hub:

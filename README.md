@@ -4,11 +4,28 @@ AutoTrain Advanced: faster and easier training and deployments of state-of-the-a
 
 NOTE: AutoTrain is free! You only pay for the resources you use in case you decide to run AutoTrain on Hugging Face Spaces. When running locally, you only pay for the resources you use on your own infrastructure.
 
+## Supported Tasks
 
-## Run on Colab or Hugging Face Spaces
+| Task | Status | Python Notebook |
+| --- | --- |
+| LLM SFT Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
+| LLM ORPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
+| LLM DPO Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
+| LLM Reward Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
+| LLM Generic/Default Finetuning | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/llm_finetuning.ipynb) |
+| Text Classification | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_classification.ipynb) |
+| Text Regression | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/text_regression.ipynb) |
+| Named Entity Recognition | ✅ | Coming Soon |
+| Token Classification | ✅ | Coming Soon |
+| Text Summarization | ✅ | Coming Soon |
+| Question Answering | ✅ | Coming Soon |
+| Image Classification | ✅ | Coming Soon |
+| Image Regression | ✅ | Coming Soon |
+| DreamBooth LoRA | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
+| VLM | 🟥 | Coming Soon |
 
-- Run AutoTrain on Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain.ipynb)
 
+## Running UI on Colab or Hugging Face Spaces
 
 - Deploy AutoTrain on Hugging Face Spaces: [![Deploy on Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-on-spaces-md.svg)](https://huggingface.co/login?next=%2Fspaces%2Fautotrain-projects%2Fautotrain-advanced%3Fduplicate%3Dtrue)
 
@@ -48,12 +65,53 @@ To use config file for training, you can use the following command:
 
 You can find sample config files in the `configs` directory of this repository.
 
-## Colabs
+Example config file for finetuning SmolLM2:
 
-| Task | Colab Link |
-| --- | --- |
-| LLM Fine Tuning | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_LLM.ipynb) |
-| DreamBooth Training | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/colabs/AutoTrain_Dreambooth.ipynb) |
+```yaml
+task: llm-sft
+base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+project_name: autotrain-smollm2-finetune
+log: tensorboard
+backend: local
+
+data:
+  path: HuggingFaceH4/no_robots
+  train_split: train
+  valid_split: null
+  chat_template: tokenizer
+  column_mapping:
+    text_column: messages
+
+params:
+  block_size: 2048
+  model_max_length: 4096
+  epochs: 2
+  batch_size: 1
+  lr: 1e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
+  padding: right
+  optimizer: paged_adamw_8bit
+  scheduler: linear
+  gradient_accumulation: 8
+  mixed_precision: bf16
+  merge_adapter: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
+```
+
+To fine-tune a model using the config file above, you can use the following command:
+
+```bash
+$ export HF_USERNAME=<your_hugging_face_username>
+$ export HF_TOKEN=<your_hugging_face_write_token>
+$ autotrain --config <path_to_config_file>
+```
+
 
 ## Documentation
 
