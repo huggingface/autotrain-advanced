@@ -105,6 +105,7 @@ def train(config):
             max_grad_norm = config.max_grad_norm
             push_to_hub = config.push_to_hub
             hub_token = config.token
+            hf_private=config.hf_private
             hub_model_id = f"{config.username}/{config.project_name}"
             logging_dir = os.path.join(config.project_name, "logs")
             allow_tf32 = config.allow_tf32
@@ -165,6 +166,7 @@ def train(config):
             adam_epsilon = config.adam_epsilon
             max_grad_norm = config.max_grad_norm
             push_to_hub = config.push_to_hub
+            hf_private=config.hf_private
             hub_token = config.token
             hub_model_id = f"{config.username}/{config.project_name}"
             logging_dir = os.path.join(config.project_name, "logs")
@@ -213,7 +215,7 @@ def train(config):
         repo_id = create_repo(
             repo_id=f"{config.username}/{config.project_name}",
             exist_ok=True,
-            private=True,
+            private=config.hf_private,
             token=config.token,
         ).repo_id
         if config.xl:

@@ -210,6 +210,7 @@ class AutoTrainConfigParser:
             params["username"] = self.config["hub"]["username"]
             params["token"] = self.config["hub"]["token"]
             params["push_to_hub"] = self.config["hub"]["push_to_hub"]
+            params["hf_private"] = self.config["hub"]["hf_private"]
         else:
             params["username"] = None
             params["token"] = None

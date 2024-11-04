@@ -464,7 +464,7 @@ class Trainer:
         repo_id = create_repo(
             repo_id=f"{self.config.username}/{self.config.project_name}",
             exist_ok=True,
-            private=True,
+            private=self.config.hf_private,
             token=self.config.token,
         ).repo_id
 

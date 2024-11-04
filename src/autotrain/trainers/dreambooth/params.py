@@ -129,6 +129,7 @@ class DreamBoothTrainingParams(AutoTrainParams):
     token: Optional[str] = Field(None, title="Token for accessing the model hub")
     push_to_hub: bool = Field(False, title="Enable pushing the model to the hub")
     username: Optional[str] = Field(None, title="Username for the model hub")
+    hf_private : bool = Field(True, title="keep the model repository private")
 
     # disabled:
     validation_prompt: Optional[str] = Field(None, title="Prompt for validation images")
