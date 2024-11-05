@@ -1,11 +1,9 @@
 import os
-
 from huggingface_hub import list_models
-
 from autotrain import logger
 
-
 VALID_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+
 try:
     XL_MODELS = [
         m.id
@@ -28,18 +26,16 @@ except Exception:
         "stabilityai/sdxl-turbo",
     ]
 
-
 def save_model_card_xl(
     repo_id: str,
-    base_model=str,
-    train_text_encoder=False,
-    instance_prompt=str,
-    repo_folder=None,
-    vae_path=None,
+    base_model: str,
+    train_text_encoder: bool,
+    instance_prompt: str,
+    repo_folder: str = None,
+    vae_path: str = None,
 ):
     img_str = ""
-    yaml = f"""
----
+    yaml = f"""---
 tags:
 - autotrain
 - stable-diffusion-xl
@@ -52,56 +48,56 @@ tags:
 base_model: {base_model}
 instance_prompt: {instance_prompt}
 license: openrail++
----
-    """
+---"""
 
-    model_card = f"""
-# AutoTrain SDXL LoRA DreamBooth - {repo_id}
-
+    model_card = f"""# ModelsLab LoRA DreamBooth Training - {repo_id}
 <Gallery />
 
 ## Model description
-
 These are {repo_id} LoRA adaption weights for {base_model}.
-
-The weights were trained  using [DreamBooth](https://dreambooth.github.io/).
-
+The weights were trained using [Modelslab](https://modelslab.com).
 LoRA for the text encoder was enabled: {train_text_encoder}.
-
 Special VAE used for training: {vae_path}.
 
-## Trigger words
+## Use it with the [🧨 diffusers library](https://github.com/huggingface/diffusers)
+```py
+!pip install -q transformers accelerate peft diffusers
+from diffusers import DiffusionPipeline
+import torch
 
+pipe_id = "stabilityai/stable-diffusion-xl-base-1.0"
+pipe = DiffusionPipeline.from_pretrained(pipe_id, torch_dtype=torch.float16).to("cuda")
+pipe.load_lora_weights("{repo_id}", weight_name="pytorch_lora_weights.safetensors", adapter_name="abc")
+prompt = "abc of a hacker with a hoodie"
+lora_scale = 0.9
+image = pipe(
+    prompt,
+    num_inference_steps=30,
+    cross_attention_kwargs={{"scale": lora_scale}},
+    generator=torch.manual_seed(0)
+).images[0]
+image
+```
+
+## Trigger words
 You should use {instance_prompt} to trigger the image generation.
 
 ## Download model
-
 Weights for this model are available in Safetensors format.
+[Download]({repo_id}/tree/main) them in the Files & versions tab."""
 
-[Download]({repo_id}/tree/main) them in the Files & versions tab.
-
-"""
     with open(os.path.join(repo_folder, "README.md"), "w") as f:
-        f.write(yaml + model_card)
-
+        f.write(yaml + "\n" + model_card)
 
 def save_model_card(
     repo_id: str,
-    base_model=str,
-    train_text_encoder=False,
-    instance_prompt=str,
-    repo_folder=None,
+    base_model: str,
+    train_text_encoder: bool,
+    instance_prompt: str,
+    repo_folder: str = None,
 ):
     img_str = ""
-    model_description = f"""
-# AutoTrain LoRA DreamBooth - {repo_id}
-
-These are LoRA adaption weights for {base_model}. The weights were trained on {instance_prompt} using [DreamBooth](https://dreambooth.github.io/).
-LoRA for the text encoder was enabled: {train_text_encoder}.
-"""
-
-    yaml = f"""
----
+    yaml = f"""---
 tags:
 - autotrain
 - stable-diffusion
@@ -114,7 +110,31 @@ tags:
 base_model: {base_model}
 instance_prompt: {instance_prompt}
 license: openrail++
----
-    """
+---"""
+
+    model_description = f"""# ModelsLab LoRA DreamBooth Training - {repo_id}
+These are LoRA adaption weights for {base_model}. The weights were trained on {instance_prompt} using [ModelsLab](https://modelslab.com).
+LoRA for the text encoder was enabled: {train_text_encoder}.
+
+## Use it with the [🧨 diffusers library](https://github.com/huggingface/diffusers)
+```py
+!pip install -q transformers accelerate peft diffusers
+from diffusers import DiffusionPipeline
+import torch
+
+pipe_id = "Lykon/DreamShaper"
+pipe = DiffusionPipeline.from_pretrained(pipe_id, torch_dtype=torch.float16).to("cuda")
+pipe.load_lora_weights("{repo_id}", weight_name="pytorch_lora_weights.safetensors", adapter_name="abc")
+prompt = "abc of a hacker with a hoodie"
+lora_scale = 0.9
+image = pipe(
+    prompt,
+    num_inference_steps=30,
+    cross_attention_kwargs={{"scale": 0.9}},
+    generator=torch.manual_seed(0)
+).images[0]
+image
+```"""
+
     with open(os.path.join(repo_folder, "README.md"), "w") as f:
-        f.write(yaml + model_description)
+        f.write(yaml + "\n" + model_description)
