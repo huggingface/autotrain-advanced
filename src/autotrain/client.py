@@ -1,7 +1,9 @@
+import os
 from dataclasses import dataclass
 from typing import Optional
-import os
+
 import requests
+
 
 """
 {
@@ -51,6 +53,7 @@ import requests
 }
 """
 
+
 @dataclass
 class Client:
     host: Optional[str] = None
@@ -60,28 +63,36 @@ class Client:
     def __post_init__(self):
         if self.host is None:
             self.host = "https://autotrain-projects-autotrain-advanced.hf.space/"
-        
+
         if self.token is None:
             self.token = os.environ.get("HF_TOKEN")
-        
+
         if self.username is None:
             self.username = os.environ.get("HF_USERNAME")
 
         if self.token is None or self.username is None:
             raise ValueError("Please provide a valid username and token")
-        
-        self.headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
-        }
-        
+
+        self.headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+
     def __str__(self):
         return f"Client(host={self.host}, token=****, username={self.username})"
-    
+
     def __repr__(self):
-        return self.__str__()   
-    
-    def create(self, project_name: str, task: str, base_model: str, hardware: str, params: dict, column_mapping: dict, hub_dataset: str, train_split: str, valid_split: str):
+        return self.__str__()
+
+    def create(
+        self,
+        project_name: str,
+        task: str,
+        base_model: str,
+        hardware: str,
+        params: dict,
+        column_mapping: dict,
+        hub_dataset: str,
+        train_split: str,
+        valid_split: str,
+    ):
         url = f"{self.host}/api/create_project"
         data = {
             "project_name": project_name,
@@ -93,7 +104,7 @@ class Client:
             "column_mapping": column_mapping,
             "hub_dataset": hub_dataset,
             "train_split": train_split,
-            "valid_split": valid_split
+            "valid_split": valid_split,
         }
         response = requests.post(url, headers=self.headers, json=data)
         return response.json()
