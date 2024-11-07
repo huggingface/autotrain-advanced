@@ -5,6 +5,26 @@ from typing import Optional
 import requests
 
 
+AUTOTRAIN_API = os.environ.get("AUTOTRAIN_API", "https://autotrain-projects-autotrain-advanced.hf.space/")
+
+BACKENDS = {
+    "spaces-a10g-large": "a10g-large",
+    "spaces-a10g-small": "a10g-small",
+    "spaces-a100-large": "a100-large",
+    "spaces-t4-medium": "t4-medium",
+    "spaces-t4-small": "t4-small",
+    "spaces-cpu-upgrade": "cpu-upgrade",
+    "spaces-cpu-basic": "cpu-basic",
+    "spaces-l4x1": "l4x1",
+    "spaces-l4x4": "l4x4",
+    "spaces-l40sx1": "l40sx1",
+    "spaces-l40sx4": "l40sx4",
+    "spaces-l40sx8": "l40sx8",
+    "spaces-a10g-largex2": "a10g-largex2",
+    "spaces-a10g-largex4": "a10g-largex4",
+}
+
+
 PARAMS = {}
 PARAMS["llm"] = {
     "target_modules": "all-linear",
@@ -156,7 +176,7 @@ class Client:
 
     def __post_init__(self):
         if self.host is None:
-            self.host = "https://autotrain-projects-autotrain-advanced.hf.space/"
+            self.host = AUTOTRAIN_API
 
         if self.token is None:
             self.token = os.environ.get("HF_TOKEN")
@@ -180,7 +200,7 @@ class Client:
         project_name: str,
         task: str,
         base_model: str,
-        hardware: str,
+        backend: str,
         dataset: str,
         train_split: str,
         column_mapping: Optional[dict] = None,
@@ -190,6 +210,9 @@ class Client:
 
         if task not in VALID_TASKS:
             raise ValueError(f"Invalid task. Valid tasks are: {VALID_TASKS}")
+
+        if backend not in BACKENDS:
+            raise ValueError(f"Invalid backend. Valid backends are: {list(BACKENDS.keys())}")
 
         url = f"{self.host}/api/create_project"
 
@@ -226,7 +249,7 @@ class Client:
             "project_name": project_name,
             "task": task,
             "base_model": base_model,
-            "hardware": hardware,
+            "hardware": backend,
             "params": params,
             "username": self.username,
             "column_mapping": column_mapping,
@@ -238,11 +261,13 @@ class Client:
         return response.json()
 
     def get_logs(self, job_id: str):
-        url = f"{self.host}/api/logs/{job_id}"
-        response = requests.get(url, headers=self.headers)
+        url = f"{self.host}/api/logs"
+        data = {"jid": job_id}
+        response = requests.post(url, headers=self.headers, json=data)
         return response.json()
 
     def stop_training(self, job_id: str):
         url = f"{self.host}/api/stop_training/{job_id}"
-        response = requests.get(url, headers=self.headers)
+        data = {"jid": job_id}
+        response = requests.post(url, headers=self.headers, json=data)
         return response.json()

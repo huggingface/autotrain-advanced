@@ -25,12 +25,16 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import warnings
 
-import torch._dynamo
+
+try:
+    import torch._dynamo
+
+    torch._dynamo.config.suppress_errors = True
+except ImportError:
+    pass
 
 from autotrain.logging import Logger
 
-
-torch._dynamo.config.suppress_errors = True
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")

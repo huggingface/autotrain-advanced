@@ -570,6 +570,10 @@ class APICreateProjectModel(BaseModel):
         return values
 
 
+class JobIDModel(BaseModel):
+    jid: str
+
+
 api_router = APIRouter()
 
 
@@ -691,8 +695,8 @@ async def api_version():
     return {"version": __version__}
 
 
-@api_router.get("/stop_training", response_class=JSONResponse)
-async def api_stop_training(job_id: str, token: bool = Depends(api_auth)):
+@api_router.post("/stop_training", response_class=JSONResponse)
+async def api_stop_training(job: JobIDModel, token: bool = Depends(api_auth)):
     """
     Stops the training job with the given job ID.
 
@@ -700,7 +704,7 @@ async def api_stop_training(job_id: str, token: bool = Depends(api_auth)):
     It uses the Hugging Face API to pause the space associated with the job.
 
     Args:
-        job_id (str): The ID of the job to stop.
+        job (JobIDModel): The job model containing the job ID.
         token (bool, optional): The authentication token, provided by dependency injection.
 
     Returns:
@@ -712,6 +716,7 @@ async def api_stop_training(job_id: str, token: bool = Depends(api_auth)):
         Exception: If there is an error while attempting to stop the training job.
     """
     hf_api = HfApi(token=token)
+    job_id = job.jid
     try:
         hf_api.pause_space(repo_id=job_id)
     except Exception as e:
@@ -720,18 +725,25 @@ async def api_stop_training(job_id: str, token: bool = Depends(api_auth)):
     return {"message": f"Training stopped for {job_id}", "success": True}
 
 
-@api_router.get("/logs", response_class=JSONResponse)
-async def api_logs(job_id: str, token: bool = Depends(api_auth)):
+@api_router.post("/logs", response_class=JSONResponse)
+async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
     """
-    Fetch logs for a specific job.
+    Fetch logs for a given job.
+
+    This endpoint retrieves logs for a specified job by its job ID. It first obtains a JWT token
+    to authenticate the request and then fetches the logs from the Hugging Face API.
 
     Args:
-        job_id (str): The ID of the job for which logs are to be fetched.
-        token (bool, optional): Authentication token, defaults to the result of api_auth dependency.
+        job (JobIDModel): The job model containing the job ID.
+        token (bool, optional): Dependency injection for API authentication. Defaults to Depends(api_auth).
 
     Returns:
-        dict: A dictionary containing the logs, success status, and a message.
+        JSONResponse: A JSON response containing the logs, success status, and a message.
+
+    Raises:
+        Exception: If there is an error fetching the logs, the exception message is returned in the response.
     """
+    job_id = job.jid
     jwt_url = f"{constants.ENDPOINT}/api/spaces/{job_id}/jwt"
     response = get_session().get(jwt_url, headers=build_hf_headers())
     hf_raise_for_status(response)

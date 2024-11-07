@@ -1,8 +1,17 @@
 import sys
 from dataclasses import dataclass
 
-from accelerate.state import PartialState
 from loguru import logger
+
+
+IS_ACCELERATE_AVAILABLE = False
+
+try:
+    from accelerate.state import PartialState
+
+    IS_ACCELERATE_AVAILABLE = True
+except ImportError:
+    pass
 
 
 @dataclass
@@ -36,6 +45,8 @@ class Logger:
         self.setup_logger()
 
     def _should_log(self, record):
+        if not IS_ACCELERATE_AVAILABLE:
+            return None
         return PartialState().is_main_process
 
     def setup_logger(self):
@@ -43,7 +54,7 @@ class Logger:
         self.logger.add(
             sys.stdout,
             format=self.log_format,
-            filter=lambda x: self._should_log(x),
+            filter=lambda x: self._should_log(x) if IS_ACCELERATE_AVAILABLE else None,
         )
 
     def get_logger(self):
