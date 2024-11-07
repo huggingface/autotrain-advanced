@@ -250,7 +250,8 @@ class AppParams:
     def _munge_params_sent_transformers(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["sentence1_column"] = "autotrain_sentence1"
             _params["sentence2_column"] = "autotrain_sentence2"
@@ -291,7 +292,8 @@ class AppParams:
                 "rejected_text" if not self.api else "rejected_text_column", "rejected_text"
             )
             _params["train_split"] = self.train_split
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
 
         trainer = self.task.split(":")[1]
         if trainer != "generic":
@@ -321,7 +323,8 @@ class AppParams:
             )
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
 
         trainer = self.task.split(":")[1]
         _params["trainer"] = trainer.lower()
@@ -335,7 +338,8 @@ class AppParams:
     def _munge_params_text_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -350,7 +354,8 @@ class AppParams:
     def _munge_params_extractive_qa(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["question_column"] = "autotrain_question"
@@ -369,7 +374,8 @@ class AppParams:
     def _munge_params_text_reg(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -384,7 +390,8 @@ class AppParams:
     def _munge_params_token_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["tokens_column"] = "autotrain_text"
             _params["tags_column"] = "autotrain_label"
@@ -400,7 +407,8 @@ class AppParams:
     def _munge_params_seq2seq(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["text_column"] = "autotrain_text"
             _params["target_column"] = "autotrain_label"
@@ -416,7 +424,8 @@ class AppParams:
     def _munge_params_img_clf(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["image_column"] = "autotrain_image"
             _params["target_column"] = "autotrain_label"
@@ -432,7 +441,8 @@ class AppParams:
     def _munge_params_img_reg(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["image_column"] = "autotrain_image"
             _params["target_column"] = "autotrain_label"
@@ -448,7 +458,8 @@ class AppParams:
     def _munge_params_img_obj_det(self):
         _params = self._munge_common_params()
         _params["model"] = self.base_model
-        _params["log"] = "tensorboard"
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
         if not self.using_hub_dataset:
             _params["image_column"] = "autotrain_image"
             _params["objects_column"] = "autotrain_objects"

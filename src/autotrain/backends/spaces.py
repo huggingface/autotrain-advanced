@@ -41,6 +41,8 @@ class SpaceRunner(BaseBackend):
         _readme += "colorTo: indigo\n"
         _readme += "sdk: docker\n"
         _readme += "pinned: false\n"
+        _readme += "tags:\n"
+        _readme += "- autotrain\n"
         _readme += "duplicated_from: autotrain-projects/autotrain-advanced\n"
         _readme += "---\n"
         _readme = io.BytesIO(_readme.encode())
