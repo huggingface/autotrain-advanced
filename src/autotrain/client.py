@@ -4,6 +4,8 @@ from typing import Optional
 
 import requests
 
+from autotrain import logger
+
 
 AUTOTRAIN_API = os.environ.get("AUTOTRAIN_API", "https://autotrain-projects-autotrain-advanced.hf.space/")
 
@@ -258,7 +260,15 @@ class Client:
             "valid_split": valid_split,
         }
         response = requests.post(url, headers=self.headers, json=data)
-        return response.json()
+        if response.status_code == 200:
+            resp = response.json()
+            logger.info(
+                f"Project created successfully. Job ID: {resp['job_id']}. View logs at: https://hf.co/spaces/{resp['job_id']}"
+            )
+            return resp
+        else:
+            logger.error(f"Error creating project: {response.json()}")
+            return response.json()
 
     def get_logs(self, job_id: str):
         url = f"{self.host}/api/logs"
