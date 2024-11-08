@@ -42,7 +42,6 @@ PARAMS["llm"] = {
     "distributed_backend": "ddp",
     "scheduler": "linear",
     "merge_adapter": True,
-    "trainer": "sft",
 }
 
 PARAMS["text-classification"] = {
