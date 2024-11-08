@@ -41,6 +41,8 @@ PARAMS["llm"] = {
     "max_completion_length": 128,
     "distributed_backend": "ddp",
     "scheduler": "linear",
+    "merge_adapter": True,
+    "trainer": "sft",
 }
 
 PARAMS["text-classification"] = {
@@ -121,30 +123,58 @@ PARAMS["extractive-qa"] = {
 }
 
 DEFAULT_COLUMN_MAPPING = {}
-DEFAULT_COLUMN_MAPPING["llm:sft"] = {"text": "text"}
-DEFAULT_COLUMN_MAPPING["llm:generic"] = {"text": "text"}
-DEFAULT_COLUMN_MAPPING["llm:default"] = {"text": "text"}
-DEFAULT_COLUMN_MAPPING["llm:dpo"] = {"prompt": "prompt", "text": "chosen", "rejected_text": "rejected"}
-DEFAULT_COLUMN_MAPPING["llm:orpo"] = {"prompt": "prompt", "text": "chosen", "rejected_text": "rejected"}
-DEFAULT_COLUMN_MAPPING["llm:reward"] = {"text": "chosen", "rejected_text": "rejected"}
-DEFAULT_COLUMN_MAPPING["vlm:captioning"] = {"image": "image", "text": "caption"}
-DEFAULT_COLUMN_MAPPING["vlm:vqa"] = {"image": "image", "prompt": "question", "text": "answer"}
+DEFAULT_COLUMN_MAPPING["llm:sft"] = {"text_column": "text"}
+DEFAULT_COLUMN_MAPPING["llm:generic"] = {"text_column": "text"}
+DEFAULT_COLUMN_MAPPING["llm:default"] = {"text_column": "text"}
+DEFAULT_COLUMN_MAPPING["llm:dpo"] = {
+    "prompt_column": "prompt",
+    "text_column": "chosen",
+    "rejected_text_column": "rejected",
+}
+DEFAULT_COLUMN_MAPPING["llm:orpo"] = {
+    "prompt_column": "prompt",
+    "text_column": "chosen",
+    "rejected_text_column": "rejected",
+}
+DEFAULT_COLUMN_MAPPING["llm:reward"] = {"text_column": "chosen", "rejected_text_column": "rejected"}
+DEFAULT_COLUMN_MAPPING["vlm:captioning"] = {"image_column": "image", "text_column": "caption"}
+DEFAULT_COLUMN_MAPPING["vlm:vqa"] = {
+    "image_column": "image",
+    "prompt_text_column": "question",
+    "text_column": "answer",
+}
 DEFAULT_COLUMN_MAPPING["st:pair"] = {"sentence1": "anchor", "sentence2": "positive"}
-DEFAULT_COLUMN_MAPPING["st:pair_class"] = {"sentence1": "premise", "sentence2": "hypothesis", "target": "label"}
-DEFAULT_COLUMN_MAPPING["st:pair_score"] = {"sentence1": "sentence1", "sentence2": "sentence2", "target": "score"}
-DEFAULT_COLUMN_MAPPING["st:triplet"] = {"sentence1": "anchor", "sentence2": "positive", "sentence3": "negative"}
-DEFAULT_COLUMN_MAPPING["st:qa"] = {"sentence1": "query", "sentence2": "answer"}
-DEFAULT_COLUMN_MAPPING["text-classification"] = {"text": "text", "label": "target"}
-DEFAULT_COLUMN_MAPPING["seq2seq"] = {"text": "text", "label": "target"}
-DEFAULT_COLUMN_MAPPING["text-regression"] = {"text": "text", "label": "target"}
-DEFAULT_COLUMN_MAPPING["token-classification"] = {"text": "tokens", "label": "tags"}
-DEFAULT_COLUMN_MAPPING["dreambooth"] = {"image": "image"}
-DEFAULT_COLUMN_MAPPING["image-classification"] = {"image": "image", "label": "label"}
-DEFAULT_COLUMN_MAPPING["image-regression"] = {"image": "image", "label": "target"}
-DEFAULT_COLUMN_MAPPING["image-object-detection"] = {"image": "image", "objects": "objects"}
-DEFAULT_COLUMN_MAPPING["tabular:classification"] = {"id": "id", "label": "target"}
-DEFAULT_COLUMN_MAPPING["tabular:regression"] = {"id": "id", "label": "target"}
-DEFAULT_COLUMN_MAPPING["extractive-qa"] = {"text": "context", "question": "question", "answer": "answers"}
+DEFAULT_COLUMN_MAPPING["st:pair_class"] = {
+    "sentence1_column": "premise",
+    "sentence2_column": "hypothesis",
+    "target_column": "label",
+}
+DEFAULT_COLUMN_MAPPING["st:pair_score"] = {
+    "sentence1_column": "sentence1",
+    "sentence2_column": "sentence2",
+    "target_column": "score",
+}
+DEFAULT_COLUMN_MAPPING["st:triplet"] = {
+    "sentence1_column": "anchor",
+    "sentence2_column": "positive",
+    "sentence3_column": "negative",
+}
+DEFAULT_COLUMN_MAPPING["st:qa"] = {"sentence1_column": "query", "sentence2_column": "answer"}
+DEFAULT_COLUMN_MAPPING["text-classification"] = {"text_column": "text", "target_column": "target"}
+DEFAULT_COLUMN_MAPPING["seq2seq"] = {"text_column": "text", "target_column": "target"}
+DEFAULT_COLUMN_MAPPING["text-regression"] = {"text_column": "text", "target_column": "target"}
+DEFAULT_COLUMN_MAPPING["token-classification"] = {"text_column": "tokens", "target_column": "tags"}
+DEFAULT_COLUMN_MAPPING["dreambooth"] = {"default": "default"}
+DEFAULT_COLUMN_MAPPING["image-classification"] = {"image_column": "image", "target_column": "label"}
+DEFAULT_COLUMN_MAPPING["image-regression"] = {"image_column": "image", "target_column": "target"}
+DEFAULT_COLUMN_MAPPING["image-object-detection"] = {"image_column": "image", "objects_column": "objects"}
+DEFAULT_COLUMN_MAPPING["tabular:classification"] = {"id_column": "id", "target__columns": ["target"]}
+DEFAULT_COLUMN_MAPPING["tabular:regression"] = {"id_column": "id", "target_columns": ["target"]}
+DEFAULT_COLUMN_MAPPING["extractive-qa"] = {
+    "text_column": "context",
+    "question_column": "question",
+    "answer_column": "answers",
+}
 
 VALID_TASKS = [k for k in DEFAULT_COLUMN_MAPPING.keys()]
 

@@ -16,6 +16,7 @@ from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
+from autotrain.trainers.object_detection.params import ObjectDetectionParams
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 from autotrain.trainers.seq2seq.params import Seq2SeqParams
 from autotrain.trainers.tabular.params import TabularParams
@@ -112,6 +113,7 @@ VLMTrainingParamsAPI = create_api_base_model(VLMTrainingParams, "VLMTrainingPara
 ExtractiveQuestionAnsweringParamsAPI = create_api_base_model(
     ExtractiveQuestionAnsweringParams, "ExtractiveQuestionAnsweringParamsAPI"
 )
+ObjectDetectionParamsAPI = create_api_base_model(ObjectDetectionParams, "ObjectDetectionParamsAPI")
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -223,6 +225,11 @@ class ExtractiveQuestionAnsweringColumnMapping(BaseModel):
     answer_column: str
 
 
+class ObjectDetectionColumnMapping(BaseModel):
+    image_column: str
+    objects_column: str
+
+
 class APICreateProjectModel(BaseModel):
     """
     APICreateProjectModel is a Pydantic model that defines the schema for creating a project.
@@ -274,6 +281,7 @@ class APICreateProjectModel(BaseModel):
         "vlm:captioning",
         "vlm:vqa",
         "extractive-question-answering",
+        "image-object-detection",
     ]
     base_model: str
     hardware: Literal[
@@ -311,6 +319,7 @@ class APICreateProjectModel(BaseModel):
         ImageRegressionParamsAPI,
         VLMTrainingParamsAPI,
         ExtractiveQuestionAnsweringParamsAPI,
+        ObjectDetectionParamsAPI,
     ]
     username: str
     column_mapping: Optional[
@@ -336,6 +345,7 @@ class APICreateProjectModel(BaseModel):
             ImageRegressionColumnMapping,
             VLMColumnMapping,
             ExtractiveQuestionAnsweringColumnMapping,
+            ObjectDetectionColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -528,6 +538,14 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("answer_column"):
                 raise ValueError("answer_column is required for extractive-question-answering")
             values["column_mapping"] = ExtractiveQuestionAnsweringColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "image-object-detection":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for image-object-detection")
+            if not values.get("column_mapping").get("image_column"):
+                raise ValueError("image_column is required for image-object-detection")
+            if not values.get("column_mapping").get("objects_column"):
+                raise ValueError("objects_column is required for image-object-detection")
+            values["column_mapping"] = ObjectDetectionColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -567,6 +585,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = VLMTrainingParamsAPI(**values["params"])
         elif values.get("task") == "extractive-question-answering":
             values["params"] = ExtractiveQuestionAnsweringParamsAPI(**values["params"])
+        elif values.get("task") == "image-object-detection":
+            values["params"] = ObjectDetectionParamsAPI(**values["params"])
         return values
 
 
@@ -745,7 +765,7 @@ async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
     """
     job_id = job.jid
     jwt_url = f"{constants.ENDPOINT}/api/spaces/{job_id}/jwt"
-    response = get_session().get(jwt_url, headers=build_hf_headers())
+    response = get_session().get(jwt_url, headers=build_hf_headers(token=token))
     hf_raise_for_status(response)
     jwt_token = response.json()["token"]  # works for 24h (see "exp" field)
 
@@ -754,7 +774,9 @@ async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
 
     _logs = []
     try:
-        with get_session().get(logs_url, headers=build_hf_headers(token=jwt_token), stream=True) as response:
+        with get_session().get(
+            logs_url, headers=build_hf_headers(token=jwt_token), stream=True, timeout=3
+        ) as response:
             hf_raise_for_status(response)
             for line in response.iter_lines():
                 if not line.startswith(b"data: "):
@@ -766,9 +788,10 @@ async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
                     continue  # ignore (for example, empty lines or `b': keep-alive'`)
                 _logs.append((event["timestamp"], event["data"]))
 
-        # convert logs to a string
         _logs = "\n".join([f"{timestamp}: {data}" for timestamp, data in _logs])
-
         return {"logs": _logs, "success": True, "message": "Logs fetched successfully"}
     except Exception as e:
+        if "Read timed out" in str(e):
+            _logs = "\n".join([f"{timestamp}: {data}" for timestamp, data in _logs])
+            return {"logs": _logs, "success": True, "message": "Logs fetched successfully"}
         return {"logs": str(e), "success": False, "message": "Failed to fetch logs"}
