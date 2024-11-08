@@ -79,6 +79,7 @@ class SpaceRunner(BaseBackend):
             private=True,
         )
         self._add_secrets(api, space_id)
+        api.set_space_sleep_time(repo_id=space_id, sleep_time=604800)
         readme = self._create_readme()
         api.upload_file(
             path_or_fileobj=readme,
