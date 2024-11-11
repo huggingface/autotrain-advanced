@@ -109,7 +109,7 @@ def train(config):
         ref_model=model_ref,
         train_dataset=train_data,
         eval_dataset=valid_data if config.valid_split is not None else None,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         peft_config=peft_config if config.peft else None,
     )
 
