@@ -37,7 +37,7 @@ from diffusers import (
     DPMSolverMultistepScheduler,
     UNet2DConditionModel,
 )
-from diffusers.loaders import LoraLoaderMixin
+from diffusers.loaders import StableDiffusionLoraLoaderMixin
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import _set_state_dict_into_text_encoder, cast_training_params
 from diffusers.utils import convert_state_dict_to_diffusers, convert_unet_state_dict_to_peft, is_wandb_available
@@ -63,6 +63,7 @@ def log_validation(
     accelerator,
     pipeline_args,
     epoch,
+    torch_dtype,  # Add torch_dtype parameter
     is_final_validation=False,
 ):
     logger.info(
@@ -82,7 +83,7 @@ def log_validation(
 
     pipeline.scheduler = DPMSolverMultistepScheduler.from_config(pipeline.scheduler.config, **scheduler_args)
 
-    pipeline = pipeline.to(accelerator.device)
+    pipeline = pipeline.to(accelerator.device, dtype=torch_dtype)  # Use torch_dtype
     pipeline.set_progress_bar_config(disable=True)
 
     # run inference
@@ -340,6 +341,10 @@ def main(args):
         project_config=accelerator_project_config,
     )
 
+    # Add MPS support check
+    if torch.backends.mps.is_available():
+        accelerator.native_amp = False
+
     if args.report_to == "wandb":
         if not is_wandb_available():
             raise ImportError("Make sure to install wandb if you want to use it for logging during training.")
@@ -545,7 +550,7 @@ def main(args):
                 # make sure to pop weight so that corresponding model is not saved again
                 weights.pop()
 
-            LoraLoaderMixin.save_lora_weights(
+            StableDiffusionLoraLoaderMixin.save_lora_weights(
                 output_dir,
                 unet_lora_layers=unet_lora_layers_to_save,
                 text_encoder_lora_layers=text_encoder_lora_layers_to_save,
@@ -565,7 +570,7 @@ def main(args):
             else:
                 raise ValueError(f"unexpected save model: {model.__class__}")
 
-        lora_state_dict, network_alphas = LoraLoaderMixin.lora_state_dict(input_dir)
+        lora_state_dict, network_alphas = StableDiffusionLoraLoaderMixin.lora_state_dict(input_dir)
 
         unet_state_dict = {f'{k.replace("unet.", "")}': v for k, v in lora_state_dict.items() if k.startswith("unet.")}
         unet_state_dict = convert_unet_state_dict_to_peft(unet_state_dict)
@@ -948,6 +953,7 @@ def main(args):
                     accelerator,
                     pipeline_args,
                     epoch,
+                    torch_dtype=weight_dtype,
                 )
 
     # Save the lora layers
@@ -964,7 +970,7 @@ def main(args):
         else:
             text_encoder_state_dict = None
 
-        LoraLoaderMixin.save_lora_weights(
+        StableDiffusionLoraLoaderMixin.save_lora_weights(
             save_directory=args.output_dir,
             unet_lora_layers=unet_lora_state_dict,
             text_encoder_lora_layers=text_encoder_state_dict,
