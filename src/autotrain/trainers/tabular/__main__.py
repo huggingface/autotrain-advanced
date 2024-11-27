@@ -13,7 +13,13 @@ from sklearn import pipeline, preprocessing
 from sklearn.compose import ColumnTransformer
 
 from autotrain import logger
-from autotrain.trainers.common import monitor, pause_space, remove_autotrain_data, save_training_params
+from autotrain.trainers.common import (
+    ALLOW_REMOTE_CODE,
+    monitor,
+    pause_space,
+    remove_autotrain_data,
+    save_training_params,
+)
 from autotrain.trainers.tabular import utils
 from autotrain.trainers.tabular.params import TabularParams
 
@@ -187,12 +193,14 @@ def train(config):
                 name=dataset_config_name,
                 split=split,
                 token=config.token,
+                trust_remote_code=ALLOW_REMOTE_CODE,
             )
         else:
             train_data = load_dataset(
                 config.data_path,
                 split=config.train_split,
                 token=config.token,
+                trust_remote_code=ALLOW_REMOTE_CODE,
             )
     train_data = train_data.to_pandas()
 
@@ -208,12 +216,14 @@ def train(config):
                     name=dataset_config_name,
                     split=split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
             else:
                 valid_data = load_dataset(
                     config.data_path,
                     split=config.valid_split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
         valid_data = valid_data.to_pandas()
 

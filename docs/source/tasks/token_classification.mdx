@@ -11,8 +11,8 @@ The data should be in the following CSV format:
 
 ```csv
 tokens,tags
-"['I', 'love', 'Paris']", "['O', 'O', 'B-LOC']"
-"['I', 'live', 'in', 'New', 'York']", "['O', 'O', 'O', 'B-LOC', 'I-LOC']"
+"['I', 'love', 'Paris']","['O', 'O', 'B-LOC']"
+"['I', 'live', 'in', 'New', 'York']","['O', 'O', 'O', 'B-LOC', 'I-LOC']"
 .
 .
 .
@@ -21,8 +21,8 @@ tokens,tags
 or you can also use JSONL format:
 
 ```json
-{"tokens": ["I", "love", "Paris"], "tags": ["O", "O", "B-LOC"]}
-{"tokens": ["I", "live", "in", "New", "York"], "tags": ["O", "O", "O", "B-LOC", "I-LOC"]}
+{"tokens": ["I", "love", "Paris"],"tags": ["O", "O", "B-LOC"]}
+{"tokens": ["I", "live", "in", "New", "York"],"tags": ["O", "O", "O", "B-LOC", "I-LOC"]}
 .
 .
 .
@@ -50,6 +50,10 @@ for chunk in pd.read_csv('example.csv', chunksize=chunk_size):
     chunk.to_csv(f'chunk_{i}.csv', index=False)
     i += 1
 ```
+
+
+Sample dataset from HuggingFace Hub: [conll2003](https://huggingface.co/datasets/eriktks/conll2003)
+
 
 ## Columns
 

@@ -262,8 +262,8 @@ def token_clf_munge_data(params, local):
         )
         params.data_path = dset.prepare()
         params.valid_split = "validation"
-        params.text_column = "autotrain_text"
-        params.target_column = "autotrain_label"
+        params.tokens_column = "autotrain_text"
+        params.tags_column = "autotrain_label"
     return params
 
 

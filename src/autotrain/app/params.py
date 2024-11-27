@@ -397,8 +397,8 @@ class AppParams:
             _params["tags_column"] = "autotrain_label"
             _params["valid_split"] = "validation"
         else:
-            _params["tokens_column"] = self.column_mapping.get("text" if not self.api else "tokens_column", "text")
-            _params["tags_column"] = self.column_mapping.get("label" if not self.api else "tags_column", "label")
+            _params["tokens_column"] = self.column_mapping.get("tokens" if not self.api else "tokens_column", "tokens")
+            _params["tags_column"] = self.column_mapping.get("tags" if not self.api else "tags_column", "tags")
             _params["train_split"] = self.train_split
             _params["valid_split"] = self.valid_split
 
