@@ -76,20 +76,6 @@ PARAMS["tabular"] = {
     "numeric_scaler": "robust",
 }
 
-PARAMS["dreambooth"] = {
-    "vae_model": "",
-    "num_steps": 500,
-    "disable_gradient_checkpointing": False,
-    "mixed_precision": "fp16",
-    "batch_size": 1,
-    "gradient_accumulation": 4,
-    "resolution": 1024,
-    "use_8bit_adam": False,
-    "xformers": False,
-    "train_text_encoder": False,
-    "lr": 1e-4,
-}
-
 PARAMS["token-classification"] = {
     "mixed_precision": "fp16",
     "log": "tensorboard",
@@ -163,7 +149,6 @@ DEFAULT_COLUMN_MAPPING["text-classification"] = {"text_column": "text", "target_
 DEFAULT_COLUMN_MAPPING["seq2seq"] = {"text_column": "text", "target_column": "target"}
 DEFAULT_COLUMN_MAPPING["text-regression"] = {"text_column": "text", "target_column": "target"}
 DEFAULT_COLUMN_MAPPING["token-classification"] = {"text_column": "tokens", "target_column": "tags"}
-DEFAULT_COLUMN_MAPPING["dreambooth"] = {"default": "default"}
 DEFAULT_COLUMN_MAPPING["image-classification"] = {"image_column": "image", "target_column": "label"}
 DEFAULT_COLUMN_MAPPING["image-regression"] = {"image_column": "image", "target_column": "target"}
 DEFAULT_COLUMN_MAPPING["image-object-detection"] = {"image_column": "image", "objects_column": "objects"}
@@ -272,9 +257,6 @@ class Client:
 
         if missing_cols:
             raise ValueError(f"Missing columns in column_mapping: {missing_cols}")
-
-        if task == "dreambooth" and params.get("prompt") is None:
-            raise ValueError("Please provide a prompt for the DreamBooth task")
 
         data = {
             "project_name": project_name,

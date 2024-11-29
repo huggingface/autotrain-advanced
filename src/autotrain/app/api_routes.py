@@ -12,7 +12,6 @@ from autotrain.app.params import HIDDEN_PARAMS, PARAMS, AppParams
 from autotrain.app.utils import token_verification
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -99,7 +98,6 @@ LLMDPOTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMDPOTraini
 LLMORPOTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMORPOTrainingParamsAPI")
 LLMGenericTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMGenericTrainingParamsAPI")
 LLMRewardTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMRewardTrainingParamsAPI")
-DreamBoothTrainingParamsAPI = create_api_base_model(DreamBoothTrainingParams, "DreamBoothTrainingParamsAPI")
 ImageClassificationParamsAPI = create_api_base_model(ImageClassificationParams, "ImageClassificationParamsAPI")
 Seq2SeqParamsAPI = create_api_base_model(Seq2SeqParams, "Seq2SeqParamsAPI")
 TabularClassificationParamsAPI = create_api_base_model(TabularParams, "TabularClassificationParamsAPI")
@@ -139,10 +137,6 @@ class LLMGenericColumnMapping(BaseModel):
 class LLMRewardColumnMapping(BaseModel):
     text_column: str
     rejected_text_column: str
-
-
-class DreamBoothColumnMapping(BaseModel):
-    default: Optional[str] = None
 
 
 class ImageClassificationColumnMapping(BaseModel):
@@ -237,7 +231,7 @@ class APICreateProjectModel(BaseModel):
     Attributes:
         project_name (str): The name of the project.
         task (Literal): The type of task for the project. Supported tasks include various LLM tasks,
-            image classification, dreambooth, seq2seq, token classification, text classification,
+            image classification, seq2seq, token classification, text classification,
             text regression, tabular classification, tabular regression, image regression, VLM tasks,
             and extractive question answering.
         base_model (str): The base model to be used for the project.
@@ -270,7 +264,6 @@ class APICreateProjectModel(BaseModel):
         "st:triplet",
         "st:qa",
         "image-classification",
-        "dreambooth",
         "seq2seq",
         "token-classification",
         "text-classification",
@@ -308,7 +301,6 @@ class APICreateProjectModel(BaseModel):
         LLMGenericTrainingParamsAPI,
         LLMRewardTrainingParamsAPI,
         SentenceTransformersParamsAPI,
-        DreamBoothTrainingParamsAPI,
         ImageClassificationParamsAPI,
         Seq2SeqParamsAPI,
         TabularClassificationParamsAPI,
@@ -329,7 +321,6 @@ class APICreateProjectModel(BaseModel):
             LLMORPOColumnMapping,
             LLMGenericColumnMapping,
             LLMRewardColumnMapping,
-            DreamBoothColumnMapping,
             ImageClassificationColumnMapping,
             Seq2SeqColumnMapping,
             TabularClassificationColumnMapping,
@@ -395,9 +386,6 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("rejected_text_column"):
                 raise ValueError("rejected_text_column is required for llm:reward")
             values["column_mapping"] = LLMRewardColumnMapping(**values["column_mapping"])
-        elif values.get("task") == "dreambooth":
-            if values.get("column_mapping"):
-                raise ValueError("column_mapping is not required for dreambooth")
         elif values.get("task") == "seq2seq":
             if not values.get("column_mapping"):
                 raise ValueError("column_mapping is required for seq2seq")
@@ -561,8 +549,6 @@ class APICreateProjectModel(BaseModel):
             values["params"] = LLMGenericTrainingParamsAPI(**values["params"])
         elif values.get("task") == "llm:reward":
             values["params"] = LLMRewardTrainingParamsAPI(**values["params"])
-        elif values.get("task") == "dreambooth":
-            values["params"] = DreamBoothTrainingParamsAPI(**values["params"])
         elif values.get("task") == "seq2seq":
             values["params"] = Seq2SeqParamsAPI(**values["params"])
         elif values.get("task") == "image-classification":

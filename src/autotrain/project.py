@@ -14,14 +14,12 @@ from autotrain.backends.nvcf import NVCFRunner
 from autotrain.backends.spaces import SpaceRunner
 from autotrain.dataset import (
     AutoTrainDataset,
-    AutoTrainDreamboothDataset,
     AutoTrainImageClassificationDataset,
     AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
     AutoTrainVLMDataset,
 )
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -289,22 +287,6 @@ def img_clf_munge_data(params, local):
     return params
 
 
-def dreambooth_munge_data(params, local):
-    # check if params.image_path is a directory
-    if os.path.isdir(params.image_path):
-        training_data = [os.path.join(params.image_path, f) for f in os.listdir(params.image_path)]
-        dset = AutoTrainDreamboothDataset(
-            concept_images=training_data,
-            concept_name=params.prompt,
-            token=params.token,
-            project_name=params.project_name,
-            username=params.username,
-            local=local,
-        )
-        params.image_path = dset.prepare()
-    return params
-
-
 def img_obj_detect_munge_data(params, local):
     train_data_path = f"{params.data_path}/{params.train_split}"
     if params.valid_split is not None:
@@ -469,7 +451,6 @@ class AutoTrainProject:
         LLMTrainingParams,
         TextClassificationParams,
         TabularParams,
-        DreamBoothTrainingParams,
         Seq2SeqParams,
         ImageClassificationParams,
         TextRegressionParams,
@@ -513,7 +494,6 @@ class AutoTrainProject:
         LLMTrainingParams,
         TextClassificationParams,
         TabularParams,
-        DreamBoothTrainingParams,
         Seq2SeqParams,
         ImageClassificationParams,
         TextRegressionParams,
@@ -535,8 +515,6 @@ class AutoTrainProject:
     def _process_params_data(self):
         if isinstance(self.params, LLMTrainingParams):
             return llm_munge_data(self.params, self.local)
-        elif isinstance(self.params, DreamBoothTrainingParams):
-            return dreambooth_munge_data(self.params, self.local)
         elif isinstance(self.params, ExtractiveQuestionAnsweringParams):
             return ext_qa_munge_data(self.params, self.local)
         elif isinstance(self.params, ImageClassificationParams):

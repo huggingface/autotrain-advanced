@@ -31,8 +31,6 @@
     title: Image Classification / Regression
   - local: tasks/object_detection
     title: Object Detection
-  - local: tasks/dreambooth
-    title: DreamBooth
   - local: tasks/seq2seq
     title: Seq2Seq
   - local: tasks/token_classification

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Union
 
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
@@ -69,7 +68,7 @@ class BaseBackend:
 
     Attributes:
         params (Union[TextClassificationParams, ImageClassificationParams, LLMTrainingParams,
-                      GenericParams, TabularParams, DreamBoothTrainingParams, Seq2SeqParams,
+                      GenericParams, TabularParams, Seq2SeqParams,
                       TokenClassificationParams, TextRegressionParams, ObjectDetectionParams,
                       SentenceTransformersParams, ImageRegressionParams, VLMTrainingParams,
                       ExtractiveQuestionAnsweringParams]): Training parameters.
@@ -86,7 +85,6 @@ class BaseBackend:
         LLMTrainingParams,
         GenericParams,
         TabularParams,
-        DreamBoothTrainingParams,
         Seq2SeqParams,
         TokenClassificationParams,
         TextRegressionParams,
@@ -123,8 +121,6 @@ class BaseBackend:
             self.task_id = 26
         elif isinstance(self.params, GenericParams):
             self.task_id = 27
-        elif isinstance(self.params, DreamBoothTrainingParams):
-            self.task_id = 25
         elif isinstance(self.params, Seq2SeqParams):
             self.task_id = 28
         elif isinstance(self.params, ImageClassificationParams):
@@ -161,10 +157,7 @@ class BaseBackend:
             "TASK_ID": str(self.task_id),
             "PARAMS": json.dumps(self.params.model_dump_json()),
         }
-        if isinstance(self.params, DreamBoothTrainingParams):
-            self.env_vars["DATA_PATH"] = self.params.image_path
-        else:
-            self.env_vars["DATA_PATH"] = self.params.data_path
+        self.env_vars["DATA_PATH"] = self.params.data_path
 
         if not isinstance(self.params, GenericParams):
             self.env_vars["MODEL"] = self.params.model

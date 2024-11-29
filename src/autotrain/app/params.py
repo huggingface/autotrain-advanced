@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -110,20 +109,6 @@ PARAMS["tabular"] = TabularParams(
     numerical_imputer="median",
     numeric_scaler="robust",
 ).model_dump()
-PARAMS["dreambooth"] = DreamBoothTrainingParams(
-    prompt="<enter your prompt here>",
-    vae_model="",
-    num_steps=500,
-    disable_gradient_checkpointing=False,
-    mixed_precision="fp16",
-    batch_size=1,
-    gradient_accumulation=4,
-    resolution=1024,
-    use_8bit_adam=False,
-    xformers=False,
-    train_text_encoder=False,
-    lr=1e-4,
-).model_dump()
 PARAMS["token-classification"] = TokenClassificationParams(
     mixed_precision="fp16",
     log="tensorboard",
@@ -187,7 +172,6 @@ class AppParams:
         _munge_params_img_reg(): Processes parameters for image regression task.
         _munge_params_img_obj_det(): Processes parameters for image object detection task.
         _munge_params_tabular(): Processes parameters for tabular data task.
-        _munge_params_dreambooth(): Processes parameters for DreamBooth training task.
     """
 
     job_params_json: str
@@ -218,8 +202,6 @@ class AppParams:
             return self._munge_params_img_obj_det()
         elif self.task.startswith("tabular"):
             return self._munge_params_tabular()
-        elif self.task == "dreambooth":
-            return self._munge_params_dreambooth()
         elif self.task.startswith("llm"):
             return self._munge_params_llm()
         elif self.task == "token-classification":
@@ -506,17 +488,6 @@ class AppParams:
 
         return TabularParams(**_params)
 
-    def _munge_params_dreambooth(self):
-        _params = self._munge_common_params()
-        _params["model"] = self.base_model
-        _params["image_path"] = self.data_path
-
-        if "weight_decay" in _params:
-            _params["adam_weight_decay"] = _params["weight_decay"]
-            _params.pop("weight_decay")
-
-        return DreamBoothTrainingParams(**_params)
-
 
 def get_task_params(task, param_type):
     """
@@ -763,35 +734,6 @@ def get_task_params(task, param_type):
             "early_stopping_patience",
             "early_stopping_threshold",
         ]
-        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-    if task == "dreambooth":
-        more_hidden_params = [
-            "epochs",
-            "logging",
-            "bf16",
-        ]
-        if param_type == "basic":
-            more_hidden_params.extend(
-                [
-                    "prior_preservation",
-                    "prior_loss_weight",
-                    "seed",
-                    "center_crop",
-                    "train_text_encoder",
-                    "disable_gradient_checkpointing",
-                    "scale_lr",
-                    "warmup_steps",
-                    "num_cycles",
-                    "lr_power",
-                    "adam_beta1",
-                    "adam_beta2",
-                    "adam_weight_decay",
-                    "adam_epsilon",
-                    "max_grad_norm",
-                    "pre_compute_text_embeddings",
-                    "text_encoder_use_attention_mask",
-                ]
-            )
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
 
     return task_params

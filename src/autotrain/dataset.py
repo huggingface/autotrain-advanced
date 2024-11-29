@@ -3,11 +3,10 @@ import os
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 
-from autotrain.preprocessor.dreambooth import DreamboothPreprocessor
 from autotrain.preprocessor.tabular import (
     TabularBinaryClassificationPreprocessor,
     TabularMultiClassClassificationPreprocessor,
@@ -65,63 +64,6 @@ def remove_non_image_files(folder):
         # Recursively call the function on each subfolder
         for subfolder in dirs:
             remove_non_image_files(os.path.join(root, subfolder))
-
-
-@dataclass
-class AutoTrainDreamboothDataset:
-    """
-    AutoTrainDreamboothDataset prepares dataset for Dreambooth task.
-
-    Attributes:
-        concept_images (List[Any]): A list of images related to the concept.
-        concept_name (str): The name of the concept.
-        token (str): The token associated with the concept.
-        project_name (str): The name of the project.
-        username (Optional[str]): The username of the person associated with the project. Defaults to None.
-        local (bool): A flag indicating whether the dataset is local. Defaults to False.
-
-    Methods:
-        __str__() -> str:
-            Returns a string representation of the dataset, including the project name and task.
-
-        __post_init__():
-            Initializes the task attribute to "dreambooth".
-
-        num_samples() -> int:
-            Returns the number of samples in the concept_images list.
-
-        prepare():
-            Prepares the dataset using the DreamboothPreprocessor and returns the preprocessed data.
-    """
-
-    concept_images: List[Any]
-    concept_name: str
-    token: str
-    project_name: str
-    username: Optional[str] = None
-    local: bool = False
-
-    def __str__(self) -> str:
-        info = f"Dataset: {self.project_name} ({self.task})\n"
-        return info
-
-    def __post_init__(self):
-        self.task = "dreambooth"
-
-    @property
-    def num_samples(self):
-        return len(self.concept_images)
-
-    def prepare(self):
-        preprocessor = DreamboothPreprocessor(
-            concept_images=self.concept_images,
-            concept_name=self.concept_name,
-            token=self.token,
-            project_name=self.project_name,
-            username=self.username,
-            local=self.local,
-        )
-        return preprocessor.prepare()
 
 
 @dataclass

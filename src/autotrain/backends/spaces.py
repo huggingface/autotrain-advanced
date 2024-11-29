@@ -3,7 +3,6 @@ import io
 from huggingface_hub import HfApi
 
 from autotrain.backends.base import BaseBackend
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.generic.params import GenericParams
 
 
@@ -59,11 +58,7 @@ class SpaceRunner(BaseBackend):
         api.add_space_secret(repo_id=space_id, key="PROJECT_NAME", value=self.params.project_name)
         api.add_space_secret(repo_id=space_id, key="TASK_ID", value=str(self.task_id))
         api.add_space_secret(repo_id=space_id, key="PARAMS", value=self.params.model_dump_json())
-
-        if isinstance(self.params, DreamBoothTrainingParams):
-            api.add_space_secret(repo_id=space_id, key="DATA_PATH", value=self.params.image_path)
-        else:
-            api.add_space_secret(repo_id=space_id, key="DATA_PATH", value=self.params.data_path)
+        api.add_space_secret(repo_id=space_id, key="DATA_PATH", value=self.params.data_path)
 
         if not isinstance(self.params, GenericParams):
             api.add_space_secret(repo_id=space_id, key="MODEL", value=self.params.model)
