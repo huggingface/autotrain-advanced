@@ -3,7 +3,6 @@ import argparse
 from autotrain import __version__, logger
 from autotrain.cli.run_api import RunAutoTrainAPICommand
 from autotrain.cli.run_app import RunAutoTrainAppCommand
-from autotrain.cli.run_dreambooth import RunAutoTrainDreamboothCommand
 from autotrain.cli.run_extractive_qa import RunAutoTrainExtractiveQACommand
 from autotrain.cli.run_image_classification import RunAutoTrainImageClassificationCommand
 from autotrain.cli.run_image_regression import RunAutoTrainImageRegressionCommand
@@ -35,7 +34,6 @@ def main():
     RunAutoTrainAppCommand.register_subcommand(commands_parser)
     RunAutoTrainLLMCommand.register_subcommand(commands_parser)
     RunSetupCommand.register_subcommand(commands_parser)
-    RunAutoTrainDreamboothCommand.register_subcommand(commands_parser)
     RunAutoTrainAPICommand.register_subcommand(commands_parser)
     RunAutoTrainTextClassificationCommand.register_subcommand(commands_parser)
     RunAutoTrainImageClassificationCommand.register_subcommand(commands_parser)

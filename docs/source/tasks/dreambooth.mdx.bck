@@ -1,0 +1,40 @@
+# DreamBooth
+
+DreamBooth is an innovative method that allows for the customization of text-to-image 
+models like Stable Diffusion using just a few images of a subject. 
+DreamBooth enables the generation of new, contextually varied images of the 
+subject in a range of scenes, poses, and viewpoints, expanding the creative 
+possibilities of generative models.
+
+
+## Data Preparation
+
+The data format for DreamBooth training is simple. All you need is images of a concept (e.g. a person) and a concept token.
+
+### Step 1: Gather Your Images
+
+Collect 3-5 high-quality images of the subject you wish to personalize. 
+These images should vary slightly in pose or background to provide the model with a 
+diverse learning set. You can select more images if you want to train a more robust model.
+
+
+### Step 2: Select Your Model
+
+Choose a base model from the Hugging Face Hub that is compatible with your needs. 
+It's essential to select a model that supports the image size of your training data. 
+Models available on the hub often have specific requirements or capabilities, 
+so ensure the model you choose can accommodate the dimensions of your images.
+
+
+### Step 3: Define Your Concept Token
+
+The concept token is a crucial element in DreamBooth training. 
+This token acts as a unique identifier for your subject within the model. 
+Typically, you will use a simple, descriptive keyword like prompt in the parameters 
+section of your training setup. This token will be used to generate new images of 
+your subject by the model.
+
+
+## Parameters
+
+[[autodoc]] trainers.dreambooth.params.DreamBoothTrainingParams
