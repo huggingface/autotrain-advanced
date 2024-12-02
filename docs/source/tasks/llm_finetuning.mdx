@@ -1,16 +1,27 @@
-# LLM Finetuning
+---
+title: "LLM Finetuning with AutoTrain Advanced"
+description: "Complete guide to fine-tuning Large Language Models (LLMs) using AutoTrain Advanced. Learn how to prepare data, train models, and deploy them for text generation, chatbots, and more."
+keywords: "llm finetuning, language model training, autotrain, hugging face, nlp, machine learning"
+---
 
-With AutoTrain, you can easily finetune large language models (LLMs) on your own data. 
-You can use AutoTrain to finetune LLMs for a variety of tasks, such as text generation, text classification, 
-and text summarization. You can also use AutoTrain to finetune LLMs for specific use cases, such as chatbots, 
-question-answering systems, and code generation and even basic fine-tuning tasks like classic text generation.
+# LLM Finetuning with AutoTrain Advanced
 
-Config file task names:
-- `llm`: generic trainer
-- `llm-sft`: SFT trainer
-- `llm-reward`: Reward trainer
-- `llm-dpo`: DPO trainer
-- `llm-orpo`: ORPO trainer
+AutoTrain Advanced makes it easy to fine-tune large language models (LLMs) for your specific use cases. This guide covers everything you need to know about LLM fine-tuning.
+
+## Key Features
+- Simple data preparation with CSV and JSONL formats
+- Support for multiple training approaches (SFT, DPO, ORPO)
+- Built-in chat templates
+- Local and cloud training options
+- Optimized training parameters
+
+## Supported Training Methods
+AutoTrain supports multiple specialized trainers:
+- `llm`: Generic LLM trainer
+- `llm-sft`: Supervised Fine-Tuning trainer
+- `llm-reward`: Reward modeling trainer  
+- `llm-dpo`: Direct Preference Optimization trainer
+- `llm-orpo`: ORPO (Optimal Reward Policy Optimization) trainer
 
 ## Data Preparation
 
@@ -145,6 +156,27 @@ Chat models can be trained using the following trainers:
 
 The only difference between the data format for reward trainer and DPO/ORPO trainer is that the reward trainer requires only `text` and `rejected_text` columns, while the DPO/ORPO trainer requires an additional `prompt` column.
 
+## Best Practices for LLM Fine-tuning
+
+### Memory Optimization
+- Use appropriate `block_size` and `model_max_length` for your hardware
+- Enable mixed precision training when possible
+- Utilize PEFT techniques for large models
+
+### Data Quality
+- Clean and validate your training data
+- Ensure balanced conversation samples
+- Use appropriate chat templates
+
+### Training Tips
+- Start with small learning rates
+- Monitor training metrics using tensorboard
+- Validate model outputs during training
+
+### Related Resources
+- [AutoTrain Documentation](https://huggingface.co/docs/autotrain)
+- [Example Fine-tuned Models](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) 
+- [Training Datasets](https://huggingface.co/datasets?task_categories=task_categories:text-generation)
 
 ## Training
 
