@@ -70,3 +70,8 @@ class TextClassificationParams(AutoTrainParams):
     log: str = Field("none", title="Logging using experiment tracking")
     early_stopping_patience: int = Field(5, title="Early stopping patience")
     early_stopping_threshold: float = Field(0.01, title="Early stopping threshold")
+    # generation parameters
+    gen_prompt: Optional[str] = Field(None, title="Generation prompt")
+    gen_model: Optional[str] = Field(None, title="Generation model")
+    gen_samples: Optional[int] = Field(100, title="Generation samples")
+    gen_params: Optional[str] = Field(None, title="Generation parameters, format: key1=value1,key2=value2")
