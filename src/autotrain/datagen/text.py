@@ -4,6 +4,9 @@ import random
 import time
 
 import ijson
+from pydantic import BaseModel
+from distilabel.llms import LlamaCppLLM
+from distilabel.steps.tasks import TextGeneration
 
 from autotrain import logger
 from autotrain.datagen import utils
@@ -23,7 +26,7 @@ If the user has not provided the classes, generate the classes as well but limit
 TEXT_CLASSIFICATION_DATA_PROMPT = """
 The dataset for text classification is in JSON format.
 Each line should be a JSON object with the following keys: text and target.
-Make sure each text sample has atleast {min_words} words.
+Make sure each text sample has at least {min_words} words.
 The target must always be a string.
 Don't write what you are doing. Just generate the data.
 Each line of the output consists of a dictionary with two keys: text and target and nothing else.
@@ -41,7 +44,7 @@ If the user has not provided the input and output format, generate the format as
 SEQ2SEQ_DATA_PROMPT = """
 The dataset for sequence-to-sequence is in JSON format.
 Each line should be a JSON object with the following keys: text and target.
-Make sure each text sample has atleast {min_words} words.
+Make sure each text sample has at least {min_words} words.
 Both text and target sentences must always be a string.
 Don't write what you are doing. Just generate the data.
 Each line of the output consists of a dictionary with two keys: text and target and nothing else.
@@ -71,83 +74,170 @@ class TextDataGenerator:
         logger.info("Prompting the model. Using prompt:")
         logger.info(formatted_message)
 
-        client = Client(self.params.backend, model_name=self.params.gen_model, api_key=self.params.api_key)
-        clean_result = []
+        if self.params.backend == "local":
 
-        if self.params.task in ["text-classification", "seq2seq"]:
-            response_format = {
-                "type": "json",
-                "value": {
-                    "properties": {
-                        "data": {
-                            "type": "array",
-                            "maxItems": 10,
-                            "minItems": 1,
-                            "items": {
-                                "type": "array",
-                                "properties": {
-                                    "text": {"type": "string"},
-                                    "target": {"type": "string"},
-                                },
-                                "required": ["text", "target"],
-                            },
-                        }
-                    },
-                    "required": ["data"],
-                },
-            }
+            if self.params.task in ["text-classification", "seq2seq"]:
+
+                class Data(BaseModel):
+                    text: str
+                    target: str
+
+            else:
+                raise NotImplementedError
+
+            def get_generator(seed: int):
+                generator = TextGeneration(
+                    llm=LlamaCppLLM(
+                        model_path=self.params.gen_model,
+                        n_gpu_layers=-1,
+                        n_ctx=1024,
+                        seed=seed,
+                        structured_output={"format": "json", "schema": Data},
+                    ),
+                    num_generations=10,
+                    system_prompt=ask,
+                )
+                generator.load()
+                return generator
+
+            counter = 0
+            clean_result = []
+            while True:
+                current_time = time.time()
+                random_number = random.randint(0, 1000000)
+                seed_input = f"{current_time}-{counter}-{random_number}"
+                random_seed = int(
+                    hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16
+                ) % (10**8)
+                generator = get_generator(seed=random_seed)
+                results = list(
+                    generator.process(
+                        [
+                            {
+                                "instruction": self.params.prompt,
+                            }
+                        ]
+                    )
+                )
+
+                for result in results[0]:
+                    items = []
+                    parser = ijson.parse(result.get("generation", ""))
+
+                    current_item = None
+                    current_key = None
+
+                    try:
+                        for prefix, event, value in parser:
+                            if event == "start_map":
+                                current_item = {}
+                            elif event == "map_key":
+                                current_key = value
+                            elif event == "string" and current_key:
+                                current_item[current_key] = value
+                            elif event == "end_map" and current_item:
+                                items.append(current_item)
+                                current_item = None
+                    except ijson.common.IncompleteJSONError:
+                        logger.warning(
+                            "Incomplete JSON encountered. Returning parsed data."
+                        )
+
+                    clean_result.append(items[0])
+                counter += 1
+                num_items_collected = len(clean_result)
+                logger.info(f"Collected {num_items_collected} items.")
+                if num_items_collected >= 10:
+                    break
+
         else:
-            raise NotImplementedError
-
-        counter = 0
-        while True:
-            current_time = time.time()
-            random_number = random.randint(0, 1000000)
-            seed_input = f"{current_time}-{counter}-{random_number}"
-            random_seed = int(hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16) % (10**8)
-            message = client.chat_completion(
-                messages=formatted_message,
-                max_tokens=4096,
-                seed=random_seed,
-                response_format=response_format,
+            client = Client(
+                self.params.backend,
+                model_name=self.params.gen_model,
+                api_key=self.params.api_key,
             )
+            clean_result = []
 
-            if message is None:
-                logger.warning("Failed to generate data. Retrying...")
-                continue
+            if self.params.task in ["text-classification", "seq2seq"]:
+                response_format = {
+                    "type": "json",
+                    "value": {
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "maxItems": 10,
+                                "minItems": 1,
+                                "items": {
+                                    "type": "array",
+                                    "properties": {
+                                        "text": {"type": "string"},
+                                        "target": {"type": "string"},
+                                    },
+                                    "required": ["text", "target"],
+                                },
+                            }
+                        },
+                        "required": ["data"],
+                    },
+                }
+            else:
+                raise NotImplementedError
 
-            result = message.choices[0].message.content
+            counter = 0
+            while True:
+                current_time = time.time()
+                random_number = random.randint(0, 1000000)
+                seed_input = f"{current_time}-{counter}-{random_number}"
+                random_seed = int(
+                    hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16
+                ) % (10**8)
+                message = client.chat_completion(
+                    messages=formatted_message,
+                    max_tokens=4096,
+                    seed=random_seed,
+                    response_format=response_format,
+                )
 
-            items = []
-            parser = ijson.parse(result)
+                if message is None:
+                    logger.warning("Failed to generate data. Retrying...")
+                    continue
 
-            current_item = None
-            current_key = None
+                result = message.choices[0].message.content
 
-            try:
-                for prefix, event, value in parser:
-                    if event == "start_map":
-                        current_item = {}
-                    elif event == "map_key":
-                        current_key = value
-                    elif event == "string" and current_key:
-                        current_item[current_key] = value
-                    elif event == "end_map" and current_item:
-                        items.append(current_item)
-                        current_item = None
-            except ijson.common.IncompleteJSONError:
-                # Handle incomplete JSON data
-                logger.warning("Incomplete JSON encountered. Returning parsed data.")
+                items = []
+                parser = ijson.parse(result)
 
-            clean_result.append(items)
-            counter += 1
-            num_items_collected = len([item for sublist in clean_result for item in sublist])
-            logger.info(f"Collected {num_items_collected} items.")
-            if num_items_collected >= self.params.min_samples:
-                break
+                current_item = None
+                current_key = None
 
-        # flatten the list
-        clean_result = [item for sublist in clean_result for item in sublist]
+                try:
+                    for prefix, event, value in parser:
+                        if event == "start_map":
+                            current_item = {}
+                        elif event == "map_key":
+                            current_key = value
+                        elif event == "string" and current_key:
+                            current_item[current_key] = value
+                        elif event == "end_map" and current_item:
+                            items.append(current_item)
+                            current_item = None
+                except ijson.common.IncompleteJSONError:
+                    # Handle incomplete JSON data
+                    logger.warning(
+                        "Incomplete JSON encountered. Returning parsed data."
+                    )
+
+                clean_result.append(items)
+                counter += 1
+                num_items_collected = len(
+                    [item for sublist in clean_result for item in sublist]
+                )
+                logger.info(f"Collected {num_items_collected} items.")
+                if num_items_collected >= self.params.min_samples:
+                    break
+
+            # flatten the list
+            clean_result = [item for sublist in clean_result for item in sublist]
 
         valid_data = None
         if self.params.valid_size != 0:
@@ -159,8 +249,12 @@ class TextDataGenerator:
             logger.info(f"Train data size: {len(train_data)}")
             logger.info(f"Valid data size: {len(valid_data)}")
 
-        hf_dataset = utils.convert_text_dataset_to_hf(self.params.task, train_data, valid_data)
-        hf_dataset.save_to_disk(os.path.join(self.params.project_name, "autotrain-data"))
+        hf_dataset = utils.convert_text_dataset_to_hf(
+            self.params.task, train_data, valid_data
+        )
+        hf_dataset.save_to_disk(
+            os.path.join(self.params.project_name, "autotrain-data")
+        )
 
         if self.params.push_to_hub:
             logger.info("Pushing the data to Hugging Face Hub.")
