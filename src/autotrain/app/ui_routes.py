@@ -756,6 +756,9 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     if not AUTOTRAIN_LOCAL:
         return {"logs": "Logs are only available in local mode."}
     log_file = "autotrain.log"
+    if not os.path.exists(log_file):
+        with open(log_file, "w", encoding="utf-8") as f:
+            pass
     with open(log_file, "r", encoding="utf-8") as f:
         logs = f.read()
     if len(str(logs).strip()) == 0:
