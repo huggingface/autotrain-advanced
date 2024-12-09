@@ -5,8 +5,8 @@ import requests
 import yaml
 
 from autotrain import logger
-from autotrain.cli.utils import (
-    dreambooth_munge_data,
+from autotrain.project import (
+    AutoTrainProject,
     ext_qa_munge_data,
     img_clf_munge_data,
     img_obj_detect_munge_data,
@@ -20,10 +20,8 @@ from autotrain.cli.utils import (
     token_clf_munge_data,
     vlm_munge_data,
 )
-from autotrain.project import AutoTrainProject
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
-from autotrain.trainers.dreambooth.params import DreamBoothTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
 from autotrain.trainers.image_regression.params import ImageRegressionParams
@@ -39,6 +37,28 @@ from autotrain.trainers.vlm.params import VLMTrainingParams
 
 @dataclass
 class AutoTrainConfigParser:
+    """
+    AutoTrainConfigParser is a class responsible for parsing and validating the yaml configuration
+    required to run various tasks in the AutoTrain framework. It supports loading configurations
+    from both local files and remote URLs, and maps task aliases to their respective parameters
+    and data munging functions.
+
+    Attributes:
+        config_path (str): Path or URL to the configuration file.
+        config (dict): Parsed configuration data.
+        task_param_map (dict): Mapping of task names to their parameter classes.
+        munge_data_map (dict): Mapping of task names to their data munging functions.
+        task_aliases (dict): Mapping of task aliases to their canonical task names.
+        task (str): The resolved task name from the configuration.
+        backend (str): The backend specified in the configuration.
+        parsed_config (dict): The parsed configuration parameters.
+
+    Methods:
+        __post_init__(): Initializes the parser, loads the configuration, and validates required fields.
+        _parse_config(): Parses the configuration and extracts relevant parameters based on the task.
+        run(): Executes the task with the parsed configuration.
+    """
+
     config_path: str
 
     def __post_init__(self):
@@ -54,7 +74,6 @@ class AutoTrainConfigParser:
 
         self.task_param_map = {
             "lm_training": LLMTrainingParams,
-            "dreambooth": DreamBoothTrainingParams,
             "image_binary_classification": ImageClassificationParams,
             "image_multi_class_classification": ImageClassificationParams,
             "image_object_detection": ObjectDetectionParams,
@@ -71,7 +90,6 @@ class AutoTrainConfigParser:
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
-            "dreambooth": dreambooth_munge_data,
             "tabular": tabular_munge_data,
             "seq2seq": seq2seq_munge_data,
             "image_multi_class_classification": img_clf_munge_data,
@@ -91,7 +109,6 @@ class AutoTrainConfigParser:
             "llm-generic": "lm_training",
             "llm-dpo": "lm_training",
             "llm-reward": "lm_training",
-            "dreambooth": "dreambooth",
             "image_binary_classification": "image_multi_class_classification",
             "image-binary-classification": "image_multi_class_classification",
             "image_classification": "image_multi_class_classification",
@@ -156,11 +173,7 @@ class AutoTrainConfigParser:
             "project_name": self.config["project_name"],
         }
 
-        if self.task == "dreambooth":
-            params["image_path"] = self.config["data"]["path"]
-            params["prompt"] = self.config["data"]["prompt"]
-        else:
-            params["data_path"] = self.config["data"]["path"]
+        params["data_path"] = self.config["data"]["path"]
 
         if self.task == "lm_training":
             params["chat_template"] = self.config["data"]["chat_template"]
@@ -177,12 +190,11 @@ class AutoTrainConfigParser:
         if self.task == "vlm":
             params["trainer"] = self.config["task"].split(":")[1]
 
-        if self.task != "dreambooth":
-            for k, v in self.config["data"]["column_mapping"].items():
-                params[k] = v
-            params["train_split"] = self.config["data"]["train_split"]
-            params["valid_split"] = self.config["data"]["valid_split"]
-            params["log"] = self.config["log"]
+        for k, v in self.config["data"]["column_mapping"].items():
+            params[k] = v
+        params["train_split"] = self.config["data"]["train_split"]
+        params["valid_split"] = self.config["data"]["valid_split"]
+        params["log"] = self.config["log"]
 
         if "hub" in self.config:
             params["username"] = self.config["hub"]["username"]

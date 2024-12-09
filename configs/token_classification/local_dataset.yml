@@ -7,10 +7,10 @@ backend: local
 data:
   path: data/ # this must be the path to the directory containing the train and valid files
   train_split: train # this must be either train.json
-  valid_split: valid # this must be either valid.json, can also be set to null
+  valid_split: test # this must be either valid.json, can also be set to null
   column_mapping:
-    text_column: text # this must be the name of the column containing the text
-    target_column: label # this must be the name of the column containing the target
+    tokens_column: tokens # this must be the name of the column containing the text
+    tags_column: tags # this must be the name of the column containing the target
 
 params:
   max_seq_length: 512

@@ -54,6 +54,22 @@ widget:
 
 
 def _binary_classification_metrics(pred):
+    """
+    Computes various binary classification metrics given the predictions and labels.
+
+    Args:
+        pred (tuple): A tuple containing raw predictions and true labels.
+                      raw_predictions (numpy.ndarray): The raw prediction scores from the model.
+                      labels (numpy.ndarray): The true labels.
+
+    Returns:
+        dict: A dictionary containing the following metrics:
+            - f1 (float): The F1 score.
+            - precision (float): The precision score.
+            - recall (float): The recall score.
+            - auc (float): The Area Under the ROC Curve (AUC) score.
+            - accuracy (float): The accuracy score.
+    """
     raw_predictions, labels = pred
     predictions = np.argmax(raw_predictions, axis=1)
     result = {
@@ -67,6 +83,27 @@ def _binary_classification_metrics(pred):
 
 
 def _multi_class_classification_metrics(pred):
+    """
+    Compute various classification metrics for multi-class classification.
+
+    Args:
+        pred (tuple): A tuple containing raw predictions and true labels.
+                      - raw_predictions (numpy.ndarray): The raw prediction scores for each class.
+                      - labels (numpy.ndarray): The true labels.
+
+    Returns:
+        dict: A dictionary containing the following metrics:
+              - "f1_macro": F1 score with macro averaging.
+              - "f1_micro": F1 score with micro averaging.
+              - "f1_weighted": F1 score with weighted averaging.
+              - "precision_macro": Precision score with macro averaging.
+              - "precision_micro": Precision score with micro averaging.
+              - "precision_weighted": Precision score with weighted averaging.
+              - "recall_macro": Recall score with macro averaging.
+              - "recall_micro": Recall score with micro averaging.
+              - "recall_weighted": Recall score with weighted averaging.
+              - "accuracy": Accuracy score.
+    """
     raw_predictions, labels = pred
     predictions = np.argmax(raw_predictions, axis=1)
     results = {
@@ -85,6 +122,18 @@ def _multi_class_classification_metrics(pred):
 
 
 def process_data(train_data, valid_data, image_processor, config):
+    """
+    Processes training and validation data for image classification.
+
+    Args:
+        train_data (Dataset): The training dataset.
+        valid_data (Dataset or None): The validation dataset. Can be None if no validation data is provided.
+        image_processor (ImageProcessor): An object containing image processing parameters such as size, mean, and std.
+        config (dict): Configuration dictionary containing additional parameters for dataset processing.
+
+    Returns:
+        tuple: A tuple containing the processed training dataset and the processed validation dataset (or None if no validation data is provided).
+    """
     if "shortest_edge" in image_processor.size:
         size = image_processor.size["shortest_edge"]
     else:
@@ -119,6 +168,26 @@ def process_data(train_data, valid_data, image_processor, config):
 
 
 def create_model_card(config, trainer, num_classes):
+    """
+    Generates a model card for the given configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing various settings.
+        trainer (object): Trainer object used for model training and evaluation.
+        num_classes (int): Number of classes in the classification task.
+
+    Returns:
+        str: A formatted string representing the model card.
+
+    The function evaluates the model if a validation split is provided in the config.
+    It then formats the evaluation scores based on whether the task is binary or multi-class classification.
+    If no validation split is provided, it notes that no validation metrics are available.
+
+    The function also checks the data path and model path in the config to determine if they are directories.
+    Based on these checks, it formats the dataset tag and base model information accordingly.
+
+    Finally, it uses the formatted information to create and return the model card string.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         valid_metrics = (

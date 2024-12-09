@@ -6,6 +6,53 @@ from autotrain.trainers.common import AutoTrainParams
 
 
 class VLMTrainingParams(AutoTrainParams):
+    """
+    VLMTrainingParams
+
+    Attributes:
+        model (str): Model name. Default is "google/paligemma-3b-pt-224".
+        project_name (str): Output directory. Default is "project-name".
+
+        data_path (str): Data path. Default is "data".
+        train_split (str): Train data config. Default is "train".
+        valid_split (Optional[str]): Validation data config. Default is None.
+
+        trainer (str): Trainer type (captioning, vqa, segmentation, detection). Default is "vqa".
+        log (str): Logging using experiment tracking. Default is "none".
+        disable_gradient_checkpointing (bool): Gradient checkpointing. Default is False.
+        logging_steps (int): Logging steps. Default is -1.
+        eval_strategy (str): Evaluation strategy. Default is "epoch".
+        save_total_limit (int): Save total limit. Default is 1.
+        auto_find_batch_size (bool): Auto find batch size. Default is False.
+        mixed_precision (Optional[str]): Mixed precision (fp16, bf16, or None). Default is None.
+        lr (float): Learning rate. Default is 3e-5.
+        epochs (int): Number of training epochs. Default is 1.
+        batch_size (int): Training batch size. Default is 2.
+        warmup_ratio (float): Warmup proportion. Default is 0.1.
+        gradient_accumulation (int): Gradient accumulation steps. Default is 4.
+        optimizer (str): Optimizer. Default is "adamw_torch".
+        scheduler (str): Scheduler. Default is "linear".
+        weight_decay (float): Weight decay. Default is 0.0.
+        max_grad_norm (float): Max gradient norm. Default is 1.0.
+        seed (int): Seed. Default is 42.
+
+        quantization (Optional[str]): Quantization (int4, int8, or None). Default is "int4".
+        target_modules (Optional[str]): Target modules. Default is "all-linear".
+        merge_adapter (bool): Merge adapter. Default is False.
+        peft (bool): Use PEFT. Default is False.
+        lora_r (int): Lora r. Default is 16.
+        lora_alpha (int): Lora alpha. Default is 32.
+        lora_dropout (float): Lora dropout. Default is 0.05.
+
+        image_column (Optional[str]): Image column. Default is "image".
+        text_column (str): Text (answer) column. Default is "text".
+        prompt_text_column (Optional[str]): Prompt (prefix) column. Default is "prompt".
+
+        push_to_hub (bool): Push to hub. Default is False.
+        username (Optional[str]): Hugging Face Username. Default is None.
+        token (Optional[str]): Huggingface token. Default is None.
+    """
+
     model: str = Field("google/paligemma-3b-pt-224", title="Model name")
     project_name: str = Field("project-name", title="Output directory")
 

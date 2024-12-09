@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.utils import get_field_info, sent_transformers_munge_data
+from autotrain.cli.utils import get_field_info
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.sent_transformers.params import SentenceTransformersParams
 
@@ -108,7 +108,6 @@ class RunAutoTrainSentenceTransformersCommand(BaseAutoTrainCommand):
         logger.info("Running Sentence Transformers...")
         if self.args.train:
             params = SentenceTransformersParams(**vars(self.args))
-            params = sent_transformers_munge_data(params, local=self.args.backend.startswith("local"))
-            project = AutoTrainProject(params=params, backend=self.args.backend)
+            project = AutoTrainProject(params=params, backend=self.args.backend, process=True)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")

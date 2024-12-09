@@ -50,6 +50,20 @@ widget:
 
 
 def collate_fn(batch):
+    """
+    Collates a batch of data for object detection training.
+
+    Args:
+        batch (list): A list of dictionaries, where each dictionary contains
+                      'pixel_values', 'labels', and optionally 'pixel_mask'.
+
+    Returns:
+        dict: A dictionary with the following keys:
+            - 'pixel_values' (torch.Tensor): A tensor containing stacked pixel values from the batch.
+            - 'labels' (list): A list of labels from the batch.
+            - 'pixel_mask' (torch.Tensor, optional): A tensor containing stacked pixel masks from the batch,
+                                                     if 'pixel_mask' is present in the input batch.
+    """
     data = {}
     data["pixel_values"] = torch.stack([x["pixel_values"] for x in batch])
     data["labels"] = [x["labels"] for x in batch]
@@ -59,6 +73,18 @@ def collate_fn(batch):
 
 
 def process_data(train_data, valid_data, image_processor, config):
+    """
+    Processes training and validation data for object detection.
+
+    Args:
+        train_data (list): List of training data samples.
+        valid_data (list or None): List of validation data samples. If None, only training data is processed.
+        image_processor (object): An image processor object that contains image processing configurations.
+        config (dict): Configuration dictionary containing various settings for data processing.
+
+    Returns:
+        tuple: A tuple containing processed training data and validation data (if provided). If validation data is not provided, the second element of the tuple is None.
+    """
     max_size = image_processor.size["longest_edge"]
     basic_transforms = [
         A.LongestMaxSize(max_size=max_size),
@@ -203,6 +229,20 @@ def object_detection_metrics(evaluation_results, image_processor, threshold=0.0,
 
 
 def create_model_card(config, trainer):
+    """
+    Generates a model card string based on the provided configuration and trainer.
+
+    Args:
+        config (object): Configuration object containing the following attributes:
+            - valid_split (optional): Validation split information.
+            - data_path (str): Path to the dataset.
+            - project_name (str): Name of the project.
+            - model (str): Path or identifier of the model.
+        trainer (object): Trainer object with an `evaluate` method that returns evaluation metrics.
+
+    Returns:
+        str: A formatted model card string containing dataset information, validation metrics, and base model details.
+    """
     if config.valid_split is not None:
         eval_scores = trainer.evaluate()
         eval_scores = [f"{k[len('eval_'):]}: {v}" for k, v in eval_scores.items() if k in VALID_METRICS]

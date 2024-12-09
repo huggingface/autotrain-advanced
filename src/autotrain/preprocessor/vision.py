@@ -14,6 +14,38 @@ ALLOWED_EXTENSIONS = ("jpeg", "png", "jpg", "JPG", "JPEG", "PNG")
 
 @dataclass
 class ImageClassificationPreprocessor:
+    """
+    A class used to preprocess image data for classification tasks.
+
+    Attributes
+    ----------
+    train_data : str
+        Path to the training data directory.
+    username : str
+        Username for the Hugging Face Hub.
+    project_name : str
+        Name of the project.
+    token : str
+        Authentication token for the Hugging Face Hub.
+    valid_data : Optional[str], optional
+        Path to the validation data directory, by default None.
+    test_size : Optional[float], optional
+        Proportion of the dataset to include in the validation split, by default 0.2.
+    seed : Optional[int], optional
+        Random seed for reproducibility, by default 42.
+    local : Optional[bool], optional
+        Whether to save the dataset locally or push to the Hugging Face Hub, by default False.
+
+    Methods
+    -------
+    __post_init__():
+        Validates the structure and contents of the training and validation data directories.
+    split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        Splits the dataframe into training and validation sets.
+    prepare() -> str:
+        Prepares the dataset for training and either saves it locally or pushes it to the Hugging Face Hub.
+    """
+
     train_data: str
     username: str
     project_name: str
@@ -160,6 +192,40 @@ class ImageClassificationPreprocessor:
 
 @dataclass
 class ObjectDetectionPreprocessor:
+    """
+    A class to preprocess data for object detection tasks.
+
+    Attributes:
+    -----------
+    train_data : str
+        Path to the training data directory.
+    username : str
+        Username for the Hugging Face Hub.
+    project_name : str
+        Name of the project.
+    token : str
+        Authentication token for the Hugging Face Hub.
+    valid_data : Optional[str], default=None
+        Path to the validation data directory.
+    test_size : Optional[float], default=0.2
+        Proportion of the dataset to include in the validation split.
+    seed : Optional[int], default=42
+        Random seed for reproducibility.
+    local : Optional[bool], default=False
+        Whether to save the dataset locally or push to the Hugging Face Hub.
+
+    Methods:
+    --------
+    _process_metadata(data_path):
+        Processes the metadata.jsonl file and extracts required columns and categories.
+    __post_init__():
+        Validates the existence and content of the training and validation data directories.
+    split(df):
+        Splits the dataframe into training and validation sets.
+    prepare():
+        Prepares the dataset for training by processing metadata, splitting data, and saving or pushing the dataset.
+    """
+
     train_data: str
     username: str
     project_name: str

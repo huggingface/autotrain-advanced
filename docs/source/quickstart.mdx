@@ -1,4 +1,4 @@
-# Quickstart
+# Quickstart Guide for Local Training
 
 This quickstart is for local installation and usage.
 If you want to use AutoTrain on Hugging Face Spaces, please refer to the *AutoTrain on Hugging Face Spaces* section.
@@ -55,7 +55,6 @@ positional arguments:
     app,
     llm,
     setup,
-    dreambooth,
     api,
     text-classification,
     text-regression,
@@ -76,13 +75,12 @@ options:
 For more information about a command, run: `autotrain <command> --help`
 ```
 
-It is advised to use `autotrain --config CONFIG_FILE` command when using the CLI.
+It is advised to use only the `autotrain --config CONFIG_FILE` command for training when using the CLI.
 
 The autotrain commands that end users will be interested in are:
 
 - `app`: Start the AutoTrain UI
 - `llm`: Train a language model
-- `dreambooth`: Train a model using DreamBooth
 - `text-classification`: Train a text classification model
 - `text-regression`: Train a text regression model
 - `image-classification`: Train an image classification model

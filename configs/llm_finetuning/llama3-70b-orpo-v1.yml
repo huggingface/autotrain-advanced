@@ -26,7 +26,7 @@ params:
   target_modules: all-linear
   padding: right
   optimizer: paged_adamw_8bit
-  scheduler: cosine
+  scheduler: linear
   gradient_accumulation: 4
   mixed_precision: bf16
 

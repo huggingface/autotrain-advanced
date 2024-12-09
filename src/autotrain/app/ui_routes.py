@@ -19,7 +19,6 @@ from autotrain.app.params import AppParams, get_task_params
 from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_process_by_pid, token_verification
 from autotrain.dataset import (
     AutoTrainDataset,
-    AutoTrainDreamboothDataset,
     AutoTrainImageClassificationDataset,
     AutoTrainImageRegressionDataset,
     AutoTrainObjectDetectionDataset,
@@ -284,10 +283,28 @@ UI_PARAMS = {
         "type": "number",
         "label": "Max doc stride",
     },
+    "distributed_backend": {
+        "type": "dropdown",
+        "label": "Distributed backend",
+        "options": ["ddp", "deepspeed"],
+    },
 }
 
 
 def graceful_exit(signum, frame):
+    """
+    Handles the SIGTERM signal to perform cleanup and exit the program gracefully.
+
+    Args:
+        signum (int): The signal number.
+        frame (FrameType): The current stack frame (or None).
+
+    Logs:
+        Logs the receipt of the SIGTERM signal and the initiation of cleanup.
+
+    Exits:
+        Exits the program with status code 0.
+    """
     logger.info("SIGTERM received. Performing cleanup...")
     sys.exit(0)
 
@@ -299,6 +316,23 @@ logger.info("AutoTrain started successfully")
 
 
 def user_authentication(request: Request):
+    """
+    Authenticates the user based on the following priority:
+    1. HF_TOKEN environment variable
+    2. OAuth information in session
+    3. Token in bearer header (not implemented in the given code)
+
+    Args:
+        request (Request): The incoming HTTP request object.
+
+    Returns:
+        str: The authenticated token if verification is successful.
+
+    Raises:
+        HTTPException: If the token is invalid or expired and the application is not running in a space.
+
+    If the application is running in a space and authentication fails, it returns a login template response.
+    """
     # priority: hf_token env var > oauth_info in session > token in bearer header
     # if "oauth_info" in request.session:
     if HF_TOKEN is not None:
@@ -429,8 +463,6 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["sentence-transformers"]
     elif task == "image-classification":
         hub_models = MODEL_CHOICE["image-classification"]
-    elif task == "dreambooth":
-        hub_models = MODEL_CHOICE["dreambooth"]
     elif task == "seq2seq":
         hub_models = MODEL_CHOICE["seq2seq"]
     elif task == "tabular:classification":
@@ -474,20 +506,28 @@ async def handle_form(
     token: str = Depends(user_authentication),
 ):
     """
-    This function is used to create a new project
-    :param project_name: str
-    :param task: str
-    :param base_model: str
-    :param hardware: str
-    :param params: str
-    :param autotrain_user: str
-    :param column_mapping: str
-    :param data_files_training: List[UploadFile]
-    :param data_files_valid: List[UploadFile]
-    :param hub_dataset: str
-    :param train_split: str
-    :param valid_split: str
-    :return: JSONResponse
+    Handle form submission for creating and managing AutoTrain projects.
+
+    Args:
+        project_name (str): The name of the project.
+        task (str): The task type (e.g., "image-classification", "text-classification").
+        base_model (str): The base model to use for training.
+        hardware (str): The hardware configuration (e.g., "local-ui").
+        params (str): JSON string of additional parameters.
+        autotrain_user (str): The username of the AutoTrain user.
+        column_mapping (str): JSON string mapping columns to their roles.
+        data_files_training (List[UploadFile]): List of training data files.
+        data_files_valid (List[UploadFile]): List of validation data files.
+        hub_dataset (str): The Hugging Face Hub dataset identifier.
+        train_split (str): The training split identifier.
+        valid_split (str): The validation split identifier.
+        token (str): The authentication token.
+
+    Returns:
+        dict: A dictionary containing the success status and monitor URL.
+
+    Raises:
+        HTTPException: If there are conflicts or validation errors in the form submission.
     """
     train_split = train_split.strip()
     if len(train_split) == 0:
@@ -531,9 +571,6 @@ async def handle_form(
             status_code=400, detail="Please upload a dataset or choose a dataset from the Hugging Face Hub."
         )
 
-    if len(hub_dataset) > 0 and task == "dreambooth":
-        raise HTTPException(status_code=400, detail="Dreambooth does not support Hugging Face Hub datasets.")
-
     if len(hub_dataset) > 0:
         if not train_split:
             raise HTTPException(status_code=400, detail="Please enter a training split.")
@@ -569,15 +606,6 @@ async def handle_form(
                 username=autotrain_user,
                 valid_data=validation_files[0] if validation_files else None,
                 percent_valid=None,  # TODO: add to UI
-                local=hardware.lower() == "local-ui",
-            )
-        elif task == "dreambooth":
-            dset = AutoTrainDreamboothDataset(
-                concept_images=data_files_training,
-                concept_name=params["prompt"],
-                token=token,
-                project_name=project_name,
-                username=autotrain_user,
                 local=hardware.lower() == "local-ui",
             )
         elif task.startswith("vlm:"):

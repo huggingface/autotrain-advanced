@@ -83,6 +83,25 @@ def _prepare_dataset(examples, tokenizer, config):
 
 
 class ExtractiveQuestionAnsweringDataset:
+    """
+    A dataset class for extractive question answering tasks.
+
+    Args:
+        data (Dataset): The dataset to be processed.
+        tokenizer (PreTrainedTokenizer): The tokenizer to be used for processing the data.
+        config (dict): Configuration parameters for processing the dataset.
+
+    Attributes:
+        data (Dataset): The original dataset.
+        tokenizer (PreTrainedTokenizer): The tokenizer used for processing the data.
+        config (dict): Configuration parameters for processing the dataset.
+        tokenized_data (Dataset): The tokenized dataset after applying the mapping function.
+
+    Methods:
+        __len__(): Returns the length of the tokenized dataset.
+        __getitem__(item): Returns the tokenized data at the specified index.
+    """
+
     def __init__(self, data, tokenizer, config):
         self.data = data
         self.tokenizer = tokenizer

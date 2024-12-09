@@ -58,12 +58,14 @@ def train(config):
                     name=dataset_config_name,
                     split=split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
             else:
                 train_data = load_dataset(
                     config.data_path,
                     split=config.train_split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
 
     if config.valid_split is not None:
@@ -78,12 +80,14 @@ def train(config):
                     name=dataset_config_name,
                     split=split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
             else:
                 valid_data = load_dataset(
                     config.data_path,
                     split=config.valid_split,
                     token=config.token,
+                    trust_remote_code=ALLOW_REMOTE_CODE,
                 )
 
     label_list = train_data.features[config.tags_column].feature.names

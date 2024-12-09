@@ -20,6 +20,29 @@ LLM_RESERVED_COLUMNS = [
 
 @dataclass
 class TextBinaryClassificationPreprocessor:
+    """
+    A preprocessor class for binary text classification tasks.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        text_column (str): The name of the column containing text data.
+        label_column (str): The name of the column containing label data.
+        username (str): The username for the Hugging Face Hub.
+        project_name (str): The project name for saving datasets.
+        token (str): The authentication token for the Hugging Face Hub.
+        valid_data (Optional[pd.DataFrame]): The validation data. Defaults to None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Defaults to 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Defaults to 42.
+        convert_to_class_label (Optional[bool]): Whether to convert labels to class labels. Defaults to False.
+        local (Optional[bool]): Whether to save the dataset locally. Defaults to False.
+
+    Methods:
+        __post_init__(): Validates the presence of required columns in the dataframes and checks for reserved column names.
+        split(): Splits the training data into training and validation sets if validation data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns for training and validation dataframes.
+        prepare(): Prepares the datasets for training and validation, converts labels if required, and saves or uploads the datasets.
+    """
+
     train_data: pd.DataFrame
     text_column: str
     label_column: str
@@ -122,10 +145,38 @@ class TextBinaryClassificationPreprocessor:
 
 
 class TextMultiClassClassificationPreprocessor(TextBinaryClassificationPreprocessor):
+    """
+    TextMultiClassClassificationPreprocessor is a class for preprocessing text data for multi-class classification tasks.
+
+    This class inherits from TextBinaryClassificationPreprocessor and is designed to handle scenarios where the text data
+    needs to be classified into more than two categories.
+
+    Methods:
+        Inherits all methods from TextBinaryClassificationPreprocessor.
+
+    Attributes:
+        Inherits all attributes from TextBinaryClassificationPreprocessor.
+    """
+
     pass
 
 
 class TextSingleColumnRegressionPreprocessor(TextBinaryClassificationPreprocessor):
+    """
+    A preprocessor class for single-column regression tasks, inheriting from TextBinaryClassificationPreprocessor.
+
+    Methods
+    -------
+    split():
+        Splits the training data into training and validation sets. If validation data is already provided, it returns
+        the training and validation data as is. Otherwise, it performs a train-test split on the training data.
+
+    prepare():
+        Prepares the training and validation datasets by splitting the data, preparing the columns, and converting
+        them to Hugging Face Datasets. The datasets are then either saved locally or pushed to the Hugging Face Hub,
+        depending on the `local` attribute.
+    """
+
     def split(self):
         if self.valid_data is not None:
             return self.train_data, self.valid_data
@@ -174,6 +225,21 @@ class TextSingleColumnRegressionPreprocessor(TextBinaryClassificationPreprocesso
 
 
 class TextTokenClassificationPreprocessor(TextBinaryClassificationPreprocessor):
+    """
+    A preprocessor class for text token classification tasks, inheriting from TextBinaryClassificationPreprocessor.
+
+    Methods
+    -------
+    split():
+        Splits the training data into training and validation sets. If validation data is already provided, it returns
+        the training and validation data as is. Otherwise, it splits the training data based on the test size and seed.
+
+    prepare():
+        Prepares the training and validation data for token classification. This includes splitting the data, preparing
+        columns, evaluating text and label columns, and converting them to datasets. The datasets are then either saved
+        locally or pushed to the Hugging Face Hub based on the configuration.
+    """
+
     def split(self):
         if self.valid_data is not None:
             return self.train_data, self.valid_data
@@ -243,6 +309,46 @@ class TextTokenClassificationPreprocessor(TextBinaryClassificationPreprocessor):
 
 @dataclass
 class LLMPreprocessor:
+    """
+    A class used to preprocess data for large language model (LLM) training.
+
+    Attributes
+    ----------
+    train_data : pd.DataFrame
+        The training data.
+    username : str
+        The username for the Hugging Face Hub.
+    project_name : str
+        The name of the project.
+    token : str
+        The token for authentication.
+    valid_data : Optional[pd.DataFrame], optional
+        The validation data, by default None.
+    test_size : Optional[float], optional
+        The size of the test split, by default 0.2.
+    seed : Optional[int], optional
+        The random seed, by default 42.
+    text_column : Optional[str], optional
+        The name of the text column, by default None.
+    prompt_column : Optional[str], optional
+        The name of the prompt column, by default None.
+    rejected_text_column : Optional[str], optional
+        The name of the rejected text column, by default None.
+    local : Optional[bool], optional
+        Whether to save the dataset locally, by default False.
+
+    Methods
+    -------
+    __post_init__()
+        Validates the provided columns and checks for reserved column names.
+    split()
+        Splits the data into training and validation sets.
+    prepare_columns(train_df, valid_df)
+        Prepares the columns for training and validation datasets.
+    prepare()
+        Prepares the datasets and pushes them to the Hugging Face Hub or saves them locally.
+    """
+
     train_data: pd.DataFrame
     username: str
     project_name: str
@@ -339,6 +445,28 @@ class LLMPreprocessor:
 
 @dataclass
 class Seq2SeqPreprocessor:
+    """
+    Seq2SeqPreprocessor is a class for preprocessing sequence-to-sequence training data.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        text_column (str): The name of the column containing the input text.
+        label_column (str): The name of the column containing the labels.
+        username (str): The username for pushing data to the hub.
+        project_name (str): The name of the project.
+        token (str): The token for authentication.
+        valid_data (Optional[pd.DataFrame]): The validation data. Default is None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Default is 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Default is 42.
+        local (Optional[bool]): Whether to save the dataset locally or push to the hub. Default is False.
+
+    Methods:
+        __post_init__(): Validates the presence of required columns in the training and validation data.
+        split(): Splits the training data into training and validation sets if validation data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns for training and validation data.
+        prepare(): Prepares the dataset for training by splitting, preparing columns, and converting to Dataset objects.
+    """
+
     train_data: pd.DataFrame
     text_column: str
     label_column: str
@@ -430,6 +558,31 @@ class Seq2SeqPreprocessor:
 
 @dataclass
 class SentenceTransformersPreprocessor:
+    """
+    A preprocessor class for preparing datasets for sentence transformers.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        username (str): The username for the Hugging Face Hub.
+        project_name (str): The project name for the Hugging Face Hub.
+        token (str): The token for authentication with the Hugging Face Hub.
+        valid_data (Optional[pd.DataFrame]): The validation data. Default is None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Default is 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Default is 42.
+        local (Optional[bool]): Whether to save the dataset locally or push to the Hugging Face Hub. Default is False.
+        sentence1_column (Optional[str]): The name of the first sentence column. Default is "sentence1".
+        sentence2_column (Optional[str]): The name of the second sentence column. Default is "sentence2".
+        sentence3_column (Optional[str]): The name of the third sentence column. Default is "sentence3".
+        target_column (Optional[str]): The name of the target column. Default is "target".
+        convert_to_class_label (Optional[bool]): Whether to convert the target column to class labels. Default is False.
+
+    Methods:
+        __post_init__(): Ensures no reserved columns are in train_data or valid_data.
+        split(): Splits the train_data into training and validation sets if valid_data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns for training and validation datasets.
+        prepare(): Prepares the datasets and either saves them locally or pushes them to the Hugging Face Hub.
+    """
+
     train_data: pd.DataFrame
     username: str
     project_name: str
@@ -530,6 +683,29 @@ class SentenceTransformersPreprocessor:
 
 @dataclass
 class TextExtractiveQuestionAnsweringPreprocessor:
+    """
+    Preprocessor for text extractive question answering tasks.
+
+    Attributes:
+        train_data (pd.DataFrame): The training data.
+        text_column (str): The name of the text column in the data.
+        question_column (str): The name of the question column in the data.
+        answer_column (str): The name of the answer column in the data.
+        username (str): The username for the Hugging Face Hub.
+        project_name (str): The project name for the Hugging Face Hub.
+        token (str): The token for authentication with the Hugging Face Hub.
+        valid_data (Optional[pd.DataFrame]): The validation data. Default is None.
+        test_size (Optional[float]): The proportion of the dataset to include in the validation split. Default is 0.2.
+        seed (Optional[int]): The random seed for splitting the data. Default is 42.
+        local (Optional[bool]): Whether to save the dataset locally or push to the Hugging Face Hub. Default is False.
+
+    Methods:
+        __post_init__(): Validates the columns in the training and validation data and converts the answer column to a dictionary.
+        split(): Splits the training data into training and validation sets if validation data is not provided.
+        prepare_columns(train_df, valid_df): Prepares the columns for training and validation data.
+        prepare(): Prepares the dataset for training by splitting, preparing columns, and converting to Hugging Face Dataset format.
+    """
+
     train_data: pd.DataFrame
     text_column: str
     question_column: str

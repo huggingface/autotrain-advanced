@@ -10,65 +10,37 @@
   title: Getting Started
 - sections:
   - local: quickstart_spaces
-    title: Quickstart
-  title: AutoTrain on Hugging Face Spaces
-- sections:
+    title: Train on Spaces
+  - local: quickstart_py
+    title: Python SDK
   - local: quickstart
-    title: Quickstart
+    title: Train Locally
   - local: config
-    title: Configurations
-  title: Use AutoTrain Locally
+    title: Config File
+  title: Quickstart
+- sections:
+  - local: tasks/llm_finetuning
+    title: LLM Finetuning
+  - local: tasks/text_classification_regression
+    title: Text Classification/Regression
+  - local: tasks/extractive_qa
+    title: Extractive QA
+  - local: tasks/sentence_transformer
+    title: Sentence Transformer
+  - local: tasks/image_classification_regression
+    title: Image Classification / Regression
+  - local: tasks/object_detection
+    title: Object Detection
+  - local: tasks/seq2seq
+    title: Seq2Seq
+  - local: tasks/token_classification
+    title: Token Classification
+  - local: tasks/tabular
+    title: Tabular
+  title: Tasks
 - sections:
   - local: col_map
     title: Understanding Column Mapping
   - local: autotrain_api
     title: AutoTrain API
   title: Miscellaneous
-- sections:
-  - local: text_classification
-    title: Text Classification
-  - local: extractive_qa
-    title: Extractive QA
-  - local: sentence_transformer
-    title: Sentence Transformer
-  - local: text_regression
-    title: Text Regression
-  - local: llm_finetuning
-    title: LLM Finetuning
-  - local: image_classification
-    title: Image Classification
-  - local: image_regression
-    title: Image Scoring/Regression
-  - local: object_detection
-    title: Object Detection
-  - local: dreambooth
-    title: DreamBooth
-  - local: seq2seq
-    title: Seq2Seq
-  - local: token_classification
-    title: Token Classification
-  - local: tabular
-    title: Tabular
-  title: Data Formats
-- sections:
-  - local: text_classification_params
-    title: Text Classification & Regression
-  - local: extractive_qa_params
-    title: Extractive QA
-  - local: llm_finetuning_params
-    title: LLM Finetuning
-  - local: image_classification_params
-    title: Image Classification
-  - local: image_regression_params
-    title: Image Scoring/Regression
-  - local: object_detection_params
-    title: Object Detection
-  - local: dreambooth_params
-    title: DreamBooth
-  - local: seq2seq_params
-    title: Seq2Seq
-  - local: token_classification_params
-    title: Token Classification
-  - local: tabular_params
-    title: Tabular
-  title: Parameters

@@ -33,8 +33,11 @@ QUALITY_REQUIRE = [
 
 TESTS_REQUIRE = ["pytest"]
 
+CLIENT_REQUIRES = ["requests", "loguru"]
+
 
 EXTRAS_REQUIRE = {
+    "base": INSTALL_REQUIRES,
     "dev": INSTALL_REQUIRES + QUALITY_REQUIRE + TESTS_REQUIRE,
     "quality": INSTALL_REQUIRES + QUALITY_REQUIRE,
     "docs": INSTALL_REQUIRES
@@ -45,6 +48,7 @@ EXTRAS_REQUIRE = {
         "sphinx-rtd-theme==0.4.3",
         "sphinx-copybutton",
     ],
+    "client": CLIENT_REQUIRES,
 }
 
 setup(
