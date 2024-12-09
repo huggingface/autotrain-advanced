@@ -4,9 +4,9 @@ import random
 import time
 
 import ijson
-from pydantic import BaseModel
 from distilabel.llms import LlamaCppLLM
 from distilabel.steps.tasks import TextGeneration
+from pydantic import BaseModel
 
 from autotrain import logger
 from autotrain.datagen import utils
@@ -106,9 +106,7 @@ class TextDataGenerator:
                 current_time = time.time()
                 random_number = random.randint(0, 1000000)
                 seed_input = f"{current_time}-{counter}-{random_number}"
-                random_seed = int(
-                    hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16
-                ) % (10**8)
+                random_seed = int(hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16) % (10**8)
                 generator = get_generator(seed=random_seed)
                 results = list(
                     generator.process(
@@ -139,9 +137,7 @@ class TextDataGenerator:
                                 items.append(current_item)
                                 current_item = None
                     except ijson.common.IncompleteJSONError:
-                        logger.warning(
-                            "Incomplete JSON encountered. Returning parsed data."
-                        )
+                        logger.warning("Incomplete JSON encountered. Returning parsed data.")
 
                     clean_result.append(items[0])
                 counter += 1
@@ -188,9 +184,7 @@ class TextDataGenerator:
                 current_time = time.time()
                 random_number = random.randint(0, 1000000)
                 seed_input = f"{current_time}-{counter}-{random_number}"
-                random_seed = int(
-                    hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16
-                ) % (10**8)
+                random_seed = int(hashlib.sha256(seed_input.encode("utf-8")).hexdigest(), 16) % (10**8)
                 message = client.chat_completion(
                     messages=formatted_message,
                     max_tokens=4096,
@@ -223,15 +217,11 @@ class TextDataGenerator:
                             current_item = None
                 except ijson.common.IncompleteJSONError:
                     # Handle incomplete JSON data
-                    logger.warning(
-                        "Incomplete JSON encountered. Returning parsed data."
-                    )
+                    logger.warning("Incomplete JSON encountered. Returning parsed data.")
 
                 clean_result.append(items)
                 counter += 1
-                num_items_collected = len(
-                    [item for sublist in clean_result for item in sublist]
-                )
+                num_items_collected = len([item for sublist in clean_result for item in sublist])
                 logger.info(f"Collected {num_items_collected} items.")
                 if num_items_collected >= self.params.min_samples:
                     break
@@ -249,12 +239,8 @@ class TextDataGenerator:
             logger.info(f"Train data size: {len(train_data)}")
             logger.info(f"Valid data size: {len(valid_data)}")
 
-        hf_dataset = utils.convert_text_dataset_to_hf(
-            self.params.task, train_data, valid_data
-        )
-        hf_dataset.save_to_disk(
-            os.path.join(self.params.project_name, "autotrain-data")
-        )
+        hf_dataset = utils.convert_text_dataset_to_hf(self.params.task, train_data, valid_data)
+        hf_dataset.save_to_disk(os.path.join(self.params.project_name, "autotrain-data"))
 
         if self.params.push_to_hub:
             logger.info("Pushing the data to Hugging Face Hub.")
