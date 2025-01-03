@@ -610,7 +610,7 @@ def get_tokenizer(config):
     return tokenizer
 
 
-def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
+def process_data_with_chat_template(config, tokenizer, train_data, valid_data=None):
     """
     Processes training and validation data using a specified chat template.
 
@@ -629,7 +629,6 @@ def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
         - For ORPO/DPO, the `prompt` will be extracted from chosen messages.
         - If `config.valid_split` is not None, the validation data will also be processed.
     """
-    valid_data = None
     if config.chat_template in ("chatml", "zephyr", "tokenizer"):
         logger.info("Applying chat template")
         logger.info("For ORPO/DPO, `prompt` will be extracted from chosen messages")
