@@ -26,7 +26,7 @@ tensorboard==2.18.0
 peft==0.14.0
 trl==0.13.0
 tiktoken==0.8.0
-transformers==4.47.1
+transformers==4.48.0
 accelerate==1.2.1
 bitsandbytes==0.45.0
 # extras
