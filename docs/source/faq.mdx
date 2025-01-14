@@ -94,13 +94,13 @@ AutoTrain will determine on its own if the user is running the command on a mult
 multi-gpu ddp if number of gpus is greater than 1 and less than 4 and deepspeed if number of gpus is greater than or equal to 4.
 
 
-## How can i use a hub dataset with multiple configs?
+## How can I use a hub dataset with multiple configs?
 
 If your hub dataset has multiple configs, you can use `train_split` parameter to specify the both the config and the split.
 For example, in this dataset [here](https://huggingface.co/datasets/timdettmers/openassistant-guanaco),
 there are multiple configs: `pair`, `pair-class`, `pair-score` and `triplet`.
 
-If i want to use `train` split of `pair-class` config, i can use write `pair-class:train` as `train_split` in the UI or the CLI / config.
+If I want to use `train` split of `pair-class` config, I can use write `pair-class:train` as `train_split` in the UI or the CLI / config.
 
 An example config is shown below:
 
