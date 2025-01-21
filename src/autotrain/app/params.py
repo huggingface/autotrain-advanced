@@ -274,6 +274,7 @@ class AppParams:
                 "rejected_text" if not self.api else "rejected_text_column", "rejected_text"
             )
             _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
         if "log" not in _params:
             _params["log"] = "tensorboard"
 
