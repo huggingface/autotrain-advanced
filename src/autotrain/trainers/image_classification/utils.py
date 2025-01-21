@@ -34,6 +34,7 @@ MODEL_CARD = """
 ---
 tags:
 - autotrain
+- transformers
 - image-classification{base_model}
 widget:
 - src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg

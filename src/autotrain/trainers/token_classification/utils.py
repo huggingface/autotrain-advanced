@@ -6,6 +6,7 @@ from seqeval import metrics
 
 MODEL_CARD = """
 ---
+library_name: transformers
 tags:
 - autotrain
 - token-classification{base_model}
