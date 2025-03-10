@@ -14,6 +14,7 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 from autotrain.trainers.vlm.params import VLMTrainingParams
+from autotrain.trainers.asr import WhisperTrainingParams
 
 
 HIDDEN_PARAMS = [
@@ -135,6 +136,11 @@ PARAMS["extractive-qa"] = ExtractiveQuestionAnsweringParams(
     max_seq_length=512,
     max_doc_stride=128,
 ).model_dump()
+PARAMS["speech-recognition"] = WhisperTrainingParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+    use_peft=True,
+).model_dump()
 
 
 @dataclass
@@ -172,6 +178,7 @@ class AppParams:
         _munge_params_img_reg(): Processes parameters for image regression task.
         _munge_params_img_obj_det(): Processes parameters for image object detection task.
         _munge_params_tabular(): Processes parameters for tabular data task.
+        _munge_params_asr(): Processes parameters for speech recognition task.
     """
 
     job_params_json: str
@@ -192,7 +199,9 @@ class AppParams:
             raise ValueError("train_split is required when using a hub dataset")
 
     def munge(self):
-        if self.task == "text-classification":
+        if self.task == "speech-recognition":
+            return self._munge_params_asr()
+        elif self.task == "text-classification":
             return self._munge_params_text_clf()
         elif self.task == "seq2seq":
             return self._munge_params_seq2seq()
@@ -488,6 +497,22 @@ class AppParams:
 
         return TabularParams(**_params)
 
+    def _munge_params_asr(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["audio_column"] = "autotrain_audio"
+            _params["text_column"] = "autotrain_text"
+            _params["valid_split"] = "validation"
+        else:
+            _params["audio_column"] = self.column_mapping.get("audio" if not self.api else "audio_column", "audio")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "text")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+        return WhisperTrainingParams(**_params)
+
 
 def get_task_params(task, param_type):
     """
@@ -733,6 +758,24 @@ def get_task_params(task, param_type):
             "eval_strategy",
             "early_stopping_patience",
             "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "speech-recognition" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "eval_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+            "lora_r",
+            "lora_alpha",
+            "lora_dropout",
+            "target_modules",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
 

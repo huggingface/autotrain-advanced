@@ -1,0 +1,44 @@
+task: speech-recognition
+base_model: openai/whisper-small
+data:
+  path: your_dataset_path
+  column_mapping:
+    audio_column: audio
+    text_column: text
+  train_split: train
+  valid_split: validation
+
+params:
+  # Audio processing parameters
+  sampling_rate: 16000
+  max_duration_secs: 30.0
+  preprocessing_num_workers: 4
+
+  # Training parameters
+  learning_rate: 5e-5
+  num_train_epochs: 3
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 1
+  eval_steps: 100
+  save_steps: 500
+  logging_steps: 10
+  warmup_steps: 0
+
+  # PEFT/LoRA parameters
+  use_peft: true
+  lora_r: 8
+  lora_alpha: 32
+  lora_dropout: 0.1
+  target_modules:
+    - q_proj
+    - v_proj
+    - k_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+  # Mixed precision and logging
+  mixed_precision: fp16
+  log: tensorboard 
