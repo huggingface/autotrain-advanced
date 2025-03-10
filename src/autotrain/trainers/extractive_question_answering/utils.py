@@ -3,7 +3,7 @@ import json
 import os
 
 import numpy as np
-from datasets import load_metric
+import evaluate
 from transformers import EvalPrediction
 
 from autotrain import logger
@@ -60,8 +60,8 @@ end_scores = outputs.end_logits
 ```
 """
 
-SQUAD_METRIC = load_metric("squad")
-SQUAD_V2_METRIC = load_metric("squad_v2")
+SQUAD_METRIC = evaluate.load("squad")
+SQUAD_V2_METRIC = evaluate.load("squad_v2")
 
 
 def postprocess_qa_predictions(
