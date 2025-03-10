@@ -305,7 +305,7 @@ def post_processing_function_qa(examples, features, predictions, version_2_with_
             {"id": k, "prediction_text": v, "no_answer_probability": 0.0} for k, v in predictions.items()
         ]
     else:
-        formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
+        formatted_predictions = [{"id": str(k), "prediction_text": v} for k, v in predictions.items()]
 
     references = [{"id": str(ex["id"]), "answers": ex[config.answer_column]} for ex in examples]
     return EvalPrediction(predictions=formatted_predictions, label_ids=references)
