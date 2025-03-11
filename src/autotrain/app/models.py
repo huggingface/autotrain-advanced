@@ -290,6 +290,16 @@ def _fetch_vlm_models():
             filter=["paligemma"],
         )
     )
+    # hub_models2 = list(
+    #     list_models(
+    #         task="image-text-to-text",
+    #         sort="downloads",
+    #         direction=-1,
+    #         limit=100,
+    #         full=False,
+    #         filter=["florence2"],
+    #     )
+    # )
     hub_models2 = []
     hub_models = list(hub_models1) + list(hub_models2)
     hub_models = get_sorted_models(hub_models)
