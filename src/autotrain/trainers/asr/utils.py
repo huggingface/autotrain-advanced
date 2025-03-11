@@ -1,9 +1,62 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List, Any
 
 import numpy as np
 import torch
+import evaluate
+import librosa
 from datasets import Dataset, load_dataset
 from transformers import WhisperProcessor
+from dataclasses import dataclass
+
+@dataclass
+class WhisperDataCollator:
+    """
+    Data collator for Whisper ASR training.
+    
+    This collator handles batching of input features and labels for Whisper training,
+    ensuring proper padding and formatting.
+    
+    Args:
+        processor (WhisperProcessor): The Whisper processor used for tokenization.
+        padding (bool, optional): Whether to pad sequences. Defaults to True.
+    """
+    processor: WhisperProcessor
+    padding: bool = True
+    
+    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        # Extract input features and labels
+        input_features = [torch.tensor(feature["input_features"]) if isinstance(feature["input_features"], list) 
+                         else feature["input_features"] for feature in features]
+        
+        # Ensure all input features are tensors
+        input_features = [feat if isinstance(feat, torch.Tensor) else torch.tensor(feat) for feat in input_features]
+        
+        # Get labels
+        labels = [feature["labels"] for feature in features]
+        
+        # Convert input features to batch
+        batch = {"input_features": torch.stack(input_features)}
+        
+        # Pad labels
+        if self.padding:
+            max_label_length = max(len(label) for label in labels)
+            padded_labels = []
+            
+            for label in labels:
+                padding_length = max_label_length - len(label)
+                padded_label = label + [self.processor.tokenizer.pad_token_id] * padding_length
+                padded_labels.append(padded_label)
+            
+            batch["labels"] = torch.tensor(padded_labels)
+        else:
+            batch["labels"] = torch.tensor(labels)
+        
+        # Replace padding with -100 to ignore loss correctly
+        batch["labels"] = batch["labels"].masked_fill(
+            batch["labels"] == self.processor.tokenizer.pad_token_id, -100
+        )
+        
+        return batch
 
 def load_audio_dataset(
     dataset_path: str,
@@ -109,13 +162,14 @@ def prepare_dataset(
             "labels": labels,
         }
     
+    # Process the dataset
     return dataset.map(
         prepare_example,
         remove_columns=dataset.column_names,
         num_proc=4,
     )
 
-def compute_metrics(pred):
+def compute_metrics(pred, processor=None):
     """Compute Word Error Rate (WER) metric for ASR evaluation.
     
     This function calculates the Word Error Rate between predicted transcriptions
@@ -124,6 +178,8 @@ def compute_metrics(pred):
     
     Args:
         pred: Prediction object containing predictions and label_ids.
+        processor (WhisperProcessor, optional): The processor to use for decoding.
+            If None, assumes a global processor is available. Defaults to None.
         
     Returns:
         dict: Dictionary containing the "wer" (Word Error Rate) metric.

@@ -17,33 +17,39 @@ This module provides functionality for fine-tuning Whisper models for Automatic 
 Create a YAML configuration file:
 
 ```yaml
-task: speech-recognition
-base_model: openai/whisper-small
-data:
-  path: your_dataset_path
-  column_mapping:
-    audio_column: audio
-    text_column: text
-  train_split: train
-  valid_split: validation
+# ASR Training Configuration
+model_name: openai/whisper-small
+dataset_path: your-dataset-name-or-path
+output_dir: whisper-finetuned
+audio_column: audio
+text_column: text
 
-params:
-  # Audio processing parameters
-  sampling_rate: 16000
-  max_duration_secs: 30.0
-  preprocessing_num_workers: 4
+# Audio processing parameters
+sampling_rate: 16000
+max_duration_secs: 30.0
+preprocessing_num_workers: 4
 
-  # Training parameters
-  learning_rate: 5e-5
-  num_train_epochs: 3
-  per_device_train_batch_size: 8
-  gradient_accumulation_steps: 1
+# Model parameters
+language: en
+task: transcribe
 
-  # PEFT/LoRA parameters
-  use_peft: true
-  lora_r: 8
-  lora_alpha: 32
-  lora_dropout: 0.1
+# Training parameters
+learning_rate: 5e-5
+num_train_epochs: 3
+per_device_train_batch_size: 8
+gradient_accumulation_steps: 1
+
+# PEFT/LoRA parameters
+use_peft: true
+lora_r: 8
+lora_alpha: 32
+lora_dropout: 0.1
+```
+
+Then run:
+
+```bash
+python -m autotrain.trainers.asr --training_config path/to/config.yaml
 ```
 
 ### Using Python API
@@ -63,8 +69,8 @@ params = WhisperTrainingParams(
 # Start training
 train_whisper(
     params=params,
-    dataset_path="your_dataset_path",
-    output_dir="output",
+    dataset_path="your-dataset-name-or-path",  # HF dataset name or local path
+    output_dir="whisper-finetuned",
     audio_column="audio",
     text_column="text"
 )
