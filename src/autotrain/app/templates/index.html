@@ -97,6 +97,10 @@
                     fields = ['text', 'question', 'answer'];
                     fieldNames = ['context', 'question', 'answers'];
                     break;
+                case 'speech-recognition':
+                    fields = ['audio', 'text'];
+                    fieldNames = ['audio', 'transcription'];
+                    break;
                 default:
                     return; // Do nothing if task is not recognized
             }
@@ -216,6 +220,7 @@
                             <option value="extractive-qa">Extractive Question Answering</option>
                             <option value="seq2seq">Sequence To Sequence</option>
                             <option value="token-classification">Token Classification</option>
+                            <option value="speech-recognition">Speech Recognition (ASR)</option>
                         </optgroup>
                         <optgroup label="Image Tasks">
                             <option value="image-classification">Image Classification</option>

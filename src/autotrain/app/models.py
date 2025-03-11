@@ -290,16 +290,6 @@ def _fetch_vlm_models():
             filter=["paligemma"],
         )
     )
-    # hub_models2 = list(
-    #     list_models(
-    #         task="image-text-to-text",
-    #         sort="downloads",
-    #         direction=-1,
-    #         limit=100,
-    #         full=False,
-    #         filter=["florence2"],
-    #     )
-    # )
     hub_models2 = []
     hub_models = list(hub_models1) + list(hub_models2)
     hub_models = get_sorted_models(hub_models)
@@ -333,6 +323,52 @@ def _fetch_vlm_models():
     return hub_models
 
 
+def _fetch_asr_models():
+    hub_models = list(
+        list_models(
+            task="automatic-speech-recognition",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+            filter=["whisper"],
+        )
+    )
+    hub_models = get_sorted_models(hub_models)
+
+    trending_models = list(
+        list_models(
+            task="automatic-speech-recognition",
+            sort="likes7d",
+            direction=-1,
+            limit=30,
+            full=False,
+            filter=["whisper"],
+        )
+    )
+    if len(trending_models) > 0:
+        trending_models = get_sorted_models(trending_models)
+        hub_models = [m for m in hub_models if m not in trending_models]
+        hub_models = trending_models + hub_models
+    
+    # Add default Whisper models if they're not already in the list
+    default_models = [
+        "openai/whisper-tiny",
+        "openai/whisper-base",
+        "openai/whisper-small",
+        "openai/whisper-medium",
+        "openai/whisper-large-v2",
+        "openai/whisper-large-v3",
+    ]
+    
+    # Add default models at the beginning if they're not already in the list
+    for model in reversed(default_models):
+        if model not in hub_models:
+            hub_models.insert(0, model)
+            
+    return hub_models
+
+
 def fetch_models():
     _mc = collections.defaultdict(list)
     _mc["text-classification"] = _fetch_text_classification_models()
@@ -346,6 +382,7 @@ def fetch_models():
     _mc["sentence-transformers"] = _fetch_st_models()
     _mc["vlm"] = _fetch_vlm_models()
     _mc["extractive-qa"] = _fetch_text_classification_models()
+    _mc["speech-recognition"] = _fetch_asr_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [

@@ -481,6 +481,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["vlm"]
     elif task == "extractive-qa":
         hub_models = MODEL_CHOICE["extractive-qa"]
+    elif task == "speech-recognition":
+        hub_models = MODEL_CHOICE["speech-recognition"]
     else:
         raise NotImplementedError
 
@@ -651,6 +653,8 @@ async def handle_form(
                 dset_task = "text_token_classification"
             elif task == "extractive-qa":
                 dset_task = "text_extractive_question_answering"
+            elif task == "speech-recognition":
+                dset_task = "speech_recognition"
             else:
                 raise NotImplementedError
             logger.info(f"Task: {dset_task}")
