@@ -20,6 +20,7 @@ NOTE: AutoTrain is free! You only pay for the resources you use in case you deci
 | Extractive Question Answering | ✅ | Coming Soon | [extractive_qa.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/extractive_question_answering) |
 | Image Classification | ✅ | Coming Soon | [image_classification.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_classification) |
 | Image Scoring/Regression | ✅ | Coming Soon | [image_regression.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_scoring) |
+| Automatic Speech Recognition (ASR) | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/examples/whisper_asr_finetuning.ipynb) | [asr_config.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/templates/asr_config.yaml) |
 | VLM | 🟥 | Coming Soon | [vlm.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/vlm) |
 
 
@@ -95,6 +96,42 @@ params:
   gradient_accumulation: 8
   mixed_precision: bf16
   merge_adapter: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
+```
+
+Example config file for fine-tuning Whisper ASR model:
+
+```yaml
+task: speech-recognition
+base_model: openai/whisper-small
+project_name: autotrain-whisper-finetune
+log: tensorboard
+backend: local
+
+data:
+  path: mozilla-foundation/common_voice_11_0
+  train_split: train
+  valid_split: validation
+  audio_column: audio
+  text_column: sentence
+
+params:
+  sampling_rate: 16000
+  max_duration_secs: 30.0
+  language: en
+  task: transcribe
+  epochs: 3
+  batch_size: 8
+  learning_rate: 5e-5
+  use_peft: true
+  lora_r: 8
+  lora_alpha: 32
+  lora_dropout: 0.1
+  mixed_precision: fp16
 
 hub:
   username: ${HF_USERNAME}
