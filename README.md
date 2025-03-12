@@ -20,7 +20,7 @@ NOTE: AutoTrain is free! You only pay for the resources you use in case you deci
 | Extractive Question Answering | ✅ | Coming Soon | [extractive_qa.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/extractive_question_answering) |
 | Image Classification | ✅ | Coming Soon | [image_classification.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_classification) |
 | Image Scoring/Regression | ✅ | Coming Soon | [image_regression.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/image_scoring) |
-| Automatic Speech Recognition (ASR) | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/examples/whisper_asr_finetuning.ipynb) | [asr_config.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/templates/asr_config.yaml) |
+| Automatic Speech Recognition (ASR) | ✅ | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huggingface/autotrain-advanced/blob/main/notebooks/whisper_asr_finetuning.ipynb) | [asr_config.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/templates/asr_config.yaml) |
 | VLM | 🟥 | Coming Soon | [vlm.yaml](https://github.com/huggingface/autotrain-advanced/tree/main/configs/vlm) |
 
 
