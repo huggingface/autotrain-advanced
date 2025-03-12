@@ -94,6 +94,7 @@ def train_whisper(
     output_dir: str,
     audio_column: str = "audio",
     text_column: str = "text",
+    dataset_config: Optional[str] = None,
     push_to_hub: bool = False,
     hub_model_id: Optional[str] = None,
     hub_token: Optional[str] = None,
@@ -106,6 +107,7 @@ def train_whisper(
         output_dir (str): Directory to save the model to.
         audio_column (str, optional): Name of the column containing audio data. Defaults to "audio".
         text_column (str, optional): Name of the column containing text transcriptions. Defaults to "text".
+        dataset_config (Optional[str], optional): Configuration name for the dataset. Defaults to None.
         push_to_hub (bool, optional): Whether to push the model to the Hugging Face Hub. Defaults to False.
         hub_model_id (Optional[str], optional): Model ID on the Hugging Face Hub. Defaults to None.
         hub_token (Optional[str], optional): Hugging Face Hub token. Defaults to None.
@@ -148,6 +150,7 @@ def train_whisper(
             audio_column=audio_column,
             text_column=text_column,
             split="train",
+            dataset_config=dataset_config,
         )
         
         try:
@@ -156,18 +159,20 @@ def train_whisper(
                 audio_column=audio_column,
                 text_column=text_column,
                 split="validation",
+                dataset_config=dataset_config,
             )
         except ValueError as e:
             # If validation split doesn't exist, create one from train
             logger.info("Validation split not found. Creating validation split from training data.")
             # Load the full dataset and split it
-            full_dataset = load_dataset(dataset_path, split="train")
+            full_dataset = load_dataset(dataset_path, dataset_config, split="train")
             splits = full_dataset.train_test_split(test_size=0.1)
             train_dataset = load_audio_dataset(
                 dataset_path=dataset_path,
                 audio_column=audio_column,
                 text_column=text_column,
                 split="train[:90%]",
+                dataset_config=dataset_config,
             )
             # Create a custom validation dataset from the last 10% of training data
             eval_dataset = splits["test"]
@@ -261,26 +266,73 @@ def train_whisper(
         # Save PEFT/LoRA adapter separately
         model.save_pretrained(f"{output_dir}/adapter")
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for command-line execution."""
     args = parse_args()
+    
+    # Load training config from YAML file
     with open(args.training_config, "r") as f:
         training_config = yaml.safe_load(f)
     
-    # Extract parameters for WhisperTrainingParams
-    model_params = {}
-    for key, value in training_config.items():
-        if key not in ["dataset_path", "output_dir", "audio_column", "text_column"]:
-            model_params[key] = value
+    # Create WhisperTrainingParams from config
+    params = WhisperTrainingParams(
+        # Audio processing parameters
+        sampling_rate=training_config.get("sampling_rate", 16000),
+        max_duration_secs=training_config.get("max_duration_secs", 30.0),
+        preprocessing_num_workers=training_config.get("preprocessing_num_workers", 4),
+        
+        # Model parameters
+        model_name=training_config.get("model_name", "openai/whisper-small"),
+        language=training_config.get("language", "en"),
+        task=training_config.get("task", "transcribe"),
+        
+        # Training parameters
+        learning_rate=training_config.get("learning_rate", 5e-5),
+        num_train_epochs=training_config.get("num_train_epochs", 3),
+        per_device_train_batch_size=training_config.get("per_device_train_batch_size", 8),
+        per_device_eval_batch_size=training_config.get("per_device_eval_batch_size", 8),
+        gradient_accumulation_steps=training_config.get("gradient_accumulation_steps", 1),
+        eval_steps=training_config.get("eval_steps", 100),
+        save_steps=training_config.get("save_steps", 500),
+        logging_steps=training_config.get("logging_steps", 10),
+        max_steps=training_config.get("max_steps"),
+        warmup_steps=training_config.get("warmup_steps", 0),
+        mixed_precision=training_config.get("mixed_precision", "fp16"),
+        log=training_config.get("log", "tensorboard"),
+        
+        # PEFT/LoRA parameters
+        use_peft=training_config.get("use_peft", True),
+        lora_r=training_config.get("lora_r", 8),
+        lora_alpha=training_config.get("lora_alpha", 32),
+        lora_dropout=training_config.get("lora_dropout", 0.1),
+        
+        # Optimizer parameters
+        optimizer_type=training_config.get("optimizer_type", "adamw"),
+        optimizer_beta1=training_config.get("optimizer_beta1", 0.9),
+        optimizer_beta2=training_config.get("optimizer_beta2", 0.999),
+        optimizer_epsilon=training_config.get("optimizer_epsilon", 1e-8),
+        weight_decay=training_config.get("weight_decay", 0.0),
+        
+        # Scheduler parameters
+        lr_scheduler_type=training_config.get("lr_scheduler_type", "linear"),
+        lr_scheduler_warmup_ratio=training_config.get("lr_scheduler_warmup_ratio", 0.0),
+        
+        # Reproducibility
+        seed=training_config.get("seed", 42),
+    )
     
-    config = WhisperTrainingParams(**model_params)
-    
+    # Start training
     train_whisper(
-        params=config,
+        params=params,
         dataset_path=training_config.get("dataset_path"),
-        output_dir=training_config.get("output_dir", "output"),
+        output_dir=training_config.get("output_dir"),
         audio_column=training_config.get("audio_column", "audio"),
         text_column=training_config.get("text_column", "text"),
+        dataset_config=training_config.get("dataset_config"),
         push_to_hub=training_config.get("push_to_hub", False),
         hub_model_id=training_config.get("hub_model_id"),
         hub_token=training_config.get("hub_token"),
-    ) 
+    )
+
+if __name__ == "__main__":
+    main() 

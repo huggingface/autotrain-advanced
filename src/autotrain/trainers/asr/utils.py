@@ -7,6 +7,10 @@ import librosa
 from datasets import Dataset, load_dataset
 from transformers import WhisperProcessor
 from dataclasses import dataclass
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class WhisperDataCollator:
@@ -63,10 +67,9 @@ def load_audio_dataset(
     audio_column: str = "audio",
     text_column: str = "text",
     split: str = "train",
+    dataset_config: Optional[str] = None,
 ) -> Dataset:
-    """Load and prepare audio dataset for Whisper training.
-    
-    This function loads an audio dataset from the Hugging Face Hub or local path and validates
+    """Load an audio dataset from the Hugging Face Hub or local path and validate
     that it contains the required columns for ASR training.
     
     Args:
@@ -74,6 +77,7 @@ def load_audio_dataset(
         audio_column (str, optional): Name of the column containing audio data. Defaults to "audio".
         text_column (str, optional): Name of the column containing text transcriptions. Defaults to "text".
         split (str, optional): Dataset split to load ("train" or "validation"). Defaults to "train".
+        dataset_config (Optional[str], optional): Configuration name for the dataset. Defaults to None.
         
     Returns:
         Dataset: The loaded dataset with validated columns.
@@ -81,7 +85,7 @@ def load_audio_dataset(
     Raises:
         ValueError: If the dataset cannot be loaded or if required columns are missing.
     """
-    dataset = load_dataset(dataset_path, split=split)
+    dataset = load_dataset(dataset_path, dataset_config, split=split)
     if not isinstance(dataset, Dataset):
         raise ValueError(f"Failed to load dataset from {dataset_path}")
     
