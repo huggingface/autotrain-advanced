@@ -26,6 +26,20 @@ logging_steps: 10
 warmup_steps: 0
 max_steps: null  # Set to a number to override num_train_epochs
 
+# Optimizer parameters
+optimizer_type: adamw  # Options: adam, adamw
+optimizer_beta1: 0.9
+optimizer_beta2: 0.999
+optimizer_epsilon: 1e-8
+weight_decay: 0.0
+
+# Scheduler parameters
+lr_scheduler_type: linear  # Options: linear, cosine, constant, constant_with_warmup
+lr_scheduler_warmup_ratio: 0.0  # Proportion of training steps for warmup (alternative to warmup_steps)
+
+# Reproducibility
+seed: 42
+
 # PEFT/LoRA parameters
 use_peft: true
 lora_r: 8
@@ -42,4 +56,9 @@ target_modules:
 
 # Mixed precision and logging
 mixed_precision: fp16
-log: tensorboard 
+log: tensorboard
+
+# Optional Hub parameters for sharing models
+push_to_hub: false
+hub_model_id: null  # Your-username/model-name
+hub_token: null  # Use environment variables or secrets for tokens 

@@ -37,6 +37,17 @@ class WhisperTrainingParams:
         lora_alpha (int): LoRA alpha parameter for scaling updates. Default is 32.
         lora_dropout (float): Dropout probability for LoRA layers. Default is 0.1.
         target_modules (List[str]): List of model modules to apply LoRA to. Defaults to attention and feed-forward layers.
+
+        optimizer_type (str): Type of optimizer to use ("adam", "adamw"). Default is "adamw".
+        optimizer_beta1 (float): Beta1 parameter for Adam/AdamW optimizers. Default is 0.9.
+        optimizer_beta2 (float): Beta2 parameter for Adam/AdamW optimizers. Default is 0.999.
+        optimizer_epsilon (float): Epsilon parameter for Adam/AdamW optimizers. Default is 1e-8.
+        weight_decay (float): Weight decay for optimizers. Default is 0.0.
+        
+        lr_scheduler_type (str): Type of learning rate scheduler ("linear", "cosine", "constant", "constant_with_warmup").
+                                Default is "linear".
+        lr_scheduler_warmup_ratio (float): Ratio of warmup steps relative to total steps. Default is 0.0.
+        seed (int): Random seed for reproducibility. Default is 42.
     """
     # Audio processing parameters
     sampling_rate: int = 16000
@@ -78,6 +89,20 @@ class WhisperTrainingParams:
             "down_proj",
         ]
     )
+    
+    # Optimizer parameters
+    optimizer_type: str = "adamw"
+    optimizer_beta1: float = 0.9
+    optimizer_beta2: float = 0.999
+    optimizer_epsilon: float = 1e-8
+    weight_decay: float = 0.0
+    
+    # Scheduler parameters
+    lr_scheduler_type: str = "linear"
+    lr_scheduler_warmup_ratio: float = 0.0
+    
+    # Reproducibility
+    seed: int = 42
     
     def __post_init__(self):
         """Validate parameters after initialization."""
@@ -135,6 +160,31 @@ class WhisperTrainingParams:
             
             if not self.target_modules:
                 raise ValueError("target_modules cannot be empty when use_peft=True")
+        
+        # Validate optimizer parameters
+        valid_optimizers = ["adam", "adamw"]
+        if self.optimizer_type.lower() not in valid_optimizers:
+            raise ValueError(f"optimizer_type must be one of {valid_optimizers}, got {self.optimizer_type}")
+        
+        if not 0 < self.optimizer_beta1 < 1:
+            raise ValueError(f"optimizer_beta1 must be between 0 and 1, got {self.optimizer_beta1}")
+        
+        if not 0 < self.optimizer_beta2 < 1:
+            raise ValueError(f"optimizer_beta2 must be between 0 and 1, got {self.optimizer_beta2}")
+        
+        if self.optimizer_epsilon <= 0:
+            raise ValueError(f"optimizer_epsilon must be positive, got {self.optimizer_epsilon}")
+        
+        if self.weight_decay < 0:
+            raise ValueError(f"weight_decay must be non-negative, got {self.weight_decay}")
+        
+        # Validate scheduler parameters
+        valid_schedulers = ["linear", "cosine", "constant", "constant_with_warmup"]
+        if self.lr_scheduler_type.lower() not in valid_schedulers:
+            raise ValueError(f"lr_scheduler_type must be one of {valid_schedulers}, got {self.lr_scheduler_type}")
+        
+        if not 0 <= self.lr_scheduler_warmup_ratio < 1:
+            raise ValueError(f"lr_scheduler_warmup_ratio must be between 0 and 1, got {self.lr_scheduler_warmup_ratio}")
     
     def get_lora_config(self) -> Optional[LoraConfig]:
         """Returns LoRA configuration if PEFT is enabled.
@@ -152,4 +202,30 @@ class WhisperTrainingParams:
             lora_dropout=self.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
-        ) 
+        )
+    
+    def get_optimizer_kwargs(self) -> dict:
+        """Returns optimizer keyword arguments based on the configuration.
+        
+        Returns:
+            dict: Keyword arguments for the optimizer.
+        """
+        return {
+            "beta1": self.optimizer_beta1, 
+            "beta2": self.optimizer_beta2,
+            "epsilon": self.optimizer_epsilon,
+            "weight_decay": self.weight_decay,
+        }
+    
+    def calculate_warmup_steps(self, total_steps: int) -> int:
+        """Calculate the number of warmup steps based on ratio or absolute value.
+        
+        Args:
+            total_steps (int): Total number of training steps.
+            
+        Returns:
+            int: Number of warmup steps.
+        """
+        if self.lr_scheduler_warmup_ratio > 0:
+            return int(total_steps * self.lr_scheduler_warmup_ratio)
+        return self.warmup_steps 

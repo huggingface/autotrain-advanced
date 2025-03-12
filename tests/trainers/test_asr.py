@@ -38,6 +38,50 @@ def test_whisper_training_params():
     # Test PEFT disabled
     params.use_peft = False
     assert params.get_lora_config() is None
+    
+    # Test new optimizer parameters
+    assert params.optimizer_type == "adamw"
+    assert params.optimizer_beta1 == 0.9
+    assert params.optimizer_beta2 == 0.999
+    assert params.optimizer_epsilon == 1e-8
+    assert params.weight_decay == 0.0
+    
+    # Test new scheduler parameters
+    assert params.lr_scheduler_type == "linear"
+    assert params.lr_scheduler_warmup_ratio == 0.0
+    assert params.seed == 42
+    
+    # Test get_optimizer_kwargs method
+    optimizer_kwargs = params.get_optimizer_kwargs()
+    assert optimizer_kwargs["beta1"] == params.optimizer_beta1
+    assert optimizer_kwargs["beta2"] == params.optimizer_beta2
+    assert optimizer_kwargs["epsilon"] == params.optimizer_epsilon
+    assert optimizer_kwargs["weight_decay"] == params.weight_decay
+    
+    # Test calculate_warmup_steps method
+    assert params.calculate_warmup_steps(1000) == params.warmup_steps
+    params.lr_scheduler_warmup_ratio = 0.1
+    assert params.calculate_warmup_steps(1000) == 100
+    
+    # Test with custom values
+    custom_params = WhisperTrainingParams(
+        optimizer_type="adam",
+        optimizer_beta1=0.8,
+        optimizer_beta2=0.99,
+        optimizer_epsilon=1e-7,
+        weight_decay=0.01,
+        lr_scheduler_type="cosine",
+        lr_scheduler_warmup_ratio=0.2,
+        seed=123
+    )
+    assert custom_params.optimizer_type == "adam"
+    assert custom_params.optimizer_beta1 == 0.8
+    assert custom_params.optimizer_beta2 == 0.99
+    assert custom_params.optimizer_epsilon == 1e-7
+    assert custom_params.weight_decay == 0.01
+    assert custom_params.lr_scheduler_type == "cosine"
+    assert custom_params.lr_scheduler_warmup_ratio == 0.2
+    assert custom_params.seed == 123
 
 
 def test_load_audio_dataset(mocker):

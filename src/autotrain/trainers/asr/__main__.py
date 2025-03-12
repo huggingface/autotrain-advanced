@@ -1,25 +1,24 @@
 import argparse
 import logging
+import os
+import sys
 import yaml
-from typing import Optional, Dict, Any, Union, List
+from typing import Dict, List, Optional, Union
 
 import torch
-from datasets import Dataset, load_dataset
+from datasets import load_dataset
+from peft import get_peft_model, PeftModel
 from transformers import (
-    Seq2SeqTrainer,
-    Seq2SeqTrainingArguments,
-    WhisperForConditionalGeneration,
+    Seq2SeqTrainer, 
+    Seq2SeqTrainingArguments, 
+    WhisperForConditionalGeneration, 
     WhisperProcessor,
+    set_seed,
 )
-from peft import get_peft_model, PeftModel, PeftConfig
 
 from autotrain.trainers.asr.params import WhisperTrainingParams
-from autotrain.trainers.asr.utils import (
-    WhisperDataCollator,
-    compute_metrics,
-    load_audio_dataset,
-    prepare_dataset,
-)
+from autotrain.trainers.asr.utils import WhisperDataCollator, compute_metrics, load_audio_dataset, prepare_dataset
+from autotrain.trainers.asr.whisper_peft import WhisperPeftModel
 
 logger = logging.getLogger(__name__)
 
@@ -95,14 +94,33 @@ def train_whisper(
     output_dir: str,
     audio_column: str = "audio",
     text_column: str = "text",
+    push_to_hub: bool = False,
+    hub_model_id: Optional[str] = None,
+    hub_token: Optional[str] = None,
 ) -> None:
-    """Main training function for Whisper ASR."""
+    """Main training function for Whisper ASR.
+    
+    Args:
+        params (WhisperTrainingParams): Parameters for training.
+        dataset_path (str): Path to the dataset.
+        output_dir (str): Directory to save the model to.
+        audio_column (str, optional): Name of the column containing audio data. Defaults to "audio".
+        text_column (str, optional): Name of the column containing text transcriptions. Defaults to "text".
+        push_to_hub (bool, optional): Whether to push the model to the Hugging Face Hub. Defaults to False.
+        hub_model_id (Optional[str], optional): Model ID on the Hugging Face Hub. Defaults to None.
+        hub_token (Optional[str], optional): Hugging Face Hub token. Defaults to None.
+    """
     # Check CUDA availability
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cpu":
         logger.warning("CUDA is not available. Training will be slow on CPU.")
     else:
         logger.info(f"Using device: {device}")
+    
+    # Set seed for reproducibility
+    if params.seed is not None:
+        set_seed(params.seed)
+        logger.info(f"Random seed set to {params.seed}")
     
     # Load model and processor
     model = WhisperForConditionalGeneration.from_pretrained(params.model_name)
@@ -179,6 +197,15 @@ def train_whisper(
     # Create data collator
     data_collator = WhisperDataCollator(processor=processor)
     
+    # Calculate total training steps for warmup
+    total_training_steps = (
+        params.max_steps if params.max_steps is not None else 
+        int(len(train_dataset) / (params.per_device_train_batch_size * params.gradient_accumulation_steps) * params.num_train_epochs)
+    )
+    
+    # Calculate warmup steps based on ratio or absolute number
+    warmup_steps = params.calculate_warmup_steps(total_training_steps)
+    
     # Set up training arguments
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
@@ -188,15 +215,28 @@ def train_whisper(
         learning_rate=params.learning_rate,
         num_train_epochs=params.num_train_epochs,
         max_steps=params.max_steps,
-        warmup_steps=params.warmup_steps,
+        warmup_steps=warmup_steps,
         evaluation_strategy="steps",
         save_strategy="steps",
         eval_steps=params.eval_steps,
         save_steps=params.save_steps,
         logging_steps=params.logging_steps,
         remove_unused_columns=True,
-        push_to_hub=False,
+        push_to_hub=push_to_hub,
+        hub_model_id=hub_model_id,
+        hub_token=hub_token,
         label_names=["labels"],
+        # Add optimizer and scheduler parameters
+        optim=params.optimizer_type.lower(),
+        adam_beta1=params.optimizer_beta1,
+        adam_beta2=params.optimizer_beta2,
+        adam_epsilon=params.optimizer_epsilon,
+        weight_decay=params.weight_decay,
+        lr_scheduler_type=params.lr_scheduler_type.lower(),
+        seed=params.seed,
+        fp16=(params.mixed_precision == "fp16"),
+        bf16=(params.mixed_precision == "bf16"),
+        report_to=params.log if params.log != "none" else None,
     )
     
     # Initialize trainer with our custom WhisperTrainer
@@ -240,4 +280,7 @@ if __name__ == "__main__":
         output_dir=training_config.get("output_dir", "output"),
         audio_column=training_config.get("audio_column", "audio"),
         text_column=training_config.get("text_column", "text"),
+        push_to_hub=training_config.get("push_to_hub", False),
+        hub_model_id=training_config.get("hub_model_id"),
+        hub_token=training_config.get("hub_token"),
     ) 
