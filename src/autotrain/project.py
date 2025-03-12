@@ -19,6 +19,7 @@ from autotrain.dataset import (
     AutoTrainObjectDetectionDataset,
     AutoTrainVLMDataset,
 )
+from autotrain.trainers.asr.params import WhisperTrainingParams
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.image_classification.params import ImageClassificationParams
@@ -440,6 +441,43 @@ def ext_qa_munge_data(params, local):
     return params
 
 
+def asr_munge_data(params, local):
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            task="speech_recognition",
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping={
+                "audio": params.audio_column,
+                "text": params.text_column,
+            },
+            percent_valid=None,
+            local=local,
+            ext=ext_to_use,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.audio_column = "autotrain_audio"
+        params.text_column = "autotrain_text"
+    return params
+
+
 @dataclass
 class AutoTrainProject:
     """
@@ -460,6 +498,7 @@ class AutoTrainProject:
         ImageRegressionParams,
         ExtractiveQuestionAnsweringParams,
         VLMTrainingParams,
+        WhisperTrainingParams,
     ]
         The parameters for the AutoTrain project.
     backend : str
@@ -479,6 +518,7 @@ class AutoTrainProject:
         - spaces-l40sx8
         - spaces-a10g-largex2
         - spaces-a10g-largex4
+        - spaces-ep-*
     process : bool
         Flag to indicate if the params and dataset should be processed. If your data format is not AutoTrain-readable, set it to True. Set it to True when in doubt. Defaults to False.
 
@@ -503,6 +543,7 @@ class AutoTrainProject:
         ImageRegressionParams,
         ExtractiveQuestionAnsweringParams,
         VLMTrainingParams,
+        WhisperTrainingParams,
     ]
     backend: str
     process: bool = False
@@ -537,6 +578,8 @@ class AutoTrainProject:
             return token_clf_munge_data(self.params, self.local)
         elif isinstance(self.params, VLMTrainingParams):
             return vlm_munge_data(self.params, self.local)
+        elif isinstance(self.params, WhisperTrainingParams):
+            return asr_munge_data(self.params, self.local)
         else:
             raise Exception("Invalid params class")
 
