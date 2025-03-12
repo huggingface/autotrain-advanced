@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import yaml
+import json
 from typing import Dict, List, Optional, Union
 
 import torch
@@ -211,7 +212,47 @@ def train_whisper(
     # Calculate warmup steps based on ratio or absolute number
     warmup_steps = params.calculate_warmup_steps(total_training_steps)
     
+    # Ensure max_steps is an integer, not None
+    max_steps = params.max_steps if params.max_steps is not None else -1
+    
     # Set up training arguments
+    # Map optimizer type to valid OptimizerNames values
+    optimizer_mapping = {
+        "adamw": "adamw_hf",
+        "adam": "adamw_torch",
+        "adafactor": "adafactor",
+        "sgd": "sgd",
+        "adagrad": "adagrad",
+        "rmsprop": "rmsprop"
+    }
+    
+    # Map scheduler type to valid SchedulerType values
+    scheduler_mapping = {
+        "linear": "linear",
+        "cosine": "cosine",
+        "cosine_with_restarts": "cosine_with_restarts",
+        "polynomial": "polynomial",
+        "constant": "constant",
+        "constant_with_warmup": "constant_with_warmup",
+        "inverse_sqrt": "inverse_sqrt",
+        "reduce_lr_on_plateau": "reduce_lr_on_plateau"
+    }
+    
+    # Get the appropriate optimizer name or default to adamw_hf
+    optimizer_name = optimizer_mapping.get(params.optimizer_type.lower(), "adamw_hf")
+    logger.info(f"Using optimizer: {optimizer_name} (mapped from {params.optimizer_type})")
+    
+    # Get the appropriate scheduler name or default to linear
+    scheduler_name = scheduler_mapping.get(params.lr_scheduler_type.lower(), "linear")
+    logger.info(f"Using scheduler: {scheduler_name} (mapped from {params.lr_scheduler_type})")
+    
+    # Check if CUDA is available for mixed precision
+    use_fp16 = (params.mixed_precision == "fp16") and torch.cuda.is_available()
+    use_bf16 = (params.mixed_precision == "bf16") and torch.cuda.is_available()
+    
+    if (params.mixed_precision in ["fp16", "bf16"]) and not torch.cuda.is_available():
+        logger.warning(f"{params.mixed_precision} mixed precision requires a GPU. Disabling mixed precision.")
+    
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
         per_device_train_batch_size=params.per_device_train_batch_size,
@@ -219,7 +260,7 @@ def train_whisper(
         gradient_accumulation_steps=params.gradient_accumulation_steps,
         learning_rate=params.learning_rate,
         num_train_epochs=params.num_train_epochs,
-        max_steps=params.max_steps,
+        max_steps=max_steps,
         warmup_steps=warmup_steps,
         evaluation_strategy="steps",
         save_strategy="steps",
@@ -232,15 +273,15 @@ def train_whisper(
         hub_token=hub_token,
         label_names=["labels"],
         # Add optimizer and scheduler parameters
-        optim=params.optimizer_type.lower(),
+        optim=optimizer_name,
         adam_beta1=params.optimizer_beta1,
         adam_beta2=params.optimizer_beta2,
         adam_epsilon=params.optimizer_epsilon,
         weight_decay=params.weight_decay,
-        lr_scheduler_type=params.lr_scheduler_type.lower(),
+        lr_scheduler_type=scheduler_name,
         seed=params.seed,
-        fp16=(params.mixed_precision == "fp16"),
-        bf16=(params.mixed_precision == "bf16"),
+        fp16=use_fp16,
+        bf16=use_bf16,
         report_to=params.log if params.log != "none" else None,
     )
     
@@ -272,10 +313,25 @@ def main():
     
     # Load training config from YAML file
     with open(args.training_config, "r") as f:
-        training_config = yaml.safe_load(f)
+        training_config = json.load(f)
+    
+    # Extract dataset path and config if specified in format "path:config"
+    data_path = training_config.get("data_path", "")
+    dataset_config = None
+    
+    if ":" in data_path:
+        data_path, dataset_config = data_path.split(":", 1)
+        logger.info(f"Using dataset {data_path} with config {dataset_config}")
     
     # Create WhisperTrainingParams from config
     params = WhisperTrainingParams(
+        # Data parameters
+        data_path=data_path,
+        train_split=training_config.get("train_split", "train"),
+        valid_split=training_config.get("valid_split"),
+        audio_column=training_config.get("audio_column", "audio"),
+        text_column=training_config.get("text_column", "text"),
+        
         # Audio processing parameters
         sampling_rate=training_config.get("sampling_rate", 16000),
         max_duration_secs=training_config.get("max_duration_secs", 30.0),
@@ -319,19 +375,22 @@ def main():
         
         # Reproducibility
         seed=training_config.get("seed", 42),
+        
+        # Project name
+        project_name=training_config.get("project_name", "whisper-finetuned"),
     )
     
     # Start training
     train_whisper(
         params=params,
-        dataset_path=training_config.get("dataset_path"),
-        output_dir=training_config.get("output_dir"),
+        dataset_path=data_path,
+        output_dir=training_config.get("project_name", "whisper-finetuned"),
         audio_column=training_config.get("audio_column", "audio"),
         text_column=training_config.get("text_column", "text"),
-        dataset_config=training_config.get("dataset_config"),
+        dataset_config=dataset_config,
         push_to_hub=training_config.get("push_to_hub", False),
         hub_model_id=training_config.get("hub_model_id"),
-        hub_token=training_config.get("hub_token"),
+        hub_token=training_config.get("token"),
     )
 
 if __name__ == "__main__":

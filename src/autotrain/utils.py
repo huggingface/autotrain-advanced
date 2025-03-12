@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from autotrain.commands import launch_command
+from autotrain.trainers.asr.params import WhisperTrainingParams
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
@@ -66,6 +67,8 @@ def run_training(params, task_id, local=False, wait=False):
         params = VLMTrainingParams(**params)
     elif task_id == 5:
         params = ExtractiveQuestionAnsweringParams(**params)
+    elif task_id == 11:
+        params = WhisperTrainingParams(**params)
     else:
         raise NotImplementedError
 

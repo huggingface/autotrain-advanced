@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Union
 
+from autotrain.trainers.asr.params import WhisperTrainingParams
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
@@ -71,7 +72,7 @@ class BaseBackend:
                       GenericParams, TabularParams, Seq2SeqParams,
                       TokenClassificationParams, TextRegressionParams, ObjectDetectionParams,
                       SentenceTransformersParams, ImageRegressionParams, VLMTrainingParams,
-                      ExtractiveQuestionAnsweringParams]): Training parameters.
+                      ExtractiveQuestionAnsweringParams, WhisperTrainingParams]): Training parameters.
         backend (str): Backend type.
 
     Methods:
@@ -93,6 +94,7 @@ class BaseBackend:
         ImageRegressionParams,
         VLMTrainingParams,
         ExtractiveQuestionAnsweringParams,
+        WhisperTrainingParams,
     ]
     backend: str
 
@@ -139,6 +141,8 @@ class BaseBackend:
             self.task_id = 31
         elif isinstance(self.params, ExtractiveQuestionAnsweringParams):
             self.task_id = 5
+        elif isinstance(self.params, WhisperTrainingParams):
+            self.task_id = 11
         else:
             raise NotImplementedError
 

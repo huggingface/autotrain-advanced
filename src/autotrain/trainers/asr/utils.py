@@ -85,9 +85,26 @@ def load_audio_dataset(
     Raises:
         ValueError: If the dataset cannot be loaded or if required columns are missing.
     """
-    dataset = load_dataset(dataset_path, dataset_config, split=split)
+    # Special handling for Mozilla Common Voice dataset
+    if dataset_path == "mozilla-foundation/common_voice_11_0" and dataset_config is None:
+        # Default to 'en' if no config is provided
+        logger.warning("No configuration provided for Mozilla Common Voice dataset. Using 'mr' (Marathi) as default.")
+        dataset_config = "mr"
+    
+    try:
+        # Try to load the dataset with the provided configuration
+        dataset = load_dataset(dataset_path, dataset_config, split=split)
+    except Exception as e:
+        logger.error(f"Error loading dataset: {str(e)}")
+        raise
+    
     if not isinstance(dataset, Dataset):
         raise ValueError(f"Failed to load dataset from {dataset_path}")
+    
+    # For Mozilla Common Voice, the text column is 'sentence' by default
+    if dataset_path == "mozilla-foundation/common_voice_11_0" and text_column == "text":
+        text_column = "sentence"
+        logger.info("Using 'sentence' column for text in Mozilla Common Voice dataset")
     
     required_columns = {audio_column, text_column}
     missing_columns = required_columns - set(dataset.column_names)

@@ -52,7 +52,7 @@ class RunAutoTrainASRCommand(BaseAutoTrainCommand):
                 run_asr_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
-                    required=arg["required"],
+                    required=arg.get("required", False),
                     type=str,
                     nargs="+",
                     default=arg.get("default"),
@@ -61,7 +61,7 @@ class RunAutoTrainASRCommand(BaseAutoTrainCommand):
                 run_asr_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
-                    required=arg["required"],
+                    required=arg.get("required", False),
                     action=arg["action"],
                     default=arg.get("default"),
                 )
@@ -69,7 +69,7 @@ class RunAutoTrainASRCommand(BaseAutoTrainCommand):
                 run_asr_parser.add_argument(
                     arg["arg"],
                     help=arg["help"],
-                    required=arg["required"],
+                    required=arg.get("required", False),
                     type=arg["type"],
                     default=arg.get("default"),
                 )

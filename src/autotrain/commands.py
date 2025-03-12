@@ -4,6 +4,7 @@ import shlex
 import torch
 
 from autotrain import logger
+from autotrain.trainers.asr.params import WhisperTrainingParams
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
 from autotrain.trainers.generic.params import GenericParams
@@ -114,6 +115,7 @@ def launch_command(params):
             - ImageRegressionParams
             - Seq2SeqParams
             - VLMTrainingParams
+            - WhisperTrainingParams
 
     Returns:
         list: A list of command line arguments to be executed for training.
@@ -432,64 +434,7 @@ def launch_command(params):
         )
 
     elif isinstance(params, VLMTrainingParams):
-        if num_gpus == 0:
-            logger.warning("No GPU found. Forcing training on CPU. This will be super slow!")
-            cmd = [
-                "accelerate",
-                "launch",
-                "--cpu",
-            ]
-        elif num_gpus == 1:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--num_machines",
-                "1",
-                "--num_processes",
-                "1",
-            ]
-        elif num_gpus == 2:
-            cmd = [
-                "accelerate",
-                "launch",
-                "--multi_gpu",
-                "--num_machines",
-                "1",
-                "--num_processes",
-                "2",
-            ]
-        else:
-            if params.quantization in ("int8", "int4") and params.peft and params.mixed_precision == "bf16":
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--multi_gpu",
-                    "--num_machines",
-                    "1",
-                    "--num_processes",
-                    str(num_gpus),
-                ]
-            else:
-                cmd = [
-                    "accelerate",
-                    "launch",
-                    "--use_deepspeed",
-                    "--zero_stage",
-                    "3",
-                    "--offload_optimizer_device",
-                    "none",
-                    "--offload_param_device",
-                    "none",
-                    "--zero3_save_16bit_model",
-                    "true",
-                    "--zero3_init_flag",
-                    "true",
-                    "--deepspeed_multinode_launcher",
-                    "standard",
-                    "--gradient_accumulation_steps",
-                    str(params.gradient_accumulation),
-                ]
-
+        cmd = get_accelerate_command(num_gpus, params.gradient_accumulation_steps)
         if num_gpus > 0:
             cmd.append("--mixed_precision")
             if params.mixed_precision == "fp16":
@@ -507,9 +452,31 @@ def launch_command(params):
                 os.path.join(params.project_name, "training_params.json"),
             ]
         )
+        return cmd
+    
+    elif isinstance(params, WhisperTrainingParams):
+        cmd = get_accelerate_command(num_gpus, params.gradient_accumulation_steps)
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
 
+        cmd.extend(
+            [
+                "-m",
+                "autotrain.trainers.asr",
+                "--training_config",
+                os.path.join(params.project_name, "training_params.json"),
+            ]
+        )
+        return cmd
+    
     else:
-        raise ValueError("Unsupported params type")
+        raise ValueError(f"Unsupported params type: {type(params)}")
 
     logger.info(cmd)
     logger.info(params)

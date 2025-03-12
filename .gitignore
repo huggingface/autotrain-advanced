@@ -146,3 +146,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 test_venv/*
+whisper_test_data/*
