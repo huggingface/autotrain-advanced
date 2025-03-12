@@ -217,4 +217,259 @@ def compute_metrics(pred, processor=None):
     
     # Compute WER
     wer = evaluate.load("wer")
-    return {"wer": wer.compute(predictions=pred_str, references=label_str)} 
+    return {"wer": wer.compute(predictions=pred_str, references=label_str)}
+
+MODEL_CARD = """---
+language:
+- {language}
+license: apache-2.0
+tags:
+- autotrain
+- automatic-speech-recognition
+- asr{base_model}
+datasets:
+{dataset_tag}
+widget:
+- audio: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/speech.wav"
+---
+
+# {model_title}
+
+This model is a fine-tuned version of {model_name} on {dataset_description}. It achieves the following results on the evaluation set:
+
+{metrics_summary}
+
+## Model description
+
+This model was trained using AutoTrain on a speech recognition task.
+
+- Task: {task}
+- Language: {language}
+
+## Intended uses & limitations
+
+This model is intended for Automatic Speech Recognition (ASR) in {language} language.
+
+## Training and evaluation data
+
+{dataset_info}
+
+## Training procedure
+
+### Training hyperparameters
+
+The following hyperparameters were used during training:
+
+- learning_rate: {learning_rate}
+- train_batch_size: {train_batch_size}
+- eval_batch_size: {eval_batch_size}
+- seed: {seed}
+- optimizer: {optimizer} with betas=({beta1},{beta2}) and epsilon={epsilon}
+- lr_scheduler_type: {lr_scheduler}
+- num_epochs: {num_epochs}
+{warmup_info}
+- mixed_precision_training: {mixed_precision}
+
+### Training results
+
+{detailed_metrics}
+
+### Framework versions
+
+- Transformers: {transformers_version}
+- Pytorch: {pytorch_version}
+- Datasets: {datasets_version}
+- PEFT: {peft_version}
+"""
+
+
+def create_asr_model_card(config, trainer, processor=None):
+    """
+    Generates a model card for ASR models.
+    
+    Args:
+        config (WhisperTrainingParams): Configuration object containing training parameters.
+        trainer (WhisperTrainer): Trainer object used for evaluating the model.
+        processor (WhisperProcessor, optional): The processor used for tokenization.
+    
+    Returns:
+        str: A formatted model card string containing dataset information, validation metrics, and model details.
+    """
+    # Get evaluation metrics if available
+    metrics_summary = ""
+    detailed_metrics = ""
+    
+    if config.valid_split is not None and hasattr(trainer, "evaluate"):
+        try:
+            eval_scores = trainer.evaluate()
+            
+            # Format metrics summary
+            metrics_list = []
+            for k, v in eval_scores.items():
+                key = k[len('eval_'):] if k.startswith('eval_') else k
+                metrics_list.append(f"{key.capitalize()}: {v:.4f}")
+            
+            metrics_summary = "\n".join(metrics_list)
+            
+            # Format detailed metrics for the training results section
+            detailed_metrics = "Training Loss | Epoch | Step | Validation Loss | WER\n"
+            detailed_metrics += "--- | --- | --- | --- | ---\n"
+            
+            # Get training loss from trainer history if available
+            train_loss = "N/A"
+            if hasattr(trainer, "state") and hasattr(trainer.state, "log_history") and trainer.state.log_history:
+                for entry in trainer.state.log_history:
+                    if "loss" in entry:
+                        train_loss = f"{entry['loss']:.4f}"
+                        break
+            
+            # Get validation metrics
+            val_loss = eval_scores.get("eval_loss", "N/A")
+            if isinstance(val_loss, (int, float)):
+                val_loss = f"{val_loss:.4f}"
+                
+            wer = eval_scores.get("eval_wer", "N/A")
+            if isinstance(wer, (int, float)):
+                wer = f"{wer:.4f}"
+            
+            # Add row to detailed metrics
+            detailed_metrics += f"{train_loss} | {config.num_train_epochs} | {trainer.state.global_step} | {val_loss} | {wer}"
+            
+        except Exception as e:
+            logger.warning(f"Failed to compute evaluation metrics: {e}")
+            metrics_summary = "No validation metrics available"
+            detailed_metrics = "No detailed training results available"
+    else:
+        metrics_summary = "No validation metrics available"
+        detailed_metrics = "No detailed training results available"
+    
+    # Dataset information
+    if hasattr(config, "data_path"):
+        data_path = config.data_path
+    else:
+        data_path = "unknown"
+        
+    if hasattr(config, "project_name"):
+        project_name = config.project_name
+    else:
+        project_name = "whisper-finetuned"
+        
+    if data_path == f"{project_name}/autotrain-data" or os.path.isdir(data_path):
+        dataset_tag = "- custom_dataset"
+        dataset_description = "a custom dataset"
+    else:
+        dataset_tag = f"- {data_path}"
+        dataset_description = f"the {data_path} dataset"
+    
+    # Base model information
+    model_name = getattr(config, "model_name", "unknown")
+    if os.path.isdir(model_name):
+        base_model = ""
+    else:
+        base_model = f"\nbase_model: {model_name}"
+    
+    # Create dataset info section
+    dataset_info = f"The model was trained on {dataset_description}"
+    if hasattr(config, "train_split"):
+        dataset_info += f" using the '{config.train_split}' split for training"
+    if hasattr(config, "valid_split") and config.valid_split:
+        dataset_info += f" and the '{config.valid_split}' split for validation"
+    dataset_info += "."
+    
+    # Get model title
+    model_parts = model_name.split("/")
+    model_base_name = model_parts[-1] if len(model_parts) > 1 else model_parts[0]
+    language = getattr(config, "language", "unknown")
+    model_title = f"{model_base_name} {language.upper()}"
+    
+    # Get optimizer info
+    optimizer_type = getattr(config, "optimizer_type", "adamw")
+    optimizer_name = optimizer_type.capitalize()
+    if optimizer_name.lower() == "adamw":
+        optimizer_name = "AdamW"
+    elif optimizer_name.lower() == "adam":
+        optimizer_name = "Adam"
+    
+    # Get warmup info
+    warmup_info = ""
+    if hasattr(config, "warmup_steps") and config.warmup_steps > 0:
+        warmup_info = f"- lr_scheduler_warmup_steps: {config.warmup_steps}"
+    elif hasattr(config, "lr_scheduler_warmup_ratio") and config.lr_scheduler_warmup_ratio > 0:
+        warmup_info = f"- lr_scheduler_warmup_ratio: {config.lr_scheduler_warmup_ratio}"
+    
+    # Get mixed precision info
+    mixed_precision = "No"
+    if hasattr(config, "mixed_precision"):
+        if config.mixed_precision == "fp16":
+            mixed_precision = "Native AMP (fp16)"
+        elif config.mixed_precision == "bf16":
+            mixed_precision = "Native AMP (bf16)"
+    
+    # Try to get library versions
+    try:
+        import transformers
+        transformers_version = transformers.__version__
+    except:
+        transformers_version = "N/A"
+        
+    try:
+        import torch
+        pytorch_version = torch.__version__
+    except:
+        pytorch_version = "N/A"
+        
+    try:
+        import datasets
+        datasets_version = datasets.__version__
+    except:
+        datasets_version = "N/A"
+        
+    try:
+        import peft
+        peft_version = peft.__version__
+    except:
+        peft_version = "N/A"
+    
+    # Get training parameters with defaults
+    num_epochs = getattr(config, "num_train_epochs", 3)
+    learning_rate = getattr(config, "learning_rate", 5e-5)
+    train_batch_size = getattr(config, "per_device_train_batch_size", 8)
+    eval_batch_size = getattr(config, "per_device_eval_batch_size", 8)
+    seed = getattr(config, "seed", 42)
+    beta1 = getattr(config, "optimizer_beta1", 0.9)
+    beta2 = getattr(config, "optimizer_beta2", 0.999)
+    epsilon = getattr(config, "optimizer_epsilon", 1e-8)
+    lr_scheduler = getattr(config, "lr_scheduler_type", "linear")
+    task = getattr(config, "task", "transcribe")
+    
+    # Create model card
+    model_card = MODEL_CARD.format(
+        model_title=model_title,
+        dataset_tag=dataset_tag,
+        metrics_summary=metrics_summary,
+        base_model=base_model,
+        language=language,
+        task=task,
+        model_name=model_name,
+        dataset_description=dataset_description,
+        dataset_info=dataset_info,
+        num_epochs=num_epochs,
+        learning_rate=learning_rate,
+        train_batch_size=train_batch_size,
+        eval_batch_size=eval_batch_size,
+        seed=seed,
+        optimizer=optimizer_name,
+        beta1=beta1,
+        beta2=beta2,
+        epsilon=epsilon,
+        lr_scheduler=lr_scheduler,
+        warmup_info=warmup_info,
+        mixed_precision=mixed_precision,
+        detailed_metrics=detailed_metrics,
+        transformers_version=transformers_version,
+        pytorch_version=pytorch_version,
+        datasets_version=datasets_version,
+        peft_version=peft_version
+    )
+    
+    return model_card 

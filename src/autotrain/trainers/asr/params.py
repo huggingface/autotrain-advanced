@@ -26,6 +26,7 @@ class WhisperTrainingParams(AutoTrainParams):
         per_device_train_batch_size (int): Training batch size per device. Default is 8.
         per_device_eval_batch_size (int): Evaluation batch size per device. Default is 8.
         gradient_accumulation_steps (int): Number of steps for gradient accumulation. Default is 1.
+        eval_accumulation_steps (Optional[int]): Number of steps for gradient accumulation during evaluation. Default is None.
         eval_steps (int): Number of steps between evaluations. Default is 100.
         save_steps (int): Number of steps between model checkpoints. Default is 500.
         logging_steps (int): Number of steps between logging updates. Default is 10.
@@ -76,6 +77,7 @@ class WhisperTrainingParams(AutoTrainParams):
     per_device_train_batch_size: int = Field(8, title="Training batch size per device")
     per_device_eval_batch_size: int = Field(8, title="Evaluation batch size per device")
     gradient_accumulation_steps: int = Field(1, title="Number of steps for gradient accumulation")
+    eval_accumulation_steps: Optional[int] = Field(None, title="Number of steps for gradient accumulation during evaluation")
     eval_steps: int = Field(100, title="Number of steps between evaluations")
     save_steps: int = Field(500, title="Number of steps between model checkpoints")
     logging_steps: int = Field(10, title="Number of steps between logging updates")

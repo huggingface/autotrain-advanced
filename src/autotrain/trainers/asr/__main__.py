@@ -1,26 +1,35 @@
+import os
+import json
 import argparse
 import logging
-import os
-import sys
-import yaml
-import json
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import torch
-from datasets import load_dataset
+from accelerate import PartialState
+from datasets import Audio, load_dataset
+from huggingface_hub import HfApi
 from peft import get_peft_model, PeftModel
 from transformers import (
-    Seq2SeqTrainer, 
-    Seq2SeqTrainingArguments, 
-    WhisperForConditionalGeneration, 
+    Seq2SeqTrainer,
+    Seq2SeqTrainingArguments,
+    WhisperForConditionalGeneration,
     WhisperProcessor,
     set_seed,
 )
 
+from autotrain import logger
 from autotrain.trainers.asr.params import WhisperTrainingParams
-from autotrain.trainers.asr.utils import WhisperDataCollator, compute_metrics, load_audio_dataset, prepare_dataset
+from autotrain.trainers.asr.utils import (
+    WhisperDataCollator,
+    compute_metrics,
+    load_audio_dataset,
+    prepare_dataset,
+    create_asr_model_card,
+)
 from autotrain.trainers.asr.whisper_peft import WhisperPeftModel
+from autotrain.trainers.common import monitor, remove_autotrain_data, save_training_params, pause_space
 
+# Use the logger from autotrain
 logger = logging.getLogger(__name__)
 
 class WhisperPeftModel(PeftModel):
@@ -99,6 +108,8 @@ def train_whisper(
     push_to_hub: bool = False,
     hub_model_id: Optional[str] = None,
     hub_token: Optional[str] = None,
+    per_device_eval_batch_size: Optional[int] = None,
+    eval_accumulation_steps: Optional[int] = None,
 ) -> None:
     """Main training function for Whisper ASR.
     
@@ -112,6 +123,8 @@ def train_whisper(
         push_to_hub (bool, optional): Whether to push the model to the Hugging Face Hub. Defaults to False.
         hub_model_id (Optional[str], optional): Model ID on the Hugging Face Hub. Defaults to None.
         hub_token (Optional[str], optional): Hugging Face Hub token. Defaults to None.
+        per_device_eval_batch_size (Optional[int], optional): Evaluation batch size per device. If provided, overrides the value in params.
+        eval_accumulation_steps (Optional[int], optional): Number of steps for gradient accumulation during evaluation. If provided, overrides the value in params.
     """
     # Check CUDA availability
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -253,11 +266,19 @@ def train_whisper(
     if (params.mixed_precision in ["fp16", "bf16"]) and not torch.cuda.is_available():
         logger.warning(f"{params.mixed_precision} mixed precision requires a GPU. Disabling mixed precision.")
     
+    # If per_device_eval_batch_size is provided as a parameter, override the value in params
+    if per_device_eval_batch_size is not None:
+        params.per_device_eval_batch_size = per_device_eval_batch_size
+    
+    # If eval_accumulation_steps is provided as a parameter, use it
+    eval_accumulation_steps_value = eval_accumulation_steps
+    
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
         per_device_train_batch_size=params.per_device_train_batch_size,
         per_device_eval_batch_size=params.per_device_eval_batch_size,
         gradient_accumulation_steps=params.gradient_accumulation_steps,
+        eval_accumulation_steps=eval_accumulation_steps_value,
         learning_rate=params.learning_rate,
         num_train_epochs=params.num_train_epochs,
         max_steps=max_steps,
@@ -306,6 +327,39 @@ def train_whisper(
     if params.use_peft:
         # Save PEFT/LoRA adapter separately
         model.save_pretrained(f"{output_dir}/adapter")
+    
+    # Save processor
+    processor.save_pretrained(output_dir)
+    
+    # Create and save model card
+    logger.info("Creating model card")
+    model_card = create_asr_model_card(params, trainer, processor)
+    
+    # Save model card to output directory as README.md
+    with open(f"{output_dir}/README.md", "w", encoding="utf-8") as f:
+        f.write(model_card)
+    
+    # Push to hub if requested
+    if push_to_hub:
+        if PartialState().process_index == 0:
+            remove_autotrain_data(params)
+            save_training_params(params)
+            logger.info("Pushing model to hub...")
+            api = HfApi(token=hub_token)
+            api.create_repo(
+                repo_id=hub_model_id,
+                repo_type="model",
+                private=True,
+                exist_ok=True
+            )
+            api.upload_folder(
+                folder_path=output_dir,
+                repo_id=hub_model_id,
+                repo_type="model",
+            )
+    
+    if PartialState().process_index == 0:
+        pause_space(params)
 
 def main():
     """Main entry point for command-line execution."""
@@ -348,6 +402,7 @@ def main():
         per_device_train_batch_size=training_config.get("per_device_train_batch_size", 8),
         per_device_eval_batch_size=training_config.get("per_device_eval_batch_size", 8),
         gradient_accumulation_steps=training_config.get("gradient_accumulation_steps", 1),
+        eval_accumulation_steps=training_config.get("eval_accumulation_steps"),
         eval_steps=training_config.get("eval_steps", 100),
         save_steps=training_config.get("save_steps", 500),
         logging_steps=training_config.get("logging_steps", 10),
@@ -378,7 +433,18 @@ def main():
         
         # Project name
         project_name=training_config.get("project_name", "whisper-finetuned"),
+        
+        # Hub parameters
+        push_to_hub=training_config.get("push_to_hub", False),
+        token=training_config.get("token"),
+        username=training_config.get("username"),
     )
+    
+    # Determine hub_model_id
+    push_to_hub = training_config.get("push_to_hub", False)
+    hub_model_id = training_config.get("hub_model_id")
+    if push_to_hub and not hub_model_id and params.username:
+        hub_model_id = f"{params.username}/{params.project_name}"
     
     # Start training
     train_whisper(
@@ -388,9 +454,11 @@ def main():
         audio_column=training_config.get("audio_column", "audio"),
         text_column=training_config.get("text_column", "text"),
         dataset_config=dataset_config,
-        push_to_hub=training_config.get("push_to_hub", False),
-        hub_model_id=training_config.get("hub_model_id"),
-        hub_token=training_config.get("token"),
+        push_to_hub=push_to_hub,
+        hub_model_id=hub_model_id,
+        hub_token=params.token,
+        per_device_eval_batch_size=training_config.get("per_device_eval_batch_size"),
+        eval_accumulation_steps=training_config.get("eval_accumulation_steps"),
     )
 
 if __name__ == "__main__":
