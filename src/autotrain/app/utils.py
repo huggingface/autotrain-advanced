@@ -6,6 +6,7 @@ import psutil
 import requests
 
 from autotrain import config, logger
+from functools import lru_cache
 
 
 def graceful_exit(signum, frame):
@@ -94,6 +95,7 @@ def kill_process_by_pid(pid):
         logger.error(f"Failed to send SIGTERM to process with PID {pid}: {e}")
 
 
+@lru_cache(maxsize=128)
 def token_verification(token):
     """
     Verifies the provided token with the Hugging Face API and retrieves user information.
