@@ -53,7 +53,15 @@ class LLMTrainingParams(AutoTrainParams):
         model_ref (Optional[str]): Reference model for DPO trainer. Default is None.
         dpo_beta (float): Beta parameter for DPO trainer. Default is 0.1.
 
-        max_prompt_length (int): Maximum length of the prompt. Default is 128.
+        grpo
+        beta: float = Field(0.1, title="Beta parameter for GRPO trainer")
+        gamma: float = Field(0.95, title="Gamma parameter for GRPO trainer")
+        kl_penalty: str = Field("kl", title="KL penalty type for GRPO trainer")
+        kl_threshold: float = Field(0.1, title="KL threshold for GRPO trainer")
+        answer_column: Optional[str] = Field(None, title="Column name for the answer data")
+
+        orpo + dpo
+        max_prompt_length: int = Field(128, title="Maximum length of the prompt")
         max_completion_length (Optional[int]): Maximum length of the completion. Default is None.
 
         prompt_text_column (Optional[str]): Column name for the prompt text. Default is None.
@@ -120,6 +128,13 @@ class LLMTrainingParams(AutoTrainParams):
     # dpo
     model_ref: Optional[str] = Field(None, title="Reference model for DPO trainer")
     dpo_beta: float = Field(0.1, title="Beta parameter for DPO trainer")
+
+    # grpo
+    beta: float = Field(0.1, title="Beta parameter for GRPO trainer")
+    gamma: float = Field(0.95, title="Gamma parameter for GRPO trainer")
+    kl_penalty: str = Field("kl", title="KL penalty type for GRPO trainer")
+    kl_threshold: float = Field(0.1, title="KL threshold for GRPO trainer")
+    answer_column: Optional[str] = Field(None, title="Column name for the answer data")
 
     # orpo + dpo
     max_prompt_length: int = Field(128, title="Maximum length of the prompt")

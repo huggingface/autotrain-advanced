@@ -25,6 +25,7 @@ def colab_app():
     TASK_NAMES = [
         "LLM SFT",
         "LLM ORPO",
+        "LLM GRPO",
         "LLM Generic",
         "LLM DPO",
         "LLM Reward",
@@ -47,6 +48,7 @@ def colab_app():
     TASK_MAP = {
         "LLM SFT": "llm:sft",
         "LLM ORPO": "llm:orpo",
+        "LLM GRPO": "llm:grpo",
         "LLM Generic": "llm:generic",
         "LLM DPO": "llm:dpo",
         "LLM Reward": "llm:reward",
@@ -238,6 +240,10 @@ def colab_app():
             col_mapping.value = '{"prompt": "prompt", "text": "text", "rejected_text": "rejected_text"}'
             dataset_source_dropdown.disabled = False
             valid_split.disabled = True
+        elif task == "llm:grpo":
+            col_mapping.value = '{"text": "question", "answer": "answer"}'
+            dataset_source_dropdown.disabled = False
+            valid_split.disabled = False
         elif task == "llm:reward":
             col_mapping.value = '{"text": "text", "rejected_text": "rejected_text"}'
             dataset_source_dropdown.disabled = False

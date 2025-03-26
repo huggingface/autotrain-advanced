@@ -42,6 +42,11 @@ def train(config):
 
         train_orpo(config)
 
+    elif config.trainer == "grpo":
+        from autotrain.trainers.clm.train_clm_grpo import train as train_grpo
+
+        train_grpo(config)
+
     else:
         raise ValueError(f"trainer `{config.trainer}` not supported")
 

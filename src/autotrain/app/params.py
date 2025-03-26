@@ -83,6 +83,21 @@ PARAMS["llm"] = LLMTrainingParams(
     distributed_backend="ddp",
 ).model_dump()
 
+PARAMS["llm:grpo"] = LLMTrainingParams(
+    target_modules="all-linear",
+    log="tensorboard",
+    mixed_precision="fp16",
+    quantization="int4",
+    peft=True,
+    block_size=1024,
+    epochs=3,
+    padding="right",
+    chat_template="none",
+    max_completion_length=128,
+    distributed_backend="ddp",
+    trainer="grpo",
+).model_dump()
+
 PARAMS["text-classification"] = TextClassificationParams(
     mixed_precision="fp16",
     log="tensorboard",
@@ -280,6 +295,9 @@ class AppParams:
         trainer = self.task.split(":")[1]
         if trainer != "generic":
             _params["trainer"] = trainer.lower()
+            if trainer.lower() == "grpo":
+                _params["text_column"] = self.column_mapping.get("question" if not self.api else "text_column", "question")
+                _params["answer_column"] = self.column_mapping.get("answer" if not self.api else "answer_column", "answer")
 
         if "quantization" in _params:
             if _params["quantization"] in ("none", "no"):

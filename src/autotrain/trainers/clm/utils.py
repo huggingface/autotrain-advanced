@@ -610,44 +610,95 @@ def get_tokenizer(config):
     return tokenizer
 
 
-def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
+def preprocess_grpo(examples, tokenizer):
     """
-    Processes training and validation data using a specified chat template.
+    Preprocesses the GRPO data by tokenizing the questions and answers.
 
     Args:
-        config (object): Configuration object containing settings and parameters.
-        tokenizer (object): Tokenizer object used for tokenizing the data.
-        train_data (Dataset): Training dataset to be processed.
-        valid_data (Dataset): Validation dataset to be processed.
+        examples (dict): A dictionary containing "question" and "answer" keys.
+        tokenizer (PreTrainedTokenizer): A tokenizer instance from the Hugging Face library.
 
     Returns:
-        tuple: A tuple containing the processed training and validation datasets.
-
-    Notes:
-        - If `config.chat_template` is one of ("chatml", "zephyr", "tokenizer"), the chat template will be applied.
-        - Logs information about the application of the chat template.
-        - For ORPO/DPO, the `prompt` will be extracted from chosen messages.
-        - If `config.valid_split` is not None, the validation data will also be processed.
+        dict: A dictionary with tokenized input IDs and attention masks.
     """
-    valid_data = None
-    if config.chat_template in ("chatml", "zephyr", "tokenizer"):
-        logger.info("Applying chat template")
-        logger.info("For ORPO/DPO, `prompt` will be extracted from chosen messages")
-        train_data = train_data.map(
-            apply_chat_template,
-            fn_kwargs={
-                "tokenizer": tokenizer,
-                "config": config,
-            },
+    new_examples = {
+        "input_ids": [],
+        "attention_mask": [],
+        "labels": [],
+    }
+    for question, answer in zip(examples["question"], examples["answer"]):
+        # Format as a chat conversation
+        conversation = [
+            {"role": "user", "content": question},
+            {"role": "assistant", "content": answer},
+        ]
+        tokenized = tokenizer.apply_chat_template(
+            conversation,
+            tokenize=True,
+            add_generation_prompt=False,
+            return_tensors=None,
         )
-        if config.valid_split is not None:
+        new_examples["input_ids"].append(tokenized)
+        new_examples["attention_mask"].append([1] * len(tokenized))
+        new_examples["labels"].append(tokenized)
+
+    return new_examples
+
+
+def process_data_with_chat_template(config, tokenizer, train_data, valid_data):
+    """Process data with chat template if needed."""
+    if config.trainer == "grpo":
+        train_data = train_data.map(
+            lambda x: preprocess_grpo(x, tokenizer),
+            batched=True,
+            remove_columns=train_data.column_names,
+        )
+        if valid_data is not None:
             valid_data = valid_data.map(
-                apply_chat_template,
-                fn_kwargs={
-                    "tokenizer": tokenizer,
-                    "config": config,
-                },
+                lambda x: preprocess_grpo(x, tokenizer),
+                batched=True,
+                remove_columns=valid_data.column_names,
             )
+        return train_data, valid_data
+
+    if config.trainer == "reward":
+        train_data = train_data.map(
+            lambda x: preprocess_reward(x, tokenizer),
+            batched=True,
+            remove_columns=train_data.column_names,
+        )
+        if valid_data is not None:
+            valid_data = valid_data.map(
+                lambda x: preprocess_reward(x, tokenizer),
+                batched=True,
+                remove_columns=valid_data.column_names,
+            )
+        return train_data, valid_data
+
+    if config.chat_template is None:
+        return train_data, valid_data
+
+    if config.chat_template.lower() == "none":
+        return train_data, valid_data
+
+    if config.chat_template.lower() == "chatml":
+        tokenizer.chat_template = CHATML_CHAT_TEMPLATE
+    elif config.chat_template.lower() == "zephyr":
+        tokenizer.chat_template = ZEPHYR_CHAT_TEMPLATE
+    else:
+        tokenizer.chat_template = config.chat_template
+
+    train_data = train_data.map(
+        lambda x: apply_chat_template(x, tokenizer, config),
+        batched=True,
+        remove_columns=train_data.column_names,
+    )
+    if valid_data is not None:
+        valid_data = valid_data.map(
+            lambda x: apply_chat_template(x, tokenizer, config),
+            batched=True,
+            remove_columns=valid_data.column_names,
+        )
     return train_data, valid_data
 
 

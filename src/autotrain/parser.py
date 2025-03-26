@@ -109,6 +109,7 @@ class AutoTrainConfigParser:
             "llm-generic": "lm_training",
             "llm-dpo": "lm_training",
             "llm-reward": "lm_training",
+            "llm-grpo": "lm_training",
             "image_binary_classification": "image_multi_class_classification",
             "image-binary-classification": "image_multi_class_classification",
             "image_classification": "image_multi_class_classification",
@@ -181,7 +182,7 @@ class AutoTrainConfigParser:
                 params["trainer"] = self.config["task"].split("-")[1]
                 if params["trainer"] == "generic":
                     params["trainer"] = "default"
-                if params["trainer"] not in ["sft", "orpo", "dpo", "reward", "default"]:
+                if params["trainer"] not in ["sft", "orpo", "dpo", "reward", "default", "grpo"]:
                     raise ValueError("Invalid LLM training task")
 
         if self.task == "sentence_transformers":

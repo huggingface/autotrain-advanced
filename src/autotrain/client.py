@@ -44,6 +44,27 @@ PARAMS["llm"] = {
     "merge_adapter": True,
 }
 
+PARAMS["llm:grpo"] = {
+    "target_modules": "all-linear",
+    "log": "tensorboard",
+    "mixed_precision": "fp16",
+    "quantization": "int4",
+    "peft": True,
+    "block_size": 1024,
+    "epochs": 3,
+    "padding": "right",
+    "chat_template": "none",
+    "max_completion_length": 128,
+    "distributed_backend": "ddp",
+    "scheduler": "linear",
+    "merge_adapter": True,
+    "trainer": "grpo",
+    "beta": 0.1,
+    "gamma": 0.95,
+    "kl_penalty": "kl",
+    "kl_threshold": 0.1,
+}
+
 PARAMS["text-classification"] = {
     "mixed_precision": "fp16",
     "log": "tensorboard",
@@ -115,6 +136,10 @@ DEFAULT_COLUMN_MAPPING["llm:dpo"] = {
     "prompt_column": "prompt",
     "text_column": "chosen",
     "rejected_text_column": "rejected",
+}
+DEFAULT_COLUMN_MAPPING["llm:grpo"] = {
+    "text_column": "question",
+    "answer_column": "answer",
 }
 DEFAULT_COLUMN_MAPPING["llm:orpo"] = {
     "prompt_column": "prompt",

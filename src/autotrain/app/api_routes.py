@@ -96,6 +96,7 @@ def create_api_base_model(base_class, class_name):
 LLMSFTTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMSFTTrainingParamsAPI")
 LLMDPOTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMDPOTrainingParamsAPI")
 LLMORPOTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMORPOTrainingParamsAPI")
+LLMGRPOTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMGRPOTrainingParamsAPI")
 LLMGenericTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMGenericTrainingParamsAPI")
 LLMRewardTrainingParamsAPI = create_api_base_model(LLMTrainingParams, "LLMRewardTrainingParamsAPI")
 ImageClassificationParamsAPI = create_api_base_model(ImageClassificationParams, "ImageClassificationParamsAPI")
@@ -128,6 +129,11 @@ class LLMORPOColumnMapping(BaseModel):
     text_column: str
     rejected_text_column: str
     prompt_text_column: str
+
+
+class LLMGRPOColumnMapping(BaseModel):
+    text_column: str
+    answer_column: str
 
 
 class LLMGenericColumnMapping(BaseModel):
@@ -256,6 +262,7 @@ class APICreateProjectModel(BaseModel):
         "llm:sft",
         "llm:dpo",
         "llm:orpo",
+        "llm:grpo",
         "llm:generic",
         "llm:reward",
         "st:pair",
@@ -298,6 +305,7 @@ class APICreateProjectModel(BaseModel):
         LLMSFTTrainingParamsAPI,
         LLMDPOTrainingParamsAPI,
         LLMORPOTrainingParamsAPI,
+        LLMGRPOTrainingParamsAPI,
         LLMGenericTrainingParamsAPI,
         LLMRewardTrainingParamsAPI,
         SentenceTransformersParamsAPI,
@@ -319,6 +327,7 @@ class APICreateProjectModel(BaseModel):
             LLMSFTColumnMapping,
             LLMDPOColumnMapping,
             LLMORPOColumnMapping,
+            LLMGRPOColumnMapping,
             LLMGenericColumnMapping,
             LLMRewardColumnMapping,
             ImageClassificationColumnMapping,
@@ -372,6 +381,14 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("prompt_text_column"):
                 raise ValueError("prompt_text_column is required for llm:orpo")
             values["column_mapping"] = LLMORPOColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "llm:grpo":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for llm:grpo")
+            if not values.get("column_mapping").get("text_column"):
+                raise ValueError("text_column is required for llm:grpo")
+            if not values.get("column_mapping").get("answer_column"):
+                raise ValueError("answer_column is required for llm:grpo")
+            values["column_mapping"] = LLMGRPOColumnMapping(**values["column_mapping"])
         elif values.get("task") == "llm:generic":
             if not values.get("column_mapping"):
                 raise ValueError("column_mapping is required for llm:generic")
@@ -545,6 +562,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = LLMDPOTrainingParamsAPI(**values["params"])
         elif values.get("task") == "llm:orpo":
             values["params"] = LLMORPOTrainingParamsAPI(**values["params"])
+        elif values.get("task") == "llm:grpo":
+            values["params"] = LLMGRPOTrainingParamsAPI(**values["params"])
         elif values.get("task") == "llm:generic":
             values["params"] = LLMGenericTrainingParamsAPI(**values["params"])
         elif values.get("task") == "llm:reward":
