@@ -1,0 +1,25 @@
+# Installation
+
+There is no installation required! AutoTrain Advanced runs on Hugging Face Spaces. All you need to do is create a new space with the AutoTrain Advanced template: https://huggingface.co/new-space?template=autotrain-projects/autotrain-advanced. Please make sure you keep the space private.
+
+![autotrain-space-template](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/space_template_1.png)
+
+Once you have selected Docker > AutoTrain template and an appropriate hardware, you can click on "Create Space" and you will be redirected to your new space.
+
+![autotrain-space-template](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/space_template_2.png)
+
+Make sure to use a write token and keep the space private for any unauthorized access.
+
+# Updating AutoTrain Advanced to Latest Version
+
+We are constantly adding new features and tasks to AutoTrain Advanced. Its always a good idea to update your space to the latest version before starting a new project. An up-to-date version of AutoTrain Advanced will have the latest tasks, features and bug fixes! Updating is as easy as clicking on the "Factory reboot" button in the setting page of your space.
+
+![autotrain-space-template](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/space_template_5.png)
+
+Please note that "restarting" a space will not update it to the latest version. You need to "Factory reboot" the space to update it to the latest version.
+
+And now we are all set and we can start with our first project!
+
+# Understanding the UI
+
+![autotrain-space-template](https://raw.githubusercontent.com/huggingface/autotrain-advanced/main/static/ui.png)

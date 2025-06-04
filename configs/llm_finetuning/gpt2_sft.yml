@@ -1,0 +1,32 @@
+task: llm-sft
+base_model: openai-community/gpt2
+project_name: autotrain-gpt2-finetuned-guanaco
+log: tensorboard
+backend: local
+
+data:
+  path: timdettmers/openassistant-guanaco
+  train_split: train
+  valid_split: null
+  chat_template: null
+  column_mapping:
+    text_column: text
+
+params:
+  block_size: 1024
+  model_max_length: 2048
+  max_prompt_length: 512
+  epochs: 3
+  batch_size: 2
+  lr: 3e-5
+  padding: right
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 4
+  mixed_precision: fp16
+  merge_adapter: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: false

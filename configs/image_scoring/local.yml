@@ -1,0 +1,28 @@
+task: image_regression
+base_model: google/vit-base-patch16-224
+project_name: autotrain-image-regression-model
+log: tensorboard
+backend: local
+
+data:
+  path: data/
+  train_split: train # this folder inside data/ will be used for training, it contains the images and metadata.jsonl
+  valid_split: valid # this folder inside data/ will be used for validation, it contains the images and metadata.jsonl. can be set to null
+  # column mapping should not be changed for local datasets
+  column_mapping:
+    image_column: image
+    target_column: target
+
+params:
+  epochs: 2
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

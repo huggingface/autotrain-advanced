@@ -1,0 +1,9 @@
+blank_issues_enabled: true
+version: 2.1
+contact_links:
+  - name: AutoTrain Documentation
+    url: https://huggingface.co/docs/autotrain
+    about: Getting started and FAQs
+  - name: AutoTrain Discussions
+    url: https://github.com/huggingface/autotrain-advanced/discussions
+    about: General usage questions and community discussions

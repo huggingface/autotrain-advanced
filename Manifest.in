@@ -1,0 +1,2 @@
+recursive-include src/autotrain/static *
+recursive-include src/autotrain/templates *

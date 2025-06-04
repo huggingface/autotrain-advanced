@@ -1,0 +1,27 @@
+task: image_regression
+base_model: google/vit-base-patch16-224
+project_name: autotrain-cats-vs-dogs-finetuned
+log: tensorboard
+backend: local
+
+data:
+  path: cats_vs_dogs
+  train_split: train
+  valid_split: null
+  column_mapping:
+    image_column: image
+    target_column: labels
+
+params:
+  epochs: 2
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

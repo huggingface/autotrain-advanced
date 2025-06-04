@@ -1,0 +1,33 @@
+task: llm-sft
+base_model: meta-llama/Meta-Llama-3-70B-Instruct
+project_name: autotrain-llama3-70b-math-v1
+log: tensorboard
+backend: local
+
+data:
+  path: rishiraj/guanaco-style-metamath-40k
+  train_split: train
+  valid_split: null
+  chat_template: null
+  column_mapping:
+    text_column: text
+
+params:
+  block_size: 2048
+  model_max_length: 8192
+  epochs: 2
+  batch_size: 1
+  lr: 1e-5
+  peft: true
+  quantization: null
+  target_modules: all-linear
+  padding: right
+  optimizer: paged_adamw_8bit
+  scheduler: linear
+  gradient_accumulation: 8
+  mixed_precision: bf16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

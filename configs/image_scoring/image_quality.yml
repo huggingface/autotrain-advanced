@@ -1,0 +1,27 @@
+task: image_regression
+base_model: microsoft/resnet-50
+project_name: autotrain-img-quality-resnet50
+log: tensorboard
+backend: local
+
+data:
+  path: abhishek/img-quality-full
+  train_split: train
+  valid_split: null
+  column_mapping:
+    image_column: image
+    target_column: target
+
+params:
+  epochs: 10
+  batch_size: 8
+  lr: 2e-3
+  optimizer: adamw_torch
+  scheduler: cosine
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

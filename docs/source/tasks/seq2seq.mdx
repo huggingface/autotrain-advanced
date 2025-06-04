@@ -1,0 +1,37 @@
+# Seq2Seq
+
+Seq2Seq is a task that involves converting a sequence of words into another sequence of words.
+It is used in machine translation, text summarization, and question answering.
+
+## Data Format
+
+You can have the dataset as a CSV file:
+
+```csv
+text,target
+"this movie is great","dieser Film ist großartig"
+"this movie is bad","dieser Film ist schlecht"
+.
+.
+.
+```
+
+Or as a JSONL file:
+
+```json
+{"text": "this movie is great", "target": "dieser Film ist großartig"}
+{"text": "this movie is bad", "target": "dieser Film ist schlecht"}
+.
+.
+.
+```
+
+
+## Columns
+
+Your CSV/JSONL dataset must have two columns: `text` and `target`.
+
+
+## Parameters
+
+[[autodoc]] trainers.seq2seq.params.Seq2SeqParams

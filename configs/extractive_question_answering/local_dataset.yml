@@ -1,0 +1,30 @@
+task: extractive-qa
+base_model: google-bert/bert-base-uncased
+project_name: autotrain-bert-ex-qa2
+log: tensorboard
+backend: local
+
+data:
+  path: data/ # this must be the path to the directory containing the train and valid files
+  train_split: train # this must be either train.csv or train.json
+  valid_split: valid # this must be either valid.csv or valid.json
+  column_mapping:
+    text_column: context
+    question_column: question
+    answer_column: answers
+
+params:
+  max_seq_length: 512
+  max_doc_stride: 128
+  epochs: 3
+  batch_size: 4
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

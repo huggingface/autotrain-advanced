@@ -1,0 +1,65 @@
+# Token Classification
+
+Token classification is the task of classifying each token in a sequence. This can be used
+for Named Entity Recognition (NER), Part-of-Speech (POS) tagging, and more. Get your data ready in
+proper format and then with just a few clicks, your state-of-the-art model will be ready to
+be used in production.
+
+## Data Format
+
+The data should be in the following CSV format:
+
+```csv
+tokens,tags
+"['I', 'love', 'Paris']","['O', 'O', 'B-LOC']"
+"['I', 'live', 'in', 'New', 'York']","['O', 'O', 'O', 'B-LOC', 'I-LOC']"
+.
+.
+.
+```
+
+or you can also use JSONL format:
+
+```json
+{"tokens": ["I", "love", "Paris"],"tags": ["O", "O", "B-LOC"]}
+{"tokens": ["I", "live", "in", "New", "York"],"tags": ["O", "O", "O", "B-LOC", "I-LOC"]}
+.
+.
+.
+```
+
+As you can see, we have two columns in the CSV file. One column is the tokens and the other
+is the tags. Both the columns are stringified lists! The tokens column contains the tokens
+of the sentence and the tags column contains the tags for each token.
+
+If your CSV is huge, you can divide it into multiple CSV files and upload them separately.
+Please make sure that the column names are the same in all CSV files.
+
+One way to divide the CSV file using pandas is as follows:
+
+```python
+import pandas as pd
+
+# Set the chunk size
+chunk_size = 1000
+i = 1
+
+# Open the CSV file and read it in chunks
+for chunk in pd.read_csv('example.csv', chunksize=chunk_size):
+    # Save each chunk to a new file
+    chunk.to_csv(f'chunk_{i}.csv', index=False)
+    i += 1
+```
+
+
+Sample dataset from HuggingFace Hub: [conll2003](https://huggingface.co/datasets/eriktks/conll2003)
+
+
+## Columns
+
+Your CSV/JSONL dataset must have two columns: `tokens` and `tags`.
+
+
+## Parameters
+
+[[autodoc]] trainers.token_classification.params.TokenClassificationParams

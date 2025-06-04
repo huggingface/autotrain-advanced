@@ -1,0 +1,34 @@
+task: llm-sft
+base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+project_name: autotrain-smollm2-finetune
+log: tensorboard
+backend: local
+
+data:
+  path: HuggingFaceH4/no_robots
+  train_split: train
+  valid_split: null
+  chat_template: tokenizer
+  column_mapping:
+    text_column: messages
+
+params:
+  block_size: 2048
+  model_max_length: 4096
+  epochs: 2
+  batch_size: 1
+  lr: 1e-5
+  peft: true
+  quantization: int4
+  target_modules: all-linear
+  padding: right
+  optimizer: paged_adamw_8bit
+  scheduler: linear
+  gradient_accumulation: 8
+  mixed_precision: bf16
+  merge_adapter: true
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true

@@ -1,0 +1,29 @@
+task: sentence-transformers:triplet
+base_model: microsoft/mpnet-base
+project_name: autotrain-st-triplet
+log: tensorboard
+backend: local
+
+data:
+  path: sentence-transformers/all-nli
+  train_split: triplet:train
+  valid_split: triplet:dev
+  column_mapping:
+    sentence1_column: anchor
+    sentence2_column: positive
+    sentence3_column: negative
+
+params:
+  max_seq_length: 512
+  epochs: 5
+  batch_size: 8
+  lr: 2e-5
+  optimizer: adamw_torch
+  scheduler: linear
+  gradient_accumulation: 1
+  mixed_precision: fp16
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
