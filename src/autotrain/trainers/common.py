@@ -7,17 +7,22 @@ import os
 import shutil
 import time
 import traceback
+import logging
+from datetime import datetime, timedelta
 
 import requests
 from accelerate import PartialState
 from huggingface_hub import HfApi
 from pydantic import BaseModel
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
+import torch
 
 from autotrain import is_colab, logger
 
 
 ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
+
+logger = logging.getLogger(__name__)
 
 
 def get_file_sizes(directory):
@@ -384,3 +389,99 @@ class TrainStartCallback(TrainerCallback):
 
     def on_train_begin(self, args, state, control, **kwargs):
         logger.info("Starting to train...")
+
+
+class DetailedTrainingCallback(TrainerCallback):
+    """
+    Callback to log detailed training progress.
+    """
+    def __init__(self):
+        self.start_time = None
+        self.training_started = False
+        self.current_epoch = 0
+        self.best_loss = float('inf')
+        self.total_steps = 0
+        self.current_step = 0
+        
+    def on_train_begin(self, args, state, control, **kwargs):
+        """Called at the beginning of training."""
+        self.start_time = datetime.now()
+        self.training_started = True
+        self.total_steps = state.max_steps
+        
+        # Log training start
+        logger.info("=" * 80)
+        logger.info("🚀 Training Started")
+        logger.info("=" * 80)
+        logger.info(f"📅 Start time: {self.start_time}")
+        logger.info(f"⚙️ Training arguments: {args}")
+        
+        # Log GPU info if available
+        if torch.cuda.is_available():
+            logger.info(f"🎮 GPU: {torch.cuda.get_device_name(0)}")
+            logger.info(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+        
+    def on_epoch_begin(self, args, state, control, **kwargs):
+        """Called at the beginning of an epoch."""
+        self.current_epoch = state.epoch
+        logger.info("=" * 80)
+        logger.info(f"📊 Starting Epoch {self.current_epoch}")
+        logger.info("=" * 80)
+        
+    def on_step_end(self, args, state, control, **kwargs):
+        """Called at the end of a step."""
+        if state.global_step % args.logging_steps == 0:
+            self.current_step = state.global_step
+            
+            # Calculate progress
+            progress = state.global_step / state.max_steps * 100
+            elapsed = datetime.now() - self.start_time
+            
+            # Calculate ETA
+            steps_per_second = state.global_step / elapsed.total_seconds()
+            remaining_steps = state.max_steps - state.global_step
+            eta = remaining_steps / steps_per_second if steps_per_second > 0 else 0
+            
+            # Get current metrics
+            current_loss = state.log_history[-1].get('loss', 'N/A')
+            current_lr = state.log_history[-1].get('learning_rate', 'N/A')
+            
+            # Update best loss
+            if isinstance(current_loss, (int, float)) and current_loss < self.best_loss:
+                self.best_loss = current_loss
+            
+            # Log progress
+            logger.info(f"⏳ Progress: {progress:.1f}% ({state.global_step}/{state.max_steps})")
+            logger.info(f"📈 Loss: {current_loss:.4f} (Best: {self.best_loss:.4f})")
+            logger.info(f"📊 Learning Rate: {current_lr:.2e}")
+            logger.info(f"⏱️ Elapsed: {elapsed}")
+            logger.info(f"⏳ ETA: {timedelta(seconds=int(eta))}")
+            
+            # Log GPU memory if available
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated() / 1024**2
+                cached = torch.cuda.memory_reserved() / 1024**2
+                logger.info(f"💾 GPU Memory: {allocated:.1f}MB allocated, {cached:.1f}MB cached")
+            
+    def on_epoch_end(self, args, state, control, **kwargs):
+        """Called at the end of an epoch."""
+        logger.info("=" * 80)
+        logger.info(f"✅ Epoch {self.current_epoch} completed")
+        logger.info(f"📊 Average loss: {state.log_history[-1].get('loss', 'N/A'):.4f}")
+        if 'eval_loss' in state.log_history[-1]:
+            logger.info(f"📊 Validation loss: {state.log_history[-1]['eval_loss']:.4f}")
+        logger.info("=" * 80)
+        
+    def on_train_end(self, args, state, control, **kwargs):
+        """Called at the end of training."""
+        total_time = datetime.now() - self.start_time
+        
+        logger.info("=" * 80)
+        logger.info("🎉 Training Completed")
+        logger.info("=" * 80)
+        logger.info(f"⏱️ Total training time: {total_time}")
+        logger.info(f"📊 Final loss: {state.log_history[-1].get('loss', 'N/A'):.4f}")
+        if 'eval_loss' in state.log_history[-1]:
+            logger.info(f"📊 Final validation loss: {state.log_history[-1]['eval_loss']:.4f}")
+        logger.info(f"🏆 Best loss: {self.best_loss:.4f}")
+        logger.info("=" * 80)

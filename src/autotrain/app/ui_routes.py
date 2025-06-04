@@ -3,7 +3,10 @@ import os
 import signal
 import sys
 import time
-from typing import List
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+import subprocess
+import sqlite3
 
 import torch
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
@@ -288,6 +291,22 @@ UI_PARAMS = {
         "label": "Distributed backend",
         "options": ["ddp", "deepspeed"],
     },
+    "audio_column": {
+        "type": "string",
+        "label": "Audio column",
+    },
+    "text_column": {
+        "type": "string",
+        "label": "Transcription column",
+    },
+    "max_duration": {
+        "type": "number",
+        "label": "Max audio duration (seconds)",
+    },
+    "sampling_rate": {
+        "type": "number",
+        "label": "Sampling rate (Hz)",
+    },
 }
 
 
@@ -315,56 +334,34 @@ signal.signal(signal.SIGTERM, graceful_exit)
 logger.info("AutoTrain started successfully")
 
 
-def user_authentication(request: Request):
+async def user_authentication(request: Request):
     """
-    Authenticates the user based on the following priority:
-    1. HF_TOKEN environment variable
-    2. OAuth information in session
-    3. Token in bearer header (not implemented in the given code)
+    Authenticates the user based on the HF_TOKEN environment variable.
 
     Args:
         request (Request): The incoming HTTP request object.
 
     Returns:
-        str: The authenticated token if verification is successful.
+        str: The authenticated token string.
 
     Raises:
-        HTTPException: If the token is invalid or expired and the application is not running in a space.
-
-    If the application is running in a space and authentication fails, it returns a login template response.
+        HTTPException: If the token is invalid or expired or verification fails.
     """
-    # priority: hf_token env var > oauth_info in session > token in bearer header
-    # if "oauth_info" in request.session:
-    if HF_TOKEN is not None:
-        try:
-            _ = token_verification(token=os.environ.get("HF_TOKEN"))
-            return HF_TOKEN
-        except Exception as e:
-            logger.error(f"Failed to verify token: {e}")
-            if IS_RUNNING_IN_SPACE:
-                return templates.TemplateResponse("login.html", {"request": request})
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid or expired token: HF_TOKEN",
-                )
-
-    if IS_RUNNING_IN_SPACE and "oauth_info" in request.session:
-        try:
-            _ = token_verification(token=request.session["oauth_info"]["access_token"])
-            return request.session["oauth_info"]["access_token"]
-        except Exception as e:
-            request.session.pop("oauth_info", None)
-            logger.error(f"Failed to verify token: {e}")
-            return templates.TemplateResponse("login.html", {"request": request})
-
-    if IS_RUNNING_IN_SPACE:
-        return templates.TemplateResponse("login.html", {"request": request})
-
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or expired token",
-    )
+    if HF_TOKEN is None:
+        logger.error("HF_TOKEN environment variable is not set.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="HF_TOKEN environment variable is not set.",
+        )
+        
+    try:
+        get_user_and_orgs(user_token=HF_TOKEN)
+        return HF_TOKEN
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token: HF_TOKEN",
+        )
 
 
 @ui_router.get("/", response_class=HTMLResponse)
@@ -378,9 +375,7 @@ async def load_index(request: Request, token: str = Depends(user_authentication)
     try:
         _users = get_user_and_orgs(user_token=token)
     except Exception as e:
-        logger.error(f"Failed to get user and orgs: {e}")
-        if "oauth_info" in request.session:
-            request.session.pop("oauth_info", None)
+        logger.error(f"Failed to get user and orgs after authentication: {e}")
         return templates.TemplateResponse("login.html", {"request": request})
     context = {
         "request": request,
@@ -481,6 +476,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["vlm"]
     elif task == "extractive-qa":
         hub_models = MODEL_CHOICE["extractive-qa"]
+    elif task == "automatic-speech-recognition":
+        hub_models = MODEL_CHOICE["automatic-speech-recognition"]
     else:
         raise NotImplementedError
 
@@ -663,6 +660,8 @@ async def handle_form(
                 dset_task = "text_token_classification"
             elif task == "extractive-qa":
                 dset_task = "text_extractive_question_answering"
+            elif task == "automatic-speech-recognition":
+                dset_task = "automatic_speech_recognition"
             else:
                 raise NotImplementedError
             logger.info(f"Task: {dset_task}")
@@ -807,3 +806,105 @@ async def stop_training(authenticated: bool = Depends(user_authentication)):
                 logger.info(f"Process {_pid} is already completed. Skipping...")
         return {"success": True}
     return {"success": False}
+
+
+@ui_router.post("/create_project")
+async def handle_form(request: Request):
+    form_data = await request.form()
+    
+    # Get task type
+    task = form_data.get("task")
+    
+    # Create timestamp for unique config file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create config directory
+    config_dir = f"{task}_training"
+    os.makedirs(config_dir, exist_ok=True)
+    
+    # Create config file path
+    config_path = os.path.join(config_dir, f"training_config_{timestamp}.json")
+    
+    # Get data path and splits
+    data_path = form_data.get("data_path")
+    train_split = form_data.get("train_split", "train.json")  # Default to train.json
+    valid_split = form_data.get("valid_split", "eval.json")   # Default to eval.json
+    
+    if not data_path:
+        return {"status": "error", "message": "Data path is required"}
+    
+    # Create config dictionary
+    config = {
+        "model": form_data.get("model"),
+        "model_name": form_data.get("model"),
+        "data_path": data_path,
+        "train_split": train_split,
+        "valid_split": valid_split,
+        "audio_column": form_data.get("audio_column", "audio"),
+        "text_column": form_data.get("text_column", "transcription"),
+        "project_name": form_data.get("project_name"),
+        "username": form_data.get("username"),
+        "num_train_epochs": int(form_data.get("epochs", 3)),
+        "per_device_train_batch_size": int(form_data.get("batch_size", 8)),
+        "per_device_eval_batch_size": int(form_data.get("batch_size", 8)),
+        "learning_rate": float(form_data.get("learning_rate", 5e-5)),
+        "max_steps": -1,
+        "gradient_accumulation_steps": 1,
+        "gradient_checkpointing": False,
+        "fp16": True,
+        "save_steps": 500,
+        "eval_steps": 500,
+        "logging_steps": 100,
+        "save_total_limit": 1,
+        "output_dir": f"{task}_training/output",
+        "push_to_hub": True,
+        "hub_model_id": f"{form_data.get('username')}/{form_data.get('project_name')}",
+        "max_duration": 30.0,
+        "sampling_rate": 16000,
+        "using_hub_dataset": False  # Set to False for local datasets
+    }
+    
+    # Save config file
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=4)
+    
+    # Start training process
+    if task == "automatic_speech_recognition":
+        try:
+            # First check if any job is already running
+            running_jobs = get_running_jobs(DB)
+            if running_jobs:
+                return {"status": "error", "message": "Another job is already running. Please wait for it to finish."}
+            
+            # Start the process
+            process = subprocess.Popen([
+                "python",
+                "src/autotrain/trainers/automatic_speech_recognition/__main__.py",
+                "--training_config",
+                config_path
+            ])
+            
+            # Get process ID
+            pid = process.pid
+            
+            # Add job to database using existing system
+            try:
+                DB.add_job(pid)
+                logger.info(f"Added job with PID {pid} to database")
+            except sqlite3.IntegrityError:
+                # If PID already exists, try to kill the old process
+                try:
+                    kill_process_by_pid(pid)
+                except:
+                    pass
+                # Remove old job and add new one
+                DB.remove_job(pid)
+                DB.add_job(pid)
+            
+            return {"status": "success", "message": f"Training started with PID: {pid}"}
+            
+        except Exception as e:
+            logger.error(f"Error starting training: {str(e)}")
+            return {"status": "error", "message": f"Error starting training: {str(e)}"}
+    
+    return {"status": "error", "message": "Invalid task type"}

@@ -11,6 +11,7 @@ NLP_TASKS = {
     "seq2seq": 28,  # 27 is reserved for generic training
     "sentence_transformers": 30,
     "vlm": 31,
+    "automatic_speech_recognition": 32,
 }
 
 VISION_TASKS = {

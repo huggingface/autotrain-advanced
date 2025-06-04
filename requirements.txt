@@ -47,3 +47,5 @@ timm==1.0.12
 torchmetrics==1.6.0
 pycocotools==2.0.8
 sentence-transformers==3.3.1
+librosa>=0.10.0
+soundfile>=0.12.1

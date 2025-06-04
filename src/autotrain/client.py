@@ -107,57 +107,43 @@ PARAMS["extractive-qa"] = {
     "max_doc_stride": 128,
 }
 
-DEFAULT_COLUMN_MAPPING = {}
-DEFAULT_COLUMN_MAPPING["llm:sft"] = {"text_column": "text"}
-DEFAULT_COLUMN_MAPPING["llm:generic"] = {"text_column": "text"}
-DEFAULT_COLUMN_MAPPING["llm:default"] = {"text_column": "text"}
-DEFAULT_COLUMN_MAPPING["llm:dpo"] = {
-    "prompt_column": "prompt",
-    "text_column": "chosen",
-    "rejected_text_column": "rejected",
+PARAMS["automatic-speech-recognition"] = {
+    "mixed_precision": "fp16",
+    "log": "tensorboard",
+    "max_duration": 30.0,
+    "sampling_rate": 16000,
+    "audio_column": "audio",
+    "text_column": "transcription",
+    "max_grad_norm": 1.0,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "early_stopping_patience": 3,
+    "early_stopping_threshold": 0.01,
+    "eval_strategy": "epoch",
+    "save_total_limit": 1,
+    "auto_find_batch_size": False,
+    "logging_steps": -1,
 }
-DEFAULT_COLUMN_MAPPING["llm:orpo"] = {
-    "prompt_column": "prompt",
-    "text_column": "chosen",
-    "rejected_text_column": "rejected",
-}
-DEFAULT_COLUMN_MAPPING["llm:reward"] = {"text_column": "chosen", "rejected_text_column": "rejected"}
-DEFAULT_COLUMN_MAPPING["vlm:captioning"] = {"image_column": "image", "text_column": "caption"}
-DEFAULT_COLUMN_MAPPING["vlm:vqa"] = {
-    "image_column": "image",
-    "prompt_text_column": "question",
-    "text_column": "answer",
-}
-DEFAULT_COLUMN_MAPPING["st:pair"] = {"sentence1": "anchor", "sentence2": "positive"}
-DEFAULT_COLUMN_MAPPING["st:pair_class"] = {
-    "sentence1_column": "premise",
-    "sentence2_column": "hypothesis",
-    "target_column": "label",
-}
-DEFAULT_COLUMN_MAPPING["st:pair_score"] = {
-    "sentence1_column": "sentence1",
-    "sentence2_column": "sentence2",
-    "target_column": "score",
-}
-DEFAULT_COLUMN_MAPPING["st:triplet"] = {
-    "sentence1_column": "anchor",
-    "sentence2_column": "positive",
-    "sentence3_column": "negative",
-}
-DEFAULT_COLUMN_MAPPING["st:qa"] = {"sentence1_column": "query", "sentence2_column": "answer"}
-DEFAULT_COLUMN_MAPPING["text-classification"] = {"text_column": "text", "target_column": "target"}
-DEFAULT_COLUMN_MAPPING["seq2seq"] = {"text_column": "text", "target_column": "target"}
-DEFAULT_COLUMN_MAPPING["text-regression"] = {"text_column": "text", "target_column": "target"}
-DEFAULT_COLUMN_MAPPING["token-classification"] = {"text_column": "tokens", "target_column": "tags"}
-DEFAULT_COLUMN_MAPPING["image-classification"] = {"image_column": "image", "target_column": "label"}
-DEFAULT_COLUMN_MAPPING["image-regression"] = {"image_column": "image", "target_column": "target"}
-DEFAULT_COLUMN_MAPPING["image-object-detection"] = {"image_column": "image", "objects_column": "objects"}
-DEFAULT_COLUMN_MAPPING["tabular:classification"] = {"id_column": "id", "target__columns": ["target"]}
-DEFAULT_COLUMN_MAPPING["tabular:regression"] = {"id_column": "id", "target_columns": ["target"]}
-DEFAULT_COLUMN_MAPPING["extractive-qa"] = {
-    "text_column": "context",
-    "question_column": "question",
-    "answer_column": "answers",
+
+DEFAULT_COLUMN_MAPPING = {
+    "text-classification": {"text_column": "text", "target_column": "label"},
+    "seq2seq": {"text_column": "text", "target_column": "target"},
+    "text-regression": {"text_column": "text", "target_column": "target"},
+    "token-classification": {"text_column": "tokens", "target_column": "tags"},
+    "image-classification": {"image_column": "image", "target_column": "label"},
+    "image-regression": {"image_column": "image", "target_column": "target"},
+    "image-object-detection": {"image_column": "image", "objects_column": "objects"},
+    "tabular:classification": {"id_column": "id", "target__columns": ["target"]},
+    "tabular:regression": {"id_column": "id", "target_columns": ["target"]},
+    "extractive-qa": {
+        "text_column": "context",
+        "question_column": "question",
+        "answer_column": "answers",
+    },
+    "automatic-speech-recognition": {
+        "audio_column": "audio",
+        "text_column": "transcription",
+    },
 }
 
 VALID_TASKS = [k for k in DEFAULT_COLUMN_MAPPING.keys()]
@@ -184,6 +170,8 @@ class Client:
             Retrieves logs for a given job ID.
         stop_training(job_id: str):
             Stops the training for a given job ID.
+        _get_task_specific_params():
+            Get task-specific parameters.
     """
 
     host: Optional[str] = None
@@ -292,3 +280,23 @@ class Client:
         data = {"jid": job_id}
         response = requests.post(url, headers=self.headers, json=data)
         return response.json()
+
+    def _get_task_specific_params(self):
+        """Get task-specific parameters."""
+        if self.task == "automatic-speech-recognition":
+            return {
+                "max_duration": 30.0,
+                "sampling_rate": 16000,
+                "audio_column": "audio",
+                "text_column": "transcription",
+                "max_grad_norm": 1.0,
+                "weight_decay": 0.01,
+                "warmup_ratio": 0.1,
+                "early_stopping_patience": 3,
+                "early_stopping_threshold": 0.01,
+                "eval_strategy": "epoch",
+                "save_total_limit": 1,
+                "auto_find_batch_size": False,
+                "logging_steps": -1,
+            }
+        return {}

@@ -30,6 +30,7 @@ from autotrain.preprocessor.vision import (
     ObjectDetectionPreprocessor,
 )
 from autotrain.preprocessor.vlm import VLMPreprocessor
+from autotrain.preprocessor.automatic_speech_recognition import AutomaticSpeechRecognitionPreprocessor
 
 
 def remove_non_image_files(folder):
@@ -808,6 +809,21 @@ class AutoTrainDataset:
                 token=self.token,
                 seed=42,
                 local=self.local,
+            )
+            return preprocessor.prepare()
+        elif self.task in ["automatic-speech-recognition", "automatic_speech_recognition"]:
+            audio_column = self.column_mapping["audio"]
+            # Handle both 'text' and 'transcription' as valid column names
+            text_column = self.column_mapping.get("text") or self.column_mapping.get("transcription")
+            if text_column is None:
+                raise ValueError("Column mapping must include either 'text' or 'transcription' for the text column")
+            preprocessor = AutomaticSpeechRecognitionPreprocessor(
+                train_data=self.train_df,
+                token=self.token,
+                project_name=self.project_name,
+                username=self.username,
+                column_mapping=self.column_mapping,
+                valid_data=self.valid_df,
             )
             return preprocessor.prepare()
         else:

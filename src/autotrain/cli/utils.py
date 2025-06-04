@@ -156,7 +156,12 @@ def python_type_from_schema_field(field_data: dict) -> Type:
 
 
 def get_default_value(field_data: dict) -> Any:
-    return field_data["default"]
+    """Get the default value from a Pydantic field."""
+    if "default" in field_data:
+        return field_data["default"]
+    elif "default_factory" in field_data:
+        return field_data["default_factory"]()
+    return None
 
 
 def get_field_info(params_class):
@@ -169,8 +174,13 @@ def get_field_info(params_class):
             "alias": [f"--{field_name}", f"--{field_name.replace('_', '-')}"],
             "type": python_type_from_schema_field(field_data),
             "help": field_data.get("title", ""),
-            "default": get_default_value(field_data),
         }
+        
+        # Get default value if it exists
+        default_value = get_default_value(field_data)
+        if default_value is not None:
+            temp_info["default"] = default_value
+            
         if temp_info["type"] == bool:
             temp_info["action"] = "store_true"
 

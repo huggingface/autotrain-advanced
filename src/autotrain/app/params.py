@@ -135,6 +135,23 @@ PARAMS["extractive-qa"] = ExtractiveQuestionAnsweringParams(
     max_seq_length=512,
     max_doc_stride=128,
 ).model_dump()
+PARAMS["automatic-speech-recognition"] = {
+    "mixed_precision": "fp16",
+    "log": "tensorboard",
+    "max_duration": 30.0,
+    "sampling_rate": 16000,
+    "audio_column": "audio",
+    "text_column": "transcription",
+    "max_grad_norm": 1.0,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "early_stopping_patience": 3,
+    "early_stopping_threshold": 0.01,
+    "eval_strategy": "epoch",
+    "save_total_limit": 1,
+    "auto_find_batch_size": False,
+    "logging_steps": -1,
+}
 
 
 @dataclass
@@ -172,6 +189,7 @@ class AppParams:
         _munge_params_img_reg(): Processes parameters for image regression task.
         _munge_params_img_obj_det(): Processes parameters for image object detection task.
         _munge_params_tabular(): Processes parameters for tabular data task.
+        _munge_params_asr(): Processes parameters for automatic speech recognition task.
     """
 
     job_params_json: str
@@ -216,6 +234,8 @@ class AppParams:
             return self._munge_params_vlm()
         elif self.task == "extractive-qa":
             return self._munge_params_extractive_qa()
+        elif self.task == "automatic-speech-recognition":
+            return self._munge_params_asr()
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
@@ -488,6 +508,22 @@ class AppParams:
 
         return TabularParams(**_params)
 
+    def _munge_params_asr(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["audio_column"] = "autotrain_audio"
+            _params["text_column"] = "autotrain_transcription"
+            _params["valid_split"] = "validation"
+        else:
+            _params["audio_column"] = self.column_mapping.get("audio" if not self.api else "audio_column", "audio")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "transcription")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+        return _params
+
 
 def get_task_params(task, param_type):
     """
@@ -722,6 +758,20 @@ def get_task_params(task, param_type):
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
     if task == "token-classification" and param_type == "basic":
+        more_hidden_params = [
+            "warmup_ratio",
+            "weight_decay",
+            "max_grad_norm",
+            "seed",
+            "logging_steps",
+            "auto_find_batch_size",
+            "save_total_limit",
+            "eval_strategy",
+            "early_stopping_patience",
+            "early_stopping_threshold",
+        ]
+        task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    if task == "automatic-speech-recognition" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
             "weight_decay",

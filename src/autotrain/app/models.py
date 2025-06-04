@@ -1,6 +1,6 @@
 import collections
 
-from huggingface_hub import list_models
+from huggingface_hub import list_models, HfApi
 
 
 def get_sorted_models(hub_models):
@@ -333,6 +333,43 @@ def _fetch_vlm_models():
     return hub_models
 
 
+def _fetch_asr_models():
+    """
+    Fetches and sorts ASR models from the Hugging Face model hub.
+    Returns a sorted list of model identifiers from the Hugging Face model hub.
+    """
+    # Get models sorted by downloads
+    hub_models = list(
+        list_models(
+            task="automatic-speech-recognition",
+            library="transformers",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+        )
+    )
+    hub_models = get_sorted_models(hub_models)
+
+    # Get trending models
+    trending_models = list(
+        list_models(
+            task="automatic-speech-recognition",
+            library="transformers",
+            sort="likes7d",
+            direction=-1,
+            limit=30,
+            full=False,
+        )
+    )
+    if len(trending_models) > 0:
+        trending_models = get_sorted_models(trending_models)
+        hub_models = [m for m in hub_models if m not in trending_models]
+        hub_models = trending_models + hub_models
+
+    return hub_models
+
+
 def fetch_models():
     _mc = collections.defaultdict(list)
     _mc["text-classification"] = _fetch_text_classification_models()
@@ -346,6 +383,7 @@ def fetch_models():
     _mc["sentence-transformers"] = _fetch_st_models()
     _mc["vlm"] = _fetch_vlm_models()
     _mc["extractive-qa"] = _fetch_text_classification_models()
+    _mc["automatic-speech-recognition"] = _fetch_asr_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [
@@ -371,4 +409,5 @@ def fetch_models():
         "decision_tree",
         "knn",
     ]
+
     return _mc

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from huggingface_hub import HfApi, constants
 from huggingface_hub.utils import build_hf_headers, get_session, hf_raise_for_status
-from pydantic import BaseModel, create_model, model_validator
+from pydantic import BaseModel, create_model, model_validator, Field
 
 from autotrain import __version__, logger
 from autotrain.app.params import HIDDEN_PARAMS, PARAMS, AppParams
@@ -23,6 +23,7 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 from autotrain.trainers.vlm.params import VLMTrainingParams
+from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
 
 
 FIELDS_TO_EXCLUDE = HIDDEN_PARAMS + ["push_to_hub"]
@@ -112,6 +113,9 @@ ExtractiveQuestionAnsweringParamsAPI = create_api_base_model(
     ExtractiveQuestionAnsweringParams, "ExtractiveQuestionAnsweringParamsAPI"
 )
 ObjectDetectionParamsAPI = create_api_base_model(ObjectDetectionParams, "ObjectDetectionParamsAPI")
+AutomaticSpeechRecognitionParamsAPI = create_api_base_model(
+    AutomaticSpeechRecognitionParams, "AutomaticSpeechRecognitionParamsAPI"
+)
 
 
 class LLMSFTColumnMapping(BaseModel):
@@ -224,6 +228,29 @@ class ObjectDetectionColumnMapping(BaseModel):
     objects_column: str
 
 
+class AutomaticSpeechRecognitionColumnMapping(BaseModel):
+    audio_column: str
+    text_column: str
+
+
+class AutomaticSpeechRecognitionParamsAPI(BaseModel):
+    mixed_precision: str = Field(default="fp16", description="Mixed precision training")
+    log: str = Field(default="tensorboard", description="Logging method")
+    max_duration: float = Field(default=30.0, description="Maximum audio duration in seconds")
+    sampling_rate: int = Field(default=16000, description="Audio sampling rate")
+    audio_column: str = Field(default="audio", description="Column name for audio data")
+    text_column: str = Field(default="transcription", description="Column name for transcription text")
+    max_grad_norm: float = Field(default=1.0, description="Maximum gradient norm")
+    weight_decay: float = Field(default=0.01, description="Weight decay")
+    warmup_ratio: float = Field(default=0.1, description="Warmup ratio")
+    early_stopping_patience: int = Field(default=3, description="Early stopping patience")
+    early_stopping_threshold: float = Field(default=0.01, description="Early stopping threshold")
+    eval_strategy: str = Field(default="epoch", description="Evaluation strategy")
+    save_total_limit: int = Field(default=1, description="Total number of checkpoints to save")
+    auto_find_batch_size: bool = Field(default=False, description="Auto find batch size")
+    logging_steps: int = Field(default=-1, description="Logging steps")
+
+
 class APICreateProjectModel(BaseModel):
     """
     APICreateProjectModel is a Pydantic model that defines the schema for creating a project.
@@ -275,6 +302,7 @@ class APICreateProjectModel(BaseModel):
         "vlm:vqa",
         "extractive-question-answering",
         "image-object-detection",
+        "automatic-speech-recognition",
     ]
     base_model: str
     hardware: Literal[
@@ -312,6 +340,7 @@ class APICreateProjectModel(BaseModel):
         VLMTrainingParamsAPI,
         ExtractiveQuestionAnsweringParamsAPI,
         ObjectDetectionParamsAPI,
+        AutomaticSpeechRecognitionParamsAPI,
     ]
     username: str
     column_mapping: Optional[
@@ -336,7 +365,7 @@ class APICreateProjectModel(BaseModel):
             ImageRegressionColumnMapping,
             VLMColumnMapping,
             ExtractiveQuestionAnsweringColumnMapping,
-            ObjectDetectionColumnMapping,
+            AutomaticSpeechRecognitionColumnMapping,
         ]
     ] = None
     hub_dataset: str
@@ -534,6 +563,12 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("objects_column"):
                 raise ValueError("objects_column is required for image-object-detection")
             values["column_mapping"] = ObjectDetectionColumnMapping(**values["column_mapping"])
+        elif values.get("task") == "automatic-speech-recognition":
+            if not values.get("column_mapping"):
+                raise ValueError("column_mapping is required for automatic-speech-recognition")
+            if not values.get("column_mapping").get("text_column"):
+                raise ValueError("text_column is required for automatic-speech-recognition")
+            values["column_mapping"] = AutomaticSpeechRecognitionColumnMapping(**values["column_mapping"])
         return values
 
     @model_validator(mode="before")
@@ -573,6 +608,8 @@ class APICreateProjectModel(BaseModel):
             values["params"] = ExtractiveQuestionAnsweringParamsAPI(**values["params"])
         elif values.get("task") == "image-object-detection":
             values["params"] = ObjectDetectionParamsAPI(**values["params"])
+        elif values.get("task") == "automatic-speech-recognition":
+            values["params"] = AutomaticSpeechRecognitionParamsAPI(**values["params"])
         return values
 
 

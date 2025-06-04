@@ -15,6 +15,7 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 from autotrain.trainers.vlm.params import VLMTrainingParams
+from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
 
 
 AVAILABLE_HARDWARE = {
@@ -71,7 +72,7 @@ class BaseBackend:
                       GenericParams, TabularParams, Seq2SeqParams,
                       TokenClassificationParams, TextRegressionParams, ObjectDetectionParams,
                       SentenceTransformersParams, ImageRegressionParams, VLMTrainingParams,
-                      ExtractiveQuestionAnsweringParams]): Training parameters.
+                      ExtractiveQuestionAnsweringParams, AutomaticSpeechRecognitionParams]): Training parameters.
         backend (str): Backend type.
 
     Methods:
@@ -93,11 +94,100 @@ class BaseBackend:
         ImageRegressionParams,
         VLMTrainingParams,
         ExtractiveQuestionAnsweringParams,
+        AutomaticSpeechRecognitionParams,
     ]
     backend: str
 
     def __post_init__(self):
+        """Initialize environment variables and task ID after object creation."""
         self.username = None
+
+        if isinstance(self.params, dict):
+            task_id = self.params.get("task_id", 32)
+            self.task_id = task_id
+            base_params = {
+                "project_name": self.params.get("project_name", "autotrain-project"),
+                "token": self.params.get("token", ""),
+                "username": self.params.get("username", ""),
+                "data_path": str(self.params.get("data_path", "")),
+                "model": self.params.get("model", "facebook/wav2vec2-base"),
+                "task_id": task_id,
+                "max_duration": self.params.get("max_duration", 30.0),
+                "sampling_rate": self.params.get("sampling_rate", 16000),
+                "audio_column": self.params.get("audio_column", "audio"),
+                "text_column": self.params.get("text_column", "text"),
+                "max_grad_norm": self.params.get("max_grad_norm", 1.0),
+                "weight_decay": self.params.get("weight_decay", 0.01),
+                "warmup_ratio": self.params.get("warmup_ratio", 0.1),
+                "early_stopping_patience": self.params.get("early_stopping_patience", 3),
+                "early_stopping_threshold": self.params.get("early_stopping_threshold", 0.01),
+                "eval_strategy": self.params.get("eval_strategy", "epoch"),
+                "save_total_limit": self.params.get("save_total_limit", 1),
+                "auto_find_batch_size": self.params.get("auto_find_batch_size", False),
+                "logging_steps": self.params.get("logging_steps", -1)
+            }
+            self.params = AutomaticSpeechRecognitionParams(**base_params)
+        elif isinstance(self.params, str):
+            params_dict = json.loads(self.params)
+            task_id = params_dict.get("task_id", 32)
+            self.task_id = task_id
+            base_params = {
+                "project_name": params_dict.get("project_name", "autotrain-project"),
+                "token": params_dict.get("token", ""),
+                "username": params_dict.get("username", ""),
+                "data_path": str(params_dict.get("data_path", "")),
+                "model": params_dict.get("model", "facebook/wav2vec2-base"),
+                "task_id": task_id,
+                "max_duration": params_dict.get("max_duration", 30.0),
+                "sampling_rate": params_dict.get("sampling_rate", 16000),
+                "audio_column": params_dict.get("audio_column", "audio"),
+                "text_column": params_dict.get("text_column", "text"),
+                "max_grad_norm": params_dict.get("max_grad_norm", 1.0),
+                "weight_decay": params_dict.get("weight_decay", 0.01),
+                "warmup_ratio": params_dict.get("warmup_ratio", 0.1),
+                "early_stopping_patience": params_dict.get("early_stopping_patience", 3),
+                "early_stopping_threshold": params_dict.get("early_stopping_threshold", 0.01),
+                "eval_strategy": params_dict.get("eval_strategy", "epoch"),
+                "save_total_limit": params_dict.get("save_total_limit", 1),
+                "auto_find_batch_size": params_dict.get("auto_find_batch_size", False),
+                "logging_steps": params_dict.get("logging_steps", -1)
+            }
+            self.params = AutomaticSpeechRecognitionParams(**base_params)
+        else:
+            if isinstance(self.params, LLMTrainingParams):
+                self.task_id = 9
+            elif isinstance(self.params, TextClassificationParams):
+                self.task_id = 2
+            elif isinstance(self.params, TabularParams):
+                self.task_id = 26
+            elif isinstance(self.params, GenericParams):
+                self.task_id = 27
+            elif isinstance(self.params, Seq2SeqParams):
+                self.task_id = 28
+            elif isinstance(self.params, ImageClassificationParams):
+                self.task_id = 18
+            elif isinstance(self.params, TokenClassificationParams):
+                self.task_id = 4
+            elif isinstance(self.params, TextRegressionParams):
+                self.task_id = 10
+            elif isinstance(self.params, ObjectDetectionParams):
+                self.task_id = 29
+            elif isinstance(self.params, SentenceTransformersParams):
+                self.task_id = 30
+            elif isinstance(self.params, ImageRegressionParams):
+                self.task_id = 24
+            elif isinstance(self.params, VLMTrainingParams):
+                self.task_id = 31
+            elif isinstance(self.params, ExtractiveQuestionAnsweringParams):
+                self.task_id = 5
+            elif isinstance(self.params, AutomaticSpeechRecognitionParams):
+                self.task_id = 32
+                if not hasattr(self.params, 'data_path') or self.params.data_path is None:
+                    self.params.data_path = ""
+                else:
+                    self.params.data_path = str(self.params.data_path)
+            else:
+                raise NotImplementedError(f"Unknown parameter type: {type(self.params)}")
 
         if isinstance(self.params, GenericParams) and self.backend.startswith("local"):
             raise ValueError("Local backend is not supported for GenericParams")
@@ -111,36 +201,10 @@ class BaseBackend:
             if self.params.username is not None:
                 self.username = self.params.username
             else:
-                raise ValueError("Must provide username")
-
-        if isinstance(self.params, LLMTrainingParams):
-            self.task_id = 9
-        elif isinstance(self.params, TextClassificationParams):
-            self.task_id = 2
-        elif isinstance(self.params, TabularParams):
-            self.task_id = 26
-        elif isinstance(self.params, GenericParams):
-            self.task_id = 27
-        elif isinstance(self.params, Seq2SeqParams):
-            self.task_id = 28
-        elif isinstance(self.params, ImageClassificationParams):
-            self.task_id = 18
-        elif isinstance(self.params, TokenClassificationParams):
-            self.task_id = 4
-        elif isinstance(self.params, TextRegressionParams):
-            self.task_id = 10
-        elif isinstance(self.params, ObjectDetectionParams):
-            self.task_id = 29
-        elif isinstance(self.params, SentenceTransformersParams):
-            self.task_id = 30
-        elif isinstance(self.params, ImageRegressionParams):
-            self.task_id = 24
-        elif isinstance(self.params, VLMTrainingParams):
-            self.task_id = 31
-        elif isinstance(self.params, ExtractiveQuestionAnsweringParams):
-            self.task_id = 5
+                raise ValueError("Must provide username for non-local backends")
         else:
-            raise NotImplementedError
+            # For local backends, username is optional
+            self.username = self.params.username if self.params.username is not None else ""
 
         self.available_hardware = AVAILABLE_HARDWARE
 
@@ -151,13 +215,23 @@ class BaseBackend:
             self.wait = True
 
         self.env_vars = {
-            "HF_TOKEN": self.params.token,
-            "AUTOTRAIN_USERNAME": self.username,
             "PROJECT_NAME": self.params.project_name,
             "TASK_ID": str(self.task_id),
-            "PARAMS": json.dumps(self.params.model_dump_json()),
+            "PARAMS": json.dumps(self.params.__dict__),
+            "HF_TOKEN": self.params.token,
+            "HF_USERNAME": self.params.username,
+            "BACKEND": self.backend,
+            "DATA_PATH": str(self.params.data_path),
         }
-        self.env_vars["DATA_PATH"] = self.params.data_path
 
         if not isinstance(self.params, GenericParams):
             self.env_vars["MODEL"] = self.params.model
+
+    def _get_task_specific_requirements(self):
+        """Get task-specific requirements."""
+        if self.task == "automatic-speech-recognition":
+            return [
+                "librosa>=0.10.0",
+                "soundfile>=0.12.1",
+            ]
+        # ... existing code ...

@@ -42,6 +42,20 @@ def colab_app():
         "ST Pair Scoring",
         "ST Triplet",
         "ST Question Answering",
+        "Automatic Speech Recognition",
+        "text_classification",
+        "seq2seq",
+        "dreambooth",
+        "image_classification",
+        "token_classification",
+        "object_detection",
+        "single_column_dreambooth",
+        "translation",
+        "tabular_classification",
+        "tabular_regression",
+        "text_generation",
+        "text_to_image",
+        "speech_separation",
     ]
 
     TASK_MAP = {
@@ -64,6 +78,20 @@ def colab_app():
         "ST Pair Scoring": "st:pair_score",
         "ST Triplet": "st:triplet",
         "ST Question Answering": "st:qa",
+        "Automatic Speech Recognition": "automatic-speech-recognition",
+        "text_classification": "text_classification",
+        "seq2seq": "seq2seq",
+        "dreambooth": "dreambooth",
+        "image_classification": "image_classification",
+        "token_classification": "token_classification",
+        "object_detection": "object_detection",
+        "single_column_dreambooth": "single_column_dreambooth",
+        "translation": "translation",
+        "tabular_classification": "tabular_classification",
+        "tabular_regression": "tabular_regression",
+        "text_generation": "text_generation",
+        "text_to_image": "text_to_image",
+        "speech_separation": "speech_separation",
     }
 
     def _get_params(task, param_type):
@@ -298,6 +326,10 @@ def colab_app():
             col_mapping.value = '{"sentence1": "query", "sentence1": "answer"}'
             dataset_source_dropdown.disabled = False
             valid_split.disabled = False
+        elif task == "automatic-speech-recognition":
+            col_mapping.value = '{"audio": "audio", "transcription": "transcription"}'
+            dataset_source_dropdown.disabled = False
+            valid_split.disabled = False
         else:
             col_mapping.value = "Enter column mapping..."
 
@@ -322,6 +354,8 @@ def colab_app():
             base_model.value = MODEL_CHOICES["image-object-detection"][0]
         elif TASK_MAP[task_dropdown.value].startswith("st:"):
             base_model.value = MODEL_CHOICES["sentence-transformers"][0]
+        elif TASK_MAP[task_dropdown.value] == "automatic-speech-recognition":
+            base_model.value = MODEL_CHOICES["automatic-speech-recognition"][0]
         else:
             base_model.value = "Enter base model..."
 

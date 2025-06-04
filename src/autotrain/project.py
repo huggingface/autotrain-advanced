@@ -31,6 +31,10 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 from autotrain.trainers.vlm.params import VLMTrainingParams
+from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def tabular_munge_data(params, local):
@@ -440,6 +444,39 @@ def ext_qa_munge_data(params, local):
     return params
 
 
+def asr_munge_data(params, local):
+    exts = ["csv", "jsonl"]
+    ext_to_use = None
+    for ext in exts:
+        path = f"{params.data_path}/{params.train_split}.{ext}"
+        if os.path.exists(path):
+            ext_to_use = ext
+            break
+    train_data_path = f"{params.data_path}/{params.train_split}.{ext_to_use}"
+    if params.valid_split is not None:
+        valid_data_path = f"{params.data_path}/{params.valid_split}.{ext_to_use}"
+    else:
+        valid_data_path = None
+    if os.path.exists(train_data_path):
+        dset = AutoTrainDataset(
+            train_data=[train_data_path],
+            task="automatic_speech_recognition",
+            token=params.token,
+            project_name=params.project_name,
+            username=params.username,
+            column_mapping={"audio": params.audio_column, "text": params.text_column},
+            valid_data=[valid_data_path] if valid_data_path is not None else None,
+            percent_valid=None,
+            local=local,
+            ext=ext_to_use,
+        )
+        params.data_path = dset.prepare()
+        params.valid_split = "validation"
+        params.audio_column = "autotrain_audio"
+        params.text_column = "autotrain_transcription"
+    return params
+
+
 @dataclass
 class AutoTrainProject:
     """
@@ -460,6 +497,7 @@ class AutoTrainProject:
         ImageRegressionParams,
         ExtractiveQuestionAnsweringParams,
         VLMTrainingParams,
+        AutomaticSpeechRecognitionParams,
     ]
         The parameters for the AutoTrain project.
     backend : str
@@ -503,6 +541,7 @@ class AutoTrainProject:
         ImageRegressionParams,
         ExtractiveQuestionAnsweringParams,
         VLMTrainingParams,
+        AutomaticSpeechRecognitionParams,
     ]
     backend: str
     process: bool = False
@@ -537,12 +576,39 @@ class AutoTrainProject:
             return token_clf_munge_data(self.params, self.local)
         elif isinstance(self.params, VLMTrainingParams):
             return vlm_munge_data(self.params, self.local)
+        elif isinstance(self.params, AutomaticSpeechRecognitionParams):
+            return asr_munge_data(self.params, self.local)
         else:
             raise Exception("Invalid params class")
 
     def create(self):
         if self.process:
-            self.params = self._process_params_data()
+            # Process params and data
+            processed_params = self._process_params_data()
+            
+            # Ensure params has all required fields for ASR
+            if isinstance(processed_params, AutomaticSpeechRecognitionParams):
+                # The params object already has all required fields
+                self.params = processed_params
+            elif isinstance(processed_params, dict):
+                # Convert dict to proper params object with all required fields
+                self.params = AutomaticSpeechRecognitionParams(
+                    train_data=processed_params.get("data_path"),
+                    valid_data=processed_params.get("valid_split"),
+                    token=processed_params.get("token"),
+                    project_name=processed_params.get("project_name"),
+                    username=processed_params.get("username"),
+                    model=processed_params.get("model"),
+                    audio_column=processed_params.get("audio_column", "audio"),
+                    text_column=processed_params.get("text_column", "text"),
+                    max_duration=processed_params.get("max_duration", 30.0),
+                    sampling_rate=processed_params.get("sampling_rate", 16000),
+                )
+            else:
+                raise ValueError(f"Unexpected type for processed_params: {type(processed_params)}")
+
+        logger.info(f"Params type before runner initialization: {type(self.params)}")
+        logger.info(f"Params content before runner initialization: {self.params}")
 
         if self.backend.startswith("local"):
             runner = LocalRunner(params=self.params, backend=self.backend)

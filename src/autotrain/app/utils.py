@@ -178,3 +178,25 @@ def get_user_and_orgs(user_token):
     who_is_training = [username] + orgs
 
     return who_is_training
+
+
+def get_user_token(user_token):
+    """
+    Retrieve the user token from the provided user_token.
+
+    Args:
+        user_token (str): The token string.
+
+    Returns:
+        str: The user token.
+
+    Raises:
+        Exception: If the user token is None or an empty string.
+    """
+    if user_token is None:
+        raise Exception("Please login with a write token.")
+
+    if user_token is None or len(user_token) == 0:
+        raise Exception("Invalid token. Please login with a write token.")
+
+    return user_token
