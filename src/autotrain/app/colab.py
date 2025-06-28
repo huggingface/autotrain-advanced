@@ -78,7 +78,7 @@ def colab_app():
         "ST Pair Scoring": "st:pair_score",
         "ST Triplet": "st:triplet",
         "ST Question Answering": "st:qa",
-        "Automatic Speech Recognition": "automatic-speech-recognition",
+        "Automatic Speech Recognition": "ASR",
         "text_classification": "text_classification",
         "seq2seq": "seq2seq",
         "dreambooth": "dreambooth",
@@ -326,7 +326,7 @@ def colab_app():
             col_mapping.value = '{"sentence1": "query", "sentence1": "answer"}'
             dataset_source_dropdown.disabled = False
             valid_split.disabled = False
-        elif task == "automatic-speech-recognition":
+        elif task == "ASR":
             col_mapping.value = '{"audio": "audio", "transcription": "transcription"}'
             dataset_source_dropdown.disabled = False
             valid_split.disabled = False
@@ -354,8 +354,8 @@ def colab_app():
             base_model.value = MODEL_CHOICES["image-object-detection"][0]
         elif TASK_MAP[task_dropdown.value].startswith("st:"):
             base_model.value = MODEL_CHOICES["sentence-transformers"][0]
-        elif TASK_MAP[task_dropdown.value] == "automatic-speech-recognition":
-            base_model.value = MODEL_CHOICES["automatic-speech-recognition"][0]
+        elif TASK_MAP[task_dropdown.value] == "ASR":
+            base_model.value = MODEL_CHOICES["ASR"][0]
         else:
             base_model.value = "Enter base model..."
 

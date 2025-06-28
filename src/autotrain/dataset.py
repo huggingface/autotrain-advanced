@@ -47,22 +47,22 @@ def remove_non_image_files(folder):
     Returns:
         None
     """
-    # Define allowed image file extensions
+    
     allowed_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG", ".jsonl"}
 
-    # Iterate through all files in the folder
+    
     for root, dirs, files in os.walk(folder):
         for file in files:
-            # Get the file extension
+            
             file_extension = os.path.splitext(file)[1]
 
-            # If the file extension is not in the allowed list, remove the file
+            
             if file_extension.lower() not in allowed_extensions:
                 file_path = os.path.join(root, file)
                 os.remove(file_path)
                 print(f"Removed file: {file_path}")
 
-        # Recursively call the function on each subfolder
+        
         for subfolder in dirs:
             remove_non_image_files(os.path.join(root, subfolder))
 
@@ -131,7 +131,7 @@ class AutoTrainImageClassificationDataset:
 
             zip_ref = zipfile.ZipFile(bytes_io, "r")
             zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
+            
             macosx_dir = os.path.join(train_dir, "__MACOSX")
             if os.path.exists(macosx_dir):
                 os.system(f"rm -rf {macosx_dir}")
@@ -145,7 +145,7 @@ class AutoTrainImageClassificationDataset:
                 bytes_io = io.BytesIO(content)
                 zip_ref = zipfile.ZipFile(bytes_io, "r")
                 zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
+                
                 macosx_dir = os.path.join(valid_dir, "__MACOSX")
                 if os.path.exists(macosx_dir):
                     os.system(f"rm -rf {macosx_dir}")
@@ -230,7 +230,7 @@ class AutoTrainObjectDetectionDataset:
 
             zip_ref = zipfile.ZipFile(bytes_io, "r")
             zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
+            
             macosx_dir = os.path.join(train_dir, "__MACOSX")
             if os.path.exists(macosx_dir):
                 os.system(f"rm -rf {macosx_dir}")
@@ -244,7 +244,7 @@ class AutoTrainObjectDetectionDataset:
                 bytes_io = io.BytesIO(content)
                 zip_ref = zipfile.ZipFile(bytes_io, "r")
                 zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
+                
                 macosx_dir = os.path.join(valid_dir, "__MACOSX")
                 if os.path.exists(macosx_dir):
                     os.system(f"rm -rf {macosx_dir}")
@@ -341,7 +341,7 @@ class AutoTrainVLMDataset:
 
             zip_ref = zipfile.ZipFile(bytes_io, "r")
             zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
+            
             macosx_dir = os.path.join(train_dir, "__MACOSX")
             if os.path.exists(macosx_dir):
                 os.system(f"rm -rf {macosx_dir}")
@@ -355,7 +355,7 @@ class AutoTrainVLMDataset:
                 bytes_io = io.BytesIO(content)
                 zip_ref = zipfile.ZipFile(bytes_io, "r")
                 zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
+                
                 macosx_dir = os.path.join(valid_dir, "__MACOSX")
                 if os.path.exists(macosx_dir):
                     os.system(f"rm -rf {macosx_dir}")
@@ -441,7 +441,7 @@ class AutoTrainImageRegressionDataset:
 
             zip_ref = zipfile.ZipFile(bytes_io, "r")
             zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
+            
             macosx_dir = os.path.join(train_dir, "__MACOSX")
             if os.path.exists(macosx_dir):
                 os.system(f"rm -rf {macosx_dir}")
@@ -455,7 +455,7 @@ class AutoTrainImageRegressionDataset:
                 bytes_io = io.BytesIO(content)
                 zip_ref = zipfile.ZipFile(bytes_io, "r")
                 zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
+                
                 macosx_dir = os.path.join(valid_dir, "__MACOSX")
                 if os.path.exists(macosx_dir):
                     os.system(f"rm -rf {macosx_dir}")
@@ -541,8 +541,6 @@ class AutoTrainDataset:
             else:
                 if self.ext == "jsonl":
                     train_df.append(pd.read_json(file, lines=True))
-                elif self.ext == "life_jsonl":
-                    train_df.append(pd.json_normalize(file))
                 else:
                     train_df.append(pd.read_csv(file))
         if len(train_df) > 1:
@@ -811,9 +809,9 @@ class AutoTrainDataset:
                 local=self.local,
             )
             return preprocessor.prepare()
-        elif self.task in ["automatic-speech-recognition", "automatic_speech_recognition"]:
+        elif self.task in ["ASR", "ASR"]:
             audio_column = self.column_mapping["audio"]
-            # Handle both 'text' and 'transcription' as valid column names
+            
             text_column = self.column_mapping.get("text") or self.column_mapping.get("transcription")
             if text_column is None:
                 raise ValueError("Column mapping must include either 'text' or 'transcription' for the text column")

@@ -107,7 +107,7 @@ PARAMS["extractive-qa"] = {
     "max_doc_stride": 128,
 }
 
-PARAMS["automatic-speech-recognition"] = {
+PARAMS["ASR"] = {
     "mixed_precision": "fp16",
     "log": "tensorboard",
     "max_duration": 30.0,
@@ -140,7 +140,7 @@ DEFAULT_COLUMN_MAPPING = {
         "question_column": "question",
         "answer_column": "answers",
     },
-    "automatic-speech-recognition": {
+    "ASR": {
         "audio_column": "audio",
         "text_column": "transcription",
     },
@@ -283,7 +283,7 @@ class Client:
 
     def _get_task_specific_params(self):
         """Get task-specific parameters."""
-        if self.task == "automatic-speech-recognition":
+        if self.task == "ASR":
             return {
                 "max_duration": 30.0,
                 "sampling_rate": 16000,

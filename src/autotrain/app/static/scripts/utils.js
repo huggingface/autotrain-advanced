@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('project_name', document.getElementById('project_name').value);
         formData.append('task', document.getElementById('task').value);
         formData.append('hardware', document.getElementById('hardware').value);
+        formData.append('dataset_source', document.getElementById('dataset_source').value);
         formData.append('params', params);
         formData.append('autotrain_user', document.getElementById('autotrain_user').value);
         formData.append('column_mapping', JSON.stringify(columnMapping));
@@ -113,11 +114,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         xhr.onload = function () {
             loadingSpinner.classList.add('hidden');
-            var finalModalContent = document.querySelector('#final-modal .text-center');
+            var finalModalContent = document.getElementById('final-modal-content');
 
             if (xhr.status === 200) {
                 var responseObj = JSON.parse(xhr.responseText);
                 var monitorURL = responseObj.monitor_url;
+                if (finalModalContent) {
                 if (monitorURL.startsWith('http')) {
                     finalModalContent.innerHTML = '<p>Success!</p>' +
                         '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
@@ -125,10 +127,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     finalModalContent.innerHTML = '<p>Success!</p>' +
                         '<p>' + monitorURL + '</p>';
                 }
-
+                }
                 showFinalModal();
             } else {
+                if (finalModalContent) {
                 finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
+                }
                 console.error('Error:', xhr.status, xhr.statusText);
                 showFinalModal();
             }

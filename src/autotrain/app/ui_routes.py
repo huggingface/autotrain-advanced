@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import subprocess
 import sqlite3
+import numpy as np
 
 import torch
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
@@ -14,10 +15,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from huggingface_hub import repo_exists
 from nvitop import Device
+from datasets import Dataset, DatasetDict
 
 from autotrain import __version__, logger
 from autotrain.app.db import AutoTrainDB
-from autotrain.app.models import fetch_models
+from autotrain.app.models import (
+    fetch_models,
+)
 from autotrain.app.params import AppParams, get_task_params
 from autotrain.app.utils import get_running_jobs, get_user_and_orgs, kill_process_by_pid, token_verification
 from autotrain.dataset import (
@@ -476,8 +480,8 @@ async def fetch_model_choices(
         hub_models = MODEL_CHOICE["vlm"]
     elif task == "extractive-qa":
         hub_models = MODEL_CHOICE["extractive-qa"]
-    elif task == "automatic-speech-recognition":
-        hub_models = MODEL_CHOICE["automatic-speech-recognition"]
+    elif task == "ASR":
+        hub_models = MODEL_CHOICE["ASR"]
     else:
         raise NotImplementedError
 
@@ -488,6 +492,7 @@ async def fetch_model_choices(
 
 @ui_router.post("/create_project", response_class=JSONResponse)
 async def handle_form(
+    request: Request,
     project_name: str = Form(...),
     task: str = Form(...),
     base_model: str = Form(...),
@@ -498,36 +503,18 @@ async def handle_form(
     data_files_training: List[UploadFile] = File(None),
     data_files_valid: List[UploadFile] = File(None),
     hub_dataset: str = Form(""),
-    life_dataset: str = Form(""),
     train_split: str = Form(""),
     valid_split: str = Form(""),
     token: str = Depends(user_authentication),
+    life_app_project: str = Form(""),
+    life_app_script: str = Form(""),
 ):
     """
     Handle form submission for creating and managing AutoTrain projects.
-
-    Args:
-        project_name (str): The name of the project.
-        task (str): The task type (e.g., "image-classification", "text-classification").
-        base_model (str): The base model to use for training.
-        hardware (str): The hardware configuration (e.g., "local-ui").
-        params (str): JSON string of additional parameters.
-        autotrain_user (str): The username of the AutoTrain user.
-        column_mapping (str): JSON string mapping columns to their roles.
-        data_files_training (List[UploadFile]): List of training data files.
-        data_files_valid (List[UploadFile]): List of validation data files.
-        hub_dataset (str): The Hugging Face Hub dataset identifier.
-        life_dataset (str): The LiFE dataset identifier.
-        train_split (str): The training split identifier.
-        valid_split (str): The validation split identifier.
-        token (str): The authentication token.
-
-    Returns:
-        dict: A dictionary containing the success status and monitor URL.
-
-    Raises:
-        HTTPException: If there are conflicts or validation errors in the form submission.
     """
+    logger.info("---------- handle_form (first definition) started ----------")
+    logger.info(f"Incoming form data: {await request.form()}") # Log all incoming form data
+
     train_split = train_split.strip()
     if len(train_split) == 0:
         train_split = None
@@ -536,7 +523,9 @@ async def handle_form(
     if len(valid_split) == 0:
         valid_split = None
 
-    logger.info(f"hardware: {hardware}")
+    print(f"[DEBUG] hardware value from UI: {hardware}")
+    logger.info(f"[DEBUG] hardware value from UI: {hardware}")
+
     if hardware == "local-ui":
         running_jobs = get_running_jobs(DB)
         if running_jobs:
@@ -551,40 +540,155 @@ async def handle_form(
         )
 
     params = json.loads(params)
-    # convert "null" to None
+   
     for key in params:
         if params[key] == "null":
             params[key] = None
     column_mapping = json.loads(column_mapping)
 
-    if len(life_dataset) > 0:
-        training_files = []
-        validation_files = []
-    else:
-        training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
-        validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
+    training_files = [f.file for f in data_files_training if f.filename != ""] if data_files_training else []
+    validation_files = [f.file for f in data_files_valid if f.filename != ""] if data_files_valid else []
+
+    form = await request.form()
+    data_source = form.get("dataset_source", "local")
+    selected_project = form.get("life_app_project")
+    selected_script = form.get("life_app_script")
+
+    logger.info(f"LiFE App Data Source: {data_source}, Project: {selected_project}, Script: {selected_script}")
+
+    
+    if data_source == "life_app":
+
+        selected_project = "autotrain_dummy_project"
+        selected_script = "autotrain_dummy_script"
+        logger.info(f"TEMPORARY BYPASS ACTIVE: Project set to '{selected_project}', Script set to '{selected_script}'")
+
+        if task != "ASR":
+            raise HTTPException(
+                status_code=400,
+                detail="LiFE app datasets can only be used with Automatic Speech Recognition tasks"
+            )
+        if not selected_project or not selected_script:
+            raise HTTPException(
+                status_code=400,
+                detail="Please select both a project and a script from LiFE app"
+            )
+       
+        dataset_path = os.path.join(BASE_DIR, "static", "dataset.json")
+        logger.info(f"Checking LiFE App dataset path: {dataset_path}, Exists: {os.path.exists(dataset_path)}")
+        if not os.path.exists(dataset_path):
+            raise HTTPException(
+                status_code=400,
+                detail="LiFE app dataset file not found"
+            )
+        import pandas as pd
+        import base64
+        from datasets import Dataset
+
+        
+        with open(dataset_path, "r", encoding="utf-8") as f:
+            dataset_json = json.load(f)
+
+        df = pd.DataFrame(dataset_json)
+
+        audio_dir = os.path.join("life_app_data", "audio")
+        os.makedirs(audio_dir, exist_ok=True)
+        audio_paths = []
+        for idx, row in df.iterrows():
+            audio_bytes = row["audio"]
+           
+            try:
+                audio_data = base64.b64decode(audio_bytes)
+            except Exception:
+                audio_data = audio_bytes.encode("latin1")
+            audio_path = os.path.join(audio_dir, f"audio_{idx}.wav")
+            with open(audio_path, "wb") as af:
+                af.write(audio_data)
+            audio_paths.append(audio_path)
+        df["audio"] = audio_paths
+        
+        processed_csv = os.path.join("life_app_data", "processed_dataset.csv")
+        df.to_csv(processed_csv, index=False)
+        
+        df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+        split_idx = int(0.8 * len(df))
+        train_df = df.iloc[:split_idx]
+        valid_df = df.iloc[split_idx:]
+       
+        train_dataset = Dataset.from_pandas(train_df)
+        valid_dataset = Dataset.from_pandas(valid_df)
+        dataset_dict = DatasetDict({
+            "train": train_dataset,
+            "validation": valid_dataset
+        })
+        
+        output_dir = os.path.join(project_name, "autotrain-data")
+        os.makedirs(output_dir, exist_ok=True)
+        dataset_dict.save_to_disk(output_dir)
+        data_path = output_dir
+        train_split = "train"
+        valid_split = "validation"
+        params["train_split"] = train_split
+        params["valid_split"] = valid_split
+        params["data_path"] = data_path
+
+        
+        if not isinstance(params, dict):
+            params = json.loads(params)
+
+        
+        params["audio_column"] = "audio"
+        params["text_column"] = "transcription"
+        params["data_path"] = data_path
+        params["life_app_project"] = selected_project
+        params["life_app_script"] = selected_script
+        params["using_hub_dataset"] = False
+        params["train_split"] = None
+        params["valid_split"] = None
+        # Set column mapping
+        column_mapping = {"audio": "audio", "transcription": "transcription"}
+        app_params = AppParams(
+            job_params_json=json.dumps(params),
+            token=token,
+            project_name=project_name,
+            username=autotrain_user,
+            task=task,
+            data_path=data_path,
+            base_model=base_model,
+            column_mapping=column_mapping,
+            using_hub_dataset=False,
+            train_split=None,
+            valid_split=None,
+        )
+        params = app_params.munge()
+        project = AutoTrainProject(params=params, backend=hardware)
+        job_id = project.create()
+        monitor_url = ""
+        if hardware == "local-ui":
+            DB.add_job(job_id)
+            monitor_url = "Monitor your job locally / in logs"
+        elif hardware.startswith("ep-"):
+            monitor_url = f"https://ui.endpoints.huggingface.co/{autotrain_user}/endpoints/{job_id}"
+        elif hardware.startswith("spaces-"):
+            monitor_url = f"https://hf.co/spaces/{job_id}"
+        else:
+            monitor_url = f"Success! Monitor your job in logs. Job ID: {job_id}"
+        return {"success": "true", "monitor_url": monitor_url}
 
     if len(training_files) > 0 and len(hub_dataset) > 0:
         raise HTTPException(
             status_code=400, detail="Please either upload a dataset or choose a dataset from the Hugging Face Hub."
         )
-
-    if len(training_files) == 0 and len(hub_dataset) == 0 and len(life_dataset) == 0:
+    elif len(training_files) == 0 and len(hub_dataset) == 0:
         raise HTTPException(
             status_code=400, detail="Please upload a dataset or choose a dataset from the Hugging Face Hub."
         )
-
-    if len(hub_dataset) > 0 or len(life_dataset) > 0:
+    elif len(hub_dataset) > 0:
         if not train_split:
             raise HTTPException(status_code=400, detail="Please enter a training split.")
-
-    if len(life_dataset) > 0:
-        file_extension = 'life_jsonl'
+        data_path = hub_dataset
     else:
-        file_extension = os.path.splitext(data_files_training[0].filename)[1]
-        file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
-
-    if len(hub_dataset) == 0:
+       
         file_extension = os.path.splitext(data_files_training[0].filename)[1]
         file_extension = file_extension[1:] if file_extension.startswith(".") else file_extension
         if task == "image-classification":
@@ -594,7 +698,7 @@ async def handle_form(
                 project_name=project_name,
                 username=autotrain_user,
                 valid_data=validation_files[0] if validation_files else None,
-                percent_valid=None,  # TODO: add to UI
+                percent_valid=None,
                 local=hardware.lower() == "local-ui",
             )
         elif task == "image-regression":
@@ -604,7 +708,7 @@ async def handle_form(
                 project_name=project_name,
                 username=autotrain_user,
                 valid_data=validation_files[0] if validation_files else None,
-                percent_valid=None,  # TODO: add to UI
+                percent_valid=None,
                 local=hardware.lower() == "local-ui",
             )
         elif task == "image-object-detection":
@@ -614,7 +718,7 @@ async def handle_form(
                 project_name=project_name,
                 username=autotrain_user,
                 valid_data=validation_files[0] if validation_files else None,
-                percent_valid=None,  # TODO: add to UI
+                percent_valid=None,
                 local=hardware.lower() == "local-ui",
             )
         elif task.startswith("vlm:"):
@@ -625,7 +729,7 @@ async def handle_form(
                 username=autotrain_user,
                 column_mapping=column_mapping,
                 valid_data=validation_files[0] if validation_files else None,
-                percent_valid=None,  # TODO: add to UI
+                percent_valid=None,
                 local=hardware.lower() == "local-ui",
             )
         else:
@@ -660,8 +764,8 @@ async def handle_form(
                 dset_task = "text_token_classification"
             elif task == "extractive-qa":
                 dset_task = "text_extractive_question_answering"
-            elif task == "automatic-speech-recognition":
-                dset_task = "automatic_speech_recognition"
+            elif task == "ASR":
+                dset_task = "ASR"
             else:
                 raise NotImplementedError
             logger.info(f"Task: {dset_task}")
@@ -674,7 +778,7 @@ async def handle_form(
                 username=autotrain_user,
                 column_mapping=column_mapping,
                 valid_data=validation_files,
-                percent_valid=None,  # TODO: add to UI
+                percent_valid=None,
                 local=hardware.lower() == "local-ui",
                 ext=file_extension,
             )
@@ -682,8 +786,6 @@ async def handle_form(
                 dset_args["convert_to_class_label"] = True
             dset = AutoTrainDataset(**dset_args)
         data_path = dset.prepare()
-    else:
-        data_path = hub_dataset
 
     app_params = AppParams(
         job_params_json=json.dumps(params),
@@ -767,7 +869,7 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
     """
     if not AUTOTRAIN_LOCAL:
         return {"logs": "Logs are only available in local mode."}
-    log_file = "autotrain.log"
+    log_file = "asr.log"
     with open(log_file, "r", encoding="utf-8") as f:
         logs = f.read()
     if len(str(logs).strip()) == 0:
@@ -775,7 +877,7 @@ async def fetch_logs(authenticated: bool = Depends(user_authentication)):
 
     logs = logs.split("\n")
     logs = logs[::-1]
-    # remove lines containing /is_model_training & /accelerators
+    
     logs = [log for log in logs if "/ui/" not in log and "/static/" not in log and "nvidia-ml-py" not in log]
 
     cuda_available = torch.cuda.is_available()
@@ -808,103 +910,125 @@ async def stop_training(authenticated: bool = Depends(user_authentication)):
     return {"success": False}
 
 
-@ui_router.post("/create_project")
-async def handle_form(request: Request):
-    form_data = await request.form()
-    
-    # Get task type
-    task = form_data.get("task")
-    
-    # Create timestamp for unique config file
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Create config directory
-    config_dir = f"{task}_training"
-    os.makedirs(config_dir, exist_ok=True)
-    
-    # Create config file path
-    config_path = os.path.join(config_dir, f"training_config_{timestamp}.json")
-    
-    # Get data path and splits
-    data_path = form_data.get("data_path")
-    train_split = form_data.get("train_split", "train.json")  # Default to train.json
-    valid_split = form_data.get("valid_split", "eval.json")   # Default to eval.json
-    
-    if not data_path:
-        return {"status": "error", "message": "Data path is required"}
-    
-    # Create config dictionary
-    config = {
-        "model": form_data.get("model"),
-        "model_name": form_data.get("model"),
-        "data_path": data_path,
-        "train_split": train_split,
-        "valid_split": valid_split,
-        "audio_column": form_data.get("audio_column", "audio"),
-        "text_column": form_data.get("text_column", "transcription"),
-        "project_name": form_data.get("project_name"),
-        "username": form_data.get("username"),
-        "num_train_epochs": int(form_data.get("epochs", 3)),
-        "per_device_train_batch_size": int(form_data.get("batch_size", 8)),
-        "per_device_eval_batch_size": int(form_data.get("batch_size", 8)),
-        "learning_rate": float(form_data.get("learning_rate", 5e-5)),
-        "max_steps": -1,
-        "gradient_accumulation_steps": 1,
-        "gradient_checkpointing": False,
-        "fp16": True,
-        "save_steps": 500,
-        "eval_steps": 500,
-        "logging_steps": 100,
-        "save_total_limit": 1,
-        "output_dir": f"{task}_training/output",
-        "push_to_hub": True,
-        "hub_model_id": f"{form_data.get('username')}/{form_data.get('project_name')}",
-        "max_duration": 30.0,
-        "sampling_rate": 16000,
-        "using_hub_dataset": False  # Set to False for local datasets
-    }
-    
-    # Save config file
-    with open(config_path, "w") as f:
-        json.dump(config, f, indent=4)
-    
-    # Start training process
-    if task == "automatic_speech_recognition":
-        try:
-            # First check if any job is already running
-            running_jobs = get_running_jobs(DB)
-            if running_jobs:
-                return {"status": "error", "message": "Another job is already running. Please wait for it to finish."}
+
+
+
+@ui_router.get("/life_app_projects", response_class=JSONResponse)
+async def get_life_app_projects(authenticated: bool = Depends(user_authentication)):
+    """
+    Returns the list of projects from the local JSON file for LiFE App integration.
+    """
+    project_list_path = os.path.join(BASE_DIR, "static", "projectList.json")
+    if not os.path.exists(project_list_path):
+        return JSONResponse(content={"projects": []})
+    with open(project_list_path, "r", encoding="utf-8") as f:
+        projects = json.load(f)
+    return {"projects": projects}
+
+@ui_router.get("/life_app_scripts", response_class=JSONResponse)
+async def get_life_app_scripts(authenticated: bool = Depends(user_authentication)):
+    """
+    Returns the list of scripts from the local JSON file for LiFE App integration.
+    """
+    script_list_path = os.path.join(BASE_DIR, "static", "scriptList.json")
+    if not os.path.exists(script_list_path):
+        return JSONResponse(content={"scripts": []})
+    with open(script_list_path, "r", encoding="utf-8") as f:
+        scripts = json.load(f)
+    return {"scripts": scripts}
+
+@ui_router.get("/life_app_dataset", response_class=JSONResponse)
+async def get_life_app_dataset(authenticated: bool = Depends(user_authentication)):
+    """
+    Returns the dataset from the local JSON file for LiFE App integration.
+    """
+    dataset_path = os.path.join(BASE_DIR, "static", "dataset.json")
+    if not os.path.exists(dataset_path):
+        return JSONResponse(content={"dataset": []})
+    with open(dataset_path, "r", encoding="utf-8") as f:
+        dataset = json.load(f)
+    return {"dataset": dataset}
+
+
+
+@ui_router.post("/project_selected", response_class=JSONResponse)
+async def handle_project_selection(request: Request, authenticated: bool = Depends(user_authentication)):
+    """
+    Handle project selection and return corresponding scripts based on project-script mapping.
+    """
+    try:
+        
+        data = await request.json()
+        selected_projects = data.get('projects', [])
+        
+       
+        logger.info(f"Projects selected: {selected_projects}")
+        
+       
+        mapping_path = os.path.join(BASE_DIR, "static", "project_script_mapping.json")
+        if not os.path.exists(mapping_path):
+            logger.error("Project-script mapping file not found")
+            return JSONResponse(content={"scripts": []})
             
-            # Start the process
-            process = subprocess.Popen([
-                "python",
-                "src/autotrain/trainers/automatic_speech_recognition/__main__.py",
-                "--training_config",
-                config_path
-            ])
-            
-            # Get process ID
-            pid = process.pid
-            
-            # Add job to database using existing system
-            try:
-                DB.add_job(pid)
-                logger.info(f"Added job with PID {pid} to database")
-            except sqlite3.IntegrityError:
-                # If PID already exists, try to kill the old process
-                try:
-                    kill_process_by_pid(pid)
-                except:
-                    pass
-                # Remove old job and add new one
-                DB.remove_job(pid)
-                DB.add_job(pid)
-            
-            return {"status": "success", "message": f"Training started with PID: {pid}"}
-            
-        except Exception as e:
-            logger.error(f"Error starting training: {str(e)}")
-            return {"status": "error", "message": f"Error starting training: {str(e)}"}
-    
-    return {"status": "error", "message": "Invalid task type"}
+        with open(mapping_path, "r", encoding="utf-8") as f:
+            project_script_mapping = json.load(f)
+        
+        
+        available_scripts = set()
+        for project in selected_projects:
+            if project in project_script_mapping:
+                available_scripts.update(project_script_mapping[project])
+        
+        
+        scripts = list(available_scripts)
+        
+       
+        logger.info(f"Available scripts for projects {selected_projects}: {scripts}")
+        
+        
+        return JSONResponse(content={
+            "status": "success",
+            "projects": selected_projects,
+            "scripts": scripts
+        })
+    except Exception as e:
+        logger.error(f"Error in project selection: {str(e)}")
+        return JSONResponse(
+            content={"error": str(e)}, 
+            status_code=500
+        )
+
+@ui_router.post("/script_selected", response_class=JSONResponse)
+async def handle_script_selection(request: Request, authenticated: bool = Depends(user_authentication)):
+    """
+    Handle script selection and return corresponding datasets based on script-dataset mapping.
+    """
+    try:
+        data = await request.json()
+        selected_script = data.get('script', '')
+        logger.info(f"Script selected (received from frontend): {selected_script}")
+        print(f"[BACKEND] Script selected (received from frontend): {selected_script}")
+
+        mapping_path = os.path.join(BASE_DIR, "static", "script_dataset_mapping.json")
+        if not os.path.exists(mapping_path):
+            logger.error("Script-dataset mapping file not found")
+            return JSONResponse(content={"datasets": []})
+
+        with open(mapping_path, "r", encoding="utf-8") as f:
+            script_dataset_mapping = json.load(f)
+
+        datasets = script_dataset_mapping.get(selected_script, [])
+        logger.info(f"Datasets fetched for script {selected_script}: {datasets}")
+        print(f"[BACKEND] Datasets fetched for script {selected_script}: {datasets}")
+
+        return JSONResponse(content={
+            "status": "success",
+            "script": selected_script,
+            "datasets": datasets
+        })
+    except Exception as e:
+        logger.error(f"Error in script selection: {str(e)}")
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )

@@ -9,6 +9,13 @@ from autotrain import logger
 
 from . import BaseAutoTrainCommand
 
+# Patch sys.stdout and sys.stderr to utf-8 for Unicode logs
+import io
+if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding.lower() != 'utf-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 
 def handle_output(stream, log_file):
     """
@@ -149,6 +156,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
                     shell=True,
                     text=True,
                     bufsize=1,
+                    encoding='utf-8',
                     preexec_fn=os.setsid,
                 )
 
@@ -163,7 +171,6 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
                 if sys.platform == "win32":
                     process.terminate()
                 else:
-                    # If user cancels (Ctrl+C), terminate the subprocess
-                    # Use os.killpg to send SIGTERM to the process group, ensuring all child processes are killed
+                    
                     os.killpg(os.getpgid(process.pid), signal.SIGTERM)
                 logger.info("Process terminated by user")

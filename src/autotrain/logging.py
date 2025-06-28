@@ -1,5 +1,6 @@
 import sys
 from dataclasses import dataclass
+import io
 
 from loguru import logger
 
@@ -51,6 +52,9 @@ class Logger:
 
     def setup_logger(self):
         self.logger.remove()
+        # Patch sys.stdout to utf-8
+        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8':
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         self.logger.add(
             sys.stdout,
             format=self.log_format,

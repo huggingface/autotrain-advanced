@@ -7,6 +7,8 @@ import requests
 
 from autotrain import config, logger
 
+_VERIFIED_USER_INFO = None
+
 
 def graceful_exit(signum, frame):
     logger.info("SIGTERM received. Performing cleanup...")
@@ -153,31 +155,19 @@ def token_verification(token):
 
 
 def get_user_and_orgs(user_token):
-    """
-    Retrieve the username and organizations associated with the provided user token.
-
-    Args:
-        user_token (str): The token used to authenticate the user. Must be a valid write token.
-
-    Returns:
-        list: A list containing the username followed by the organizations the user belongs to.
-
-    Raises:
-        Exception: If the user token is None or an empty string.
-    """
-    if user_token is None:
-        raise Exception("Please login with a write token.")
+    global _VERIFIED_USER_INFO
+    if _VERIFIED_USER_INFO is not None:
+        username = _VERIFIED_USER_INFO["name"]
+        orgs = _VERIFIED_USER_INFO["orgs"]
+        return [username] + orgs
 
     if user_token is None or len(user_token) == 0:
         raise Exception("Invalid token. Please login with a write token.")
 
-    user_info = token_verification(token=user_token)
-    username = user_info["name"]
-    orgs = user_info["orgs"]
-
-    who_is_training = [username] + orgs
-
-    return who_is_training
+    _VERIFIED_USER_INFO = token_verification(token=user_token)
+    username = _VERIFIED_USER_INFO["name"]
+    orgs = _VERIFIED_USER_INFO["orgs"]
+    return [username] + orgs
 
 
 def get_user_token(user_token):

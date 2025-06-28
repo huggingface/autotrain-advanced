@@ -68,7 +68,7 @@ def _add_oauth_routes(app: fastapi.FastAPI) -> None:
                          OAUTH_SCOPES, OPENID_PROVIDER_URL) are not set.
     """
     """Add OAuth routes to the FastAPI app (login, callback handler and logout)."""
-    # Check environment variables
+    
     msg = (
         "OAuth is required but {} environment variable is not set. Make sure you've enabled OAuth in your Space by"
         " setting `hf_oauth: true` in the Space metadata."

@@ -5,8 +5,8 @@ proper format and then with just a few clicks, your state-of-the-art model will 
 be used in production.
 
 Config file task names:
-- `automatic_speech_recognition`
-- `automatic-speech-recognition`
+- `ASR`
+- `ASR`
 - `asr`
 
 ## Data Format
@@ -50,7 +50,7 @@ To train an ASR model locally, you can use the `autotrain --config config.yaml` 
 Here is an example of a `config.yaml` file for training an ASR model:
 
 ```yaml
-task: automatic_speech_recognition
+task: ASR
 model: facebook/wav2vec2-base-960h
 data_path: /path/to/your/data
 train_split: train
@@ -89,4 +89,4 @@ params:
 
 ## Training Parameters
 
-[[autodoc]] trainers.automatic_speech_recognition.params.AutomaticSpeechRecognitionParams 
+[[autodoc]] trainers.ASR.params.AutomaticSpeechRecognitionParams

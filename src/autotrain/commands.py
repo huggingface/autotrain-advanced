@@ -266,7 +266,7 @@ def launch_command(params):
             cmd.extend(
                 [
                     "-m",
-                    "autotrain.trainers.automatic_speech_recognition",
+                    "autotrain.trainers.ASR",
                     "--training_config",
                     os.path.join(params.project_name, "training_params.json"),
                 ]
@@ -553,8 +553,8 @@ def launch_command(params):
 
 def _get_task_specific_commands(self):
     """Get task-specific commands."""
-    if self.task == "automatic-speech-recognition":
+    if self.task == "ASR":
         return [
             "pip install librosa>=0.10.0 soundfile>=0.12.1",
         ]
-    # ... existing code ...
+    

@@ -8,10 +8,10 @@ NLP_TASKS = {
     "speech_recognition": 11,
     "natural_language_inference": 22,
     "lm_training": 9,
-    "seq2seq": 28,  # 27 is reserved for generic training
+    "seq2seq": 28, 
     "sentence_transformers": 30,
     "vlm": 31,
-    "automatic_speech_recognition": 32,
+    "ASR": 32,
 }
 
 VISION_TASKS = {

@@ -28,6 +28,8 @@ from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpee
 
 FIELDS_TO_EXCLUDE = HIDDEN_PARAMS + ["push_to_hub"]
 
+_VERIFIED_API_TOKEN = None
+
 
 def create_api_base_model(base_class, class_name):
     """
@@ -233,22 +235,7 @@ class AutomaticSpeechRecognitionColumnMapping(BaseModel):
     text_column: str
 
 
-class AutomaticSpeechRecognitionParamsAPI(BaseModel):
-    mixed_precision: str = Field(default="fp16", description="Mixed precision training")
-    log: str = Field(default="tensorboard", description="Logging method")
-    max_duration: float = Field(default=30.0, description="Maximum audio duration in seconds")
-    sampling_rate: int = Field(default=16000, description="Audio sampling rate")
-    audio_column: str = Field(default="audio", description="Column name for audio data")
-    text_column: str = Field(default="transcription", description="Column name for transcription text")
-    max_grad_norm: float = Field(default=1.0, description="Maximum gradient norm")
-    weight_decay: float = Field(default=0.01, description="Weight decay")
-    warmup_ratio: float = Field(default=0.1, description="Warmup ratio")
-    early_stopping_patience: int = Field(default=3, description="Early stopping patience")
-    early_stopping_threshold: float = Field(default=0.01, description="Early stopping threshold")
-    eval_strategy: str = Field(default="epoch", description="Evaluation strategy")
-    save_total_limit: int = Field(default=1, description="Total number of checkpoints to save")
-    auto_find_batch_size: bool = Field(default=False, description="Auto find batch size")
-    logging_steps: int = Field(default=-1, description="Logging steps")
+
 
 
 class APICreateProjectModel(BaseModel):
@@ -302,7 +289,7 @@ class APICreateProjectModel(BaseModel):
         "vlm:vqa",
         "extractive-question-answering",
         "image-object-detection",
-        "automatic-speech-recognition",
+        "ASR",
     ]
     base_model: str
     hardware: Literal[
@@ -563,11 +550,11 @@ class APICreateProjectModel(BaseModel):
             if not values.get("column_mapping").get("objects_column"):
                 raise ValueError("objects_column is required for image-object-detection")
             values["column_mapping"] = ObjectDetectionColumnMapping(**values["column_mapping"])
-        elif values.get("task") == "automatic-speech-recognition":
+        elif values.get("task") == "ASR":
             if not values.get("column_mapping"):
-                raise ValueError("column_mapping is required for automatic-speech-recognition")
+                raise ValueError("column_mapping is required for ASR")
             if not values.get("column_mapping").get("text_column"):
-                raise ValueError("text_column is required for automatic-speech-recognition")
+                raise ValueError("text_column is required for ASR")
             values["column_mapping"] = AutomaticSpeechRecognitionColumnMapping(**values["column_mapping"])
         return values
 
@@ -608,7 +595,7 @@ class APICreateProjectModel(BaseModel):
             values["params"] = ExtractiveQuestionAnsweringParamsAPI(**values["params"])
         elif values.get("task") == "image-object-detection":
             values["params"] = ObjectDetectionParamsAPI(**values["params"])
-        elif values.get("task") == "automatic-speech-recognition":
+        elif values.get("task") == "ASR":
             values["params"] = AutomaticSpeechRecognitionParamsAPI(**values["params"])
         return values
 
@@ -633,13 +620,17 @@ def api_auth(request: Request):
     Raises:
         HTTPException: If the token is invalid, expired, or missing.
     """
+    global _VERIFIED_API_TOKEN
     authorization = request.headers.get("Authorization")
     if authorization:
         schema, _, token = authorization.partition(" ")
         if schema.lower() == "bearer":
             token = token.strip()
+            if _VERIFIED_API_TOKEN == token:
+                return token
             try:
                 _ = token_verification(token=token)
+                _VERIFIED_API_TOKEN = token
                 return token
             except Exception as e:
                 logger.error(f"Failed to verify token: {e}")
@@ -808,7 +799,7 @@ async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
                 try:
                     event = json.loads(line_data.decode())
                 except json.JSONDecodeError:
-                    continue  # ignore (for example, empty lines or `b': keep-alive'`)
+                    continue  
                 _logs.append((event["timestamp"], event["data"]))
 
         _logs = "\n".join([f"{timestamp}: {data}" for timestamp, data in _logs])

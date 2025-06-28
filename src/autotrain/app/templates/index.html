@@ -12,6 +12,10 @@
     <script src="/static/scripts/utils.js?cb={{ time }}" defer></script>
     <script src="/static/scripts/logs.js?cb={{ time }}" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 
 <script>
@@ -97,12 +101,24 @@
                     fields = ['text', 'question', 'answer'];
                     fieldNames = ['context', 'question', 'answers'];
                     break;
-                case 'automatic-speech-recognition':
+                case 'ASR':
                     fields = ['audio', 'transcription'];
                     fieldNames = ['audio', 'transcription'];
+                    // Show LiFE App dataset source option only for ASR
+                    document.getElementById("dataset_source").querySelectorAll("option").forEach(opt => {
+                        if (opt.value === "life_app") {
+                            opt.style.display = "";
+                        }
+                    });
                     break;
                 default:
-                    return; // Do nothing if task is not recognized
+                    // Hide LiFE App dataset source option for other tasks
+                    document.getElementById("dataset_source").querySelectorAll("option").forEach(opt => {
+                        if (opt.value === "life_app") {
+                            opt.style.display = "none";
+                        }
+                    });
+                    break;
             }
 
             fields.forEach((field, index) => {
@@ -123,6 +139,15 @@
             createColumnMappings(selectedTask);
         });
         createColumnMappings(document.querySelector('select#task').value);
+
+        // On page load, hide LiFE App dataset source if not ASR
+        if (document.querySelector('select#task').value !== "ASR") {
+            document.getElementById("dataset_source").querySelectorAll("option").forEach(opt => {
+                if (opt.value === "life_app") {
+                    opt.style.display = "none";
+                }
+            });
+        }
     });
 </script>
 <script>
@@ -220,7 +245,7 @@
                             <option value="extractive-qa">Extractive Question Answering</option>
                             <option value="seq2seq">Sequence To Sequence</option>
                             <option value="token-classification">Token Classification</option>
-                            <option value="automatic-speech-recognition">Automatic Speech Recognition</option>
+                            <option value="ASR">Automatic Speech Recognition</option>
                         </optgroup>
                         <optgroup label="Image Tasks">
                             <option value="image-classification">Image Classification</option>
@@ -243,7 +268,7 @@
                     <select id="hardware" name="hardware"
                         class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         {% if enable_local == 1 %}
-                        <option value="local-ui">Local/Space</option>
+                        <option value="local-ui">Local</option>
                         {% endif %}
                         {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
                         <optgroup label="Hugging Face Spaces">
@@ -358,196 +383,6 @@
                 </div>
             </ul>
         </div>
-        <div class="form-group mb-2">
-          <label for="base_model" class="text-sm font-medium text-gray-700">Base Model
-            <button type="button" id="base_model_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <select name="base_model" id="base_model"
-            class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          </select>
-        </div>
-        <div class="mb-2">
-          <label class="text-sm font-medium text-gray-700">Dataset
-            <button type="button" id="dataset_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <div class="flex items-center ps-4 border border-gray-300 rounded">
-            <input checked id="life-dataset-radio" type="radio" value="" name="dataset-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="life-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">LiFE
-              Dataset</label>
-            <input checked id="upload-dataset-radio" type="radio" value="" name="dataset-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="upload-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Upload
-              Dataset</label>
-            <input id="hub-dataset-radio" type="radio" value="" name="dataset-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="hub-dataset-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Hub
-              Dataset</label>
-          </div>
-        </div>
-        <div id="form-group">
-          <div id="life-data-tab-content">
-            <div class="form-group">
-              <label for="life_dataset" class="text-sm font-medium text-gray-700">LiFE Dataset
-              </label>
-              <input type="text" name="life_dataset" id="life_dataset"
-                class="mt-1 block w-full border border-gray-300 px-3 py-2.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div class="columns-2 mb-2 mt-2">
-              <div class="form-group">
-                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
-                </label>
-                <input type="text" name="train_split" id="train_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split (optional)
-                </label>
-                <input type="text" name="valid_split" id="valid_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="form-group">
-          <div id="hub-data-tab-content">
-            <div class="form-group">
-              <label for="hub_dataset" class="text-sm font-medium text-gray-700">Hub Dataset
-              </label>
-              <input type="text" name="hub_dataset" id="hub_dataset"
-                class="mt-1 block w-full border border-gray-300 px-3 py-2.5 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div class="columns-2 mb-2 mt-2">
-              <div class="form-group">
-                <label for="train_split" class="text-sm font-medium text-gray-700">Train split
-                </label>
-                <input type="text" name="train_split" id="train_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                <label for="valid_split" class="text-sm font-medium text-gray-700">Valid split (optional)
-                </label>
-                <input type="text" name="valid_split" id="valid_split"
-                  class="mt-1 block w-full border border-gray-300 px-3 py-2 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="upload-data-tabs">
-          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
-            data-tabs-toggle="#upload-data-tab-content" role="tablist">
-            <li class="me-2" role="presentation">
-              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="training-data-tab"
-                data-tabs-target="#training-data" type="button" role="tab" aria-controls="training-data"
-                aria-selected="false">Training Data</button>
-            </li>
-            <li class="me-2" role="presentation">
-              <button class="p-4 hover:text-gray-600 hover:bg-gray-50" id="valid-data-tab"
-                data-tabs-target="#valid-data" type="button" role="tab" aria-controls="valid-data"
-                aria-selected="false">Validation Data
-                (optional)</button>
-            </li>
-          </ul>
-        </div>
-        <div id="form-group">
-          <div id="upload-data-tab-content">
-            <div class="hidden p-4" id="training-data" role="tabpanel" aria-labelledby="training-data-tab">
-              <div class="flex items-center justify-center w-full h-20">
-                <label for="data_files_training"
-                  class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
-                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                      fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                    </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Training File(s)
-                        <p class="text-xs text-gray-700" id="file-container-training"></p>
-                  </div>
-                  <input id="data_files_training" name="data_files_training" type="file" multiple class="hidden" />
-                </label>
-              </div>
-            </div>
-            <div class="hidden p-4" id="valid-data" role="tabpanel" aria-labelledby="valid-data-tab">
-              <div class="flex items-center justify-center w-full h-20">
-                <label for="data_files_valid"
-                  class="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
-                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg class="w-8 h-8 mb-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                      fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                    </svg>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Upload Validation File(s)
-                        <p class="text-xs text-gray-700" id="file-container-valid"></p>
-                  </div>
-                  <input id="data_files_valid" name="data_files_valid" type="file" multiple class="hidden" />
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="columns-1" id="text_label">
-          <label for="column_mapping" class="text-sm font-medium text-gray-700">Column mapping
-            <button type="button" id="column_mapping_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <input type="text" name="column_mapping" id="column_mapping"
-            class="mt-2 mb-4 block w-full border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
-
-      </div>
-      <div>
-        <div class="form-group">
-          <div class="text-sm font-normal text-right mb-2">
-            <button type="button" id="button_logs"
-              class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-xs px-3 py-1.5 text-center inline-flex items-center">
-              <svg class="w-3 h-3 me-1 -ms-1 text-[#626890]" aria-hidden="true" focusable="false" data-prefix="fas"
-                data-icon="terminal" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                <path fill="currentColor"
-                  d="M624 64H304a48 48 0 0 0-48 48v352a48 48 0 0 0 48 48h320a48 48 0 0 0 48-48V112a48 48 0 0 0-48-48zM328 120h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm144 0h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm0 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm72 48h72a8 8 0 0 1 0 16h-72a8 8 0 0 1 0-16zm-72 0h-72a8 8 0 0 1 0-16h72a8 8 0 0 1 0 16zm-72 48h320a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H304a8 8 0 0 1-8-8v-16a8 8 0 0 1 8-8zm0 112v-48h320v48zm-8-128h336v96H312z">
-                </path>
-              </svg>
-              Logs
-            </button>
-          </div>
-          <hr>
-          <label for="params" class="text-sm font-medium text-gray-700">Training Parameters (find params to
-            copy-paste <a class="text-sm font-medium text-blue-700" href="#">here</a>)
-            <button type="button" id="params_info" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </label>
-          <div class="flex items-center ps-20">
-            <input checked id="basic-params-radio" type="radio" value="" name="params-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="basic-params-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Basic</label>
-            <input id="full-params-radio" type="radio" value="" name="params-radio"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
-            <label for="full-params-radio" class="w-full py-4 ms-2 text-sm font-medium text-gray-900">Full</label>
-          </div>
-          <textarea id="params" name="params" rows="20" class="p-2.5 w-full text-sm text-gray-900"
-            placeholder="Loading..."></textarea>
-        </div>
-      </div>
-      <div class="col-span-2">
-        <button type="submit" id="start-training-button"
-          class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">Start
-          Training
-        </button>
-        <button type="button" id="stop-training-button"
-          class="hidden w-full px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:bg-red-700">Stop
-          Training
-        </button>
-        <div class="columns-2 mb-2 mt-2">
-          <p class="text-sm text-gray-700" id="num_accelerators">Accelerators: Fetching...</p>
-          <p class="text-sm text-gray-700 font-bold text-right" id="is_model_training">Fetching training
-            status...
-          </p>
-        </div>
-      </div>
-    </form>
     </aside>
 
     <div class="p-4 sm:ml-64">
@@ -611,13 +446,15 @@
                             </p>
                             <select id="dataset_source" name="dataset_source"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="local">Local</option>
-                                <option value="hub">Hugging Face Hub</option>
+                                <option value="local">Local Files</option>
+                                <option value="huggingface">Hugging Face Dataset</option>
+                                <option value="life_app">LiFE App</option>
                             </select>
                         </div>
                     </div>
+
                     <div class="items-stretch justify-center h-48 rounded">
-                        <div id="hub-data-tab-content" class="w-full px-4">
+                        <div id="hub-data-tab-content" class="w-full px-4" style="display:none;">
                             <label for="hub_dataset" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hub
                                 dataset path</label>
                             <div class="mt-1 flex items-center">
@@ -647,7 +484,8 @@
                                     class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
-                        <div id="upload-data-tabs" class="w-full px-4">
+
+                        <div id="upload-data-tabs" class="w-full px-4" style="display:none;">
                             <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
                                 data-tabs-toggle="#upload-data-tab-content" role="tablist">
                                 <li class="me-2" role="presentation">
@@ -664,7 +502,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <div id="upload-data-tab-content" class="w-full px-4">
+                        <div id="upload-data-tab-content" class="w-full px-4" style="display:none;">
                             <div class="hidden p-4" id="training-data" role="tabpanel"
                                 aria-labelledby="training-data-tab">
                                 <div class="flex items-center justify-center w-full h-20">
@@ -712,6 +550,41 @@
                                             class="hidden" />
                                     </label>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Move LiFE App selection here, just after hub-data-tab-content -->
+                        <div id="life-app-selection" style="display:none;" class="w-full px-4 mb-4">
+                            <div class="flex flex-wrap gap-4">
+                                <!-- Projects Multi-select -->
+                                <div class="flex-1">
+                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Project(s)
+                                    </label>
+                                    <select id="life_app_project" name="life_app_project" multiple
+                                        class="block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    </select>
+                                    <div id="life-app-project-tags" class="mb-2"></div>
+                                </div>
+
+                                <!-- Script Dropdown -->
+                                <div class="flex-1">
+                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Script
+                                    </label>
+                                    <select id="life_app_script" name="life_app_script"
+                                        class="block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="">Select Script</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Dataset File Dropdown -->
+                            <div id="dataset_file_div">
+                                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Dataset File
+                                </label>
+                                <select id="dataset_file" name="dataset_file"
+                                    class="js-example-basic-single block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Dataset</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -822,6 +695,7 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-4 md:p-5 text-center">
+                    <div id="final-modal-content"></div>
                     <h3 class="mb-5 text-sm font-normal text-gray-800 dark:text-gray-200"></h3>
                 </div>
             </div>
@@ -848,65 +722,6 @@
             </div>
         </div>
     </div>
-    <hr class="h-px my-1 bg-gray-200 border-b-2 dark:bg-gray-700">
-    <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/autotrain" target="_blank"
-        class="text-gray-700">Powered by 🤗 Hugging Face</a>.
-    </div>
-    <div class="block text-sm font-normal text-gray-700 text-center"><a href="https://hf.co/docs/autotrain"
-        target="_blank" class="text-blue-600">Docs</a> | <a href="https://github.com/huggingface/autotrain-advanced"
-        target="_blank" class="text-blue-600">GitHub</a>
-    </div>
-    <div class="block text-xs font-normal text-gray-400 text-center">{{version}}
-    </div>
-  </div>
-  </div>
-</body>
-<script>
-  window.addEventListener("load", function () {
-    // Get references to the radio buttons and the tab content elements
-    const hubDatasetRadio = document.getElementById("hub-dataset-radio");
-    const uploadDatasetRadio = document.getElementById("upload-dataset-radio");
-    const uploadDataTabContent = document.getElementById("upload-data-tab-content");
-    const hubDataTabContent = document.getElementById("hub-data-tab-content");
-    const uploadDataTabs = document.getElementById("upload-data-tabs");
-    const lifeDatasetRadio = document.getElementById("life-dataset-radio");
-    const lifeDataTabContent = document.getElementById("life-data-tab-content")
-
-    // Function to handle radio button click events
-    function handleRadioButtonClick() {
-      if (hubDatasetRadio.checked) {
-        uploadDataTabContent.style.display = "none";
-        uploadDataTabs.style.display = "none";
-        lifeDataTabContent.style.display = "none";
-        hubDataTabContent.style.display = "block";
-      } else if (uploadDatasetRadio.checked) {
-        uploadDataTabContent.style.display = "block";
-        uploadDataTabs.style.display = "block";
-        hubDataTabContent.style.display = "none";
-        lifeDataTabContent.style.display = "none";
-      }
-      else if (lifeDatasetRadio.checked) {
-        uploadDataTabContent.style.display = "none";
-        uploadDataTabs.style.display = "none";
-        hubDataTabContent.style.display = "none";
-        lifeDataTabContent.style.display = "block";
-      }
-    }
-
-    // Attach event listeners to radio buttons
-    hubDatasetRadio.addEventListener("click", handleRadioButtonClick);
-    uploadDatasetRadio.addEventListener("click", handleRadioButtonClick);
-    lifeDatasetRadio.addEventListener("click", handleRadioButtonClick);
-
-    // Trigger initial click event to ensure correct display on page load
-    // uploadDatasetRadio.click();
-    lifeDatasetRadio.click();
-  });
-</script>
-<script>
-  window.addEventListener('load', function () {
-    const stopTrainingButton = document.getElementById('stop-training-button');
-    const loadingSpinner = document.getElementById('loadingSpinner');
     <div id="dataset-viewer-modal" tabindex="-1"
         class="hidden fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
         <div class="relative w-full max-w-5xl p-4">
@@ -934,7 +749,6 @@
     <script>
         var autotrain_local_value = {{ enable_local }};
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const stopTrainingButton = document.getElementById('stop-training-button');
@@ -947,7 +761,7 @@
                     method: 'GET'
                 })
                     .then(response => response.text())
-                    .then(data => {
+                    .then((data) => {
                         console.log(data);
                         loadingSpinner.classList.add('hidden');
                     })
@@ -971,6 +785,57 @@
                 selectElement.classList.remove('hidden');
                 baseModelInput.classList.add('hidden');
             }
+        });
+    </script>
+
+    <script>
+        // Show/hide LiFE App selection UI based on dataset source
+        document.addEventListener('DOMContentLoaded', function () {
+            const datasetSource = document.getElementById('dataset_source');
+            const lifeAppSelection = document.getElementById('life-app-selection');
+
+            function toggleLifeAppSelection() {
+                if (datasetSource.value === 'life_app') {
+                    lifeAppSelection.style.display = '';
+                } else {
+                    lifeAppSelection.style.display = 'none';
+                }
+            }
+
+            datasetSource.addEventListener('change', toggleLifeAppSelection);
+            // Initialize on page load
+            toggleLifeAppSelection();
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 for all dropdowns
+            $('#life_app_project').select2({
+                placeholder: "Select LiFE App Project(s)",
+                allowClear: true,
+                multiple: true,
+                width: '100%',
+                maximumSelectionLength: 2,
+                tags: true
+            });
+            
+            $('#dataset_file').select2({
+                placeholder: "Select Dataset File",
+                allowClear: true,
+                width: '100%'
+            });
+            
+            // Handle dataset source change
+            $('#dataset_source').on('change', function() {
+                const lifeAppSelection = $('#life-app-selection');
+                if ($(this).val() === 'life_app') {
+                    lifeAppSelection.show();
+                    // Load projects when LiFE App is selected
+                    loadLifeAppProjects();
+                } else {
+                    lifeAppSelection.hide();
+                }
+            });
         });
     </script>
 </body>

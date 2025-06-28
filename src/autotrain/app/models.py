@@ -1,6 +1,8 @@
 import collections
 
 from huggingface_hub import list_models, HfApi
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
 
 
 def get_sorted_models(hub_models):
@@ -335,13 +337,13 @@ def _fetch_vlm_models():
 
 def _fetch_asr_models():
     """
-    Fetches and sorts ASR models from the Hugging Face model hub.
+    Fetches and sorts ASR models from the Hugging Face model hub using the official pipeline tag.
     Returns a sorted list of model identifiers from the Hugging Face model hub.
     """
     # Get models sorted by downloads
     hub_models = list(
         list_models(
-            task="automatic-speech-recognition",
+            pipeline_tag="automatic-speech-recognition",
             library="transformers",
             sort="downloads",
             direction=-1,
@@ -351,12 +353,12 @@ def _fetch_asr_models():
     )
     hub_models = get_sorted_models(hub_models)
 
-    # Get trending models
+    # Get trending models (most likes)
     trending_models = list(
         list_models(
-            task="automatic-speech-recognition",
+            pipeline_tag="automatic-speech-recognition",
             library="transformers",
-            sort="likes7d",
+            sort="likes",
             direction=-1,
             limit=30,
             full=False,
@@ -383,7 +385,7 @@ def fetch_models():
     _mc["sentence-transformers"] = _fetch_st_models()
     _mc["vlm"] = _fetch_vlm_models()
     _mc["extractive-qa"] = _fetch_text_classification_models()
-    _mc["automatic-speech-recognition"] = _fetch_asr_models()
+    _mc["ASR"] = _fetch_asr_models()
 
     # tabular-classification
     _mc["tabular-classification"] = [
@@ -411,3 +413,24 @@ def fetch_models():
     ]
 
     return _mc
+
+
+class LifeAppApiSource(BaseModel):
+    api_url: str
+    api_token: str
+
+
+class LifeAppJsonSource(BaseModel):
+    # For JSON file, the content will be handled via UploadFile in the endpoint
+    pass
+
+
+class LifeAppDatasetValidationRequest(BaseModel):
+    source_type: str  # "api" or "json"
+    api_data: Optional[LifeAppApiSource] = None
+
+
+class LifeAppDatasetPrepareRequest(BaseModel):
+    project_ids: List[str]
+    script_id: str
+    dataset_file: str

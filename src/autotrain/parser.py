@@ -89,7 +89,7 @@ class AutoTrainConfigParser:
             "image_single_column_regression": ImageRegressionParams,
             "vlm": VLMTrainingParams,
             "text_extractive_question_answering": ExtractiveQuestionAnsweringParams,
-            "automatic_speech_recognition": AutomaticSpeechRecognitionParams,
+            "ASR": AutomaticSpeechRecognitionParams,
         }
         self.munge_data_map = {
             "lm_training": llm_munge_data,
@@ -104,7 +104,7 @@ class AutoTrainConfigParser:
             "image_single_column_regression": img_reg_munge_data,
             "vlm": vlm_munge_data,
             "text_extractive_question_answering": ext_qa_munge_data,
-            "automatic_speech_recognition": asr_munge_data,
+            "ASR": asr_munge_data,
         }
         self.task_aliases = {
             "llm": "lm_training",
@@ -155,9 +155,9 @@ class AutoTrainConfigParser:
             "ext_qa": "text_extractive_question_answering",
             "ext-qa": "text_extractive_question_answering",
             "extractive-qa": "text_extractive_question_answering",
-            "automatic_speech_recognition": "automatic_speech_recognition",
-            "automatic-speech-recognition": "automatic_speech_recognition",
-            "asr": "automatic_speech_recognition",
+            "ASR": "ASR",
+            "ASR": "ASR",
+            "asr": "ASR",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)
@@ -236,8 +236,8 @@ class AutoTrainConfigParser:
         logger.info(f"Job ID: {job_id}")
 
 def _get_task_specific_imports(task: str) -> str:
-    if task == "automatic-speech-recognition":
-        return "from autotrain.trainers.automatic_speech_recognition import AutomaticSpeechRecognitionTrainer"
+    if task == "ASR":
+        return "from autotrain.trainers.ASR import AutomaticSpeechRecognitionTrainer"
     elif task == "text-classification":
         return "from autotrain.trainers.text_classification import TextClassificationTrainer"
     elif task == "token-classification":
@@ -262,7 +262,7 @@ def _get_task_specific_imports(task: str) -> str:
         raise ValueError(f"Unsupported task: {task}")
 
 def _get_task_specific_train_call(task: str) -> str:
-    if task == "automatic-speech-recognition":
+    if task == "ASR":
         return "trainer = AutomaticSpeechRecognitionTrainer(config)"
     elif task == "text-classification":
         return "trainer = TextClassificationTrainer(config)"

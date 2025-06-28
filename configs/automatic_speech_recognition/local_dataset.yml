@@ -1,16 +1,16 @@
-task: automatic-speech-recognition
+task: ASR
 base_model: facebook/wav2vec2-base-960h
 project_name: autotrain-asr-local
 log: tensorboard
 backend: local
 
 data:
-  path: data/ # this must be the path to the directory containing the train and valid files
-  train_split: train # this must be either train.csv or train.json
-  valid_split: valid # this must be either valid.csv or valid.json
+  path: data/ 
+  train_split: train
+  valid_split: valid
   column_mapping:
-    audio_column: audio # this must be the name of the column containing the audio file paths
-    text_column: transcription # this must be the name of the column containing the transcriptions
+    audio_column: audio 
+    text_column: transcription 
 
 params:
   max_duration: 30.0

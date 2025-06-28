@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         // Send a request to the /accelerators endpoint
         fetch('/ui/accelerators')
-            .then(response => response.json()) // Assuming the response is in JSON format
+            .then(response => response.json()) 
             .then(data => {
                 // Update the paragraph with the number of accelerators
                 document.getElementById('num_accelerators').innerText = `Accelerators: ${data.accelerators}`;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             return;
         }
         fetch('/ui/is_model_training')
-            .then(response => response.json()) // Assuming the response is in JSON format
+            .then(response => response.json()) 
             .then(data => {
                 // Construct the message to display
                 let message = data.model_training ? 'Running job PID(s): ' + data.pids.join(', ') : 'No running jobs';
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 // Update the paragraph to show an error message
                 let statusParagraph = document.getElementById('is_model_training');
                 statusParagraph.innerText = 'Error fetching training status';
-                statusParagraph.style.color = 'red'; // Set error message color to red
+                statusParagraph.style.color = 'red'; 
             });
     }
 

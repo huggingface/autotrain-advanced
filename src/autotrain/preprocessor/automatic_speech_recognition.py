@@ -38,12 +38,12 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
         seed: int = 42,
         local: bool = False,
     ):
-        # Set default column mapping to match user's CSV structure
+       
         if column_mapping is None:
             column_mapping = {
-                "audio": "audio",  # Path to audio files
-                "transcription": "transcription",  # Text transcription
-                "duration": "duration"  # Audio duration
+                "audio": "audio",  
+                "transcription": "transcription", 
+                "duration": "duration"  
             }
             
         super().__init__(
@@ -58,12 +58,12 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
         self.seed = seed
         self.local = local
 
-        # Extract column names from mapping
+        
         self.audio_column = self.column_mapping.get("audio", "audio")
         self.text_column = self.column_mapping.get("transcription", "transcription")
         self.duration_column = self.column_mapping.get("duration", "duration")
 
-        # Validate columns exist
+        
         if self.audio_column not in self.train_data.columns:
             raise ValueError(f"Audio column '{self.audio_column}' not found in training data")
         if self.text_column not in self.train_data.columns:
@@ -95,14 +95,14 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
 
     def prepare_columns(self, train_df: pd.DataFrame, valid_df: pd.DataFrame):
         """Prepare columns for training."""
-        # Rename columns to standard names that the trainer expects
+        
         train_df = train_df.rename(columns={
-            self.audio_column: "autotrain_audio",
-            self.text_column: "autotrain_transcription"
+            self.audio_column: "audio",
+            self.text_column: "transcription"
         })
         valid_df = valid_df.rename(columns={
-            self.audio_column: "autotrain_audio",
-            self.text_column: "autotrain_transcription"
+            self.audio_column: "audio",
+            self.text_column: "transcription"
         })
         return train_df, valid_df
 
@@ -115,17 +115,17 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
         train_dataset = Dataset.from_pandas(train_df)
         valid_dataset = Dataset.from_pandas(valid_df)
 
-        # Save locally
+        
         dataset = DatasetDict({
             "train": train_dataset,
             "validation": valid_dataset
         })
         
-        # Create output directory
+       
         output_dir = os.path.join(self.project_name, "autotrain-data")
         os.makedirs(output_dir, exist_ok=True)
         
-        # Save dataset to disk
+        
         dataset.save_to_disk(output_dir)
         logger.info(f"Dataset saved to {output_dir}")
         
@@ -136,19 +136,19 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
         logger.info(f"Available columns in DataFrame: {df.columns.tolist()}")
         logger.info(f"Column mapping: {self.column_mapping}")
         
-        # Process audio files
+        
         logger.info(f"Processing audio files from column: {self.audio_column}")
         
         processed_audio = []
         for audio_path in df[self.audio_column]:
             processed_audio.append(self._process_audio(audio_path))
         
-        # Clean text
+        
         logger.info(f"Cleaning text from column: {self.text_column}")
         
         processed_text = df[self.text_column].apply(lambda x: x.strip().lower())
         
-        # Create processed dataframe
+        
         processed_df = pd.DataFrame({
             'audio': processed_audio,
             'transcription': processed_text
@@ -170,10 +170,10 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
 
     def _create_datasets(self, processed_df: pd.DataFrame) -> DatasetDict:
         """Create train/validation/test datasets."""
-        # Create train dataset
+        
         train_dataset = Dataset.from_pandas(processed_df)
         
-        # Create dataset dictionary
+        
         datasets = DatasetDict({
             'train': train_dataset
         })
@@ -187,4 +187,9 @@ class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
         
         logger.info("Saving training dataset...")
         datasets.save_to_disk(save_path)
-        logger.info("Training dataset saved successfully") 
+        logger.info("Training dataset saved successfully")
+
+
+def load_life_app_dataset_from_disk(data_path):
+    from datasets import load_from_disk
+    return load_from_disk(data_path)
