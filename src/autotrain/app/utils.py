@@ -4,11 +4,13 @@ import sys
 
 import psutil
 import requests
+import base64
+import pandas as pd
+import tempfile
 
 from autotrain import config, logger
 
 _VERIFIED_USER_INFO = None
-
 
 def graceful_exit(signum, frame):
     logger.info("SIGTERM received. Performing cleanup...")
@@ -88,12 +90,14 @@ def kill_process_by_pid(pid):
         Exception: If an error occurs while attempting to send the SIGTERM signal.
     """
     try:
-        os.kill(pid, signal.SIGTERM)
-        logger.info(f"Sent SIGTERM to process with PID {pid}")
-    except ProcessLookupError:
+        # Use psutil for cross-platform process termination
+        process = psutil.Process(pid)
+        process.terminate()
+        logger.info(f"Sent termination signal to process with PID {pid}")
+    except psutil.NoSuchProcess:
         logger.error(f"No process found with PID {pid}")
     except Exception as e:
-        logger.error(f"Failed to send SIGTERM to process with PID {pid}: {e}")
+        logger.error(f"Failed to terminate process with PID {pid}: {e}")
 
 
 def token_verification(token):
@@ -155,6 +159,18 @@ def token_verification(token):
 
 
 def get_user_and_orgs(user_token):
+    """
+    Retrieve the username and organizations associated with the provided user token.
+
+    Args:
+        user_token (str): The token used to authenticate the user. Must be a valid write token.
+
+    Returns:
+        list: A list containing the username followed by the organizations the user belongs to.
+
+    Raises:
+        Exception: If the user token is None or an empty string.
+    """
     global _VERIFIED_USER_INFO
     if _VERIFIED_USER_INFO is not None:
         username = _VERIFIED_USER_INFO["name"]

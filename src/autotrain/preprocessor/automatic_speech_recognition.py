@@ -1,195 +1,227 @@
 import os
-import logging
-import pandas as pd
-import numpy as np
-from datasets import Dataset, DatasetDict
-from typing import Dict, Optional, Any
-from autotrain.preprocessor.base import AutoTrainPreprocessor
+import shutil
+import uuid
 from dataclasses import dataclass
+from typing import Optional
+
+import pandas as pd
+from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 
-logger = logging.getLogger(__name__)
+ALLOWED_AUDIO_EXTENSIONS = ("wav", "mp3", "flac", "ogg", "m4a")
 
-class AutomaticSpeechRecognitionPreprocessor(AutoTrainPreprocessor):
+@dataclass
+class AutomaticSpeechRecognitionPreprocessor:
     """
-    A preprocessor class for automatic speech recognition tasks.
+    A class used to preprocess audio data for automatic speech recognition (ASR) tasks.
 
-    Attributes:
-        train_data (pd.DataFrame): The training data.
-        valid_data (Optional[pd.DataFrame]): The validation data.
-        project_name (str): Name of the project.
-        username (str): Hugging Face username.
-        token (str): Hugging Face token.
-        column_mapping (Dict[str, str]): Mapping of column names.
-        test_size (float): Proportion of data to use for validation.
-        seed (int): Random seed for splitting.
-        local (bool): Whether to save data locally or push to hub.
+    Attributes
+    ----------
+    train_data : str
+        Path to the training data directory (should contain audio/ folder and CSV).
+    username : str
+        Username for the Hugging Face Hub.
+    project_name : str
+        Name of the project.
+    token : str
+        Authentication token for the Hugging Face Hub.
+    valid_data : Optional[str], optional
+        Path to the validation data directory, by default None.
+    test_size : Optional[float], optional
+        Proportion of the dataset to include in the validation split, by default 0.2.
+    seed : Optional[int], optional
+        Random seed for reproducibility, by default 42.
+    local : Optional[bool], optional
+        Whether to save the dataset locally or push to the Hugging Face Hub, by default False.
+
+    Methods
+    -------
+    __post_init__():
+        Validates the structure and contents of the training and validation data directories.
+    split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        Splits the dataframe into training and validation sets.
+    prepare() -> str:
+        Prepares the dataset for training and either saves it locally or pushes it to the Hugging Face Hub.
+    load_life_app_dataset_from_disk(data_path):
+        Loads the LiFE App dataset from disk for ASR training.
     """
 
-    def __init__(
-        self,
-        train_data: pd.DataFrame,
-        project_name: str,
-        username: str,
-        token: str,
-        column_mapping: Optional[Dict[str, str]] = None,
-        valid_data: Optional[pd.DataFrame] = None,
-        test_size: float = 0.2,
-        seed: int = 42,
-        local: bool = False,
-    ):
-       
-        if column_mapping is None:
-            column_mapping = {
-                "audio": "audio",  
-                "transcription": "transcription", 
-                "duration": "duration"  
-            }
-            
-        super().__init__(
-            train_data=train_data,
-            token=token,
-            project_name=project_name,
-            username=username,
-            column_mapping=column_mapping,
-        )
-        self.valid_data = valid_data
-        self.test_size = test_size
-        self.seed = seed
-        self.local = local
+    train_data: str
+    username: str
+    project_name: str
+    token: str
+    valid_data: Optional[str] = None
+    test_size: Optional[float] = 0.2
+    seed: Optional[int] = 42
+    local: Optional[bool] = False
 
-        
-        self.audio_column = self.column_mapping.get("audio", "audio")
-        self.text_column = self.column_mapping.get("transcription", "transcription")
-        self.duration_column = self.column_mapping.get("duration", "duration")
+    def __post_init__(self):
+        # Validate train data directory
+        if not os.path.exists(self.train_data):
+            raise ValueError(f"{self.train_data} does not exist.")
 
-        
-        if self.audio_column not in self.train_data.columns:
-            raise ValueError(f"Audio column '{self.audio_column}' not found in training data")
-        if self.text_column not in self.train_data.columns:
-            raise ValueError(f"Text column '{self.text_column}' not found in training data")
-        if self.duration_column not in self.train_data.columns:
-            raise ValueError(f"Duration column '{self.duration_column}' not found in training data")
-        
-        if self.valid_data is not None:
-            if self.audio_column not in self.valid_data.columns:
-                raise ValueError(f"Audio column '{self.audio_column}' not found in validation data")
-            if self.text_column not in self.valid_data.columns:
-                raise ValueError(f"Text column '{self.text_column}' not found in validation data")
-            if self.duration_column not in self.valid_data.columns:
-                raise ValueError(f"Duration column '{self.duration_column}' not found in validation data")
+        audio_dir = None
+        csv_file = None
+        for root, dirs, files in os.walk(self.train_data):
+            for d in dirs:
+                if d.lower() == 'audio':
+                    audio_dir = os.path.join(root, d)
+            for f in files:
+                if f.endswith('.csv'):
+                    csv_file = os.path.join(root, f)
+        if not audio_dir or not csv_file:
+            raise ValueError(f"{self.train_data} should contain an audio/ folder and a CSV file.")
 
-    def split(self):
-        """Split data into train and validation sets."""
-        if self.valid_data is not None:
-            return self.train_data, self.valid_data
-        
+        audio_files = [f for f in os.listdir(audio_dir) if f.endswith(ALLOWED_AUDIO_EXTENSIONS)]
+        if len(audio_files) < 5:
+            raise ValueError(f"{audio_dir} should contain at least 5 audio files.")
+
+        df = pd.read_csv(csv_file)
+        if "autotrain_audio" in df.columns and "autotrain_transcription" in df.columns:
+            df = df.rename(columns={
+                "autotrain_audio": "audio",
+                "autotrain_transcription": "transcription"
+            })
+        if 'audio' not in df.columns or 'transcription' not in df.columns:
+            raise ValueError("CSV must have 'audio' and 'transcription' columns.")
+
+        # Check that all audio files in CSV exist
+        missing_files = []
+        for _, row in df.iterrows():
+            audio_path = os.path.join(audio_dir, str(row['audio']))
+            if not os.path.exists(audio_path):
+                missing_files.append(str(row['audio']))
+        if missing_files:
+            raise ValueError(f"The following audio files referenced in CSV are missing: {missing_files[:5]}...")
+
+        self.audio_dir = audio_dir
+        self.csv_file = csv_file
+        self.df = df
+
+        if self.valid_data:
+            # Validate validation data directory
+            if not os.path.exists(self.valid_data):
+                raise ValueError(f"{self.valid_data} does not exist.")
+
+            valid_audio_dir = None
+            valid_csv_file = None
+            for root, dirs, files in os.walk(self.valid_data):
+                for d in dirs:
+                    if d.lower() == 'audio':
+                        valid_audio_dir = os.path.join(root, d)
+                for f in files:
+                    if f.endswith('.csv'):
+                        valid_csv_file = os.path.join(root, f)
+            if not valid_audio_dir or not valid_csv_file:
+                raise ValueError(f"{self.valid_data} should contain an audio/ folder and a CSV file.")
+
+            valid_audio_files = [f for f in os.listdir(valid_audio_dir) if f.endswith(ALLOWED_AUDIO_EXTENSIONS)]
+            if len(valid_audio_files) < 5:
+                raise ValueError(f"{valid_audio_dir} should contain at least 5 audio files.")
+
+            valid_df = pd.read_csv(valid_csv_file)
+            if "autotrain_audio" in valid_df.columns and "autotrain_transcription" in valid_df.columns:
+                valid_df = valid_df.rename(columns={
+                    "autotrain_audio": "audio",
+                    "autotrain_transcription": "transcription"
+                })
+            if 'audio' not in valid_df.columns or 'transcription' not in valid_df.columns:
+                raise ValueError("Validation CSV must have 'audio' and 'transcription' columns.")
+
+            missing_valid_files = []
+            for _, row in valid_df.iterrows():
+                audio_path = os.path.join(valid_audio_dir, str(row['audio']))
+                if not os.path.exists(audio_path):
+                    missing_valid_files.append(str(row['audio']))
+            if missing_valid_files:
+                raise ValueError(f"The following validation audio files referenced in CSV are missing: {missing_valid_files[:5]}...")
+
+            self.valid_audio_dir = valid_audio_dir
+            self.valid_csv_file = valid_csv_file
+            self.valid_df = valid_df
+
+    def split(self, df):
+        """
+        Split a DataFrame into train and validation sets.
+        """
         train_df, valid_df = train_test_split(
-            self.train_data,
+            df,
             test_size=self.test_size,
-            random_state=self.seed
+            random_state=self.seed,
         )
         train_df = train_df.reset_index(drop=True)
         valid_df = valid_df.reset_index(drop=True)
         return train_df, valid_df
 
-    def prepare_columns(self, train_df: pd.DataFrame, valid_df: pd.DataFrame):
-        """Prepare columns for training."""
-        
-        train_df = train_df.rename(columns={
-            self.audio_column: "audio",
-            self.text_column: "transcription"
-        })
-        valid_df = valid_df.rename(columns={
-            self.audio_column: "audio",
-            self.text_column: "transcription"
-        })
-        return train_df, valid_df
-
     def prepare(self):
-        """Prepare the dataset for training."""
-        train_df, valid_df = self.split()
-        train_df, valid_df = self.prepare_columns(train_df, valid_df)
+        """
+        Prepare the dataset for training: copy, split, and format as needed.
+        """
+        random_uuid = uuid.uuid4()
+        cache_dir = os.environ.get("HF_HOME")
+        if not cache_dir:
+            cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
+        data_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
 
-        # Convert to HuggingFace datasets
-        train_dataset = Dataset.from_pandas(train_df)
-        valid_dataset = Dataset.from_pandas(valid_df)
+        if self.valid_data:
+            # Copy train and validation data as-is
+            shutil.copytree(self.train_data, os.path.join(data_dir, "train"))
+            shutil.copytree(self.valid_data, os.path.join(data_dir, "validation"))
 
-        
-        dataset = DatasetDict({
-            "train": train_dataset,
-            "validation": valid_dataset
-        })
-        
-       
-        output_dir = os.path.join(self.project_name, "autotrain-data")
-        os.makedirs(output_dir, exist_ok=True)
-        
-        
-        dataset.save_to_disk(output_dir)
-        logger.info(f"Dataset saved to {output_dir}")
-        
-        return output_dir
+            dataset = load_dataset(
+                "csv", 
+                data_files={
+                    "train": os.path.join(data_dir, "train", "data.csv"),
+                    "validation": os.path.join(data_dir, "validation", "data.csv")
+                }
+            )
+            dataset = dataset.rename_columns({"audio": "audio", "transcription": "transcription"})
+            if self.local:
+                dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+            else:
+                dataset.push_to_hub(
+                    f"{self.username}/autotrain-data-{self.project_name}",
+                    private=True,
+                    token=self.token,
+                )
+        else:
+            # Split training data into train/validation
+            train_df, valid_df = self.split(self.df)
+            for split_name, split_df in zip(["train", "validation"], [train_df, valid_df]):
+                split_audio_dir = os.path.join(data_dir, split_name, "audio")
+                os.makedirs(split_audio_dir, exist_ok=True)
+                split_csv = os.path.join(data_dir, split_name, "data.csv")
+                new_rows = []
+                for _, row in split_df.iterrows():
+                    src_audio = os.path.join(self.audio_dir, str(row["audio"]))
+                    dst_audio = os.path.join(split_audio_dir, os.path.basename(src_audio))
+                    shutil.copy(src_audio, dst_audio)
+                    new_rows.append({
+                        "audio": os.path.join("audio", os.path.basename(src_audio)),
+                        "transcription": row["transcription"]
+                    })
+                pd.DataFrame(new_rows).to_csv(split_csv, index=False)
+            dataset = load_dataset(
+                "csv", 
+                data_files={
+                    "train": os.path.join(data_dir, "train", "data.csv"),
+                    "validation": os.path.join(data_dir, "validation", "data.csv")
+                }
+            )
+            dataset = dataset.rename_columns({"audio": "audio", "transcription": "transcription"})
+            if self.local:
+                dataset.save_to_disk(f"{self.project_name}/autotrain-data")
+            else:
+                dataset.push_to_hub(
+                    f"{self.username}/autotrain-data-{self.project_name}",
+                    private=True,
+                    token=self.token,
+                )
+        if self.local:
+            return f"{self.project_name}/autotrain-data"
+        return f"{self.username}/autotrain-data-{self.project_name}"
 
-    def _process_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Process the data for ASR training."""
-        logger.info(f"Available columns in DataFrame: {df.columns.tolist()}")
-        logger.info(f"Column mapping: {self.column_mapping}")
-        
-        
-        logger.info(f"Processing audio files from column: {self.audio_column}")
-        
-        processed_audio = []
-        for audio_path in df[self.audio_column]:
-            processed_audio.append(self._process_audio(audio_path))
-        
-        
-        logger.info(f"Cleaning text from column: {self.text_column}")
-        
-        processed_text = df[self.text_column].apply(lambda x: x.strip().lower())
-        
-        
-        processed_df = pd.DataFrame({
-            'audio': processed_audio,
-            'transcription': processed_text
-        })
-        
-        return processed_df
-
-    def _process_audio(self, audio_path: str) -> np.ndarray:
-        """Process an audio file."""
-        logger.info(f"Processing audio file: {audio_path}")
-        try:
-            import librosa
-            audio, _ = librosa.load(audio_path, sr=16000)
-            logger.info(f"Successfully processed audio file: {audio_path}")
-            return audio
-        except Exception as e:
-            logger.error(f"Error processing audio file {audio_path}: {str(e)}")
-            raise
-
-    def _create_datasets(self, processed_df: pd.DataFrame) -> DatasetDict:
-        """Create train/validation/test datasets."""
-        
-        train_dataset = Dataset.from_pandas(processed_df)
-        
-        
-        datasets = DatasetDict({
-            'train': train_dataset
-        })
-        
-        return datasets
-
-    def _save_datasets(self, datasets: DatasetDict):
-        """Save datasets to disk."""
-        save_path = f"{self.project_name}/autotrain-data"
-        os.makedirs(save_path, exist_ok=True)
-        
-        logger.info("Saving training dataset...")
-        datasets.save_to_disk(save_path)
-        logger.info("Training dataset saved successfully")
-
-
-def load_life_app_dataset_from_disk(data_path):
-    from datasets import load_from_disk
-    return load_from_disk(data_path)
+    def load_life_app_dataset_from_disk(self, data_path):
+        """
+        Load a LiFE App dataset from disk for ASR training. (Extend as needed.)
+        """

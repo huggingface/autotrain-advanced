@@ -1,25 +1,26 @@
-import argparse
-import json
-import os
-from typing import Optional
+"""
+CLI entrypoint for running ASR (Automatic Speech Recognition) tasks with AutoTrain.
+"""
+from argparse import ArgumentParser
 
 from autotrain import logger
-from autotrain.cli.run import AutoTrainCLI
 from autotrain.cli.utils import get_field_info
 from autotrain.project import AutoTrainProject
-from autotrain.trainers.automatic_speech_recognition import __main__ as trainer
 from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
 
 from . import BaseAutoTrainCommand
 
-
-def run_ASR_command_factory(args):
+def run_automatic_speech_recognition_command_factory(args):
+    """Factory for the ASR CLI command."""
     return RunAutoTrainAutomaticSpeechRecognitionCommand(args)
 
-
-class RunAutoTrainAutomaticSpeechRecognitionCommand(AutoTrainCLI):
+class RunAutoTrainAutomaticSpeechRecognitionCommand(BaseAutoTrainCommand):
+    """
+    CLI command for training, deploying, or running inference for ASR tasks.
+    """
     @staticmethod
-    def register_subcommand(parser: argparse._SubParsersAction):
+    def register_subcommand(parser: ArgumentParser):
+        """Register the ASR subcommand and its arguments."""
         arg_list = get_field_info(AutomaticSpeechRecognitionParams)
         arg_list = [
             {
@@ -42,14 +43,15 @@ class RunAutoTrainAutomaticSpeechRecognitionCommand(AutoTrainCLI):
             },
             {
                 "arg": "--backend",
-                "help": "Backend to use for training",
+                "help": "Backend",
                 "required": False,
+                "type": str,
                 "default": "local",
             },
         ] + arg_list
         run_parser = parser.add_parser(
-            "ASR",
-            description="✨ Run AutoTrain Automatic Speech Recognition"
+            "automatic-speech-recognition",
+            description="✨ Run AutoTrain Automatic Speech Recognition",
         )
         for arg in arg_list:
             names = [arg["arg"]] + arg.get("alias", [])
@@ -72,11 +74,11 @@ class RunAutoTrainAutomaticSpeechRecognitionCommand(AutoTrainCLI):
                     default=arg.get("default"),
                     choices=arg.get("choices"),
                 )
-        run_parser.set_defaults(func=run_ASR_command_factory)
+        run_parser.set_defaults(func=run_automatic_speech_recognition_command_factory)
 
     def __init__(self, args):
+        """Initialize the ASR CLI command with parsed arguments."""
         self.args = args
-
         store_true_arg_names = [
             "train",
             "deploy",
@@ -85,9 +87,8 @@ class RunAutoTrainAutomaticSpeechRecognitionCommand(AutoTrainCLI):
             "push_to_hub",
         ]
         for arg_name in store_true_arg_names:
-            if getattr(self.args, arg_name) is None:
+            if getattr(self.args, arg_name, None) is None:
                 setattr(self.args, arg_name, False)
-
         if self.args.train:
             if self.args.project_name is None:
                 raise ValueError("Project name must be specified")
@@ -100,50 +101,19 @@ class RunAutoTrainAutomaticSpeechRecognitionCommand(AutoTrainCLI):
                     raise ValueError("Username must be specified for push to hub")
         else:
             raise ValueError("Must specify --train, --deploy or --inference")
+        if self.args.backend.startswith("spaces") or self.args.backend.startswith("ep-"):
+            if not self.args.push_to_hub:
+                raise ValueError("Push to hub must be specified for spaces backend")
+            if self.args.username is None:
+                raise ValueError("Username must be specified for spaces backend")
+            if self.args.token is None:
+                raise ValueError("Token must be specified for spaces backend")
 
     def run(self):
-        """Run the ASR training."""
+        """Run the ASR training (or other selected action)."""
         logger.info("Running Automatic Speech Recognition")
         if self.args.train:
             params = AutomaticSpeechRecognitionParams(**vars(self.args))
             project = AutoTrainProject(params=params, backend=self.args.backend, process=True)
             job_id = project.create()
             logger.info(f"Job ID: {job_id}")
-        
-        logger.info("Starting ASR training...")
-        
-        # Create training config
-        training_config = {
-            "task": "ASR",
-            "model": self.args.model,
-            "train_data": self.args.train_data,
-            "valid_data": self.args.valid_data,
-            "project_name": self.args.project_name,
-            "text_column": self.args.text_column,
-            "audio_column": self.args.audio_column,
-            "max_duration": self.args.max_duration,
-            "sampling_rate": self.args.sampling_rate,
-            "batch_size": self.args.batch_size,
-            "epochs": self.args.epochs,
-            "learning_rate": self.args.learning_rate,
-            "optimizer": self.args.optimizer,
-            "scheduler": self.args.scheduler,
-            "mixed_precision": self.args.mixed_precision,
-            "weight_decay": self.args.weight_decay,
-            "warmup_ratio": self.args.warmup_ratio,
-            "early_stopping_patience": self.args.early_stopping_patience,
-            "early_stopping_threshold": self.args.early_stopping_threshold,
-            "eval_strategy": self.args.eval_strategy,
-            "save_total_limit": self.args.save_total_limit,
-            "auto_find_batch_size": self.args.auto_find_batch_size,
-            "logging_steps": self.args.logging_steps,
-        }
-        
-        # Save config
-        config_path = f"{self.args.project_name}/training_config.json"
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        with open(config_path, "w") as f:
-            json.dump(training_config, f, indent=2)
-        
-        
-        trainer.train(training_config) 

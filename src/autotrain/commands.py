@@ -20,6 +20,7 @@ from autotrain.trainers.vlm.params import VLMTrainingParams
 from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
 
 
+
 CPU_COMMAND = [
     "accelerate",
     "launch",
@@ -115,6 +116,7 @@ def launch_command(params):
             - ImageRegressionParams
             - Seq2SeqParams
             - VLMTrainingParams
+            - AutomaticSpeechRecognitionParams
 
     Returns:
         list: A list of command line arguments to be executed for training.
@@ -228,45 +230,10 @@ def launch_command(params):
                 ]
             )
         elif isinstance(params, ExtractiveQuestionAnsweringParams):
-            cmd = [
-                "accelerate",
-                "launch",
-                "--num_machines",
-                "1",
-                "--num_processes",
-                "1",
-            ]
-            if num_gpus > 0:
-                cmd.append("--mixed_precision")
-                if params.mixed_precision == "fp16":
-                    cmd.append("fp16")
-                elif params.mixed_precision == "bf16":
-                    cmd.append("bf16")
-                else:
-                    cmd.append("no")
             cmd.extend(
                 [
                     "-m",
                     "autotrain.trainers.extractive_question_answering",
-                    "--training_config",
-                    os.path.join(params.project_name, "training_params.json"),
-                ]
-            )
-        elif isinstance(params, AutomaticSpeechRecognitionParams):
-            cmd = get_accelerate_command(num_gpus, params.gradient_accumulation)
-            if num_gpus > 0:
-                cmd.append("--mixed_precision")
-                if params.mixed_precision == "fp16":
-                    cmd.append("fp16")
-                elif params.mixed_precision == "bf16":
-                    cmd.append("bf16")
-                else:
-                    cmd.append("no")
-
-            cmd.extend(
-                [
-                    "-m",
-                    "autotrain.trainers.ASR",
                     "--training_config",
                     os.path.join(params.project_name, "training_params.json"),
                 ]
@@ -391,6 +358,47 @@ def launch_command(params):
                     os.path.join(params.project_name, "training_params.json"),
                 ]
             )
+    elif isinstance(params, AutomaticSpeechRecognitionParams):
+        if num_gpus == 0:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--cpu",
+            ]
+        elif num_gpus == 1:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                "1",
+            ]
+        else:
+            cmd = [
+                "accelerate",
+                "launch",
+                "--multi_gpu",
+                "--num_machines",
+                "1",
+                "--num_processes",
+                str(num_gpus),
+            ]
+        if num_gpus > 0:
+            cmd.append("--mixed_precision")
+            if params.mixed_precision == "fp16":
+                cmd.append("fp16")
+            elif params.mixed_precision == "bf16":
+                cmd.append("bf16")
+            else:
+                cmd.append("no")
+        cmd.extend([
+            "-m",
+            "autotrain.trainers.automatic_speech_recognition",
+            "--training_config",
+            os.path.join(params.project_name, "training_params.json"),
+        ])
+        
     elif isinstance(params, Seq2SeqParams):
         if num_gpus == 0:
             logger.warning("No GPU found. Forcing training on CPU. This will be super slow!")
@@ -550,11 +558,3 @@ def launch_command(params):
     logger.info(cmd)
     logger.info(params)
     return cmd
-
-def _get_task_specific_commands(self):
-    """Get task-specific commands."""
-    if self.task == "ASR":
-        return [
-            "pip install librosa>=0.10.0 soundfile>=0.12.1",
-        ]
-    

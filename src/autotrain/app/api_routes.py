@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from huggingface_hub import HfApi, constants
 from huggingface_hub.utils import build_hf_headers, get_session, hf_raise_for_status
-from pydantic import BaseModel, create_model, model_validator, Field
+from pydantic import BaseModel, create_model, model_validator
 
 from autotrain import __version__, logger
 from autotrain.app.params import HIDDEN_PARAMS, PARAMS, AppParams
-from autotrain.app.utils import token_verification
+from autotrain.app.utils import token_verification, get_user_and_orgs
 from autotrain.project import AutoTrainProject
 from autotrain.trainers.clm.params import LLMTrainingParams
 from autotrain.trainers.extractive_question_answering.params import ExtractiveQuestionAnsweringParams
@@ -27,9 +27,7 @@ from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpee
 
 
 FIELDS_TO_EXCLUDE = HIDDEN_PARAMS + ["push_to_hub"]
-
 _VERIFIED_API_TOKEN = None
-
 
 def create_api_base_model(base_class, class_name):
     """
@@ -118,7 +116,6 @@ ObjectDetectionParamsAPI = create_api_base_model(ObjectDetectionParams, "ObjectD
 AutomaticSpeechRecognitionParamsAPI = create_api_base_model(
     AutomaticSpeechRecognitionParams, "AutomaticSpeechRecognitionParamsAPI"
 )
-
 
 class LLMSFTColumnMapping(BaseModel):
     text_column: str
@@ -228,16 +225,13 @@ class ExtractiveQuestionAnsweringColumnMapping(BaseModel):
 class ObjectDetectionColumnMapping(BaseModel):
     image_column: str
     objects_column: str
-
-
+    
+    
 class AutomaticSpeechRecognitionColumnMapping(BaseModel):
     audio_column: str
     text_column: str
-
-
-
-
-
+    
+    
 class APICreateProjectModel(BaseModel):
     """
     APICreateProjectModel is a Pydantic model that defines the schema for creating a project.
@@ -352,6 +346,7 @@ class APICreateProjectModel(BaseModel):
             ImageRegressionColumnMapping,
             VLMColumnMapping,
             ExtractiveQuestionAnsweringColumnMapping,
+            ObjectDetectionColumnMapping,
             AutomaticSpeechRecognitionColumnMapping,
         ]
     ] = None
@@ -555,8 +550,11 @@ class APICreateProjectModel(BaseModel):
                 raise ValueError("column_mapping is required for ASR")
             if not values.get("column_mapping").get("text_column"):
                 raise ValueError("text_column is required for ASR")
+            if not values.get("column_mapping").get("audio_column"):
+                raise ValueError("audio_column is required for ASR")
             values["column_mapping"] = AutomaticSpeechRecognitionColumnMapping(**values["column_mapping"])
         return values
+
 
     @model_validator(mode="before")
     @classmethod
@@ -629,7 +627,8 @@ def api_auth(request: Request):
             if _VERIFIED_API_TOKEN == token:
                 return token
             try:
-                _ = token_verification(token=token)
+                # Use cached get_user_and_orgs instead of direct token_verification
+                _ = get_user_and_orgs(user_token=token)
                 _VERIFIED_API_TOKEN = token
                 return token
             except Exception as e:
@@ -799,7 +798,7 @@ async def api_logs(job: JobIDModel, token: bool = Depends(api_auth)):
                 try:
                     event = json.loads(line_data.decode())
                 except json.JSONDecodeError:
-                    continue  
+                    continue  # ignore (for example, empty lines or `b': keep-alive'`)
                 _logs.append((event["timestamp"], event["data"]))
 
         _logs = "\n".join([f"{timestamp}: {data}" for timestamp, data in _logs])

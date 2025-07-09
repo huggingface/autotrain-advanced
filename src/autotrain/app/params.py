@@ -14,6 +14,8 @@ from autotrain.trainers.text_classification.params import TextClassificationPara
 from autotrain.trainers.text_regression.params import TextRegressionParams
 from autotrain.trainers.token_classification.params import TokenClassificationParams
 from autotrain.trainers.vlm.params import VLMTrainingParams
+from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
+
 
 
 HIDDEN_PARAMS = [
@@ -65,6 +67,9 @@ HIDDEN_PARAMS = [
     "sentence3_column",
     "question_column",
     "answer_column",
+    "audio_column",
+    "transcription_column",
+    "text_column",
 ]
 
 
@@ -135,23 +140,24 @@ PARAMS["extractive-qa"] = ExtractiveQuestionAnsweringParams(
     max_seq_length=512,
     max_doc_stride=128,
 ).model_dump()
-PARAMS["ASR"] = {
-    "mixed_precision": "fp16",
-    "log": "tensorboard",
-    "max_duration": 30.0,
-    "sampling_rate": 16000,
-    "audio_column": "audio",
-    "text_column": "transcription",
-    "max_grad_norm": 1.0,
-    "weight_decay": 0.01,
-    "warmup_ratio": 0.1,
-    "early_stopping_patience": 3,
-    "early_stopping_threshold": 0.01,
-    "eval_strategy": "epoch",
-    "save_total_limit": 1,
-    "auto_find_batch_size": False,
-    "logging_steps": -1,
-}
+PARAMS["ASR"] = AutomaticSpeechRecognitionParams(
+    mixed_precision="fp16",
+    log="tensorboard",
+    max_duration=30.0,
+    sampling_rate=16000,
+    audio_column="audio",
+    text_column="transcription",
+    max_grad_norm=1.0,
+    weight_decay=0.01,
+    warmup_ratio=0.1,
+    early_stopping_patience=3,
+    early_stopping_threshold=0.01,
+    eval_strategy="epoch",
+    save_total_limit=1,
+    auto_find_batch_size=False,
+    logging_steps=-1,
+).model_dump()
+
 
 
 @dataclass
@@ -439,6 +445,23 @@ class AppParams:
             _params["valid_split"] = self.valid_split
 
         return ImageClassificationParams(**_params)
+    
+    def _munge_params_asr(self):
+        _params = self._munge_common_params()
+        _params["model"] = self.base_model
+        if "log" not in _params:
+            _params["log"] = "tensorboard"
+        if not self.using_hub_dataset:
+            _params["audio_column"] = "audio"
+            _params["text_column"] = "transcription"
+            _params["valid_split"] = "validation"
+        else:
+            _params["audio_column"] = self.column_mapping.get("audio" if not self.api else "audio_column", "audio")
+            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "transcription")
+            _params["train_split"] = self.train_split
+            _params["valid_split"] = self.valid_split
+    
+        return AutomaticSpeechRecognitionParams(**_params)
 
     def _munge_params_img_reg(self):
         _params = self._munge_common_params()
@@ -507,23 +530,6 @@ class AppParams:
             _params["task"] = "regression"
 
         return TabularParams(**_params)
-
-    def _munge_params_asr(self):
-        _params = self._munge_common_params()
-        _params["model"] = self.base_model
-        if "log" not in _params:
-            _params["log"] = "tensorboard"
-        if not self.using_hub_dataset:
-            _params["audio_column"] = "audio"
-            _params["text_column"] = "transcription"
-            _params["valid_split"] = "validation"
-        else:
-            _params["audio_column"] = self.column_mapping.get("audio" if not self.api else "audio_column", "audio")
-            _params["text_column"] = self.column_mapping.get("text" if not self.api else "text_column", "transcription")
-            _params["train_split"] = self.train_split
-            _params["valid_split"] = self.valid_split
-        # NOTE: Unlike other tasks, this returns a dict, not a Pydantic Params object
-        return _params
 
 
 def get_task_params(task, param_type):
@@ -772,6 +778,7 @@ def get_task_params(task, param_type):
             "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
+    
     if task == "ASR" and param_type == "basic":
         more_hidden_params = [
             "warmup_ratio",
@@ -786,5 +793,6 @@ def get_task_params(task, param_type):
             "early_stopping_threshold",
         ]
         task_params = {k: v for k, v in task_params.items() if k not in more_hidden_params}
-
+    
+    
     return task_params

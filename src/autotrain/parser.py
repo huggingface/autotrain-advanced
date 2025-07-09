@@ -20,6 +20,7 @@ from autotrain.project import (
     token_clf_munge_data,
     vlm_munge_data,
     asr_munge_data,
+    
 )
 from autotrain.tasks import TASKS
 from autotrain.trainers.clm.params import LLMTrainingParams
@@ -155,9 +156,9 @@ class AutoTrainConfigParser:
             "ext_qa": "text_extractive_question_answering",
             "ext-qa": "text_extractive_question_answering",
             "extractive-qa": "text_extractive_question_answering",
-            "ASR": "ASR",
-            "ASR": "ASR",
             "asr": "ASR",
+            "automatic_speech_recognition": "ASR",
+            "automatic-speech-recognition": "ASR",
         }
         task = self.config.get("task")
         self.task = self.task_aliases.get(task, task)
@@ -234,55 +235,3 @@ class AutoTrainConfigParser:
         project = AutoTrainProject(params=_params, backend=self.backend)
         job_id = project.create()
         logger.info(f"Job ID: {job_id}")
-
-def _get_task_specific_imports(task: str) -> str:
-    if task == "ASR":
-        return "from autotrain.trainers.ASR import AutomaticSpeechRecognitionTrainer"
-    elif task == "text-classification":
-        return "from autotrain.trainers.text_classification import TextClassificationTrainer"
-    elif task == "token-classification":
-        return "from autotrain.trainers.token_classification import TokenClassificationTrainer"
-    elif task == "question-answering":
-        return "from autotrain.trainers.question_answering import QuestionAnsweringTrainer"
-    elif task == "summarization":
-        return "from autotrain.trainers.summarization import SummarizationTrainer"
-    elif task == "translation":
-        return "from autotrain.trainers.translation import TranslationTrainer"
-    elif task == "text-generation":
-        return "from autotrain.trainers.text_generation import TextGenerationTrainer"
-    elif task == "image-classification":
-        return "from autotrain.trainers.image_classification import ImageClassificationTrainer"
-    elif task == "image-regression":
-        return "from autotrain.trainers.image_regression import ImageRegressionTrainer"
-    elif task == "tabular-classification":
-        return "from autotrain.trainers.tabular_classification import TabularClassificationTrainer"
-    elif task == "tabular-regression":
-        return "from autotrain.trainers.tabular_regression import TabularRegressionTrainer"
-    else:
-        raise ValueError(f"Unsupported task: {task}")
-
-def _get_task_specific_train_call(task: str) -> str:
-    if task == "ASR":
-        return "trainer = AutomaticSpeechRecognitionTrainer(config)"
-    elif task == "text-classification":
-        return "trainer = TextClassificationTrainer(config)"
-    elif task == "token-classification":
-        return "trainer = TokenClassificationTrainer(config)"
-    elif task == "question-answering":
-        return "trainer = QuestionAnsweringTrainer(config)"
-    elif task == "summarization":
-        return "trainer = SummarizationTrainer(config)"
-    elif task == "translation":
-        return "trainer = TranslationTrainer(config)"
-    elif task == "text-generation":
-        return "trainer = TextGenerationTrainer(config)"
-    elif task == "image-classification":
-        return "trainer = ImageClassificationTrainer(config)"
-    elif task == "image-regression":
-        return "trainer = ImageRegressionTrainer(config)"
-    elif task == "tabular-classification":
-        return "trainer = TabularClassificationTrainer(config)"
-    elif task == "tabular-regression":
-        return "trainer = TabularRegressionTrainer(config)"
-    else:
-        raise ValueError(f"Unsupported task: {task}")

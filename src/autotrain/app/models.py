@@ -1,8 +1,6 @@
 import collections
 
-from huggingface_hub import list_models, HfApi
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from huggingface_hub import list_models
 
 
 def get_sorted_models(hub_models):
@@ -238,6 +236,41 @@ def _fetch_token_classification_models():
 
     return hub_models
 
+def _fetch_asr_models():
+    """
+    Fetches and sorts ASR models from the Hugging Face model hub using the official pipeline tag.
+    Returns a sorted list of model identifiers from the Hugging Face model hub.
+    """
+    # Get models sorted by downloads
+    hub_models = list(
+        list_models(
+            pipeline_tag="automatic-speech-recognition",
+            library="transformers",
+            sort="downloads",
+            direction=-1,
+            limit=100,
+            full=False,
+        )
+    )
+    hub_models = get_sorted_models(hub_models)
+
+    # Get trending models (most likes)
+    trending_models = list(
+        list_models(
+            pipeline_tag="automatic-speech-recognition",
+            library="transformers",
+            sort="likes",
+            direction=-1,
+            limit=30,
+            full=False,
+        )
+    )
+    if len(trending_models) > 0:
+        trending_models = get_sorted_models(trending_models)
+        hub_models = [m for m in hub_models if m not in trending_models]
+        hub_models = trending_models + hub_models
+
+    return hub_models
 
 def _fetch_st_models():
     hub_models1 = list(
@@ -335,43 +368,6 @@ def _fetch_vlm_models():
     return hub_models
 
 
-def _fetch_asr_models():
-    """
-    Fetches and sorts ASR models from the Hugging Face model hub using the official pipeline tag.
-    Returns a sorted list of model identifiers from the Hugging Face model hub.
-    """
-    # Get models sorted by downloads
-    hub_models = list(
-        list_models(
-            pipeline_tag="automatic-speech-recognition",
-            library="transformers",
-            sort="downloads",
-            direction=-1,
-            limit=100,
-            full=False,
-        )
-    )
-    hub_models = get_sorted_models(hub_models)
-
-    # Get trending models (most likes)
-    trending_models = list(
-        list_models(
-            pipeline_tag="automatic-speech-recognition",
-            library="transformers",
-            sort="likes",
-            direction=-1,
-            limit=30,
-            full=False,
-        )
-    )
-    if len(trending_models) > 0:
-        trending_models = get_sorted_models(trending_models)
-        hub_models = [m for m in hub_models if m not in trending_models]
-        hub_models = trending_models + hub_models
-
-    return hub_models
-
-
 def fetch_models():
     _mc = collections.defaultdict(list)
     _mc["text-classification"] = _fetch_text_classification_models()
@@ -411,26 +407,4 @@ def fetch_models():
         "decision_tree",
         "knn",
     ]
-
     return _mc
-
-
-class LifeAppApiSource(BaseModel):
-    api_url: str
-    api_token: str
-
-
-class LifeAppJsonSource(BaseModel):
-    # For JSON file, the content will be handled via UploadFile in the endpoint
-    pass
-
-
-class LifeAppDatasetValidationRequest(BaseModel):
-    source_type: str  # "api" or "json"
-    api_data: Optional[LifeAppApiSource] = None
-
-
-class LifeAppDatasetPrepareRequest(BaseModel):
-    project_ids: List[str]
-    script_id: str
-    dataset_file: str

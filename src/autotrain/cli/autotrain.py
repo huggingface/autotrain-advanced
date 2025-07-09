@@ -1,6 +1,6 @@
 import argparse
 
-from autotrain.version import __version__
+from autotrain import __version__, logger
 from autotrain.cli.run_api import RunAutoTrainAPICommand
 from autotrain.cli.run_app import RunAutoTrainAppCommand
 from autotrain.cli.run_extractive_qa import RunAutoTrainExtractiveQACommand
@@ -16,10 +16,9 @@ from autotrain.cli.run_tabular import RunAutoTrainTabularCommand
 from autotrain.cli.run_text_classification import RunAutoTrainTextClassificationCommand
 from autotrain.cli.run_text_regression import RunAutoTrainTextRegressionCommand
 from autotrain.cli.run_token_classification import RunAutoTrainTokenClassificationCommand
+from autotrain.cli.run_automatic_speech_recognition import RunAutoTrainAutomaticSpeechRecognitionCommand
 from autotrain.cli.run_tools import RunAutoTrainToolsCommand
 from autotrain.parser import AutoTrainConfigParser
-from autotrain.cli.run_automatic_speech_recognition import RunAutoTrainAutomaticSpeechRecognitionCommand
-from autotrain import logger
 
 
 def main():
@@ -30,7 +29,6 @@ def main():
     )
     parser.add_argument("--version", "-v", help="Display AutoTrain version", action="store_true")
     parser.add_argument("--config", help="Optional configuration file", type=str)
-    parser.add_argument("--task", help="Specify the task", type=str)
     commands_parser = parser.add_subparsers(help="commands")
 
     # Register commands
@@ -67,12 +65,6 @@ def main():
     if not hasattr(args, "func"):
         parser.print_help()
         exit(1)
-
-    if args.task:
-        if args.task == "text-classification":
-            from autotrain.trainers.text_classification import __main__ as trainer
-        elif args.task == "ASR":
-            from autotrain.trainers.automatic_speech_recognition import __main__ as trainer
 
     command = args.func(args)
     command.run()

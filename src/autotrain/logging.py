@@ -1,6 +1,5 @@
 import sys
 from dataclasses import dataclass
-import io
 
 from loguru import logger
 
@@ -14,6 +13,9 @@ try:
 except ImportError:
     pass
 
+
+# Singleton guard for logger setup
+_LOGGER_INITIALIZED = False
 
 @dataclass
 class Logger:
@@ -36,6 +38,7 @@ class Logger:
     """
 
     def __post_init__(self):
+        global _LOGGER_INITIALIZED
         self.log_format = (
             "<level>{level: <8}</level> | "
             "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -43,7 +46,9 @@ class Logger:
             "<level>{message}</level>"
         )
         self.logger = logger
-        self.setup_logger()
+        if not _LOGGER_INITIALIZED:
+            self.setup_logger()
+            _LOGGER_INITIALIZED = True
 
     def _should_log(self, record):
         if not IS_ACCELERATE_AVAILABLE:
@@ -52,9 +57,6 @@ class Logger:
 
     def setup_logger(self):
         self.logger.remove()
-        # Patch sys.stdout to utf-8
-        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8':
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         self.logger.add(
             sys.stdout,
             format=self.log_format,

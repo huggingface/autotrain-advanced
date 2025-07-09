@@ -110,6 +110,8 @@
                             opt.style.display = "";
                         }
                     });
+                    // Show the LiFE App selection UI block
+                    document.getElementById("life-app-selection").style.display = "block";
                     break;
                 default:
                     // Hide LiFE App dataset source option for other tasks
@@ -118,6 +120,8 @@
                             opt.style.display = "none";
                         }
                     });
+                    // Hide the LiFE App selection UI block
+                    document.getElementById("life-app-selection").style.display = "none";
                     break;
             }
 
@@ -239,13 +243,15 @@
                             <option value="st:triplet">ST Triplet</option>
                             <option value="st:qa">ST Question Answering</option>
                         </optgroup>
+                        <optgroup label="Audio Tasks">
+                            <option value="ASR">Automatic Speech Recognition</option>
+                        </optgroup>
                         <optgroup label="Other Text Tasks">
                             <option value="text-classification">Text Classification</option>
                             <option value="text-regression">Text Regression</option>
                             <option value="extractive-qa">Extractive Question Answering</option>
                             <option value="seq2seq">Sequence To Sequence</option>
                             <option value="token-classification">Token Classification</option>
-                            <option value="ASR">Automatic Speech Recognition</option>
                         </optgroup>
                         <optgroup label="Image Tasks">
                             <option value="image-classification">Image Classification</option>
@@ -268,7 +274,7 @@
                     <select id="hardware" name="hardware"
                         class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         {% if enable_local == 1 %}
-                        <option value="local-ui">Local</option>
+                        <option value="local-ui">Local/Space</option>
                         {% endif %}
                         {% if enable_local == 0 and enable_ngc == 0 and enable_nvcf == 0 %}
                         <optgroup label="Hugging Face Spaces">
@@ -446,15 +452,14 @@
                             </p>
                             <select id="dataset_source" name="dataset_source"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="local">Local Files</option>
-                                <option value="huggingface">Hugging Face Dataset</option>
-                                <option value="life_app">LiFE App</option>
+                                <option value="local">Local</option>
+                                <option value="life_app" style="display:none;">LiFE App</option>
+                                <option value="hub">Hugging Face Hub</option>
                             </select>
                         </div>
                     </div>
-
                     <div class="items-stretch justify-center h-48 rounded">
-                        <div id="hub-data-tab-content" class="w-full px-4" style="display:none;">
+                        <div id="hub-data-tab-content" class="w-full px-4">
                             <label for="hub_dataset" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hub
                                 dataset path</label>
                             <div class="mt-1 flex items-center">
@@ -484,8 +489,7 @@
                                     class="mt-1 block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
-
-                        <div id="upload-data-tabs" class="w-full px-4" style="display:none;">
+                        <div id="upload-data-tabs" class="w-full px-4">
                             <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="upload-data-tab"
                                 data-tabs-toggle="#upload-data-tab-content" role="tablist">
                                 <li class="me-2" role="presentation">
@@ -502,7 +506,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <div id="upload-data-tab-content" class="w-full px-4" style="display:none;">
+                        <div id="upload-data-tab-content" class="w-full px-4">
                             <div class="hidden p-4" id="training-data" role="tabpanel"
                                 aria-labelledby="training-data-tab">
                                 <div class="flex items-center justify-center w-full h-20">
@@ -552,39 +556,39 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Move LiFE App selection here, just after hub-data-tab-content -->
+                        <!-- LiFE App Selection (hidden by default, shown only for ASR/LiFE App) -->
+                        <!-- This block allows the user to select LiFE App projects, scripts, and datasets when ASR and LiFE App are chosen -->
                         <div id="life-app-selection" style="display:none;" class="w-full px-4 mb-4">
                             <div class="flex flex-wrap gap-4">
                                 <!-- Projects Multi-select -->
-                                <div class="flex-1">
-                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Project(s)
-                                    </label>
+                                <!-- User can select one or more LiFE App projects -->
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Project(s)</label>
                                     <select id="life_app_project" name="life_app_project" multiple
                                         class="block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                     </select>
                                     <div id="life-app-project-tags" class="mb-2"></div>
                                 </div>
-
                                 <!-- Script Dropdown -->
-                                <div class="flex-1">
-                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Script
-                                    </label>
-                                    <select id="life_app_script" name="life_app_script"
+                                <!-- User selects a script associated with the selected project(s) -->
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">LiFE App Script</label>
+                                    <select id="life_app_script" name="life_app_script" disabled
                                         class="block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                         <option value="">Select Script</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <!-- Dataset File Dropdown -->
-                            <div id="dataset_file_div">
-                                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Dataset File
-                                </label>
-                                <select id="dataset_file" name="dataset_file"
-                                    class="js-example-basic-single block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">Select Dataset</option>
-                                </select>
+                                <!-- Shows the currently selected script below the dropdown -->
+                                <div id="selected-script-summary" style="margin-top: 8px; color: #333; font-weight: bold;"></div>
+                                <!-- Dataset Dropdown -->
+                                <!-- User selects a dataset file associated with the selected script -->
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Dataset File</label>
+                                    <select id="dataset_file" name="dataset_file" disabled
+                                        class="js-example-basic-single block w-full border border-gray-300 dark:border-gray-600 px-3 py-2 mb-2 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="">Select Dataset</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -695,7 +699,6 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <div class="p-4 md:p-5 text-center">
-                    <div id="final-modal-content"></div>
                     <h3 class="mb-5 text-sm font-normal text-gray-800 dark:text-gray-200"></h3>
                 </div>
             </div>
@@ -749,6 +752,7 @@
     <script>
         var autotrain_local_value = {{ enable_local }};
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const stopTrainingButton = document.getElementById('stop-training-button');
@@ -761,7 +765,7 @@
                     method: 'GET'
                 })
                     .then(response => response.text())
-                    .then((data) => {
+                    .then(data => {
                         console.log(data);
                         loadingSpinner.classList.add('hidden');
                     })
@@ -785,57 +789,6 @@
                 selectElement.classList.remove('hidden');
                 baseModelInput.classList.add('hidden');
             }
-        });
-    </script>
-
-    <script>
-        // Show/hide LiFE App selection UI based on dataset source
-        document.addEventListener('DOMContentLoaded', function () {
-            const datasetSource = document.getElementById('dataset_source');
-            const lifeAppSelection = document.getElementById('life-app-selection');
-
-            function toggleLifeAppSelection() {
-                if (datasetSource.value === 'life_app') {
-                    lifeAppSelection.style.display = '';
-                } else {
-                    lifeAppSelection.style.display = 'none';
-                }
-            }
-
-            datasetSource.addEventListener('change', toggleLifeAppSelection);
-            // Initialize on page load
-            toggleLifeAppSelection();
-        });
-    </script>
-    <script>
-        $(document).ready(function() {
-            // Initialize Select2 for all dropdowns
-            $('#life_app_project').select2({
-                placeholder: "Select LiFE App Project(s)",
-                allowClear: true,
-                multiple: true,
-                width: '100%',
-                maximumSelectionLength: 2,
-                tags: true
-            });
-            
-            $('#dataset_file').select2({
-                placeholder: "Select Dataset File",
-                allowClear: true,
-                width: '100%'
-            });
-            
-            // Handle dataset source change
-            $('#dataset_source').on('change', function() {
-                const lifeAppSelection = $('#life-app-selection');
-                if ($(this).val() === 'life_app') {
-                    lifeAppSelection.show();
-                    // Load projects when LiFE App is selected
-                    loadLifeAppProjects();
-                } else {
-                    lifeAppSelection.hide();
-                }
-            });
         });
     </script>
 </body>

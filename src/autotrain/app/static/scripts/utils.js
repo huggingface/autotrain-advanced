@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(document.getElementById('params_json').value)
 
         var formData = new FormData();
+        const dataSource = document.getElementById('dataset_source').value;
         var columnMapping = {};
         var params;
         var paramsJsonElement = document.getElementById('params_json');
@@ -87,11 +88,11 @@ document.addEventListener('DOMContentLoaded', function () {
             ? document.getElementById('base_model_input').value
             : document.getElementById('base_model').value;
 
+            
         formData.append('base_model', baseModelValue);
         formData.append('project_name', document.getElementById('project_name').value);
         formData.append('task', document.getElementById('task').value);
         formData.append('hardware', document.getElementById('hardware').value);
-        formData.append('dataset_source', document.getElementById('dataset_source').value);
         formData.append('params', params);
         formData.append('autotrain_user', document.getElementById('autotrain_user').value);
         formData.append('column_mapping', JSON.stringify(columnMapping));
@@ -99,14 +100,29 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('train_split', document.getElementById('train_split').value);
         formData.append('valid_split', document.getElementById('valid_split').value);
 
+        if (dataSource === 'life_app') {
+            const selectedProject = $('#life_app_project').val();
+            const selectedScript = $('#life_app_script').val();
+            const datasetFile = $('#dataset_file').val();
+            if (!selectedProject || selectedProject.length === 0 || !selectedScript || !datasetFile) {
+                loadingSpinner.classList.add('hidden');
+                alert('Please select Project(s), Script, and Dataset for LiFE App.');
+                return;
+            }
+            formData.append('data_source', 'life_app');
+            formData.append('selected_project', Array.isArray(selectedProject) ? selectedProject.join(',') : selectedProject);
+            formData.append('selected_script', selectedScript);
+            formData.append('dataset_file', datasetFile);
+        } else {
+            formData.append('data_source', dataSource);
         var trainingFiles = document.getElementById('data_files_training').files;
         for (var i = 0; i < trainingFiles.length; i++) {
             formData.append('data_files_training', trainingFiles[i]);
         }
-
         var validationFiles = document.getElementById('data_files_valid').files;
         for (var i = 0; i < validationFiles.length; i++) {
             formData.append('data_files_valid', validationFiles[i]);
+            }
         }
 
         const xhr = new XMLHttpRequest();
@@ -114,12 +130,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         xhr.onload = function () {
             loadingSpinner.classList.add('hidden');
-            var finalModalContent = document.getElementById('final-modal-content');
+            var finalModalContent = document.querySelector('#final-modal .text-center');
 
             if (xhr.status === 200) {
                 var responseObj = JSON.parse(xhr.responseText);
                 var monitorURL = responseObj.monitor_url;
-                if (finalModalContent) {
                 if (monitorURL.startsWith('http')) {
                     finalModalContent.innerHTML = '<p>Success!</p>' +
                         '<p>You can check the progress of your training here: <a href="' + monitorURL + '" target="_blank">' + monitorURL + '</a></p>';
@@ -127,13 +142,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     finalModalContent.innerHTML = '<p>Success!</p>' +
                         '<p>' + monitorURL + '</p>';
                 }
-                }
+
                 showFinalModal();
             } else {
-                if (finalModalContent) {
-                finalModalContent.innerHTML = '<p>Error: ' + xhr.status + ' ' + xhr.statusText + '</p>' + '<p> Please check the logs for more information.</p>';
-                }
-                console.error('Error:', xhr.status, xhr.statusText);
+                let errorMsg = 'Error: ' + xhr.status + ' ' + xhr.statusText;
+                try {
+                    const resp = JSON.parse(xhr.responseText);
+                    if (resp.detail) errorMsg += '<br>' + resp.detail;
+                } catch {}
+                finalModalContent.innerHTML = '<p>' + errorMsg + '</p><p> Please check the logs for more information.</p>';
                 showFinalModal();
             }
         };

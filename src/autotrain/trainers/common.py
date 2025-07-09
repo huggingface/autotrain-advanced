@@ -7,22 +7,17 @@ import os
 import shutil
 import time
 import traceback
-import logging
-from datetime import datetime, timedelta
 
 import requests
 from accelerate import PartialState
 from huggingface_hub import HfApi
 from pydantic import BaseModel
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
-import torch
 
 from autotrain import is_colab, logger
 
 
 ALLOW_REMOTE_CODE = os.environ.get("ALLOW_REMOTE_CODE", "true").lower() == "true"
-
-logger = logging.getLogger(__name__)
 
 
 def get_file_sizes(directory):
@@ -63,7 +58,7 @@ def remove_global_step(directory):
         for name in dirs:
             if name.startswith("global_step"):
                 folder_path = os.path.join(root, name)
-                print(f"Removing folder: {folder_path}")
+                logger.info(f"Removing folder: {folder_path}")
                 shutil.rmtree(folder_path)
 
 
@@ -77,7 +72,11 @@ def remove_autotrain_data(config):
     Raises:
         OSError: If the removal of the directory fails.
     """
-    os.system(f"rm -rf {config.project_name}/autotrain-data")
+    # Use shutil.rmtree for cross-platform compatibility
+    import shutil
+    autotrain_data_path = f"{config.project_name}/autotrain-data"
+    if os.path.exists(autotrain_data_path):
+        shutil.rmtree(autotrain_data_path)
     remove_global_step(config.project_name)
 
 
@@ -157,7 +156,7 @@ def pause_space(params, is_failure=False):
         Error: Logs if the model failed to train and the discussion was not created.
     """
     if "SPACE_ID" in os.environ:
-        
+        # shut down the space
         logger.info("Pausing space...")
         api = HfApi(token=params.token)
 
@@ -186,7 +185,7 @@ def pause_space(params, is_failure=False):
 
         api.pause_space(repo_id=os.environ["SPACE_ID"])
     if "ENDPOINT_ID" in os.environ:
-        
+        # shut down the endpoint
         logger.info("Pausing endpoint...")
         pause_endpoint(params)
 
@@ -246,13 +245,16 @@ class AutoTrainParams(BaseModel):
 
     def save(self, output_dir):
         """
-        Save parameters to a json file.
+        Save parameters to a json file, always removing the 'token' key before writing.
         """
         os.makedirs(output_dir, exist_ok=True)
         path = os.path.join(output_dir, "training_params.json")
-        
+        data = self.model_dump()
+        if "token" in data:
+            del data["token"]
+        # save formatted json
         with open(path, "w", encoding="utf-8") as f:
-            f.write(self.model_dump_json(indent=4))
+            f.write(json.dumps(data, indent=4))
 
     def __str__(self):
         """
@@ -269,22 +271,23 @@ class AutoTrainParams(BaseModel):
         super().__init__(**data)
 
         if len(self.project_name) > 0:
-           
+            # make sure project_name is always alphanumeric but can have hyphens. if not, raise ValueError
             if not self.project_name.replace("-", "").isalnum():
                 raise ValueError("project_name must be alphanumeric but can contain hyphens")
 
-        
+        # project name cannot be more than 50 characters
         if len(self.project_name) > 50:
             raise ValueError("project_name cannot be more than 50 characters")
 
-        
+        # Parameters not supplied by the user
         defaults = set(self.model_fields.keys())
         supplied = set(data.keys())
         not_supplied = defaults - supplied
         if not_supplied and not is_colab:
             logger.warning(f"Parameters not supplied by user and set to default: {', '.join(not_supplied)}")
 
-       
+        # Parameters that were supplied but not used
+        # This is a naive implementation. It might catch some internal Pydantic params.
         unused = supplied - set(self.model_fields)
         if unused:
             logger.warning(f"Parameters supplied but not used: {', '.join(unused)}")
@@ -367,8 +370,9 @@ class LossLoggingCallback(TrainerCallback):
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
-        if state.is_local_process_zero:
-            logger.info(logs)
+        if state.is_local_process_zero and logs:
+            log_str = " | ".join(f"{k}: {v}" for k, v in logs.items())
+            logger.info(log_str)
 
 
 class TrainStartCallback(TrainerCallback):
@@ -388,159 +392,3 @@ class TrainStartCallback(TrainerCallback):
 
     def on_train_begin(self, args, state, control, **kwargs):
         logger.info("Starting to train...")
-
-
-class DetailedTrainingCallback(TrainerCallback):
-    """
-    Callback to log detailed training progress.
-    """
-    def __init__(self):
-        self.start_time = None
-        self.training_started = False
-        self.current_epoch = 0
-        self.best_loss = float('inf')
-        self.total_steps = 0
-        self.current_step = 0
-        
-    def on_train_begin(self, args, state, control, **kwargs):
-        """Called at the beginning of training."""
-        self.start_time = datetime.now()
-        self.training_started = True
-        self.total_steps = state.max_steps
-        
-        
-        logger.info("=" * 80)
-        logger.info("🚀 Training Started")
-        logger.info("=" * 80)
-        logger.info(f"📅 Start time: {self.start_time}")
-        logger.info(f"⚙️ Training arguments: {args}")
-        
-        
-        if torch.cuda.is_available():
-            logger.info(f"🎮 GPU: {torch.cuda.get_device_name(0)}")
-            logger.info(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
-        
-    def on_epoch_begin(self, args, state, control, **kwargs):
-        """Called at the beginning of an epoch."""
-        self.current_epoch = state.epoch
-        logger.info("=" * 80)
-        logger.info(f"📊 Starting Epoch {self.current_epoch}")
-        logger.info("=" * 80)
-        
-    def on_step_end(self, args, state, control, **kwargs):
-        """Called at the end of a step."""
-        if state.global_step % args.logging_steps == 0:
-            self.current_step = state.global_step
-            
-           
-            progress = state.global_step / state.max_steps * 100
-            elapsed = datetime.now() - self.start_time
-            
-            
-            steps_per_second = state.global_step / elapsed.total_seconds()
-            remaining_steps = state.max_steps - state.global_step
-            eta = remaining_steps / steps_per_second if steps_per_second > 0 else 0
-            
-           
-            if state.log_history:
-                current_loss = state.log_history[-1].get('loss', 'N/A')
-                current_lr = state.log_history[-1].get('learning_rate', 'N/A')
-            else:
-                current_loss = 'N/A'
-                current_lr = 'N/A'
-            
-            
-            if isinstance(current_loss, (int, float)) and current_loss < self.best_loss:
-                self.best_loss = current_loss
-            
-           
-            logger.info(f"⏳ Progress: {progress:.1f}% ({state.global_step}/{state.max_steps})")
-            
-            
-            if isinstance(current_loss, (int, float)):
-                loss_str = f"{current_loss:.4f}"
-            else:
-                loss_str = str(current_loss)
-            
-            if isinstance(self.best_loss, (int, float)) and self.best_loss != float('inf'):
-                best_loss_str = f"{self.best_loss:.4f}"
-            else:
-                best_loss_str = "N/A"
-            
-            logger.info(f"📈 Loss: {loss_str} (Best: {best_loss_str})")
-            
-           
-            if isinstance(current_lr, (int, float)):
-                lr_str = f"{current_lr:.2e}"
-            else:
-                lr_str = str(current_lr)
-            
-            logger.info(f"📊 Learning Rate: {lr_str}")
-            logger.info(f"⏱️ Elapsed: {elapsed}")
-            logger.info(f"⏳ ETA: {timedelta(seconds=int(eta))}")
-            
-            
-            if torch.cuda.is_available():
-                allocated = torch.cuda.memory_allocated() / 1024**2
-                cached = torch.cuda.memory_reserved() / 1024**2
-                logger.info(f"💾 GPU Memory: {allocated:.1f}MB allocated, {cached:.1f}MB cached")
-            
-    def on_epoch_end(self, args, state, control, **kwargs):
-        """Called at the end of an epoch."""
-        logger.info("=" * 80)
-        logger.info(f"✅ Epoch {self.current_epoch} completed")
-        
-        
-        if state.log_history:
-            current_loss = state.log_history[-1].get('loss', 'N/A')
-            if isinstance(current_loss, (int, float)):
-                loss_str = f"{current_loss:.4f}"
-            else:
-                loss_str = str(current_loss)
-            logger.info(f"📊 Average loss: {loss_str}")
-            
-            if 'eval_loss' in state.log_history[-1]:
-                eval_loss = state.log_history[-1]['eval_loss']
-                if isinstance(eval_loss, (int, float)):
-                    eval_loss_str = f"{eval_loss:.4f}"
-                else:
-                    eval_loss_str = str(eval_loss)
-                logger.info(f"📊 Validation loss: {eval_loss_str}")
-        else:
-            logger.info("📊 Average loss: N/A")
-        logger.info("=" * 80)
-        
-    def on_train_end(self, args, state, control, **kwargs):
-        """Called at the end of training."""
-        total_time = datetime.now() - self.start_time
-        
-        logger.info("=" * 80)
-        logger.info("🎉 Training Completed")
-        logger.info("=" * 80)
-        logger.info(f"⏱️ Total training time: {total_time}")
-        
-        
-        if state.log_history:
-            current_loss = state.log_history[-1].get('loss', 'N/A')
-            if isinstance(current_loss, (int, float)):
-                loss_str = f"{current_loss:.4f}"
-            else:
-                loss_str = str(current_loss)
-            logger.info(f"📊 Final loss: {loss_str}")
-            
-            if 'eval_loss' in state.log_history[-1]:
-                eval_loss = state.log_history[-1]['eval_loss']
-                if isinstance(eval_loss, (int, float)):
-                    eval_loss_str = f"{eval_loss:.4f}"
-                else:
-                    eval_loss_str = str(eval_loss)
-                logger.info(f"📊 Final validation loss: {eval_loss_str}")
-        else:
-            logger.info("📊 Final loss: N/A")
-        
-        if isinstance(self.best_loss, (int, float)) and self.best_loss != float('inf'):
-            best_loss_str = f"{self.best_loss:.4f}"
-        else:
-            best_loss_str = "N/A"
-        logger.info(f"🏆 Best loss: {best_loss_str}")
-        logger.info("=" * 80)
