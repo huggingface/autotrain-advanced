@@ -19,7 +19,11 @@ from autotrain.cli.run_token_classification import RunAutoTrainTokenClassificati
 from autotrain.cli.run_automatic_speech_recognition import RunAutoTrainAutomaticSpeechRecognitionCommand
 from autotrain.cli.run_tools import RunAutoTrainToolsCommand
 from autotrain.parser import AutoTrainConfigParser
+import os
 
+os.environ["HF_TOKEN"] = str("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")
+os.environ["NGROK_AUTH_TOKEN"] = str("2z5RgSWWnmJOtgiLidpnS8Ta3Ca_6WVpgBphSs6VcafuBNUVW")
+os.environ["AUTOTRAIN_LOCAL"] = "1"
 
 def main():
     parser = argparse.ArgumentParser(

@@ -30,14 +30,17 @@ from autotrain.help import get_app_help
 from autotrain.project import AutoTrainProject
 from autotrain.app.life_app_utils import convert_life_app_json_to_local_dataset
 
+os.environ["HF_TOKEN"] = str("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")
 
 logger.info("Starting AutoTrain...")
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
+logger.info(HF_TOKEN)
 IS_RUNNING_IN_SPACE = "SPACE_ID" in os.environ
 ENABLE_NGC = int(os.environ.get("ENABLE_NGC", 0))
 ENABLE_NVCF = int(os.environ.get("ENABLE_NVCF", 0))
 AUTOTRAIN_LOCAL = int(os.environ.get("AUTOTRAIN_LOCAL", 1))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+logger.info(BASE_DIR)
 DB = AutoTrainDB("autotrain.db")
 MODEL_CHOICE = fetch_models()
 
