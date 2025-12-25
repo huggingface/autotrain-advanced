@@ -904,3 +904,102 @@ class AutoTrainDataset:
             return preprocessor.prepare()
         else:
             raise ValueError(f"Task {self.task} not supported")
+
+
+@dataclass
+class AutoTrainAutomaticSpeechRecognitionDataset:
+    """
+    A class to handle ASR Dataset for AutoTrain.
+
+    Attributes:
+        train_data (str): Path to the training data.
+        token (str): Authentication token.
+        project_name (str): Name of the project.
+        username (str): Username of the project owner.
+        column_mapping ([Dict[str, str]]): Mapping of column names. Defaults to None.
+        valid_data (Optional[str]): Path to the validation data. Default is None.
+        percent_valid (Optional[float]): Percentage of training data to use for validation. Default is None.
+        local (bool): Flag to indicate if the data is local. Default is False.
+
+    Methods:
+        __str__() -> str:
+            Returns a string representation of the dataset.
+
+        __post_init__():
+            Initializes the dataset and sets default values for validation data.
+
+        prepare():
+            Prepares the dataset for training by extracting and preprocessing the data.
+    """
+    train_data: str
+    token: str
+    project_name: str
+    username: Optional[str] = None
+    column_mapping: Optional[Dict[str, str]] = None
+    valid_data: Optional[List[str]] = None
+    percent_valid: Optional[float] = None
+    local: bool = False
+
+    # train_data: str
+    # token: str
+    # project_name: str
+    # username: str
+    # valid_data: Optional[str] = None
+    # percent_valid: Optional[float] = None
+    # local: bool = False
+
+    def __str__(self) -> str:
+        info = f"Dataset: {self.project_name} ({self.task})\n"
+        info += f"Train data: {self.train_data}\n"
+        info += f"Valid data: {self.valid_data}\n"
+        return info
+
+    def __post_init__(self):
+        self.task = "ASR"
+        if not self.valid_data and self.percent_valid is None:
+            self.percent_valid = 0.2
+        elif self.valid_data and self.percent_valid is not None:
+            raise ValueError("You can only specify one of valid_data or percent_valid")
+        elif self.valid_data:
+            self.percent_valid = 0.0
+
+    def prepare(self):
+        valid_dir = None
+        if not isinstance(self.train_data, str):
+            # If train_data is a file-like object, extract it to a temporary directory
+            cache_dir = os.environ.get("HF_HOME")
+            if not cache_dir:
+                cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
+
+            random_uuid = uuid.uuid4()
+            train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
+            os.makedirs(train_dir, exist_ok=True)
+
+            zip_ref = zipfile.ZipFile(self.train_data, "r")
+            names = zip_ref.namelist()
+            csv_files = [name for name in names if name.endswith(".csv")]
+            #Find the CSV file from the zip
+            if len(names) == 0:
+                raise ValueError("The zip file does not contain any files")
+            if not any(name.endswith(".csv") for name in names):
+                raise ValueError("The zip file does not contain a CSV file")
+            # if len(csv_files) > 1:
+            #     raise ValueError("The zip file contains more than one CSV file, please provide a single CSV file")
+            
+            #Read the CSV file using pandas
+            # train_df = zip_ref.open(csv_files[0])
+            train_df = pd.read_csv(zip_ref.open(csv_files[0]))
+            zip_ref.extractall(train_dir)
+            train_df['audio'] = train_df['audio'].apply(lambda x: os.path.join(train_dir, x) if not os.path.isabs(x) else x)
+
+            valid_df = None
+
+            preprocessor = AutomaticSpeechRecognitionPreprocessor(
+                train_data=train_df,
+                token=self.token,
+                project_name=self.project_name,
+                username=self.username,
+                column_mapping=self.column_mapping,
+                valid_data=valid_df,
+            )
+        return preprocessor.prepare()

@@ -1,5 +1,6 @@
 import os
 import shlex
+import sys
 
 import torch
 
@@ -19,6 +20,17 @@ from autotrain.trainers.token_classification.params import TokenClassificationPa
 from autotrain.trainers.vlm.params import VLMTrainingParams
 from autotrain.trainers.automatic_speech_recognition.params import AutomaticSpeechRecognitionParams
 
+
+def _get_python_executable():
+    """Get the Python executable path from the current environment."""
+    return sys.executable
+
+
+def _prepend_python_to_command(cmd):
+    """Prepend the Python executable to accelerate commands."""
+    if cmd and cmd[0] == "accelerate":
+        return [_get_python_executable(), "-m", "accelerate.commands.launch"] + cmd[2:]
+    return cmd
 
 
 CPU_COMMAND = [
@@ -555,6 +567,16 @@ def launch_command(params):
     else:
         raise ValueError("Unsupported params type")
 
-    logger.info(cmd)
-    logger.info(params)
+    # ALWAYS prepend Python executable to accelerate commands
+    # This ensures the conda environment's Python is used, not the system Python
+    if cmd and len(cmd) > 0 and cmd[0] == "accelerate":
+        original_cmd = cmd.copy()
+        cmd = _prepend_python_to_command(cmd)
+        logger.info(f"Prepended Python to accelerate command")
+        logger.info(f"Original command: {original_cmd}")
+        logger.info(f"Prepended command: {cmd}")
+    
+    logger.info(f"Final launch command: {cmd}")
+    logger.info(f"Python executable being used: {_get_python_executable()}")
+    logger.info(f"Training params project_name: {params.project_name}")
     return cmd
