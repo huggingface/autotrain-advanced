@@ -373,8 +373,10 @@ def colab_app():
             with open("config.yml", "w") as f:
                 yaml.dump(config, f)
 
-            cmd = "autotrain --config config.yml"
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            cmd = ["autotrain", "--config", "config.yml"]
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            )
             while True:
                 output = process.stdout.readline()
                 if output == "" and process.poll() is not None:

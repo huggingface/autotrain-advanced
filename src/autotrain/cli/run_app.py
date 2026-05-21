@@ -36,6 +36,19 @@ def run_app_command_factory(args):
     return RunAutoTrainAppCommand(args.port, args.host, args.share, args.workers, args.colab)
 
 
+def _uvicorn_command(host, port, workers):
+    return [
+        "uvicorn",
+        "autotrain.app.app:app",
+        "--host",
+        str(host),
+        "--port",
+        str(port),
+        "--workers",
+        str(workers),
+    ]
+
+
 class RunAutoTrainAppCommand(BaseAutoTrainCommand):
     """
     Command to run the AutoTrain application.
@@ -117,7 +130,7 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
         if self.share:
             from pyngrok import ngrok
 
-            os.system(f"fuser -n tcp -k {self.port}")
+            subprocess.run(["fuser", "-n", "tcp", "-k", str(self.port)], check=False)
             authtoken = os.environ.get("NGROK_AUTH_TOKEN", "")
             if authtoken.strip() == "":
                 logger.info("NGROK_AUTH_TOKEN not set")
@@ -132,25 +145,19 @@ class RunAutoTrainAppCommand(BaseAutoTrainCommand):
             logger.info(f"AutoTrain Public URL: {url}")
             logger.info("Please wait for the app to load...")
 
-        command = f"uvicorn autotrain.app.app:app --host {self.host} --port {self.port}"
-        command += f" --workers {self.workers}"
+        command = _uvicorn_command(self.host, self.port, self.workers)
 
         with open("autotrain.log", "w", encoding="utf-8") as log_file:
-            if sys.platform == "win32":
-                process = subprocess.Popen(
-                    command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, bufsize=1
-                )
+            popen_kwargs = {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+                "text": True,
+                "bufsize": 1,
+            }
+            if sys.platform != "win32":
+                popen_kwargs["preexec_fn"] = os.setsid
 
-            else:
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    shell=True,
-                    text=True,
-                    bufsize=1,
-                    preexec_fn=os.setsid,
-                )
+            process = subprocess.Popen(command, **popen_kwargs)
 
             output_thread = threading.Thread(target=handle_output, args=(process.stdout, log_file))
             output_thread.start()
