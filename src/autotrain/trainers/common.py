@@ -72,7 +72,7 @@ def remove_autotrain_data(config):
     Raises:
         OSError: If the removal of the directory fails.
     """
-    os.system(f"rm -rf {config.project_name}/autotrain-data")
+    shutil.rmtree(os.path.join(config.project_name, "autotrain-data"), ignore_errors=True)
     remove_global_step(config.project_name)
 
 

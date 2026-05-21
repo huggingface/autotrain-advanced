@@ -39,7 +39,13 @@ def _safe_extract_zip(zip_ref, destination):
         member_path = PurePosixPath(member.filename.replace("\\", "/"))
         if member_path.is_absolute() or ".." in member_path.parts:
             raise ValueError(f"Unsafe path in zip archive: {member.filename}")
-    zip_ref.extractall(destination)
+        target = os.path.join(destination, *member_path.parts)
+        if member.is_dir():
+            os.makedirs(target, exist_ok=True)
+            continue
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with zip_ref.open(member) as source, open(target, "wb") as output:
+            shutil.copyfileobj(source, output)
 
 
 def _extract_dataset_zip(data, destination):
