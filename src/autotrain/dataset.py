@@ -1,8 +1,10 @@
 import io
 import os
+import shutil
 import uuid
 import zipfile
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -30,6 +32,27 @@ from autotrain.preprocessor.vision import (
     ObjectDetectionPreprocessor,
 )
 from autotrain.preprocessor.vlm import VLMPreprocessor
+
+
+def _safe_extract_zip(zip_ref, destination):
+    for member in zip_ref.infolist():
+        member_path = PurePosixPath(member.filename.replace("\\", "/"))
+        if member_path.is_absolute() or ".." in member_path.parts:
+            raise ValueError(f"Unsafe path in zip archive: {member.filename}")
+    zip_ref.extractall(destination)
+
+
+def _extract_dataset_zip(data, destination):
+    data.seek(0)
+    content = data.read()
+    bytes_io = io.BytesIO(content)
+
+    with zipfile.ZipFile(bytes_io, "r") as zip_ref:
+        _safe_extract_zip(zip_ref, destination)
+
+    macosx_dir = os.path.join(destination, "__MACOSX")
+    if os.path.exists(macosx_dir):
+        shutil.rmtree(macosx_dir)
 
 
 def remove_non_image_files(folder):
@@ -124,30 +147,14 @@ class AutoTrainImageClassificationDataset:
             random_uuid = uuid.uuid4()
             train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
             os.makedirs(train_dir, exist_ok=True)
-            self.train_data.seek(0)
-            content = self.train_data.read()
-            bytes_io = io.BytesIO(content)
 
-            zip_ref = zipfile.ZipFile(bytes_io, "r")
-            zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
-            macosx_dir = os.path.join(train_dir, "__MACOSX")
-            if os.path.exists(macosx_dir):
-                os.system(f"rm -rf {macosx_dir}")
+            _extract_dataset_zip(self.train_data, train_dir)
             remove_non_image_files(train_dir)
             if self.valid_data:
                 random_uuid = uuid.uuid4()
                 valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
                 os.makedirs(valid_dir, exist_ok=True)
-                self.valid_data.seek(0)
-                content = self.valid_data.read()
-                bytes_io = io.BytesIO(content)
-                zip_ref = zipfile.ZipFile(bytes_io, "r")
-                zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
-                macosx_dir = os.path.join(valid_dir, "__MACOSX")
-                if os.path.exists(macosx_dir):
-                    os.system(f"rm -rf {macosx_dir}")
+                _extract_dataset_zip(self.valid_data, valid_dir)
                 remove_non_image_files(valid_dir)
         else:
             train_dir = self.train_data
@@ -223,30 +230,14 @@ class AutoTrainObjectDetectionDataset:
             random_uuid = uuid.uuid4()
             train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
             os.makedirs(train_dir, exist_ok=True)
-            self.train_data.seek(0)
-            content = self.train_data.read()
-            bytes_io = io.BytesIO(content)
 
-            zip_ref = zipfile.ZipFile(bytes_io, "r")
-            zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
-            macosx_dir = os.path.join(train_dir, "__MACOSX")
-            if os.path.exists(macosx_dir):
-                os.system(f"rm -rf {macosx_dir}")
+            _extract_dataset_zip(self.train_data, train_dir)
             remove_non_image_files(train_dir)
             if self.valid_data:
                 random_uuid = uuid.uuid4()
                 valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
                 os.makedirs(valid_dir, exist_ok=True)
-                self.valid_data.seek(0)
-                content = self.valid_data.read()
-                bytes_io = io.BytesIO(content)
-                zip_ref = zipfile.ZipFile(bytes_io, "r")
-                zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
-                macosx_dir = os.path.join(valid_dir, "__MACOSX")
-                if os.path.exists(macosx_dir):
-                    os.system(f"rm -rf {macosx_dir}")
+                _extract_dataset_zip(self.valid_data, valid_dir)
                 remove_non_image_files(valid_dir)
         else:
             train_dir = self.train_data
@@ -334,30 +325,14 @@ class AutoTrainVLMDataset:
             random_uuid = uuid.uuid4()
             train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
             os.makedirs(train_dir, exist_ok=True)
-            self.train_data.seek(0)
-            content = self.train_data.read()
-            bytes_io = io.BytesIO(content)
 
-            zip_ref = zipfile.ZipFile(bytes_io, "r")
-            zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
-            macosx_dir = os.path.join(train_dir, "__MACOSX")
-            if os.path.exists(macosx_dir):
-                os.system(f"rm -rf {macosx_dir}")
+            _extract_dataset_zip(self.train_data, train_dir)
             remove_non_image_files(train_dir)
             if self.valid_data:
                 random_uuid = uuid.uuid4()
                 valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
                 os.makedirs(valid_dir, exist_ok=True)
-                self.valid_data.seek(0)
-                content = self.valid_data.read()
-                bytes_io = io.BytesIO(content)
-                zip_ref = zipfile.ZipFile(bytes_io, "r")
-                zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
-                macosx_dir = os.path.join(valid_dir, "__MACOSX")
-                if os.path.exists(macosx_dir):
-                    os.system(f"rm -rf {macosx_dir}")
+                _extract_dataset_zip(self.valid_data, valid_dir)
                 remove_non_image_files(valid_dir)
         else:
             train_dir = self.train_data
@@ -434,30 +409,14 @@ class AutoTrainImageRegressionDataset:
             random_uuid = uuid.uuid4()
             train_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
             os.makedirs(train_dir, exist_ok=True)
-            self.train_data.seek(0)
-            content = self.train_data.read()
-            bytes_io = io.BytesIO(content)
 
-            zip_ref = zipfile.ZipFile(bytes_io, "r")
-            zip_ref.extractall(train_dir)
-            # remove the __MACOSX directory
-            macosx_dir = os.path.join(train_dir, "__MACOSX")
-            if os.path.exists(macosx_dir):
-                os.system(f"rm -rf {macosx_dir}")
+            _extract_dataset_zip(self.train_data, train_dir)
             remove_non_image_files(train_dir)
             if self.valid_data:
                 random_uuid = uuid.uuid4()
                 valid_dir = os.path.join(cache_dir, "autotrain", str(random_uuid))
                 os.makedirs(valid_dir, exist_ok=True)
-                self.valid_data.seek(0)
-                content = self.valid_data.read()
-                bytes_io = io.BytesIO(content)
-                zip_ref = zipfile.ZipFile(bytes_io, "r")
-                zip_ref.extractall(valid_dir)
-                # remove the __MACOSX directory
-                macosx_dir = os.path.join(valid_dir, "__MACOSX")
-                if os.path.exists(macosx_dir):
-                    os.system(f"rm -rf {macosx_dir}")
+                _extract_dataset_zip(self.valid_data, valid_dir)
                 remove_non_image_files(valid_dir)
         else:
             train_dir = self.train_data
