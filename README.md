@@ -1,5 +1,8 @@
 # 🤗 AutoTrain Advanced
 
+> [!WARNING]
+> **This project is no longer maintained.** No new features will be added and bugs will not be fixed. We recommend using [Axolotl](https://github.com/axolotl-ai-cloud/axolotl), [TRL](https://github.com/huggingface/trl), or [transformers.Trainer](https://huggingface.co/docs/transformers/main_classes/trainer).
+
 AutoTrain Advanced: faster and easier training and deployments of state-of-the-art machine learning models. AutoTrain Advanced is a no-code solution that allows you to train machine learning models in just a few clicks. Please note that you must upload data in correct format for project to be created. For help regarding proper data format and pricing, check out the documentation. 
 
 NOTE: AutoTrain is free! You only pay for the resources you use in case you decide to run AutoTrain on Hugging Face Spaces. When running locally, you only pay for the resources you use on your own infrastructure.
