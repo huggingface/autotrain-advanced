@@ -17,9 +17,9 @@ jobs:
     runs-on:
       group: aws-g6-4xlarge-plus
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
     - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v7
       with:
         python-version: 3.9
     - name: Install dependencies

@@ -12,13 +12,13 @@ jobs:
       group: 'aws-general-8-plus'
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to NGC
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: nvcr.io
           username: ${{ secrets.NVCR_USERNAME }}
