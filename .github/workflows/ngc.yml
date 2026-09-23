@@ -5,8 +5,12 @@ on:
     branches:
       - main
 
+permissions: {}
+
 jobs:
   dockerhub:
+    permissions:
+      contents: read
     name: NGC
     runs-on:
       group: 'aws-general-8-plus'

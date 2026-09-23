@@ -11,8 +11,12 @@ on:
     types:
       - created
 
+permissions: {}
+
 jobs:
   tests:
+    permissions:
+      contents: read
     name: Run unit tests
     runs-on:
       group: aws-g6-4xlarge-plus
