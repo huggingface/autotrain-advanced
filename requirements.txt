@@ -6,7 +6,7 @@ jiwer==3.0.5
 joblib==1.4.2
 loguru==0.7.3
 pandas==2.2.3
-nltk==3.9.1
+nltk==3.10.3
 optuna==4.1.0
 Pillow==11.0.0
 sacremoses==0.1.1
