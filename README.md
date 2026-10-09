@@ -114,6 +114,31 @@ $ autotrain --config <path_to_config_file>
 ```
 
 
+## Security
+
+The UI/API app ships with an optional security middleware
+([fastapi-guard](https://github.com/Guard-Core/fastapi-guard)) that is disabled
+by default. Set `AUTOTRAIN_GUARD_ENABLED=1` to enable IP block/allow lists,
+rate limiting with auto-ban, user-agent blocking, and penetration-attempt
+detection:
+
+```bash
+export AUTOTRAIN_GUARD_ENABLED=1
+export AUTOTRAIN_GUARD_RATE_LIMIT=100          # requests per window (default 100)
+export AUTOTRAIN_GUARD_RATE_LIMIT_WINDOW=60    # window seconds (default 60)
+export AUTOTRAIN_GUARD_BLOCKED_IPS=1.2.3.4,5.6.7.0/24
+export AUTOTRAIN_GUARD_BLOCKED_USER_AGENTS=sqlmap,nikto
+```
+
+Additional optional settings: `AUTOTRAIN_GUARD_ALLOWED_IPS` (allowlist mode),
+`AUTOTRAIN_GUARD_EXCLUDED_PATHS`, `AUTOTRAIN_GUARD_TRUSTED_PROXIES` /
+`AUTOTRAIN_GUARD_TRUSTED_PROXY_DEPTH` (client IP resolution behind reverse
+proxies), `AUTOTRAIN_GUARD_REDIS_URL` (distributed rate limiting and bans
+across workers), `AUTOTRAIN_GUARD_HONEYPOT_FIELDS` (trap fields that reject
+bots POSTing to `/api/create_project`), and `IPINFO_TOKEN` (geo/cloud-provider
+lookups). When the app runs behind the Hugging Face Spaces proxy, private
+network ranges are trusted for `X-Forwarded-For` by default.
+
 ## Documentation
 
 Documentation is available at https://hf.co/docs/autotrain/

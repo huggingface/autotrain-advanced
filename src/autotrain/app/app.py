@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from autotrain import __version__, logger
 from autotrain.app.api_routes import api_router
 from autotrain.app.oauth import attach_oauth
+from autotrain.app.security import attach_guard
 from autotrain.app.ui_routes import ui_router
 
 
@@ -15,6 +16,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI()
 if "SPACE_ID" in os.environ:
     attach_oauth(app)
+attach_guard(app)
 
 app.include_router(ui_router, prefix="/ui", include_in_schema=False)
 app.include_router(api_router, prefix="/api")
