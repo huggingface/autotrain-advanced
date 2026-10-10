@@ -55,8 +55,12 @@ def _build_app(module, trap_fields=None):
 def _run_scenario(module, scenario, trap_fields=None, client_ip=None):
     async def runner():
         app = _build_app(module, trap_fields=trap_fields)
-        transport = httpx.ASGITransport(app=app, client=(client_ip or _unique_ip(), 50000))
-        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        transport = httpx.ASGITransport(
+            app=app, client=(client_ip or _unique_ip(), 50000)
+        )
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://testserver"
+        ) as client:
             return await scenario(client)
 
     return asyncio.run(runner())
@@ -78,6 +82,27 @@ def test_disabled_by_default(monkeypatch):
 def test_redis_stays_off_without_config(monkeypatch):
     module = _reload(monkeypatch, AUTOTRAIN_GUARD_ENABLED="1")
     assert module.security_config.enable_redis is False
+
+
+def test_full_bundle_mapping(monkeypatch):
+    module = _reload(
+        monkeypatch,
+        AUTOTRAIN_GUARD_ENABLED="1",
+        AUTOTRAIN_GUARD_PASSIVE_MODE="1",
+        AUTOTRAIN_GUARD_SECURITY_HEADERS="1",
+        AUTOTRAIN_GUARD_ENFORCE_HTTPS="1",
+        AUTOTRAIN_GUARD_BLOCKED_COUNTRIES="RU",
+        AUTOTRAIN_GUARD_ALLOWED_COUNTRIES="US",
+        AUTOTRAIN_GUARD_BLOCK_CLOUD_PROVIDERS="AWS",
+        IPINFO_TOKEN="test-token",
+    )
+    cfg = module.security_config
+    assert cfg.passive_mode is True
+    assert cfg.enforce_https is True
+    assert cfg.security_headers["enabled"] is True
+    assert cfg.blocked_countries == frozenset({"RU"})
+    assert cfg.whitelist_countries == frozenset({"US"})
+    assert cfg.block_cloud_providers == frozenset({"AWS"})
 
 
 def test_honeypot_decorator_is_identity_when_disabled(monkeypatch):

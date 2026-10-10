@@ -16,7 +16,9 @@ from typing import Callable, List, Optional
 from autotrain import logger
 
 
-DEFAULT_EXCLUDED_PATHS = "/docs,/redoc,/openapi.json,/static,/login/huggingface,/auth,/api/version"
+DEFAULT_EXCLUDED_PATHS = (
+    "/docs,/redoc,/openapi.json,/static,/login/huggingface,/auth,/api/version"
+)
 DEFAULT_TRUSTED_PROXIES = "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 
 
@@ -25,38 +27,78 @@ def _env_list(name: str, default: str = "") -> List[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def _env_bool(name: str) -> bool:
+    return os.environ.get(name, "0").strip().lower() in ("1", "true", "yes")
+
+
 def _build_security_config():
     from guard import SecurityConfig
 
     kwargs = {
         "enable_rate_limiting": True,
         "rate_limit": int(os.environ.get("AUTOTRAIN_GUARD_RATE_LIMIT", "100")),
-        "rate_limit_window": int(os.environ.get("AUTOTRAIN_GUARD_RATE_LIMIT_WINDOW", "60")),
+        "rate_limit_window": int(
+            os.environ.get("AUTOTRAIN_GUARD_RATE_LIMIT_WINDOW", "60")
+        ),
         "enable_ip_banning": True,
-        "auto_ban_threshold": int(os.environ.get("AUTOTRAIN_GUARD_AUTO_BAN_THRESHOLD", "10")),
-        "auto_ban_duration": int(os.environ.get("AUTOTRAIN_GUARD_AUTO_BAN_DURATION", "300")),
+        "auto_ban_threshold": int(
+            os.environ.get("AUTOTRAIN_GUARD_AUTO_BAN_THRESHOLD", "10")
+        ),
+        "auto_ban_duration": int(
+            os.environ.get("AUTOTRAIN_GUARD_AUTO_BAN_DURATION", "300")
+        ),
         "enable_penetration_detection": True,
         # In-memory state unless a Redis URL is configured: never implicitly
         # depend on a Redis server being reachable at localhost.
         "enable_redis": False,
         "blacklist": tuple(_env_list("AUTOTRAIN_GUARD_BLOCKED_IPS")),
         "blocked_user_agents": _env_list("AUTOTRAIN_GUARD_BLOCKED_USER_AGENTS"),
-        "trusted_proxies": tuple(_env_list("AUTOTRAIN_GUARD_TRUSTED_PROXIES", DEFAULT_TRUSTED_PROXIES)),
-        "trusted_proxy_depth": int(os.environ.get("AUTOTRAIN_GUARD_TRUSTED_PROXY_DEPTH", "1")),
-        "exclude_paths": _env_list("AUTOTRAIN_GUARD_EXCLUDED_PATHS", DEFAULT_EXCLUDED_PATHS),
+        "trusted_proxies": tuple(
+            _env_list("AUTOTRAIN_GUARD_TRUSTED_PROXIES", DEFAULT_TRUSTED_PROXIES)
+        ),
+        "trusted_proxy_depth": int(
+            os.environ.get("AUTOTRAIN_GUARD_TRUSTED_PROXY_DEPTH", "1")
+        ),
+        "exclude_paths": _env_list(
+            "AUTOTRAIN_GUARD_EXCLUDED_PATHS", DEFAULT_EXCLUDED_PATHS
+        ),
         "custom_log_file": os.environ.get("AUTOTRAIN_GUARD_LOG_FILE") or None,
         "log_format": os.environ.get("AUTOTRAIN_GUARD_LOG_FORMAT", "text"),
+        "passive_mode": _env_bool("AUTOTRAIN_GUARD_PASSIVE_MODE"),
+        "security_headers": (
+            {
+                "enabled": True,
+                "hsts": {"max_age": 31536000, "include_subdomains": True},
+                "frame_options": "SAMEORIGIN",
+                "content_type_options": "nosniff",
+                "referrer_policy": "strict-origin-when-cross-origin",
+            }
+            if _env_bool("AUTOTRAIN_GUARD_SECURITY_HEADERS")
+            else None
+        ),
+        "enforce_https": _env_bool("AUTOTRAIN_GUARD_ENFORCE_HTTPS"),
     }
+
+    if blocked_countries := _env_list("AUTOTRAIN_GUARD_BLOCKED_COUNTRIES"):
+        kwargs["blocked_countries"] = frozenset(blocked_countries)
+    if allowed_countries := _env_list("AUTOTRAIN_GUARD_ALLOWED_COUNTRIES"):
+        kwargs["whitelist_countries"] = frozenset(allowed_countries)
+    if cloud_providers := _env_list("AUTOTRAIN_GUARD_BLOCK_CLOUD_PROVIDERS"):
+        kwargs["block_cloud_providers"] = frozenset(cloud_providers)
 
     allowed_ips = _env_list("AUTOTRAIN_GUARD_ALLOWED_IPS")
     if allowed_ips:
         kwargs["whitelist"] = tuple(allowed_ips)
 
-    redis_url = os.environ.get("AUTOTRAIN_GUARD_REDIS_URL") or os.environ.get("REDIS_URL")
+    redis_url = os.environ.get("AUTOTRAIN_GUARD_REDIS_URL") or os.environ.get(
+        "REDIS_URL"
+    )
     if redis_url:
         kwargs["enable_redis"] = True
         kwargs["redis_url"] = redis_url
-        kwargs["redis_prefix"] = os.environ.get("AUTOTRAIN_GUARD_REDIS_PREFIX", "autotrain_guard:")
+        kwargs["redis_prefix"] = os.environ.get(
+            "AUTOTRAIN_GUARD_REDIS_PREFIX", "autotrain_guard:"
+        )
 
     ipinfo_token = os.environ.get("IPINFO_TOKEN")
     if ipinfo_token:
@@ -107,7 +149,11 @@ def honeypot_detection(trap_fields: Optional[List[str]] = None) -> Callable:
     is disabled or no trap fields are configured (via argument or the
     AUTOTRAIN_GUARD_HONEYPOT_FIELDS environment variable).
     """
-    fields = trap_fields if trap_fields is not None else _env_list("AUTOTRAIN_GUARD_HONEYPOT_FIELDS")
+    fields = (
+        trap_fields
+        if trap_fields is not None
+        else _env_list("AUTOTRAIN_GUARD_HONEYPOT_FIELDS")
+    )
     if guard is None or not fields:
 
         def identity(func):

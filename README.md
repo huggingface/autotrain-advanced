@@ -135,9 +135,14 @@ Additional optional settings: `AUTOTRAIN_GUARD_ALLOWED_IPS` (allowlist mode),
 `AUTOTRAIN_GUARD_TRUSTED_PROXY_DEPTH` (client IP resolution behind reverse
 proxies), `AUTOTRAIN_GUARD_REDIS_URL` (distributed rate limiting and bans
 across workers), `AUTOTRAIN_GUARD_HONEYPOT_FIELDS` (trap fields that reject
-bots POSTing to `/api/create_project`), and `IPINFO_TOKEN` (geo/cloud-provider
-lookups). When the app runs behind the Hugging Face Spaces proxy, private
-network ranges are trusted for `X-Forwarded-For` by default.
+bots POSTing to `/api/create_project`), `AUTOTRAIN_GUARD_PASSIVE_MODE` (log
+violations without blocking), `AUTOTRAIN_GUARD_SECURITY_HEADERS` (HSTS and
+friends on responses), `AUTOTRAIN_GUARD_ENFORCE_HTTPS`,
+`AUTOTRAIN_GUARD_BLOCKED_COUNTRIES` / `_ALLOWED_COUNTRIES` and
+`AUTOTRAIN_GUARD_BLOCK_CLOUD_PROVIDERS` (requires `IPINFO_TOKEN`), and
+`IPINFO_TOKEN` (geo lookups). When the app runs behind the Hugging Face
+Spaces proxy, private network ranges are trusted for `X-Forwarded-For` by
+default.
 
 ## Documentation
 
