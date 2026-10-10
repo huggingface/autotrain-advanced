@@ -34,6 +34,7 @@ rouge_score==0.1.2
 py7zr==0.22.0
 fastapi==0.115.6
 uvicorn==0.34.0
+fastapi-guard==8.0.3; python_version >= "3.10"
 python-multipart==0.0.20
 pydantic==2.10.4
 hf-transfer
