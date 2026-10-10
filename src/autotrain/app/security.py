@@ -27,8 +27,22 @@ def _env_list(name: str, default: str = "") -> List[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def _env_str(name: str, default: str | None = None) -> str | None:
+    raw = os.environ.get(name)
+    return raw if raw not in (None, "") else default
+
+
 def _env_bool(name: str) -> bool:
-    return os.environ.get(name, "0").strip().lower() in ("1", "true", "yes")
+    raw = os.environ.get(name)
+    if raw is None:
+        return False
+    normalized = raw.strip().lower()
+    if normalized in ("1", "true", "yes", "on"):
+        return True
+    if normalized in ("", "0", "false", "no", "off"):
+        return False
+    msg = f"{name} must be a boolean (1/true/yes/on or 0/false/no/off), " f"got {raw!r}"
+    raise ValueError(msg)
 
 
 def _build_security_config():
@@ -47,6 +61,7 @@ def _build_security_config():
         "auto_ban_duration": int(
             os.environ.get("AUTOTRAIN_GUARD_AUTO_BAN_DURATION", "300")
         ),
+        "enable_rate_limit_auto_ban": _env_bool("AUTOTRAIN_GUARD_RATE_LIMIT_AUTO_BAN"),
         "enable_penetration_detection": True,
         # In-memory state unless a Redis URL is configured: never implicitly
         # depend on a Redis server being reachable at localhost.
@@ -78,6 +93,16 @@ def _build_security_config():
         ),
         "enforce_https": _env_bool("AUTOTRAIN_GUARD_ENFORCE_HTTPS"),
     }
+
+    # Behind a TLS-terminating proxy, enforce_https must read the forwarded
+    # scheme or every request looks like plain HTTP.
+    explicit_xfp = _env_str("AUTOTRAIN_GUARD_TRUST_X_FORWARDED_PROTO")
+    if explicit_xfp is not None:
+        kwargs["trust_x_forwarded_proto"] = _env_bool(
+            "AUTOTRAIN_GUARD_TRUST_X_FORWARDED_PROTO"
+        )
+    else:
+        kwargs["trust_x_forwarded_proto"] = _env_bool("AUTOTRAIN_GUARD_ENFORCE_HTTPS")
 
     if blocked_countries := _env_list("AUTOTRAIN_GUARD_BLOCKED_COUNTRIES"):
         kwargs["blocked_countries"] = frozenset(blocked_countries)
