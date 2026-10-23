@@ -8,6 +8,7 @@ from huggingface_hub.utils import build_hf_headers, get_session, hf_raise_for_st
 from pydantic import BaseModel, create_model, model_validator
 
 from autotrain import __version__, logger
+from autotrain.app import security
 from autotrain.app.params import HIDDEN_PARAMS, PARAMS, AppParams
 from autotrain.app.utils import token_verification
 from autotrain.project import AutoTrainProject
@@ -617,6 +618,7 @@ def api_auth(request: Request):
 
 
 @api_router.post("/create_project", response_class=JSONResponse)
+@security.honeypot_detection()
 async def api_create_project(project: APICreateProjectModel, token: bool = Depends(api_auth)):
     """
     Asynchronously creates a new project based on the provided parameters.
